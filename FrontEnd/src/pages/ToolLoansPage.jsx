@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 
 export default function ToolLoansPage() {
   const { user, role } = useAuth();
@@ -89,40 +90,49 @@ export default function ToolLoansPage() {
         </button>
       </div>
 
-      {/* Metrics Row */}
+      {/* Metrics Row (Parallelogram Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-mono font-bold text-slate-500 uppercase">Sedang Dipinjam</div>
-            <div className="text-2xl font-black text-slate-900 mt-1">{borrowedCount} Unit</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Dalam batas waktu aman</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Wrench className="w-5 h-5" />
-          </div>
-        </div>
+        <ParallelogramCard
+          title="SEDANG DIPINJAM"
+          value={borrowedCount}
+          unit="Unit"
+          subtitle="Dalam batas waktu aman"
+          subtitleIcon={Clock}
+          subtitleColor="text-blue-600"
+          icon={Wrench}
+          iconColor="text-blue-500"
+          accentColor="border-blue-600"
+          onClick={() => setStatusFilter('borrowed')}
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-mono font-bold text-slate-500 uppercase">Jatuh Tempo (Overdue)</div>
-            <div className="text-2xl font-black text-red-600 mt-1">{overdueCount} Unit</div>
-            <div className="text-[10px] text-red-400 mt-0.5">Peringatan bot otomatis aktif</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-        </div>
+        <ParallelogramCard
+          title="JATUH TEMPO (OVERDUE)"
+          value={overdueCount}
+          unit="Unit"
+          valueColor="text-red-700"
+          subtitle="Peringatan bot otomatis aktif"
+          subtitleIcon={AlertTriangle}
+          subtitleColor="text-red-600"
+          icon={AlertTriangle}
+          iconColor="text-red-600"
+          accentColor="border-red-700"
+          badgeDotColor="bg-red-600 ring-4 ring-red-100"
+          onClick={() => setStatusFilter('overdue')}
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-mono font-bold text-slate-500 uppercase">Selesai Dikembalikan</div>
-            <div className="text-2xl font-black text-emerald-600 mt-1">{returnedCount} Riwayat</div>
-            <div className="text-[10px] text-emerald-500 mt-0.5">Kondisi fisik telah diverifikasi</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
+        <ParallelogramCard
+          title="SELESAI DIKEMBALIKAN"
+          value={returnedCount}
+          unit="Riwayat"
+          valueColor="text-emerald-700"
+          subtitle="Kondisi fisik telah diverifikasi"
+          subtitleIcon={CheckCircle2}
+          subtitleColor="text-emerald-600"
+          icon={CheckCircle2}
+          iconColor="text-emerald-600"
+          accentColor="border-emerald-600"
+          onClick={() => setStatusFilter('returned')}
+        />
       </div>
 
       {/* Filter and Search */}
@@ -190,7 +200,7 @@ export default function ToolLoansPage() {
                           item.status === 'returned'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : isOverdue
-                            ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
+                            ? 'bg-red-50 text-red-700 border-red-200'
                             : 'bg-blue-50 text-blue-700 border-blue-200'
                         }`}>
                           {item.status === 'returned' ? 'Kembali' : isOverdue ? '⚠️ Overdue' : 'Dipinjam'}

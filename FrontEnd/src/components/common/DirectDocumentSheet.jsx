@@ -335,7 +335,7 @@ export default function DirectDocumentSheet({
                 <div>
                   <div className="text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
                     <span>STATUS: APPROVED (DISETUJUI SEPENUHNYA)</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
                     Seluruh 3 tanda tangan berjenjang telah lengkap dan terverifikasi secara sah.
@@ -355,7 +355,7 @@ export default function DirectDocumentSheet({
                 <div>
                   <div className="text-xs font-black uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
                     <span>STATUS: PENDING APPROVAL</span>
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
                   </div>
                   <div className="text-[10px] text-amber-700 font-medium mt-0.5">
                     Menunggu kelengkapan tanda tangan: {!signatures.slot1?.signed ? 'Slot 1 (Pemohon)' : !signatures.slot2?.signed ? 'Slot 2 (Admin Gudang)' : 'Slot 3 (Superadmin)'}

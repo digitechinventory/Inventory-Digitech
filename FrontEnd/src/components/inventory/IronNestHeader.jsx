@@ -87,7 +87,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white animate-pulse" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white" />
           </button>
 
           {/* Notifications Dropdown */}

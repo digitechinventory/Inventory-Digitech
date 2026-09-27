@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
+import ParallelogramCard from '../../components/common/ParallelogramCard';
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -88,7 +90,7 @@ export default function AdminDashboard() {
         <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-amber-500/10 via-amber-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono text-amber-600 font-bold uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
             Panel Operasional Gudang &amp; Logistik Lapangan
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -116,51 +118,63 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 4 Warehouse Operational Metrics (PRD 4.2.1) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">MOS Menunggu Slot 2</span>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shadow-2xs">
-              <FileCheck2 className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-amber-600 tracking-tight">{pendingInspectionCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Butuh cek fisik &amp; tanda tangan</p>
-        </div>
+      {/* 4 Warehouse Operational Parallelogram Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 py-2">
+        <ParallelogramCard
+          title="MOS MENUNGGU SLOT 2"
+          value={String(pendingInspectionCount).padStart(2, '0')}
+          unit="BERKAS"
+          subtitle="Butuh Cek Fisik & Tanda Tangan"
+          subtitleIcon={FileCheck2}
+          subtitleColor="text-amber-700"
+          icon={FileCheck2}
+          iconColor="text-amber-600"
+          accentColor="border-amber-600"
+          valueColor="text-amber-600"
+          onClick={() => navigate('/mos')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Picking List Aktif</span>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shadow-2xs">
-              <PackageCheck className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-blue-600 tracking-tight">{activePickingCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Material keluar sesuai MR</p>
-        </div>
+        <ParallelogramCard
+          title="PICKING LIST AKTIF"
+          value={String(activePickingCount).padStart(2, '0')}
+          unit="ORDER"
+          subtitle="Material Keluar Sesuai MR"
+          subtitleIcon={PackageCheck}
+          subtitleColor="text-blue-700"
+          icon={PackageCheck}
+          iconColor="text-blue-600"
+          accentColor="border-blue-600"
+          valueColor="text-blue-600"
+          onClick={() => navigate('/mr')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Low Stock Alert</span>
-            <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200/60 flex items-center justify-center text-red-600 shadow-2xs">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-red-600 tracking-tight">{lowStockCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">SKU di bawah batas aman</p>
-        </div>
+        <ParallelogramCard
+          title="KRITIS REORDER"
+          value={String(lowStockCount).padStart(2, '0')}
+          unit="PART"
+          subtitle="Di Bawah Buffer Minimum"
+          subtitleIcon={AlertTriangle}
+          subtitleColor="text-red-700"
+          icon={AlertTriangle}
+          iconColor="text-red-600"
+          accentColor="border-red-600"
+          valueColor="text-red-600"
+          onClick={() => navigate('/inventory?status=low_stock')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Alat Jatuh Tempo</span>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600 shadow-2xs">
-              <Clock className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-purple-600 tracking-tight">{overdueCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Melewati estimasi kembali</p>
-        </div>
+        <ParallelogramCard
+          title="TOOL DIPINJAM"
+          value={String(overdueCount).padStart(2, '0')}
+          unit="UNIT"
+          subtitle="1 Tool Overdue Target"
+          subtitleIcon={Clock}
+          subtitleColor="text-purple-700"
+          icon={Clock}
+          iconColor="text-purple-600"
+          accentColor="border-purple-600"
+          valueColor="text-purple-600"
+          onClick={() => navigate('/tools')}
+        />
       </div>
 
       {/* 2D Warehouse Rack Layout (PRD Section 4.2.2) */}

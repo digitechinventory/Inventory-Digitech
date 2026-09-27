@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
+import ParallelogramCard from '../../components/common/ParallelogramCard';
+
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -63,7 +65,7 @@ export default function UserDashboard() {
         <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono text-red-600 font-bold uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             Portal Teknisi Lapangan • {user?.company || 'PT Digitech Global'}
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -91,51 +93,63 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* 4 Personal Metric Cards (PRD 4.1.1) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200/90 rounded-[1.5rem] p-5 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase">Draft MOS Saya</span>
-            <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-              <FileText className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-slate-900">{draftMosCount}</div>
-          <p className="text-[10px] text-slate-400 mt-1">Form sedang disusun</p>
-        </div>
+      {/* 4 Personal Metric Parallelogram Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 py-2">
+        <ParallelogramCard
+          title="DRAFT MOS SAYA"
+          value={String(draftMosCount).padStart(2, '0')}
+          unit="BERKAS"
+          subtitle="Form Sedang Disusun"
+          subtitleIcon={FileText}
+          subtitleColor="text-slate-600"
+          icon={FileText}
+          iconColor="text-slate-700"
+          accentColor="border-slate-700"
+          valueColor="text-slate-900"
+          onClick={() => navigate('/mos')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.5rem] p-5 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase">Permintaan Berjalan (MR)</span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <PackagePlus className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-blue-600">{activeMrCount}</div>
-          <p className="text-[10px] text-slate-400 mt-1">Menunggu picking gudang</p>
-        </div>
+        <ParallelogramCard
+          title="PERMINTAAN MATERIAL (MR)"
+          value={String(activeMrCount).padStart(2, '0')}
+          unit="ORDER"
+          subtitle="Menunggu Picking Gudang"
+          subtitleIcon={PackagePlus}
+          subtitleColor="text-blue-700"
+          icon={PackagePlus}
+          iconColor="text-blue-600"
+          accentColor="border-blue-600"
+          valueColor="text-blue-600"
+          onClick={() => navigate('/mr')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.5rem] p-5 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase">Tools Dipinjam</span>
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Wrench className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-purple-600">{activeLoansCount}</div>
-          <p className="text-[10px] text-slate-400 mt-1">Unit perkakas aktif di pit</p>
-        </div>
+        <ParallelogramCard
+          title="TOOLS DIPINJAM"
+          value={String(activeLoansCount).padStart(2, '0')}
+          unit="UNIT"
+          subtitle="Unit Perkakas Aktif di Pit"
+          subtitleIcon={Wrench}
+          subtitleColor="text-purple-700"
+          icon={Wrench}
+          iconColor="text-purple-600"
+          accentColor="border-purple-600"
+          valueColor="text-purple-600"
+          onClick={() => navigate('/tools')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.5rem] p-5 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase">Perlu TTD (Slot 1)</span>
-            <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black text-red-600">{needSignCount}</div>
-          <p className="text-[10px] text-slate-400 mt-1">Belum diparaf teknisi</p>
-        </div>
+        <ParallelogramCard
+          title="PERLU TTD (SLOT 1)"
+          value={String(needSignCount).padStart(2, '0')}
+          unit="BERKAS"
+          subtitle="Belum Diparaf Teknisi"
+          subtitleIcon={Clock}
+          subtitleColor="text-red-700"
+          icon={Clock}
+          iconColor="text-red-600"
+          accentColor="border-red-600"
+          valueColor="text-red-600"
+          onClick={() => navigate('/mos')}
+        />
       </div>
 
       {/* Main Content Split: MOS Progress & Peminjaman Tools */}

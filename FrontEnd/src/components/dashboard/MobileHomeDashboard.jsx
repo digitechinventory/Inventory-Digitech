@@ -23,10 +23,15 @@ import {
   Compass,
   CheckCircle2,
   Clock,
-  Sparkles
+  Sparkles,
+  QrCode,
+  ScanLine,
+  FilePlus2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
+import ParallelogramCard from '../common/ParallelogramCard';
+import InventoryScannerModal from '../common/InventoryScannerModal';
 
 export default function MobileHomeDashboard() {
   const navigate = useNavigate();
@@ -36,6 +41,7 @@ export default function MobileHomeDashboard() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isListExpanded, setIsListExpanded] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Dynamic greeting based on current local time
@@ -524,56 +530,184 @@ export default function MobileHomeDashboard() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. THREE WHITE SUMMARY STAT CARDS (Inventory Focused)
+          2. AKSI CEPAT OPERASIONAL INVENTORY (Mobile Native Experience)
       ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2.5">
-        
-        {/* Card 1: 28 Part Number */}
-        <div
-          onClick={() => navigate('/inventory')}
-          className="bg-white rounded-2xl p-3 text-center border border-slate-200/80 shadow-xs hover:border-red-200 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95"
-        >
-          <div className="flex items-center gap-1 text-sky-600 mb-1">
-            <Package className="w-4 h-4 text-sky-600" />
-            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
-              28
-            </span>
+      <div className="space-y-2.5 pt-1">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded-lg bg-red-50 text-red-600">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+              Aksi Cepat Inventory
+            </h2>
           </div>
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 leading-tight">
-            Part Number
+          <span className="text-[10px] font-mono font-bold text-slate-400">
+            Akses Lapangan
           </span>
         </div>
 
-        {/* Card 2: 12 Perlu Restock */}
-        <div
-          onClick={() => navigate('/inventory?status=low_stock')}
-          className="bg-white rounded-2xl p-3 text-center border border-slate-200/80 shadow-xs hover:border-red-200 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95"
-        >
-          <div className="flex items-center gap-1 text-rose-500 mb-1">
-            <AlertTriangle className="w-4 h-4 text-rose-500" />
-            <span className="text-base sm:text-lg font-black text-rose-600 tracking-tight leading-none">
-              12
+        {/* 6-Button Operational Grid */}
+        <div className="grid grid-cols-3 gap-2">
+          
+          {/* 1. Tambah MOS */}
+          <button
+            onClick={() => navigate('/mos')}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <FilePlus2 className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Tambah MOS
             </span>
+            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
+              Penerimaan
+            </span>
+          </button>
+
+          {/* 2. Scan QR / Barcode */}
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border-2 border-red-300 bg-gradient-to-b from-red-50/40 to-white shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <ScanLine className="w-5 h-5" />
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Scan QR / Barcode
+            </span>
+            <span className="text-[9px] text-red-600 font-bold mt-0.5">
+              Kamera & Rak
+            </span>
+          </button>
+
+          {/* 3. Ambil Material (MR) */}
+          <button
+            onClick={() => navigate('/mr')}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <PackagePlus className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Ambil Part (MR)
+            </span>
+            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
+              Pengeluaran
+            </span>
+          </button>
+
+          {/* 4. Katalog Part */}
+          <button
+            onClick={() => navigate('/inventory')}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <Store className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Katalog Part
+            </span>
+            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
+              Stok & Lokasi Rak
+            </span>
+          </button>
+
+          {/* 5. Stock Opname */}
+          <button
+            onClick={() => navigate('/opname')}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Stock Opname
+            </span>
+            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
+              Blind Count Fisik
+            </span>
+          </button>
+
+          {/* 6. Pinjam Tool */}
+          <button
+            onClick={() => navigate('/tools')}
+            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-black text-slate-900 leading-tight">
+              Pinjam Tool
+            </span>
+            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
+              Perkakas Pit
+            </span>
+          </button>
+
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          3. RINGKASAN METRIK (Kartu Jajaran Genjang / Parallelogram)
+      ───────────────────────────────────────────────────────────── */}
+      <div className="space-y-2.5 pt-1">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded-lg bg-red-50 text-red-600">
+              <Layers className="w-4 h-4" />
+            </div>
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+              Ringkasan Aset & Dokumen
+            </h2>
           </div>
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 leading-tight">
-            Perlu Restock
+          <span className="text-[10px] font-mono text-slate-400">
+            Realtime
           </span>
         </div>
 
-        {/* Card 3: 5 Dokumen MOS */}
-        <div
-          onClick={() => navigate('/mos')}
-          className="bg-white rounded-2xl p-3 text-center border border-slate-200/80 shadow-xs hover:border-red-200 flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95"
-        >
-          <div className="flex items-center gap-1 text-amber-500 mb-1">
-            <FileCheck2 className="w-4 h-4 text-amber-500" />
-            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none">
-              5
-            </span>
-          </div>
-          <span className="text-[10px] sm:text-xs font-semibold text-slate-500 leading-tight">
-            Dokumen MOS
-          </span>
+        {/* Parallelogram Cards Row matching reference */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-1 py-1">
+          <ParallelogramCard
+            title="TOTAL ASET AKTIF"
+            value="28"
+            unit="SKU"
+            subtitle="+4 SKU Bulan Ini"
+            subtitleColor="text-emerald-700"
+            icon={Package}
+            iconColor="text-slate-400"
+            accentColor="border-red-700"
+            padding="p-3.5 sm:p-4"
+            onClick={() => navigate('/inventory')}
+          />
+          <ParallelogramCard
+            title="DRAF MOS PENDING"
+            value="05"
+            unit="Berkas"
+            subtitle="Verifikasi SPV Gudang Siap"
+            subtitleIcon={FileCheck2}
+            subtitleColor="text-amber-700"
+            badgeDotColor="bg-red-600 ring-4 ring-red-100"
+            accentColor="border-red-700"
+            padding="p-3.5 sm:p-4"
+            onClick={() => navigate('/mos')}
+          />
+          <ParallelogramCard
+            title="KRITIS REORDER"
+            value="12"
+            unit="Part"
+            valueColor="text-red-700"
+            subtitle="Di bawah buffer minimum"
+            subtitleIcon={AlertTriangle}
+            subtitleColor="text-red-600"
+            icon={AlertTriangle}
+            iconColor="text-red-600"
+            accentColor="border-red-700"
+            padding="p-3.5 sm:p-4"
+            onClick={() => navigate('/inventory?status=low_stock')}
+          />
         </div>
       </div>
 
@@ -739,6 +873,14 @@ export default function MobileHomeDashboard() {
           })}
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          5. INVENTORY QR & BARCODE SCANNER MODAL
+      ───────────────────────────────────────────────────────────── */}
+      <InventoryScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+      />
 
     </div>
   );

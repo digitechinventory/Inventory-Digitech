@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
+import WebSocket from 'ws';
+
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = WebSocket;
+}
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
@@ -13,6 +18,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false }
 });
+
 
 // Admin client — only used server-side for admin operations (bypasses RLS)
 export const supabaseAdmin = supabaseServiceKey

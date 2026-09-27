@@ -112,12 +112,11 @@ export default function IronNestWarehousesView() {
     loadData();
   }, []);
 
-  // 4 Sections matching image mockup (A-Electronics 5/12, B-Appliances 7/12, C-Home Decor 8/12, D-Sports 7/12)
-  // And mapped to mining inventory domains from PRD
+  // 4 Sections mapped to genuine mining inventory categories from PRD
   const [sections, setSections] = useState([
     {
       code: 'A',
-      title: 'A-Electronics',
+      title: 'A - Mesin & Filter',
       subtitle: 'Mechanical & Filtration',
       filledCount: 5,
       totalCount: 12,
@@ -140,7 +139,7 @@ export default function IronNestWarehousesView() {
     },
     {
       code: 'B',
-      title: 'B-Appliances',
+      title: 'B - Hidrolik & Seal',
       subtitle: 'Hydraulics & Seals',
       filledCount: 7,
       totalCount: 12,
@@ -162,7 +161,7 @@ export default function IronNestWarehousesView() {
     },
     {
       code: 'C',
-      title: 'C- Home Decor',
+      title: 'C - Pelumas & Fluida',
       subtitle: 'Lubricants & Fuel',
       filledCount: 8,
       totalCount: 12,
@@ -184,7 +183,7 @@ export default function IronNestWarehousesView() {
     },
     {
       code: 'D',
-      title: 'D-Sports',
+      title: 'D - Elektrikal & Alat',
       subtitle: 'Tools & Electrical',
       filledCount: 7,
       totalCount: 12,
@@ -265,27 +264,33 @@ export default function IronNestWarehousesView() {
       )}
 
       {/* ── 1. PAGE HEADER: Title, Sort/Filter, Warehouse Pills ── */}
-      {/* ── 1. PAGE HEADER: Title, Sort/Filter, Warehouse Pills ── */}
-      <div className="space-y-5">
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm relative overflow-hidden space-y-4">
+        {/* Soft Ambient Crimson Wash */}
+        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-2xl" />
+
         {/* Title & Top Right Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
           <div>
-            <h1 className="font-display font-black text-3xl sm:text-4xl lg:text-5xl text-slate-900 tracking-tight">
-              Warehouses ({warehouses.length * 2})
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
+              <span className="w-2 h-2 rounded-full bg-red-600" />
+              Tata Letak Gudang 2D &amp; Kapasitas Rak Real-Time
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Denah 2D Rak Gudang Site BIB ({warehouses.length} Gudang)
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-              Pemantauan real-time kapasitas rak, distribusi material, dan operasional logistik site BIB.
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Pemantauan real-time kapasitas rak, alokasi penempatan barang, dan distribusi material logistik site BIB.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 relative z-10">
             {/* Sort by button */}
             <div className="relative">
               <button
                 onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl border border-slate-200/90 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
               >
-                <ArrowUpDown className="w-4 h-4 text-slate-500" />
+                <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
                 <span>Sort by</span>
               </button>
 
@@ -320,10 +325,10 @@ export default function IronNestWarehousesView() {
             <div className="relative">
               <button
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl border border-slate-200/90 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all shadow-2xs cursor-pointer"
               >
-                <SlidersHorizontal className="w-4 h-4 text-slate-500" />
-                <span>Filter by ({currentFilter === 'all' ? '4' : '1'})</span>
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                <span>Filter by ({currentFilter === 'all' ? 'Semua' : '1'})</span>
               </button>
 
               {showFilterDropdown && (
@@ -356,8 +361,8 @@ export default function IronNestWarehousesView() {
           </div>
         </div>
 
-        {/* Warehouse Carousel / Selector Pills matching screenshot */}
-        <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+        {/* Warehouse Selector Pills Row */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none pt-2 border-t border-slate-100 relative z-10">
           {warehouses.map((wh) => {
             const isSelected = selectedWarehouseId === wh.id;
             return (
@@ -367,15 +372,10 @@ export default function IronNestWarehousesView() {
                   setSelectedWarehouseId(wh.id);
                   showToast(`Gudang aktif: ${wh.fullName || wh.name}`);
                 }}
-                style={isSelected ? {
-                  backgroundColor: 'var(--primary-color, #1E3A5F)',
-                  color: 'var(--active-pill-text, #FFFFFF)',
-                  boxShadow: '0 6px 18px var(--primary-light, rgba(0,0,0,0.18))'
-                } : {}}
-                className={`px-7 sm:px-8 py-3 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
                   isSelected
-                    ? 'shadow-md scale-102'
-                    : 'bg-[#F1F5F9] text-slate-700 hover:bg-slate-200/80 border border-slate-200/70 hover:scale-101'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80 border border-slate-200/70'
                 }`}
               >
                 {wh.name}
@@ -383,18 +383,17 @@ export default function IronNestWarehousesView() {
             );
           })}
 
-          {/* Carousel Arrows and Add Button matching screenshot */}
-          <div className="flex items-center gap-2 ml-1">
+          <div className="flex items-center gap-1.5 ml-1">
             <button
               onClick={() => {
                 const currentIndex = warehouses.findIndex(w => w.id === selectedWarehouseId);
                 const prevIndex = (currentIndex - 1 + warehouses.length) % warehouses.length;
                 setSelectedWarehouseId(warehouses[prevIndex].id);
               }}
-              className="w-11 h-11 rounded-full bg-white border border-slate-200/90 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
               aria-label="Previous warehouse"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => {
@@ -402,99 +401,93 @@ export default function IronNestWarehousesView() {
                 const nextIndex = (currentIndex + 1) % warehouses.length;
                 setSelectedWarehouseId(warehouses[nextIndex].id);
               }}
-              className="w-11 h-11 rounded-full bg-white border border-slate-200/90 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
               aria-label="Next warehouse"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowAddWarehouseModal(true)}
-              style={{
-                backgroundColor: 'var(--primary-color, #1E3A5F)',
-                color: 'var(--active-pill-text, #FFFFFF)',
-                boxShadow: '0 6px 18px var(--primary-light, rgba(0,0,0,0.18))'
-              }}
-              className="w-11 h-11 rounded-full flex items-center justify-center hover:opacity-90 transition-all shadow-md cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-xs cursor-pointer"
               aria-label="Add warehouse"
               title="Tambah Gudang Baru"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── 2. MAIN GRID: Section Overview (20) [Left] + Usage & Overview [Right] ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 lg:gap-8">
+      {/* ── 2. MAIN GRID: Section Overview [Left] + Usage & Overview [Right] ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        {/* ── LEFT CARD (Col 1-8 / 68%): Section Overview (20) ── */}
-        <div className="lg:col-span-8 bg-white rounded-[2rem] sm:rounded-[2.25rem] p-6 sm:p-8 lg:p-9 shadow-sm border border-slate-100 flex flex-col justify-between">
+        {/* ── LEFT CARD (Col 1-8 / 66%): Section Overview ── */}
+        <div className="lg:col-span-8 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
             {/* Header: Title + Action Buttons */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">
-                  Section Overview (20)
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <h2 className="font-bold text-base sm:text-lg text-slate-900 tracking-tight">
+                  Denah Rak Seksie ({currentWarehouse.name})
                 </h2>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                  4 Racks Active
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono">
+                  4 Zona Rak Aktif
                 </span>
               </div>
 
-              {/* Action Buttons matching screenshot */}
-              <div className="flex items-center gap-2.5">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAddRequestModal(true)}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-slate-200/90 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
                 >
-                  <Plus className="w-4 h-4 text-slate-600" />
-                  <span>Add Request</span>
+                  <Plus className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Ambil (MR)</span>
                 </button>
                 <button
                   onClick={() => setShowEditSectionModal(true)}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-slate-200/90 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
                 >
-                  <Edit className="w-4 h-4 text-slate-600" />
-                  <span>Edit Section</span>
+                  <Edit className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Edit Zona</span>
                 </button>
                 <button
                   onClick={() => setShowDeleteSectionModal(true)}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-slate-200/90 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
                 >
-                  <Trash2 className="w-4 h-4 text-slate-600" />
-                  <span>Delete Section</span>
+                  <Trash2 className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Hapus</span>
                 </button>
               </div>
             </div>
 
             {/* 4 Rack Section Columns Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 mt-7">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
               {sections.map((sec) => {
                 const isSectionActive = activeSectionCode === sec.code;
 
                 return (
                   <div
                     key={sec.code}
-                    style={isSectionActive ? { borderColor: 'var(--primary-color, #1E293B)' } : {}}
-                    className={`flex flex-col transition-all duration-200 ${
+                    className={`flex flex-col transition-all duration-200 rounded-xl p-2.5 cursor-pointer ${
                       isSectionActive
-                        ? 'border-2 rounded-[1.5rem] p-3 sm:p-3.5 bg-slate-50/50 shadow-sm'
-                        : 'p-3 sm:p-3.5 rounded-[1.5rem] hover:bg-slate-50/60 cursor-pointer border border-transparent'
+                        ? 'border-2 border-red-500 bg-red-50/20 shadow-xs'
+                        : 'border border-slate-200/80 bg-slate-50/30 hover:bg-slate-50/70'
                     }`}
                     onClick={() => setActiveSectionCode(sec.code)}
                   >
-                    {/* Column Header: Section Title + Fraction (e.g. A-Electronics 5/12) */}
-                    <div className="flex items-center justify-between pb-3.5 px-1">
-                      <span className="text-sm font-extrabold text-slate-900 font-sans truncate">
+                    {/* Column Header */}
+                    <div className="flex items-center justify-between pb-2 px-0.5">
+                      <span className="text-xs font-bold text-slate-900 truncate">
                         {sec.title}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-500 px-2 py-0.5 rounded-md bg-slate-100">
+                      <span className="text-[10px] font-mono font-bold text-slate-500 px-1.5 py-0.5 rounded bg-white border border-slate-200">
                         {sec.filledCount}/{sec.totalCount}
                       </span>
                     </div>
 
                     {/* 2x6 Capsules Grid (12 Capsules total per section) */}
-                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    <div className="grid grid-cols-2 gap-1.5">
                       {sec.slots.map((slot) => {
                         const styleClass = getSlotStyle(slot, sec.colorTheme);
                         const isSelectedSlot = selectedShelf?.id === slot.id;
@@ -506,20 +499,20 @@ export default function IronNestWarehousesView() {
                               e.stopPropagation();
                               handleSlotClick(sec, slot);
                             }}
-                            className={`h-16 sm:h-20 lg:h-[5.25rem] rounded-2xl transition-all duration-200 flex flex-col items-center justify-center p-1.5 cursor-pointer ${styleClass} ${
-                              isSelectedSlot ? 'ring-3 ring-red-600 ring-offset-2 scale-105 shadow-md' : 'hover:scale-103 hover:shadow-xs'
+                            className={`h-11 sm:h-12 rounded-xl transition-all duration-150 flex flex-col items-center justify-center p-1 cursor-pointer ${styleClass} ${
+                              isSelectedSlot ? 'ring-2 ring-red-600 ring-offset-1 scale-102 shadow-xs' : 'hover:scale-101'
                             }`}
                             title={`${slot.id} - ${slot.name || 'Kosong'}`}
                           >
-                            <span className="text-sm sm:text-base lg:text-lg font-black font-mono leading-none tracking-tight">
+                            <span className="text-xs sm:text-sm font-black font-mono leading-none tracking-tight">
                               {slot.id}
                             </span>
                             {slot.status === 'filled' ? (
-                              <span className="text-[10px] sm:text-[11px] font-sans font-bold opacity-90 mt-1 truncate max-w-full px-1">
+                              <span className="text-[9px] font-bold opacity-90 mt-0.5 truncate max-w-full px-0.5 leading-none">
                                 {slot.qty} {slot.unit}
                               </span>
                             ) : (
-                              <span className="text-[9.5px] sm:text-[10px] font-sans font-medium text-slate-400 opacity-60 mt-1">
+                              <span className="text-[8.5px] font-medium text-slate-400 opacity-60 mt-0.5 leading-none">
                                 Kosong
                               </span>
                             )}
@@ -532,49 +525,46 @@ export default function IronNestWarehousesView() {
               })}
             </div>
           </div>
-
         </div>
 
-        {/* ── RIGHT COLUMN (Col 9-12 / 32%): 2 Cards ── */}
-        <div className="lg:col-span-4 flex flex-col gap-6 sm:gap-7">
+        {/* ── RIGHT COLUMN (Col 9-12 / 34%): 2 Cards ── */}
+        <div className="lg:col-span-4 flex flex-col gap-5">
           
-          {/* Card 1: B-Section Usage matching screenshot */}
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.25rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col justify-between">
+          {/* Card 1: Section Usage */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-3">
-                <h3 className="font-display font-black text-xl sm:text-2xl text-slate-900 tracking-tight">
-                  {activeSectionCode}-Section Usage
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight">
+                  Kapasitas Seksie {activeSectionCode}
                 </h3>
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80">
                   Live Telemetry
                 </span>
               </div>
 
-              {/* Donut Progress Meter and Center Label */}
-              <div className="flex items-center justify-center py-4 sm:py-6">
-                <div className="relative w-56 h-56 sm:w-60 sm:h-60 lg:w-64 lg:h-64 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                    {/* Background track */}
+              {/* Compact Donut Progress Meter */}
+              <div className="flex items-center justify-center py-3">
+                <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                     <circle
-                      cx="100"
-                      cy="100"
-                      r="78"
+                      cx="60"
+                      cy="60"
+                      r="48"
                       className="stroke-slate-100"
-                      strokeWidth="20"
+                      strokeWidth="12"
                       fill="transparent"
                     />
-                    {/* Progress Circle in Amber/Yellow matching B-Section in reference image */}
                     <circle
-                      cx="100"
-                      cy="100"
-                      r="78"
+                      cx="60"
+                      cy="60"
+                      r="48"
                       style={{
-                        stroke: activeSectionCode === 'B' ? '#FBBF24' : activeSectionCode === 'A' ? '#34D399' : activeSectionCode === 'C' ? '#A78BFA' : '#2DD4BF'
+                        stroke: activeSectionCode === 'B' ? '#F59E0B' : activeSectionCode === 'A' ? '#10B981' : activeSectionCode === 'C' ? '#8B5CF6' : '#14B8A6'
                       }}
                       className="transition-all duration-700 ease-out"
-                      strokeWidth="20"
-                      strokeDasharray={490}
-                      strokeDashoffset={490 * (1 - 0.56)}
+                      strokeWidth="12"
+                      strokeDasharray={301.59}
+                      strokeDashoffset={301.59 * (1 - 0.56)}
                       strokeLinecap="round"
                       fill="transparent"
                     />
@@ -582,123 +572,123 @@ export default function IronNestWarehousesView() {
 
                   {/* Center Text: 56% Location Used */}
                   <div className="absolute flex flex-col items-center justify-center text-center">
-                    <span className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-slate-900 leading-none tracking-tight">
+                    <span className="font-black text-2xl sm:text-3xl text-slate-900 leading-none tracking-tight">
                       56%
                     </span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider mt-2">
-                      Location Used
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                      Kapasitas
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* 4 Stats Grid matching screenshot */}
-              <div className="grid grid-cols-2 gap-5 sm:gap-6 pt-5 border-t border-slate-100">
+              {/* 4 Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
                 <div>
-                  <div className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 tracking-tight">
+                  <div className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-none">
                     {stats.totalShelves || 240}
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Total Shelves</div>
+                  <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Total Rak</div>
                 </div>
                 <div>
-                  <div className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 tracking-tight">
+                  <div className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-none">
                     {stats.emptyShelves || 136}
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Empty Shelves</div>
+                  <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Rak Kosong</div>
                 </div>
                 <div>
-                  <div className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 tracking-tight">
+                  <div className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-none">
                     {stats.fullShelves || 84}
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Full Shelves</div>
+                  <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Rak Penuh</div>
                 </div>
                 <div>
-                  <div className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 tracking-tight">
+                  <div className="font-black text-lg sm:text-xl text-slate-900 tracking-tight leading-none">
                     {stats.newlyAdded || 20}
                   </div>
-                  <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Newly Added</div>
+                  <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Baru Masuk</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Inventory Overview matching screenshot */}
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.25rem] p-6 sm:p-8 shadow-sm border border-slate-100">
-            <h3 className="font-display font-black text-xl sm:text-2xl text-slate-900 pb-5 tracking-tight">
-              Inventory Overview
+          {/* Card 2: Inventory Overview */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 pb-3 tracking-tight">
+              Ringkasan Arus Material
             </h3>
 
             {/* 4 Metric Tiles 2x2 Grid */}
-            <div className="grid grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-2 gap-2.5">
               {/* Tile 1: Orders Received */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs">
-                    <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-xs transition-all">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
+                    <Package className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                    26% <TrendingUp className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60">
+                    26% <TrendingUp className="w-3 h-3" />
                   </span>
                 </div>
-                <div className="font-display font-black text-2xl sm:text-3xl text-slate-900 leading-tight tracking-tight">
+                <div className="font-black text-base sm:text-lg text-slate-900 leading-tight tracking-tight">
                   {(stats.ordersReceived || 4236).toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                  Orders Received
+                <div className="text-[10px] font-medium text-slate-500 mt-0.5">
+                  Material Masuk (MOS)
                 </div>
               </div>
 
               {/* Tile 2: Orders Shipped */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs">
-                    <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-xs transition-all">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
+                    <Truck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-red-600 flex items-center gap-0.5 bg-red-50 px-2 py-0.5 rounded-full border border-red-200/60">
-                    20% <TrendingDown className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200/60">
+                    20% <TrendingDown className="w-3 h-3" />
                   </span>
                 </div>
-                <div className="font-display font-black text-2xl sm:text-3xl text-slate-900 leading-tight tracking-tight">
+                <div className="font-black text-base sm:text-lg text-slate-900 leading-tight tracking-tight">
                   {(stats.ordersShipped || 2778).toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                  Orders Shipped
+                <div className="text-[10px] font-medium text-slate-500 mt-0.5">
+                  Pengeluaran (MR)
                 </div>
               </div>
 
               {/* Tile 3: Orders Returned */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs">
-                    <Archive className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-xs transition-all">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
+                    <Archive className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-red-600 flex items-center gap-0.5 bg-red-50 px-2 py-0.5 rounded-full border border-red-200/60">
-                    8% <TrendingDown className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5 bg-red-50 px-1.5 py-0.5 rounded-full border border-red-200/60">
+                    8% <TrendingDown className="w-3 h-3" />
                   </span>
                 </div>
-                <div className="font-display font-black text-2xl sm:text-3xl text-slate-900 leading-tight tracking-tight">
+                <div className="font-black text-base sm:text-lg text-slate-900 leading-tight tracking-tight">
                   {(stats.ordersReturned || 147).toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                  Orders Returned
+                <div className="text-[10px] font-medium text-slate-500 mt-0.5">
+                  Retur &amp; Servis
                 </div>
               </div>
 
               {/* Tile 4: Orders Canceled */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs">
-                    <PackageCheck className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-white hover:shadow-xs transition-all">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-2xs">
+                    <PackageCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                    6% <TrendingUp className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60">
+                    6% <TrendingUp className="w-3 h-3" />
                   </span>
                 </div>
-                <div className="font-display font-black text-2xl sm:text-3xl text-slate-900 leading-tight tracking-tight">
+                <div className="font-black text-base sm:text-lg text-slate-900 leading-tight tracking-tight">
                   {(stats.ordersCanceled || 537).toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                  Orders Canceled
+                <div className="text-[10px] font-medium text-slate-500 mt-0.5">
+                  Karantina / Scrap
                 </div>
               </div>
             </div>

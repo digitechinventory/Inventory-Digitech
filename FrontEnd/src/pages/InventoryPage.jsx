@@ -27,7 +27,9 @@ import {
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockData.js';
+
 
 const WAREHOUSES = [
   { id: 'wh-1', name: 'Warehouse 1', code: 'BIB-WH-01', location: 'Pit Sebamban KM 24' },
@@ -124,7 +126,7 @@ export default function InventoryPage() {
         
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-red-600" />
             Katalog Suku Cadang &amp; Inventaris Gudang Real-Time
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -156,55 +158,58 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* ── 2. Four Key Operational Metrics Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total SKU */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Part Number</span>
-            <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-700 border border-slate-200/80 flex items-center justify-center">
-              <Boxes className="w-4 h-4 text-slate-700" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900">{totalSku}</div>
-          <p className="text-[10px] text-slate-400 mt-1 font-medium">SKU aktif terdaftar di sistem</p>
-        </div>
+      {/* ── 2. Four Key Operational Metrics Parallelogram Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 py-2">
+        <ParallelogramCard
+          title="TOTAL PART NUMBER"
+          value={totalSku}
+          unit="SKU"
+          subtitle="• +48 SKU Terdaftar Bulan Ini"
+          subtitleColor="text-slate-600"
+          icon={Boxes}
+          iconColor="text-slate-700"
+          accentColor="border-slate-700"
+          valueColor="text-slate-900"
+        />
 
-        {/* Optimal Stock */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Stok Optimal</span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-600">{optimalCount}</div>
-          <p className="text-[10px] text-slate-400 mt-1 font-medium">Di atas batas minimum safety stock</p>
-        </div>
+        <ParallelogramCard
+          title="STOK OPTIMAL"
+          value={optimalCount}
+          unit="PART"
+          subtitle="Di Atas Batas Safety Stock"
+          subtitleIcon={CheckCircle2}
+          subtitleColor="text-emerald-700"
+          icon={CheckCircle2}
+          iconColor="text-emerald-600"
+          accentColor="border-emerald-600"
+          valueColor="text-emerald-600"
+        />
 
-        {/* Low Stock Alert */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-red-200/80 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider">Perlu Restock</span>
-            <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-200/80 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-red-600">{lowStockCount}</div>
-          <p className="text-[10px] text-red-500/80 mt-1 font-medium">Menyentuh ambang batas minimum</p>
-        </div>
+        <ParallelogramCard
+          title="KRITIS REORDER"
+          value={lowStockCount}
+          unit="PART"
+          subtitle="Di Bawah Buffer Minimum"
+          subtitleIcon={AlertTriangle}
+          subtitleColor="text-red-700"
+          icon={AlertTriangle}
+          iconColor="text-red-600"
+          accentColor="border-red-600"
+          valueColor="text-red-600"
+        />
 
-        {/* Total Units */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Fisik Unit</span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-blue-600">{totalUnits.toLocaleString()}</div>
-          <p className="text-[10px] text-slate-400 mt-1 font-medium">Jumlah fisik seluruh rak gudang</p>
-        </div>
+        <ParallelogramCard
+          title="TOTAL FISIK UNIT"
+          value={totalUnits.toLocaleString('id-ID')}
+          unit="UNIT"
+          subtitle="Tersimpan di 4 Gudang Site"
+          subtitleIcon={Package}
+          subtitleColor="text-blue-700"
+          icon={Package}
+          iconColor="text-blue-600"
+          accentColor="border-blue-600"
+          valueColor="text-blue-600"
+        />
       </div>
 
       {/* ── 3. Warehouse Location Selector Pills ── */}
@@ -382,7 +387,7 @@ export default function InventoryPage() {
                         </span>
 
                         {isCritical ? (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 flex items-center gap-1 shrink-0 animate-pulse">
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 flex items-center gap-1 shrink-0">
                             <AlertTriangle className="w-3 h-3 text-red-600" />
                             Kritis
                           </span>

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
+import ParallelogramCard from '../../components/common/ParallelogramCard';
+
 
 export default function SuperadminDashboard() {
   const navigate = useNavigate();
@@ -82,7 +84,7 @@ export default function SuperadminDashboard() {
         <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono text-red-600 font-bold uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-red-600" />
             Executive Command Center • Digitech Systems Engineering
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -110,53 +112,62 @@ export default function SuperadminDashboard() {
         </div>
       </div>
 
-      {/* 4 Executive Metric Cards (PRD 4.3.1) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Kuantitas Fisik Barang</span>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600 shadow-2xs">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-slate-900 tracking-tight">
-            {totalUnits ? Number(totalUnits).toLocaleString('id-ID') : '14.850'} Unit
-          </div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Total unit fisik suku cadang di seluruh gudang</p>
-        </div>
+      {/* 4 Executive Metric Parallelogram Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 py-2">
+        <ParallelogramCard
+          title="TOTAL ASET AKTIF"
+          value={totalUnits ? Number(totalUnits).toLocaleString('id-ID') : '14,850'}
+          unit="UNIT"
+          subtitle="• Suku Cadang Terdaftar di 4 Gudang"
+          subtitleColor="text-slate-600"
+          icon={TrendingUp}
+          iconColor="text-red-600"
+          accentColor="border-red-600"
+          valueColor="text-slate-900"
+          onClick={() => navigate('/inventory')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Otorisasi (Slot 3)</span>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shadow-2xs">
-              <FileCheck2 className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-blue-600 tracking-tight">{pendingSlot3Count}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Menunggu persetujuan manajemen</p>
-        </div>
+        <ParallelogramCard
+          title="DRAF MOS PENDING"
+          value={String(pendingSlot3Count).padStart(2, '0')}
+          unit="BERKAS"
+          subtitle="Verifikasi SPV Gudang Siap (Slot 3)"
+          subtitleIcon={FileCheck2}
+          subtitleColor="text-blue-700"
+          icon={FileCheck2}
+          iconColor="text-blue-600"
+          accentColor="border-blue-600"
+          valueColor="text-blue-600"
+          onClick={() => navigate('/mos')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Antrean Aktivasi Akun</span>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600 shadow-2xs">
-              <Users className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-purple-600 tracking-tight">{pendingUsersCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Pendaftar baru butuh review</p>
-        </div>
+        <ParallelogramCard
+          title="ANTEAN AKTIVASI AKUN"
+          value={String(pendingUsersCount).padStart(2, '0')}
+          unit="USER"
+          subtitle="Pendaftar Baru Butuh Review"
+          subtitleIcon={Users}
+          subtitleColor="text-purple-700"
+          icon={Users}
+          iconColor="text-purple-600"
+          accentColor="border-purple-600"
+          valueColor="text-purple-600"
+          onClick={() => navigate('/users')}
+        />
 
-        <div className="bg-white border border-slate-200/90 rounded-[1.75rem] p-6 sm:p-7 shadow-xs hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Selisih Opname (Variance)</span>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shadow-2xs">
-              <ClipboardList className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="text-3xl sm:text-4xl font-black font-display text-amber-600 tracking-tight">{varianceApprovalCount}</div>
-          <p className="text-xs font-medium text-slate-400 mt-1.5">Butuh rekonsiliasi Superadmin</p>
-        </div>
+        <ParallelogramCard
+          title="SELISIH OPNAME"
+          value={String(varianceApprovalCount).padStart(2, '0')}
+          unit="PART"
+          subtitle="Di Bawah Buffer Rekonsiliasi"
+          subtitleIcon={ClipboardList}
+          subtitleColor="text-amber-700"
+          icon={ClipboardList}
+          iconColor="text-amber-600"
+          accentColor="border-amber-600"
+          valueColor="text-amber-600"
+          onClick={() => navigate('/opname')}
+        />
       </div>
 
       {/* Panel Ringkasan Alur 8 Tahap Siklus Aset (PRD Section 4.3.2) */}

@@ -152,14 +152,14 @@ export default function SwipeButton({
         className="w-full flex items-center justify-center gap-1.5 px-9 text-[10px] sm:text-[10.5px] font-bold text-slate-600 group-hover:text-slate-900 transition-colors pointer-events-none"
       >
         {!isRight && (
-          <div className="flex items-center text-red-600 animate-pulse">
+          <div className="flex items-center text-red-600">
             <ChevronLeft className="w-3.5 h-3.5 -mr-1.5" />
             <ChevronLeft className="w-3.5 h-3.5" />
           </div>
         )}
         <span className="tracking-wider uppercase font-extrabold">{label}</span>
         {isRight && (
-          <div className="flex items-center text-red-600 animate-pulse">
+          <div className="flex items-center text-red-600">
             <ChevronRight className="w-3.5 h-3.5 -mr-1.5" />
             <ChevronRight className="w-3.5 h-3.5" />
           </div>

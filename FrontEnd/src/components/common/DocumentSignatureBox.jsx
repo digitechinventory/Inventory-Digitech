@@ -218,7 +218,7 @@ export default function DocumentSignatureBox({
           </div>
         ) : (
           <div className="flex items-center gap-1 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             <span>PENDING</span>
           </div>
         )}
