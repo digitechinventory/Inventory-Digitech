@@ -367,19 +367,19 @@ router.put('/:id/sign', requireAuth, async (req, res, next) => {
 
     if (slot === 'slot1') {
       newStatus = 'waiting_admin';
-      signerTitle = 'Teknisi VGT Lapangan';
+      signerTitle = 'Teknisi Lapangan (PIC Penerima)';
     } else if (slot === 'slot2') {
       if (doc.status !== 'waiting_admin' && doc.status !== 'draft') {
         throw new AppError('Dokumen belum berada pada status menunggu pemeriksaan Admin (waiting_admin).', 409, 'STATE_CONFLICT');
       }
       newStatus = 'waiting_superadmin';
-      signerTitle = 'Supervisor Logistik VGT';
+      signerTitle = 'Supervisor Logistik Gudang';
     } else if (slot === 'slot3') {
       if (doc.status !== 'waiting_superadmin') {
         throw new AppError('Dokumen belum disetujui Slot 2 dan belum menunggu otorisasi Superadmin.', 409, 'STATE_CONFLICT');
       }
       newStatus = 'completed';
-      signerTitle = 'Superadmin Digitech / BIB';
+      signerTitle = 'Superadmin DIGITECH';
     }
 
     const timestamp = new Date().toISOString();
