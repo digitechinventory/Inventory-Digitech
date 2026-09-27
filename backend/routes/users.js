@@ -259,7 +259,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
         email: req.user.email,
         full_name: req.user.full_name || 'Pengguna Digitech',
         role: req.user.role || 'User',
-        company: 'PT Borneo Indobara (BIB)',
+        company: 'DIGITECH',
         department: req.user.department || 'Operasional Site',
         phone: req.user.phone || '+62 812-3456-7890',
         site_id: req.user.site_id || 'site-bib-02',
@@ -289,7 +289,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       full_name: full_name.trim(),
       phone: phone || '',
       department: department || '',
-      company: company || 'Digitech / BIB',
+      company: company || 'DIGITECH',
       updated_at: new Date().toISOString()
     };
 

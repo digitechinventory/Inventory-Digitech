@@ -129,7 +129,7 @@ export default function InventoryPage() {
             Katalog &amp; Manajemen Stok
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Monitoring ketersediaan sparepart, bin lokasi rak penyimpanan, dan kartu QR suku cadang PT Borneo Indobara.
+            Monitoring ketersediaan sparepart, bin lokasi rak penyimpanan, dan kartu QR suku cadang DIGITECH.
           </p>
         </div>
 

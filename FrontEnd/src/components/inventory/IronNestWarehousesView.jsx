@@ -964,7 +964,7 @@ export default function IronNestWarehousesView() {
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-base text-slate-900">Registrasi Area Rak Baru</h3>
-                  <p className="text-xs text-slate-500">PT Borneo Indobara Site Expansion</p>
+                  <p className="text-xs text-slate-500">DIGITECH — Penambahan Area Rak Gudang Baru</p>
                 </div>
               </div>
               <button onClick={() => setShowAddWarehouseModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">

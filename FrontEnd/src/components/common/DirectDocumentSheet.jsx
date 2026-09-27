@@ -21,7 +21,7 @@ import DocumentSignatureBox from './DocumentSignatureBox';
  * Material Requests (MR), MOS documents, or Stock Serah Terima.
  * 
  * Features:
- * - Official corporate letterhead (PT Digitech Global & PT Borneo Indobara)
+ * - Official corporate letterhead (DIGITECH — Logistics & Asset Management)
  * - Directly editable / previewable fields on the document
  * - 3 Official Signature Columns directly ON the sheet (Slot 1, 2, 3)
  * - Copy & Paste signature directly on the document
@@ -61,7 +61,7 @@ export default function DirectDocumentSheet({
     : 'SURAT SERAH TERIMA INVENTARIS OPERASIONAL';
 
   const subtitle = isMR
-    ? 'PT BORNEO INDOBARA &bull; LOGISTIK DAN DISTRIBUSI SPAREPART PIT'
+    ? 'DIGITECH &bull; LOGISTIK DAN DISTRIBUSI MATERIAL SPAREPART'
     : 'VERIFIKASI FISIK & SERAH TERIMA VENDOR KE SITE OPERASIONAL';
 
   const handlePrint = () => {

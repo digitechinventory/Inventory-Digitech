@@ -130,7 +130,7 @@ export const sendMosNotificationEmail = async (email, docNumber, status, actionB
       <p style="color: #475569;">Diproses Oleh: <strong>${actionBy}</strong></p>
       <p style="color: #475569;">Status Terbaru: <span style="font-weight: bold; color: ${isCompleted ? '#15803d' : '#b91c1c'};">${status.toUpperCase()}</span></p>
       ${notes ? `<div style="background: #fef2f2; border-left: 3px solid #ef4444; padding: 10px; margin: 12px 0;"><p style="margin: 0; color: #991b1b; font-size: 13px;"><strong>Catatan:</strong> ${notes}</p></div>` : ''}
-      <p style="color: #64748b; font-size: 12px; margin-top: 20px;">Dokumen ini diproses secara elektronik sesuai hierarki otorisasi 3-slot IMS PT Borneo Indobara.</p>
+      <p style="color: #64748b; font-size: 12px; margin-top: 20px;">Dokumen ini diproses secara elektronik sesuai hierarki otorisasi 3-slot IMS DIGITECH.</p>
     </div>
   `;
   return sendEmail({ to: email, subject, html, text: `Status MOS ${docNumber}: ${status}. Catatan: ${notes}` });

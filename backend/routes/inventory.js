@@ -7,7 +7,7 @@ import { AppError } from '../middlewares/errorHandler.js';
 
 const router = Router();
 
-// Fallback mining items (PT Borneo Indobara operational data)
+// Fallback mining items (DIGITECH operational data)
 const FALLBACK_INVENTORY = [
   { id: 'item-001', sku: 'BIB-CAT-777D-FLTR', name: 'Cat 777D Engine Oil Filter', category: 'Heavy Equipment Parts', current_stock: 4, min_threshold: 10, unit: 'PCS', rack: 'R-A01', warehouse_id: 'site-bib-02', status: 'critical', price: 1450000 },
   { id: 'item-002', sku: 'BIB-KOM-PC2000-HYD', name: 'Komatsu PC2000 Hydraulic Seal Kit', category: 'Hydraulics', current_stock: 18, min_threshold: 8, unit: 'SET', rack: 'R-A02', warehouse_id: 'site-bib-02', status: 'optimal', price: 8900000 },

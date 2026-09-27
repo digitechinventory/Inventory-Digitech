@@ -221,7 +221,7 @@ export default function UsersPage() {
                         <span className="flex items-center gap-1.5 text-slate-400">
                           <Building2 className="w-3.5 h-3.5" /> Mitra Perusahaan
                         </span>
-                        <span className="font-semibold text-slate-800">{u.company || 'PT Borneo Indobara'}</span>
+                        <span className="font-semibold text-slate-800">{u.company || 'DIGITECH'}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 text-slate-400">
@@ -313,7 +313,7 @@ export default function UsersPage() {
                       <div className="font-bold text-slate-900">{u.full_name}</div>
                       <div className="text-[10px] text-slate-500 font-mono">{u.email}</div>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-800">{u.company || 'PT Borneo Indobara'}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-800">{u.company || 'DIGITECH'}</td>
                     <td className="px-4 py-3 text-slate-600">{u.department || 'Operasional'}</td>
                     <td className="px-4 py-3 font-mono font-bold text-red-600">{u.role}</td>
                     <td className="px-4 py-3 text-center">

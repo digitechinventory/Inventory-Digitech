@@ -68,7 +68,7 @@ export default function UserDashboard() {
             Selamat Datang, {user?.full_name || 'Teknisi Lapangan'}!
           </h1>
           <p className="text-slate-600 text-xs mt-1">
-            Pengelolaan tiket material ter-geofence dan peminjaman perkakas operasional tambang PT Borneo Indobara.
+            Pengelolaan tiket material ter-geofence dan peminjaman perkakas operasional site DIGITECH.
           </p>
         </div>
         <div className="flex items-center gap-2 relative z-10">

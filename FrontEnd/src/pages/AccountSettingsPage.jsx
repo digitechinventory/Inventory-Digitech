@@ -67,7 +67,7 @@ export default function AccountSettingsPage() {
           setFullName(p.full_name || user?.full_name || '');
           setPhone(p.phone || '+62 812-3456-7890');
           setDepartment(p.department || 'Operasional Lapangan & Maintenance');
-          setCompany(p.company || 'PT Borneo Indobara (BIB)');
+          setCompany(p.company || 'DIGITECH');
           setEmailMfa(Boolean(p.email_mfa_enabled));
           setAuthenticatorMfa(Boolean(p.authenticator_mfa_enabled));
         }
@@ -372,7 +372,7 @@ export default function AccountSettingsPage() {
                     type="text"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Contoh: PT Borneo Indobara (BIB)"
+                    placeholder="Contoh: DIGITECH"
                     className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
                   />
                 </div>

@@ -219,7 +219,7 @@ router.post('/login', async (req, res, next) => {
       email: profile.email,
       full_name: profile.full_name,
       role: profile.role || 'User',
-      company: profile.company || 'PT Borneo Indobara',
+      company: profile.company || 'DIGITECH',
       department: profile.department || 'Operasional',
       site_id: profile.site_id,
       is_active: true
