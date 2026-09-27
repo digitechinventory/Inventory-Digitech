@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Search,
   Bell,
@@ -7,11 +7,13 @@ import {
   ChevronDown,
   Menu,
   LogOut,
+  Settings,
   X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm = '' }) {
+  const navigate = useNavigate();
   const location = useLocation();
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
   const { user, role, logout } = useAuth();
@@ -21,6 +23,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
+  const calendarRef = useRef(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -30,6 +33,9 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
       }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+      }
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowCalendarModal(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -117,15 +123,77 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           )}
         </div>
 
-        {/* Site Calendar Button */}
-        <button
-          onClick={() => setShowCalendarModal(true)}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-red-600 hover:border-red-300 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-          aria-label="Calendar"
-          title="Jadwal Shift & Operasional Site"
-        >
-          <Calendar className="w-4 h-4" />
-        </button>
+        {/* Site Calendar Button & Dropdown Popover */}
+        <div className="relative" ref={calendarRef}>
+          <button
+            onClick={() => setShowCalendarModal(!showCalendarModal)}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center justify-center ${
+              showCalendarModal
+                ? 'bg-red-50 border-red-300 text-red-600'
+                : 'bg-white border-slate-200/90 text-slate-700 hover:text-red-600 hover:border-red-300'
+            }`}
+            aria-label="Calendar"
+            title="Jadwal Shift & Operasional Site"
+          >
+            <Calendar className="w-4 h-4" />
+          </button>
+
+          {/* Calendar Dropdown Popover (Never clipped) */}
+          {showCalendarModal && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xs text-slate-900">Agenda &amp; Shift Site</h3>
+                    <p className="text-[10px] text-slate-500">DIGITECH — September 2026</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCalendarModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="py-3 space-y-2.5">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">Shift A — Pit Sebamban KM 24</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">Aktif</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">07:00 - 19:00 WITA • PIC: {user?.full_name || 'arya-user'}</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">Penerimaan Kontrak PO Vendor Trakindo</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">MOS</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">Jadwal MOS: 24 September 2026 • Area Rak 1</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">Audit Fisik Rutin Akhir Bulan</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200">Opname</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1">30 September 2026 • Rekonsiliasi Varians Rak</div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowCalendarModal(false)}
+                className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Elevated User Profile Pill */}
         <div className="relative" ref={profileRef}>
@@ -168,6 +236,17 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
+                    navigate('/settings');
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Pengaturan Akun &amp; Keamanan</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false);
                     logout();
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
@@ -180,46 +259,6 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           )}
         </div>
       </div>
-
-      {/* Calendar Modal */}
-      {showCalendarModal && (
-        <div className="fixed inset-0 bg-slate-800/30 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-base text-slate-900">Jadwal Operasional Site</h3>
-                  <p className="text-xs text-slate-500">PT Borneo Indobara — September 2026</p>
-                </div>
-              </div>
-              <button onClick={() => setShowCalendarModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="py-4 space-y-3">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs font-bold text-slate-800">Shift A — Pit Sebamban KM 24</div>
-                <div className="text-xs text-slate-500 mt-0.5">07:00 - 19:00 WITA • PIC: arya-user</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs font-bold text-slate-800">Penerimaan Kontrak PO Vendor Trakindo</div>
-                <div className="text-xs text-slate-500 mt-0.5">Jadwal MOS: 24 September 2026 • Area Rak 1</div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowCalendarModal(false)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold text-xs shadow-md shadow-red-600/20 transition-all cursor-pointer"
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

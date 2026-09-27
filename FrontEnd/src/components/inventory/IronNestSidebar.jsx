@@ -11,6 +11,7 @@ import {
   Compass,
   FileSpreadsheet,
   LogOut,
+  Settings,
   X,
   PanelLeftClose,
   PanelLeftOpen
@@ -34,13 +35,13 @@ export default function IronNestSidebar({
     if (normalizedRole === 'Superadmin') {
       return [
         { id: 'overview', label: 'Overview Eksekutif', icon: LayoutGrid, path: '/overview' },
-        { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
+        { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
         { id: 'orders', label: 'MOS Otorisasi', icon: PackageCheck, path: '/mos' },
         { id: 'opname', label: 'Stock Opname & Audit', icon: Truck, path: '/opname' },
         { id: 'inventory', label: 'Master Inventory & QR', icon: Boxes, path: '/inventory' },
         { id: 'finance', label: 'Ledger & Valuasi Aset', icon: CircleDollarSign, path: '/ledger' },
         { id: 'users', label: 'Manajemen User & Aktivasi', icon: Users, path: '/users', badge: 'Admin' },
-        { id: 'tracking', label: 'GIS Asset Tracking', icon: Compass, path: '/tools' },
+        { id: 'tracking', label: 'GIS Asset Tracking', icon: Compass, path: '/gis' },
         { id: 'reports', label: 'Export Laporan Resmi', icon: FileSpreadsheet, path: '/reports' },
       ];
     }
@@ -48,7 +49,7 @@ export default function IronNestSidebar({
     if (normalizedRole === 'Admin') {
       return [
         { id: 'adminDashboard', label: 'Panel Logistik & MOS', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
-        { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
+        { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
         { id: 'orders', label: 'MOS Verifikasi', icon: PackageCheck, path: '/mos', badge: 'Verif' },
         { id: 'opname', label: 'Stock Opname Fisik', icon: Truck, path: '/opname' },
         { id: 'inventory', label: 'Katalog Stok', icon: Boxes, path: '/inventory' },
@@ -220,15 +221,43 @@ export default function IronNestSidebar({
           </nav>
         </div>
 
-        {/* Footer: Clean, Light-Themed Logout Action (Preferences & Help Center completely removed per request) */}
-        <div className={`border-t border-slate-100 space-y-1.5 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+        {/* Footer: Pengaturan Akun & Logout */}
+        <div className={`border-t border-slate-100 space-y-1 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          {/* Pengaturan Akun Shortcut */}
+          <div className="relative group">
+            <button
+              onClick={() => {
+                navigate('/settings');
+                if (isOpen) onClose();
+              }}
+              className={`w-full flex items-center rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                location.pathname === '/settings'
+                  ? 'bg-red-50 text-red-700 font-bold border border-red-200/80 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
+              } ${
+                isCollapsed
+                  ? 'w-11 h-11 mx-auto justify-center'
+                  : 'gap-2.5 px-3 py-2'
+              }`}
+            >
+              <Settings className={`w-4 h-4 shrink-0 ${location.pathname === '/settings' ? 'text-red-600' : 'text-slate-500'}`} />
+              {!isCollapsed && <span className="truncate">Pengaturan Akun</span>}
+            </button>
+            {isCollapsed && (
+              <div className="fixed left-20 ml-2.5 px-3 py-1.5 bg-white/95 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all z-50 whitespace-nowrap backdrop-blur-md">
+                Pengaturan Akun
+              </div>
+            )}
+          </div>
+
+          {/* Logout Action */}
           <div className="relative group">
             <button
               onClick={handleLogout}
               className={`w-full flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all duration-200 cursor-pointer hover:translate-x-1 ${
                 isCollapsed
                   ? 'w-11 h-11 mx-auto justify-center'
-                  : 'gap-2.5 px-3 py-2.5'
+                  : 'gap-2.5 px-3 py-2'
               }`}
             >
               <LogOut className="w-4 h-4 text-red-500 shrink-0" />

@@ -272,10 +272,10 @@ export default function IronNestWarehousesView() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Rak
+              Rak Gudang
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pemantauan status slot, alokasi penempatan suku cadang, dan kapasitas penyimpanan rak site BIB.
+              Pemantauan status slot, alokasi penempatan suku cadang, dan kapasitas penyimpanan rak gudang site BIB.
             </p>
           </div>
 

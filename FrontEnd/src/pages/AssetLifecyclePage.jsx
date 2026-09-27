@@ -86,7 +86,7 @@ const STAGES = [
   },
   {
     num: 8,
-    code: 'Disposal',
+    code: 'Decommissioning',
     title: 'Decommissioning & Afkir',
     roles: 'Admin & Superadmin',
     output: 'Status Decommissioned & Hapus Stok',

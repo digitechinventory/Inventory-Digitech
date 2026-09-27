@@ -74,7 +74,7 @@ export default function SuperadminDashboard() {
     { num: 5, code: 'MOS', name: 'Material On Site', count: pendingSlot3Count || 1, status: 'Verification', active: true },
     { num: 6, code: 'QC', name: 'Commissioning', count: 5, status: 'Passed' },
     { num: 7, code: 'Ops', name: 'Operational & MR', count: 18, status: 'In-Use' },
-    { num: 8, code: 'Disposal', name: 'Decommissioned', count: 1, status: 'Archived' }
+    { num: 8, code: 'Decommissioning', name: 'Decommissioned', count: 1, status: 'Archived' }
   ];
 
   return (

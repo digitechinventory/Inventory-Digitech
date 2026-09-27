@@ -17,7 +17,13 @@ import {
   Briefcase,
   Phone,
   RefreshCw,
-  LogOut
+  LogOut,
+  Monitor,
+  Laptop,
+  Globe,
+  Clock,
+  Trash2,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -592,42 +598,193 @@ export default function AccountSettingsPage() {
         </div>
       )}
 
-      {/* ─── TAB 3: SESI AKTIF & LOGOUT ───────────────────────── */}
+      {/* ─── TAB 3: SESI AKTIF & DEVICE LOGIN INFO ────────────────── */}
       {activeTab === 'sessions' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-          <h3 className="text-base font-bold text-slate-900">Perangkat &amp; Sesi Aktif Saat Ini</h3>
+        <div className="space-y-6">
           
-          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                PC
-              </div>
+          {/* 1. Current Active Device Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div>
-                <span className="text-sm font-bold text-slate-900 block">
-                  Perangkat Ini (Sesi Aktif)
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Monitor className="w-5 h-5 text-red-600" />
+                  <span>Informasi Perangkat Login Saat Ini</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Metadata perangkat keras, peramban, dan alamat jaringan yang digunakan untuk mengakses sesi ini.
+                </p>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Sesi Ini (Aktif Sekarang)
+              </span>
+            </div>
+
+            {/* Device Specs Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sistem Operasi</span>
+                <span className="text-xs font-bold text-slate-900 mt-1 flex items-center gap-1.5">
+                  <Laptop className="w-3.5 h-3.5 text-slate-600" />
+                  {navigator.userAgent.includes('Windows') ? 'Windows 11 / 10 PC' : navigator.userAgent.includes('Mac') ? 'macOS' : navigator.userAgent.includes('Linux') ? 'Linux Debian' : 'Mobile / Tablet'}
                 </span>
-                <span className="text-xs text-slate-500 font-mono">
-                  IP: Localhost / 100.100.98.113 • Digitech Web Client v1.0
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Peramban Web</span>
+                <span className="text-xs font-bold text-slate-900 mt-1 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-600" />
+                  {navigator.userAgent.includes('Edg') ? 'Microsoft Edge' : navigator.userAgent.includes('Chrome') ? 'Google Chrome' : navigator.userAgent.includes('Firefox') ? 'Mozilla Firefox' : 'Safari / WebKit'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Alamat IP &amp; Node</span>
+                <span className="text-xs font-mono font-bold text-red-700 mt-1 flex items-center gap-1.5">
+                  100.100.98.113 (CasaOS Server)
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resolusi Layar</span>
+                <span className="text-xs font-mono font-bold text-slate-900 mt-1">
+                  {typeof window !== 'undefined' ? `${window.screen.width} × ${window.screen.height} px` : '1920 × 1080 px'}
                 </span>
               </div>
             </div>
-            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">
-              Online
-            </span>
+
+            <div className="p-3.5 rounded-2xl bg-red-50/40 border border-red-100 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-slate-700">
+                <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+                <span>Lokasi Geofence Terdeteksi: <strong>Site Pit Sebamban KM 24 (BIB-02)</strong></span>
+              </div>
+              <span className="text-[11px] font-mono text-slate-500">Waktu Login: Hari ini, {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WITA</span>
+            </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-            <div className="text-xs text-slate-400">
-              Jika Anda mencurigai aktivitas mencurigakan, keluar dari semua sesi.
+          {/* 2. Registered Devices & Session History */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Daftar Perangkat Terhubung &amp; Riwayat Login
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Kelola sesi login pada laptop lapangan, tablet barcode scanner, dan workstation operasional Anda.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMessage({ type: 'success', text: 'Semua sesi perangkat lain berhasil diputus dan diamankan.' });
+                }}
+                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Keluar dari Semua Perangkat Lain
+              </button>
             </div>
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              Keluar dari Akun (Logout)
-            </button>
+
+            <div className="space-y-3">
+              {/* Session 1: Current Session */}
+              <div className="p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50/20 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <Monitor className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">Workstation Utama — Chrome (Windows 11)</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Perangkat Ini</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
+                      <span>IP: 100.100.98.113</span>
+                      <span>•</span>
+                      <span>Port 5176 / 3001</span>
+                      <span>•</span>
+                      <span>Aktif sekarang</span>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 font-mono">ONLINE</span>
+              </div>
+
+              {/* Session 2: Tablet Barcode Scanner Pit */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">Samsung Galaxy Tab Active 4 Pro (Android 14)</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Tablet QR Scanner Pit</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
+                      <span>IP: 100.100.98.145</span>
+                      <span>•</span>
+                      <span>Workshop Central Site BIB</span>
+                      <span>•</span>
+                      <span>Terakhir aktif: 2 jam lalu</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert('Sesi tablet barcode scanner berhasil diputus.')}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-bold transition cursor-pointer"
+                >
+                  Putus Sesi
+                </button>
+              </div>
+
+              {/* Session 3: Admin Laptop Field */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">ThinkPad T14s Gen 3 — Microsoft Edge</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Laptop Mobile Site</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
+                      <span>IP: 192.168.1.108</span>
+                      <span>•</span>
+                      <span>Office Admin Logistik Sebamban</span>
+                      <span>•</span>
+                      <span>Terakhir aktif: Kemarin, 17:45 WITA</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert('Sesi ThinkPad mobile site berhasil diputus.')}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-bold transition cursor-pointer"
+                >
+                  Putus Sesi
+                </button>
+              </div>
+            </div>
+
+            {/* Logout from this device */}
+            <div className="pt-4 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3">
+              <div className="text-xs text-slate-400">
+                Mengakhiri sesi akan menghapus token otentikasi dari perangkat ini secara aman.
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Keluar dari Akun Ini (Logout)</span>
+              </button>
+            </div>
           </div>
+
         </div>
       )}
 
