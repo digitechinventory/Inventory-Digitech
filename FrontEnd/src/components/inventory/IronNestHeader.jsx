@@ -160,7 +160,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase">
                     {role || 'Superadmin'}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 truncate">{user?.company || 'PT Digitech Global'}</span>
+                  <span className="text-[10px] font-bold text-slate-500 truncate">{user?.company || 'DIGITECH'}</span>
                 </div>
               </div>
 

@@ -33,9 +33,9 @@ export default function IronNestSidebar({
 
     if (normalizedRole === 'Superadmin') {
       return [
-        { id: 'overview', label: 'Overview Eksekutif', icon: LayoutGrid, path: '/overview', badge: 'Slot 3' },
+        { id: 'overview', label: 'Overview Eksekutif', icon: LayoutGrid, path: '/overview' },
         { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
-        { id: 'orders', label: 'MOS Otorisasi (Slot 3)', icon: PackageCheck, path: '/mos' },
+        { id: 'orders', label: 'MOS Otorisasi', icon: PackageCheck, path: '/mos' },
         { id: 'opname', label: 'Stock Opname & Audit', icon: Truck, path: '/opname' },
         { id: 'inventory', label: 'Master Inventory & QR', icon: Boxes, path: '/inventory' },
         { id: 'finance', label: 'Ledger & Valuasi Aset', icon: CircleDollarSign, path: '/ledger' },
@@ -49,7 +49,7 @@ export default function IronNestSidebar({
       return [
         { id: 'adminDashboard', label: 'Panel Logistik & MOS', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
         { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
-        { id: 'orders', label: 'MOS Verifikasi (Slot 2)', icon: PackageCheck, path: '/mos', badge: 'Verif' },
+        { id: 'orders', label: 'MOS Verifikasi', icon: PackageCheck, path: '/mos', badge: 'Verif' },
         { id: 'opname', label: 'Stock Opname Fisik', icon: Truck, path: '/opname' },
         { id: 'inventory', label: 'Katalog Stok', icon: Boxes, path: '/inventory' },
         { id: 'finance', label: 'Mutasi Stok & Ledger', icon: CircleDollarSign, path: '/ledger' },
@@ -61,7 +61,7 @@ export default function IronNestSidebar({
     // Default 'User' (Teknisi Lapangan / Mitra Operasional)
     return [
       { id: 'dashboard', label: 'Portal Teknisi Lapangan', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
-      { id: 'orders', label: 'Penerimaan MOS (Slot 1)', icon: PackageCheck, path: '/mos' },
+      { id: 'orders', label: 'Penerimaan MOS', icon: PackageCheck, path: '/mos' },
       { id: 'inventory', label: 'Cari Material & Suku Cadang', icon: Boxes, path: '/inventory' },
       { id: 'tracking', label: 'Tools Saya & Pengembalian', icon: Compass, path: '/tools' },
     ];

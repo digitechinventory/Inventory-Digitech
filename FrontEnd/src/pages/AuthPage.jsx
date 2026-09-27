@@ -39,7 +39,7 @@ export default function AuthPage() {
     email: '',
     password: '',
     phone: '',
-    company: 'PT Digitech Global',
+    company: 'DIGITECH',
     department: ''
   });
 

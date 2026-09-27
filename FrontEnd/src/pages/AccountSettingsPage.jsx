@@ -33,7 +33,7 @@ export default function AccountSettingsPage() {
   const [email] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '+62 812-3456-7890');
   const [department, setDepartment] = useState(user?.department || 'Operasional Lapangan & Maintenance');
-  const [company, setCompany] = useState(user?.company || 'PT Borneo Indobara (BIB)');
+  const [company, setCompany] = useState(user?.company || 'DIGITECH');
 
   // Security Form State
   const [emailMfa, setEmailMfa] = useState(false);

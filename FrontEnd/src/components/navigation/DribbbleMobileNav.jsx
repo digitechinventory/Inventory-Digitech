@@ -238,7 +238,7 @@ export default function DribbbleMobileNav() {
                   <Building2 className="w-4 h-4 text-slate-400" /> Perusahaan / Divisi
                 </span>
                 <span className="font-bold text-slate-900">
-                  {user?.company || 'PT Digitech Global'}
+                  {user?.company || 'DIGITECH'}
                 </span>
               </div>
 

@@ -111,7 +111,7 @@ export default function DirectDocumentSheet({
             <div className="flex items-center gap-3">
               <img
                 src="/digitech-logo-light.png"
-                alt="PT Digitech Global"
+                alt="DIGITECH"
                 className="h-9 sm:h-11 w-auto object-contain"
                 onError={(e) => {
                   e.target.onerror = null;
@@ -120,10 +120,10 @@ export default function DirectDocumentSheet({
               />
               <div>
                 <div className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  PT DIGITECH GLOBAL MARITIM
+                  DIGITECH
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium">
-                  Divisi Manajemen Operasional & Inventaris Tambang
+                  Inventory Management System
                 </div>
               </div>
             </div>
@@ -131,10 +131,10 @@ export default function DirectDocumentSheet({
             {/* Right: Partner / Site Branding */}
             <div className="text-right">
               <div className="text-[11px] font-bold text-red-700 uppercase tracking-wider">
-                PT BORNEO INDOBARA
+                DIGITECH
               </div>
               <div className="text-[10px] text-slate-500 font-mono">
-                Project Site: BIB-02 Kalsel
+                Logistics & Asset Management
               </div>
             </div>
           </div>
