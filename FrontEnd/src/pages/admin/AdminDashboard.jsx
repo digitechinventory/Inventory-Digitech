@@ -89,15 +89,11 @@ export default function AdminDashboard() {
       <div className="bg-white/95 backdrop-blur-md rounded-[1.75rem] p-6 text-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-200/90 flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-amber-500/10 via-amber-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs font-mono text-amber-600 font-bold uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            Panel Operasional Gudang &amp; Logistik Lapangan
-          </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Halo, {user?.full_name || 'Admin Logistik'} (Admin Gudang)
           </h1>
           <p className="text-slate-600 text-xs mt-1">
-            Verifikasi fisik DO/PO, pembubuhan tanda tangan Slot 2, dan pemantauan rak inventaris 2D.
+            Verifikasi fisik DO/PO, pembubuhan tanda tangan Slot 2, dan pemantauan status penempatan rak inventaris.
           </p>
         </div>
         <div className="flex items-center gap-2 relative z-10">
@@ -106,7 +102,7 @@ export default function AdminDashboard() {
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-amber-600/20 cursor-pointer"
           >
             <Layers className="w-4 h-4" />
-            Buka Denah Gudang Interaktif
+            Buka Rak Suku Cadang
           </button>
           <button
             onClick={fetchData}
@@ -177,13 +173,13 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* 2D Warehouse Rack Layout (PRD Section 4.2.2) */}
+      {/* Monitoring Rak Inventaris */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Layers className="w-4 h-4 text-amber-600" />
-              Peta Denah Rak Inventaris 2D
+              Monitoring Rak Inventaris
             </h3>
             <p className="text-[11px] text-slate-500">Visualisasi kapasitas rak real-time (Hijau: Aman, Oranye: Terisi, Merah: Kritis)</p>
           </div>

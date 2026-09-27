@@ -103,10 +103,6 @@ export default function AssetLifecyclePage() {
     <div className="p-4 sm:p-6 lg:p-7 space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-          <span className="w-2 h-2 rounded-full bg-red-600" />
-          Siklus Hidup Aset Operasional
-        </div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
           Pemantauan 8 Tahap Siklus Hidup Aset
         </h1>

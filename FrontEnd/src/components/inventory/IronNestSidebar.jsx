@@ -34,7 +34,7 @@ export default function IronNestSidebar({
     if (normalizedRole === 'Superadmin') {
       return [
         { id: 'overview', label: 'Overview Eksekutif', icon: LayoutGrid, path: '/overview', badge: 'Slot 3' },
-        { id: 'warehouses', label: '8 Gudang Site BIB', icon: Store, path: '/warehouses', badge: 'Live' },
+        { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
         { id: 'orders', label: 'MOS Otorisasi (Slot 3)', icon: PackageCheck, path: '/mos' },
         { id: 'opname', label: 'Stock Opname & Audit', icon: Truck, path: '/opname' },
         { id: 'inventory', label: 'Master Inventory & QR', icon: Boxes, path: '/inventory' },
@@ -48,10 +48,10 @@ export default function IronNestSidebar({
     if (normalizedRole === 'Admin') {
       return [
         { id: 'adminDashboard', label: 'Panel Logistik & MOS', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
-        { id: 'warehouses', label: 'Gudang & Put-Away', icon: Store, path: '/warehouses', badge: 'Operasional' },
+        { id: 'warehouses', label: 'Rak', icon: Store, path: '/warehouses' },
         { id: 'orders', label: 'MOS Verifikasi (Slot 2)', icon: PackageCheck, path: '/mos', badge: 'Verif' },
         { id: 'opname', label: 'Stock Opname Fisik', icon: Truck, path: '/opname' },
-        { id: 'inventory', label: 'Katalog Stok Gudang', icon: Boxes, path: '/inventory' },
+        { id: 'inventory', label: 'Katalog Stok', icon: Boxes, path: '/inventory' },
         { id: 'finance', label: 'Mutasi Stok & Ledger', icon: CircleDollarSign, path: '/ledger' },
         { id: 'tracking', label: 'Peminjaman Tools Lapangan', icon: Compass, path: '/tools' },
         { id: 'reports', label: 'Laporan Logistik Site', icon: FileSpreadsheet, path: '/reports' },

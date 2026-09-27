@@ -39,7 +39,7 @@ export default function MOSPage() {
   const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [vendorName, setVendorName] = useState('PT Trakindo Utama');
   const [poNumber, setPoNumber] = useState('PO-2026-BIB-7721 / DO-TKU-9902');
-  const [siteLocation, setSiteLocation] = useState('Warehouse 1 Pit Sebamban KM 24');
+  const [siteLocation, setSiteLocation] = useState('Area Rak 1 Pit Sebamban KM 24');
   const [receiverName, setReceiverName] = useState(user?.full_name || 'arya-user');
   const [purpose, setPurpose] = useState(
     'Penerimaan material suku cadang pengadaan berkala unit Excavator dan Haul Truck. Pemeriksaan fisik kemasan, segel vendor, dan kesesuaian part number telah diverifikasi di area gudang site.'
@@ -226,7 +226,7 @@ export default function MOSPage() {
     setDocDate(doc.received_date || doc.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]);
     setVendorName(doc.vendor_name || 'Vendor Terdaftar');
     setPoNumber(doc.po_do_number || 'PO-2026-001');
-    setSiteLocation(doc.site_location || 'Warehouse 1 Pit Sebamban');
+    setSiteLocation(doc.site_location || 'Area Rak 1 Pit Sebamban');
     setReceiverName(doc.pic_receiver_name || doc.requester_name || user?.full_name);
     setPurpose(doc.purpose || 'Penerimaan fisik material site.');
     setItems(Array.isArray(doc.items) && doc.items.length > 0 ? doc.items : items);
@@ -263,7 +263,7 @@ export default function MOSPage() {
     setDocDate(new Date().toISOString().split('T')[0]);
     setVendorName('PT Trakindo Utama');
     setPoNumber('PO-2026-BIB-7721 / DO-TKU-9902');
-    setSiteLocation('Warehouse 1 Pit Sebamban KM 24');
+    setSiteLocation('Area Rak 1 Pit Sebamban KM 24');
     setReceiverName(user?.full_name || 'arya-user');
     setPurpose('Penerimaan material suku cadang pengadaan berkala unit operasional tambang.');
     setSignatures({
@@ -287,10 +287,6 @@ export default function MOSPage() {
       {/* ── 1. Top Header & Tab Controls ── */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600" />
-            Dokumen Resmi Berita Acara Penerimaan Barang
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Material On Site (MOS)
           </h1>
@@ -503,7 +499,7 @@ export default function MOSPage() {
                       <div className="mt-3 space-y-1 text-xs text-slate-600">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="truncate">{doc.site_location || 'Warehouse 1'}</span>
+                          <span className="truncate">{doc.site_location || 'Area Rak 1'}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Building2 className="w-3.5 h-3.5 text-slate-400" />

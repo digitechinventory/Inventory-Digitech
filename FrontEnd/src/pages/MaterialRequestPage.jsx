@@ -183,10 +183,6 @@ export default function MaterialRequestPage() {
       {/* ── Top Header & Tab Controls ── */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-red-100 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600" />
-            Dokumen Permintaan Resmi &bull; Pengeluaran Rak Site
-          </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Surat Permintaan Material (MR)
           </h1>

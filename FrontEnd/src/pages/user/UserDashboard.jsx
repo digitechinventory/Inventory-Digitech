@@ -64,10 +64,6 @@ export default function UserDashboard() {
       <div className="bg-white/95 backdrop-blur-md rounded-[1.75rem] p-6 text-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-200/90 flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs font-mono text-red-600 font-bold uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Portal Teknisi Lapangan • {user?.company || 'PT Digitech Global'}
-          </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Selamat Datang, {user?.full_name || 'Teknisi Lapangan'}!
           </h1>
@@ -190,7 +186,7 @@ export default function UserDashboard() {
                         {doc.vendor_name || 'PT Trakindo Utama'} • PO: {doc.po_do_number || 'PO-2026-09-001'}
                       </div>
                       <div className="text-[10px] text-slate-400 flex items-center gap-2">
-                        <span>Lokasi: {doc.site_location || 'Warehouse 1'}</span>
+                        <span>Lokasi: {doc.site_location || 'Area Rak 1'}</span>
                         <span>•</span>
                         <span>{doc.created_at?.split('T')[0] || 'Hari ini'}</span>
                       </div>

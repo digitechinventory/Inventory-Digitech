@@ -207,7 +207,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="text-xs font-bold text-slate-800">Penerimaan Kontrak PO Vendor Trakindo</div>
-                <div className="text-xs text-slate-500 mt-0.5">Jadwal MOS: 24 September 2026 • Warehouse 1</div>
+                <div className="text-xs text-slate-500 mt-0.5">Jadwal MOS: 24 September 2026 • Area Rak 1</div>
               </div>
             </div>
 

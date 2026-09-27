@@ -48,10 +48,10 @@ export default function IronNestWarehousesView() {
 
   // Live data
   const [warehouses, setWarehouses] = useState([
-    { id: 'wh-01', name: 'Warehouse 1', fullName: 'Warehouse 1 (Main Pit Site BIB-02)', code: 'BIB-WH1', total_shelves: 240, occupied_shelves: 134 },
-    { id: 'wh-02', name: 'Warehouse 2', fullName: 'Warehouse 2 (Central Workshop)', code: 'BIB-WH2', total_shelves: 180, occupied_shelves: 95 },
-    { id: 'wh-03', name: 'Warehouse 3', fullName: 'Warehouse 3 (Sebamban Port Logistics)', code: 'BIB-WH3', total_shelves: 200, occupied_shelves: 110 },
-    { id: 'wh-04', name: 'Warehouse 4', fullName: 'Warehouse 4 (Sub-Depot Angsana)', code: 'BIB-WH4', total_shelves: 120, occupied_shelves: 48 },
+    { id: 'wh-01', name: 'Area Rak 1', fullName: 'Area Rak 1 (Main Pit Site BIB-02)', code: 'BIB-R1', total_shelves: 240, occupied_shelves: 134 },
+    { id: 'wh-02', name: 'Area Rak 2', fullName: 'Area Rak 2 (Central Workshop)', code: 'BIB-R2', total_shelves: 180, occupied_shelves: 95 },
+    { id: 'wh-03', name: 'Area Rak 3', fullName: 'Area Rak 3 (Sebamban Port Logistics)', code: 'BIB-R3', total_shelves: 200, occupied_shelves: 110 },
+    { id: 'wh-04', name: 'Area Rak 4', fullName: 'Area Rak 4 (Sub-Depot Angsana)', code: 'BIB-R4', total_shelves: 120, occupied_shelves: 48 },
   ]);
 
   const [dbItems, setDbItems] = useState([]);
@@ -87,8 +87,8 @@ export default function IronNestWarehousesView() {
         if (whData && whData.length > 0) {
           setWarehouses(whData.map((w, idx) => ({
             ...w,
-            name: w.name?.startsWith('Warehouse') ? w.name.split(' (')[0] : `Warehouse ${idx + 1}`,
-            fullName: w.name
+            name: `Area Rak ${idx + 1}`,
+            fullName: `Area Rak ${idx + 1} (${w.name?.replace(/Warehouse \d+/gi, '').replace(/[()]/g, '').trim() || 'Site BIB'})`
           })));
         }
         if (itemsData && itemsData.length > 0) {
@@ -271,15 +271,11 @@ export default function IronNestWarehousesView() {
         {/* Title & Top Right Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-              <span className="w-2 h-2 rounded-full bg-red-600" />
-              Tata Letak Gudang 2D &amp; Kapasitas Rak Real-Time
-            </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Denah 2D Rak Gudang Site BIB ({warehouses.length} Gudang)
+              Rak
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pemantauan real-time kapasitas rak, alokasi penempatan barang, dan distribusi material logistik site BIB.
+              Pemantauan status slot, alokasi penempatan suku cadang, dan kapasitas penyimpanan rak site BIB.
             </p>
           </div>
 
@@ -370,7 +366,7 @@ export default function IronNestWarehousesView() {
                 key={wh.id}
                 onClick={() => {
                   setSelectedWarehouseId(wh.id);
-                  showToast(`Gudang aktif: ${wh.fullName || wh.name}`);
+                  showToast(`Area aktif: ${wh.fullName || wh.name}`);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
                   isSelected
@@ -410,7 +406,7 @@ export default function IronNestWarehousesView() {
               onClick={() => setShowAddWarehouseModal(true)}
               className="w-8 h-8 rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-xs cursor-pointer"
               aria-label="Add warehouse"
-              title="Tambah Gudang Baru"
+              title="Tambah Area Rak Baru"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -428,10 +424,10 @@ export default function IronNestWarehousesView() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <h2 className="font-bold text-base sm:text-lg text-slate-900 tracking-tight">
-                  Denah Rak Seksie ({currentWarehouse.name})
+                  Seksi Rak ({currentWarehouse.name})
                 </h2>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-                  4 Zona Rak Aktif
+                  4 Seksi Aktif
                 </span>
               </div>
 
@@ -449,7 +445,7 @@ export default function IronNestWarehousesView() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs hover:border-slate-300"
                 >
                   <Edit className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Edit Zona</span>
+                  <span>Edit Seksi</span>
                 </button>
                 <button
                   onClick={() => setShowDeleteSectionModal(true)}
@@ -967,7 +963,7 @@ export default function IronNestWarehousesView() {
                   <Boxes className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-base text-slate-900">Registrasi Gudang Baru</h3>
+                  <h3 className="font-display font-bold text-base text-slate-900">Registrasi Area Rak Baru</h3>
                   <p className="text-xs text-slate-500">PT Borneo Indobara Site Expansion</p>
                 </div>
               </div>
@@ -979,18 +975,18 @@ export default function IronNestWarehousesView() {
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowAddWarehouseModal(false);
-                showToast('Gudang baru berhasil ditambahkan ke database.');
+                showToast('Area rak baru berhasil ditambahkan ke database.');
               }}
               className="py-4 space-y-3 text-xs"
             >
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Nama Gudang</label>
-                <input type="text" placeholder="Warehouse 5 (Pit Timur Logistics)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" required />
+                <label className="font-bold text-slate-700 block mb-1">Nama Area Rak</label>
+                <input type="text" placeholder="Area Rak 5 (Pit Timur Logistics)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Kode Gudang</label>
-                  <input type="text" placeholder="BIB-WH5" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-mono" required />
+                  <label className="font-bold text-slate-700 block mb-1">Kode Area Rak</label>
+                  <input type="text" placeholder="BIB-RAK5" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-mono" required />
                 </div>
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Total Kapasitas Rak</label>

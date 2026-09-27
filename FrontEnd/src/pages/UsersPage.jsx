@@ -97,10 +97,6 @@ export default function UsersPage() {
       {/* ── Header ── */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600" />
-            Manajemen Akun &amp; Hak Akses
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Manajemen Pengguna &amp; Antrean Aktivasi
           </h1>

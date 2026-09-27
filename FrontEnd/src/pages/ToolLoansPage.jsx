@@ -69,15 +69,11 @@ export default function ToolLoansPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-600 uppercase tracking-wider mb-1">
-            <span className="w-2 h-2 rounded-full bg-red-600" />
-            Manajemen Sirkulasi Perkakas
-          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Tool Tracking (Peminjaman Alat Kerja)
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Pelacakan peralatan non-habis pakai, batas waktu pengembalian & deteksi overdue
+            Pelacakan peralatan non-habis pakai, batas waktu pengembalian &amp; deteksi overdue
           </p>
         </div>
 
