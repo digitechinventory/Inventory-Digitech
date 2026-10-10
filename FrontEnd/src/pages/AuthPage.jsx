@@ -21,6 +21,9 @@ import SwipeButton from '../components/auth/SwipeButton.jsx';
 
 
 export default function AuthPage() {
+  if (typeof window !== 'undefined' && window.self !== window.top) {
+    return null;
+  }
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const iframeRef = useRef(null);
@@ -260,6 +263,14 @@ export default function AuthPage() {
           title="Interactive 3D Robot Mascot"
           className="w-full h-full border-0 pointer-events-auto"
           loading="eager"
+          onLoad={() => {
+            try {
+              if (iframeRef.current?.contentDocument?.getElementById('root')) {
+                console.warn('[AuthPage] Detected app root inside background iframe, suppressing iframe.');
+                iframeRef.current.style.display = 'none';
+              }
+            } catch {}
+          }}
         />
         {/* Soft Ambient Vignette for seamless cinematic blending */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/35" />

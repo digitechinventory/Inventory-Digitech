@@ -61,13 +61,20 @@ class ErrorBoundary extends Component {
   }
 }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>,
-)
+// Frame-busting guard: Prevent recursive embedding of React App inside iframes
+if (typeof window !== 'undefined' && window.self !== window.top) {
+  console.warn('[Layout] Prevented recursive React app instantiation inside iframe.');
+  const rootEl = document.getElementById('root');
+  if (rootEl) rootEl.innerHTML = '';
+} else {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+}
 
 
 

@@ -6,7 +6,7 @@
             "destination": "/api/index.js"
         },
         {
-            "source": "/(.*)",
+            "source": "/((?!.*\\.[\\w]+$).*)",
             "destination": "/index.html"
         }
     ],
