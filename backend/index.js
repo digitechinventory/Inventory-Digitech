@@ -138,10 +138,10 @@ for (const p of possibleDistPaths) {
   }
 }
 
-if (distDir) {
+if (distDir && !process.env.VERCEL) {
   console.log(`[Static] Serving frontend SPA from: ${distDir}`);
   app.use(express.static(distDir));
-  app.get('*', (req, res, next) => {
+  app.get('(.*)', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(distDir, 'index.html'));
   });
