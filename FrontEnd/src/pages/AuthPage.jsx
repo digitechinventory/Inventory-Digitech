@@ -258,19 +258,11 @@ export default function AuthPage() {
       <div className="fixed lg:absolute inset-0 z-0 overflow-hidden pointer-events-auto">
         <iframe
           ref={iframeRef}
-          src="/spline-robot.html?embedded=1"
+          src="/spline-robot.html"
           frameBorder="0"
           title="Interactive 3D Robot Mascot"
           className="w-full h-full border-0 pointer-events-auto"
           loading="eager"
-          onLoad={() => {
-            try {
-              if (iframeRef.current?.contentDocument?.getElementById('root')) {
-                console.warn('[AuthPage] Detected app root inside background iframe, suppressing iframe.');
-                iframeRef.current.style.display = 'none';
-              }
-            } catch {}
-          }}
         />
         {/* Soft Ambient Vignette for seamless cinematic blending */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/35" />
