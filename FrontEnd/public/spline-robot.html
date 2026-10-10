@@ -467,7 +467,14 @@
 				if (!res.ok) throw new Error('HTTP ' + res.status + ' loading 3D binary');
 				return res.arrayBuffer();
 			})
-			.then(buf => app.start(new Uint8Array(buf))).then(() => { console.log("app.start completed!"); tryConfigure3DText(); }).catch(console.error);
+			.then(buf => app.start(buf))
+			.then(() => {
+				console.log("3D Mascot started successfully!");
+				tryConfigure3DText();
+			})
+			.catch(err => {
+				console.warn('Spline Mascot start notice:', err);
+			});
 
 	</script>
 </body>

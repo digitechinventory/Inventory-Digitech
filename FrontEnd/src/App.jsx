@@ -202,10 +202,6 @@ export default function App() {
       if (params.get('nosplash') === 'true' || params.get('nosplash') === '1') {
         return false;
       }
-      // Do not display splash screen on /login route so login form is immediately clean and accessible
-      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-        return false;
-      }
       return true;
     } catch {
       return true;
@@ -223,12 +219,12 @@ export default function App() {
     setShowSplash(false);
   }, []);
 
-  // Safety fallback: if showSplash is active, ensure it unconditionally unmounts after 4.5s
+  // Safety fallback: if showSplash is active, ensure it unconditionally unmounts after 3.8s
   useEffect(() => {
     if (!showSplash) return;
     const safetyTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 4500);
+    }, 3800);
     return () => clearTimeout(safetyTimer);
   }, [showSplash]);
 

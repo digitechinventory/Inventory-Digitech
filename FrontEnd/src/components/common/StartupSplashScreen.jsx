@@ -33,7 +33,7 @@ export default function StartupSplashScreen({ onFinish }) {
     setIsFadingOut(true);
     setTimeout(() => {
       if (onFinishRef.current) onFinishRef.current();
-    }, 300); // 300ms clean dissolve
+    }, 400); // 400ms clean dissolve
   }, []);
 
   useEffect(() => {
@@ -48,34 +48,34 @@ export default function StartupSplashScreen({ onFinish }) {
       img.src = src;
     });
 
-    // 2. High-speed cinematic timeline (~4.0s total, crisp and responsive)
+    // 2. High-speed cinematic timeline (~3.2s total, crisp, smooth, and responsive)
     // Stage 1 (0ms): Vector outline stroke drawing begins (D -> I -> M -> S)
-    // Stage 2 (650ms): Concentric sonar shockwaves radiate from 'D' inner node
-    const t1 = setTimeout(() => setPhase(2), 650);
+    // Stage 2 (450ms): Concentric sonar shockwaves radiate from 'D' inner node
+    const t1 = setTimeout(() => setPhase(2), 450);
 
-    // Stage 3 (1150ms): Solid glossy red fill wipe (left to right) across DIMS
-    const t2 = setTimeout(() => setPhase(3), 1150);
+    // Stage 3 (850ms): Solid glossy red fill wipe (left to right) across DIMS
+    const t2 = setTimeout(() => setPhase(3), 850);
 
-    // Stage 4 (1650ms): Specular metallic sheen sweep beam across DIMS
-    const t3 = setTimeout(() => setPhase(4), 1650);
+    // Stage 4 (1250ms): Specular metallic sheen sweep beam across DIMS
+    const t3 = setTimeout(() => setPhase(4), 1250);
 
-    // Stage 5 (2150ms): DIGITECH smooth left-to-right wipe reveal
-    const t4 = setTimeout(() => setPhase(5), 2150);
+    // Stage 5 (1650ms): DIGITECH smooth left-to-right wipe reveal
+    const t4 = setTimeout(() => setPhase(5), 1650);
 
-    // Stage 6 (2650ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
-    const t5 = setTimeout(() => setPhase(6), 2650);
+    // Stage 6 (2050ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
+    const t5 = setTimeout(() => setPhase(6), 2050);
 
-    // Stage 7 (3100ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
-    const t6 = setTimeout(() => setPhase(7), 3100);
+    // Stage 7 (2450ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
+    const t6 = setTimeout(() => setPhase(7), 2450);
 
-    // Stage 8 (3600ms): Flares resolve into pristine completed logo lockup hold
-    const t7 = setTimeout(() => setPhase(8), 3600);
+    // Stage 8 (2850ms): Flares resolve into pristine completed logo lockup hold
+    const t7 = setTimeout(() => setPhase(8), 2850);
 
-    // Stage 9 (4050ms): Animation completes, smooth dissolve fade-out into app
-    const t8 = setTimeout(() => handleComplete(), 4050);
+    // Stage 9 (3200ms): Animation completes, smooth dissolve fade-out into app
+    const t8 = setTimeout(() => handleComplete(), 3200);
 
     // Safety watchdog: ensure preload NEVER hangs if tab is throttled
-    const tSafety = setTimeout(() => handleComplete(), 4900);
+    const tSafety = setTimeout(() => handleComplete(), 3800);
 
     return () => {
       clearTimeout(t1);
@@ -92,9 +92,13 @@ export default function StartupSplashScreen({ onFinish }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center select-none cursor-default overflow-hidden transition-opacity duration-600 ${
+      className={`fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center select-none cursor-default overflow-hidden transition-opacity duration-400 ${
         isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
+      style={{
+        backgroundColor: '#ffffff',
+        zIndex: 99999
+      }}
     >
       {/* Self-contained Keyframe Animations */}
       <style>{`
