@@ -63,7 +63,10 @@ export async function requireAuth(req, res, next) {
     if (token.startsWith('bearer.')) {
       const payload = parseAppToken(token);
       if (!payload) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
+        return res.status(401).json({
+          error: 'Sesi login Anda telah kedaluwarsa atau token tidak valid. Silakan login kembali.',
+          code: 'TOKEN_EXPIRED'
+        });
       }
 
       let profile = null;
@@ -98,7 +101,10 @@ export async function requireAuth(req, res, next) {
     if (token.startsWith('demo.')) {
       const payload = parseDemoToken(token);
       if (!payload) {
-        return res.status(401).json({ error: 'Invalid or expired demo token' });
+        return res.status(401).json({
+          error: 'Sesi demo Anda telah kedaluwarsa. Silakan login kembali.',
+          code: 'TOKEN_EXPIRED'
+        });
       }
       const demoUser = DEMO_USERS[payload.id] || {
         id: payload.id,

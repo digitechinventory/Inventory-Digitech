@@ -182,7 +182,7 @@ export default function MaterialRequestPage() {
       
       {/* ── Top Header & Tab Controls ── */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-red-100 shadow-xs">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Surat Permintaan Material (MR)
           </h1>
@@ -191,8 +191,8 @@ export default function MaterialRequestPage() {
           </p>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+        {/* Tab Selector — Pushed to right edge */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold ml-auto shrink-0 justify-end">
           <button
             type="button"
             onClick={() => setActiveTab('document')}

@@ -1,22 +1,74 @@
-# Project Configuration
+# Dependencies
 node_modules/
+backend/node_modules/
+FrontEnd/node_modules/
+
+# Environment and sensitive keys
 .env
+.env.*
+!.env.example
+temp_*.env
+
+# Production build artifacts
 dist/
 dist-ssr/
 build/
-.vscode/
-!.vscode/extensions.json
-.DS_Store
+FrontEnd/dist/
+backend/dist/
+
+# Logs and runtime data
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-*.local
-.idea
+
+# Office, Reports & Non-code Documents (PRD, SDD, Absensi, Magang, Docx)
+*.docx
+*.xlsx
+*.xls
+~$*.xlsx
+~$*.docx
+*.pdf
+!FrontEnd/public/**/*.pdf
+
+# Media & Videos
+*.mp4
+*.webm
+*.avi
+*.mov
+
+# Python cache & temporary automation scripts
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+scratch_*.py
+check_*.py
+inspect_*.py
+generate_*.py
+process_*.py
+upload_*.py
+
+# Test evidence & temporary inspection folders
+test_evidence/
+temp_inspect_imgs/
+test-results/
+playwright-report/
+.e2e/
+e2e/.e2e/
+e2e/node_modules/
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.local

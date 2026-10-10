@@ -395,3 +395,93 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO stock_opname_items (id, opname_id, item_name, sku, rack, system_qty, physical_qty, variance, variance_reason, audited_by_id, created_at)
 VALUES ('35bf8838-bdec-489d-a7a0-fec6f67ed019', 'ec202ffb-f80f-41cb-a030-2c91d0aacbde', 'Heavy Duty Alternator 24V 150A', 'DIG-ALT-24V-HD', 'R-D01', 0, 3, 3, '1 unit terpakai darurat untuk perbaikan genset', 'demo-admin-001', '2026-09-23T11:57:17.454129+00:00')
 ON CONFLICT (id) DO NOTHING;
+
+-- ====================================================================
+-- 10. PROJECT WORKSPACES & DEDICATED MINING ASSET LIFECYCLE
+-- ====================================================================
+
+CREATE TABLE IF NOT EXISTS project_workspaces (
+    id VARCHAR(50) PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    site_location VARCHAR(255),
+    color_theme VARCHAR(50) DEFAULT 'emerald',
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS project_warehouses (
+    id VARCHAR(50) PRIMARY KEY,
+    project_id VARCHAR(50) REFERENCES project_workspaces(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    location VARCHAR(255),
+    pic_name VARCHAR(255),
+    pic_contact VARCHAR(100),
+    capacity_shelves INT DEFAULT 100,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS project_inventory_items (
+    id VARCHAR(100) PRIMARY KEY,
+    project_id VARCHAR(50) REFERENCES project_workspaces(id) ON DELETE CASCADE,
+    warehouse_id VARCHAR(50) REFERENCES project_warehouses(id) ON DELETE SET NULL,
+    item_code VARCHAR(100) NOT NULL,
+    serial_number VARCHAR(100),
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
+    brand VARCHAR(100),
+    quantity NUMERIC(10, 2) DEFAULT 1,
+    unit VARCHAR(50) DEFAULT 'PCS',
+    condition VARCHAR(50) DEFAULT 'Baru',
+    status VARCHAR(50) DEFAULT 'in_warehouse',
+    price NUMERIC(15, 2) DEFAULT 0,
+    installed_unit VARCHAR(255),
+    installation_location_detail VARCHAR(255),
+    installed_date DATE,
+    installed_by VARCHAR(255),
+    unit_hm_at_install NUMERIC(10, 1),
+    warranty_start_date DATE,
+    warranty_duration_months INT DEFAULT 12,
+    warranty_expiry_date DATE,
+    warranty_status VARCHAR(50) DEFAULT 'active',
+    warranty_provider VARCHAR(255),
+    warranty_claim_notes TEXT,
+    origin_unit VARCHAR(255),
+    transfer_date DATE,
+    transfer_reason TEXT,
+    is_damaged BOOLEAN DEFAULT FALSE,
+    damage_type VARCHAR(100),
+    damage_date DATE,
+    damage_notes TEXT,
+    replacement_due_date DATE,
+    replacement_due_hm NUMERIC(10, 1),
+    expected_lifetime_hours NUMERIC(10, 1),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS project_inventory_logs (
+    id VARCHAR(100) PRIMARY KEY,
+    project_id VARCHAR(50) REFERENCES project_workspaces(id) ON DELETE CASCADE,
+    item_id VARCHAR(100) REFERENCES project_inventory_items(id) ON DELETE CASCADE,
+    action_type VARCHAR(50) NOT NULL,
+    source_location VARCHAR(255),
+    destination_location VARCHAR(255),
+    technician_name VARCHAR(255),
+    document_number VARCHAR(255),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- SEED PROJECTS (WIM, FAMOUS, CCM)
+INSERT INTO project_workspaces (id, code, name, description, site_location, color_theme, status)
+VALUES 
+('proj-wim', 'WIM', 'WIM (Weigh-In-Motion Scale System)', 'Sistem timbangan dinamis jembatan timbang hauling batubara, sensor load cell, telemetry link, dan kamera ANPR.', 'BIB Pit Sebamban KM-14 & KM-28', 'emerald', 'active'),
+('proj-famous', 'FAMOUS', 'FAMOUS (Fleet Asset Management & Operations Unified System)', 'Telematika alat berat tambang, GPS tracker presisi tinggi, fuel level sensors, MDVR fatigue camera, dan OBD CAN-Bus interface.', 'Pit South BIB & Workshop Utama', 'blue', 'active'),
+('proj-ccm', 'CCM', 'CCM (Coal Crushing & Materials Processing)', 'Sistem peremukan batubara, crusher jaw & cone, vibratory screen, motor conveyor drive, sensor temperatur bearing, dan belt weigher.', 'Port Terminal Sebamban & ROM Stockpile', 'amber', 'active')
+ON CONFLICT (id) DO NOTHING;
+

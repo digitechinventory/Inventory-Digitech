@@ -5,7 +5,8 @@
         "start": "node backend/index.js",
         "dev": "npm --prefix backend run dev",
         "dev:frontend": "cd FrontEnd && npm run dev",
-        "build": "cd FrontEnd && npm run build"
+        "build": "cd FrontEnd && npm run build",
+        "test:e2e": "npm --prefix e2e run test:e2e"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.90.1",

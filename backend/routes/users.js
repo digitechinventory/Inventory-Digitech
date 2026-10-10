@@ -5,7 +5,7 @@ import { adminOnly, superadminOnly } from '../middleware/rbac.js';
 import { cacheDel } from '../services/redis.js';
 import { sendSuccess } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
-import { sendActivationEmail } from '../services/mailer.js';
+import { sendActivationEmail, sendAccountSettingsChangeEmail } from '../services/mailer.js';
 
 const router = Router();
 
@@ -103,11 +103,11 @@ router.get('/pending', requireAuth, superadminOnly, async (req, res, next) => {
       .or('is_active.is.false,is_approved.is.false')
       .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) {
+    if (error) {
       const pendingFallback = FALLBACK_USERS_LIST.filter(u => !u.is_active || !u.is_approved);
       return sendSuccess(res, pendingFallback, 'Antrean aktivasi akun baru (fallback).');
     }
-    return sendSuccess(res, data, 'Antrean aktivasi akun baru.');
+    return sendSuccess(res, data || [], 'Antrean aktivasi akun baru.');
   } catch (err) {
     const pendingFallback = FALLBACK_USERS_LIST.filter(u => !u.is_active || !u.is_approved);
     return sendSuccess(res, pendingFallback, 'Antrean aktivasi fallback.');
@@ -305,6 +305,15 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       ...updates
     };
 
+    if (req.user?.email) {
+      sendAccountSettingsChangeEmail(
+        req.user.email,
+        req.user.full_name || full_name,
+        'Pembaruan Data Diri Profil Akun',
+        `Nama: ${full_name}, Departemen: ${department || '-'}`
+      ).catch(e => console.warn('[Users] Email alert error:', e.message));
+    }
+
     return sendSuccess(res, updatedUser, 'Data diri profil akun berhasil diperbarui.');
   } catch (err) {
     next(err);
@@ -324,6 +333,15 @@ router.post('/mfa/email', requireAuth, async (req, res, next) => {
         .eq('id', req.user.id);
     } catch {}
 
+    if (req.user?.email) {
+      sendAccountSettingsChangeEmail(
+        req.user.email,
+        req.user.full_name,
+        'Pengaturan Verifikasi Email (MFA)',
+        isEnabled ? 'MFA Email telah diaktifkan' : 'MFA Email telah dinonaktifkan'
+      ).catch(e => console.warn('[Users] Email alert error:', e.message));
+    }
+
     return sendSuccess(
       res,
       { email_mfa_enabled: isEnabled, email: req.user.email },
@@ -331,6 +349,58 @@ router.post('/mfa/email', requireAuth, async (req, res, next) => {
         ? 'MFA via Email berhasil diaktifkan. Kode OTP akan dikirim ke email saat login baru.'
         : 'MFA via Email telah dinonaktifkan.'
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// In-memory signature cache for resilient fallback across demo users
+const USER_SIGNATURES = {};
+
+// GET /api/users/signature — Get currently logged in user's saved signature
+router.get('/signature', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    let signature = USER_SIGNATURES[userId] || null;
+
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('signature_image')
+        .eq('id', userId)
+        .maybeSingle();
+      if (data?.signature_image) {
+        signature = data.signature_image;
+      }
+    } catch {}
+
+    return sendSuccess(res, { signature }, 'Tanda tangan pengguna berhasil diambil.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/users/signature — Save / update user's extracted signature
+router.post('/signature', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { signature } = req.body;
+    if (!signature) {
+      throw new AppError('Data tanda tangan tidak boleh kosong.', 400, 'VALIDATION_FAILED');
+    }
+
+    USER_SIGNATURES[userId] = signature;
+
+    try {
+      await supabase
+        .from('user_profiles')
+        .update({ signature_image: signature, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+    } catch (e) {
+      console.warn('[Users] Supabase update signature error:', e.message);
+    }
+
+    return sendSuccess(res, { signature }, 'Tanda tangan digital berhasil disimpan di profil akun.');
   } catch (err) {
     next(err);
   }
@@ -359,6 +429,15 @@ router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
         .eq('id', req.user.id);
     } catch {}
 
+    if (req.user?.email) {
+      sendAccountSettingsChangeEmail(
+        req.user.email,
+        req.user.full_name,
+        'Pengaturan Aplikasi Authenticator (TOTP)',
+        isEnabled ? 'Aplikasi Authenticator telah berhasil dihubungkan' : 'Aplikasi Authenticator telah dinonaktifkan'
+      ).catch(e => console.warn('[Users] Email alert error:', e.message));
+    }
+
     return sendSuccess(
       res,
       {
@@ -381,6 +460,15 @@ router.put('/change-password', requireAuth, async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     if (!newPassword || newPassword.length < 6) {
       throw new AppError('Password baru harus minimal 6 karakter.', 400, 'VALIDATION_FAILED');
+    }
+
+    if (req.user?.email) {
+      sendAccountSettingsChangeEmail(
+        req.user.email,
+        req.user.full_name,
+        'Penggantian Kata Sandi Akun',
+        'Kata sandi login Anda telah berhasil diperbarui secara aman.'
+      ).catch(e => console.warn('[Users] Email alert error:', e.message));
     }
 
     return sendSuccess(res, { success: true }, 'Password akun berhasil diperbarui secara aman.');

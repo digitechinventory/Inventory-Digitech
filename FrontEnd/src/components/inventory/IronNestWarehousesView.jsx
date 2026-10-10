@@ -465,11 +465,7 @@ export default function IronNestWarehousesView() {
                 return (
                   <div
                     key={sec.code}
-                    className={`flex flex-col transition-all duration-200 rounded-xl p-2.5 cursor-pointer ${
-                      isSectionActive
-                        ? 'border-2 border-red-500 bg-red-50/20 shadow-xs'
-                        : 'border border-slate-200/80 bg-slate-50/30 hover:bg-slate-50/70'
-                    }`}
+                    className="flex flex-col transition-all duration-200 rounded-xl p-2.5 cursor-pointer border border-slate-200/80 bg-slate-50/30 hover:bg-slate-50/70"
                     onClick={() => setActiveSectionCode(sec.code)}
                   >
                     {/* Column Header */}

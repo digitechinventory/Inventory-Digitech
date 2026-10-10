@@ -60,35 +60,6 @@ export default function UserDashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header Welcome Banner — Pure White Timbul Card with Crimson Accent */}
-      <div className="bg-white/95 backdrop-blur-md rounded-[1.75rem] p-6 text-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-200/90 flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Selamat Datang, {user?.full_name || 'Teknisi Lapangan'}!
-          </h1>
-          <p className="text-slate-600 text-xs mt-1">
-            Pengelolaan tiket material ter-geofence dan peminjaman perkakas operasional site DIGITECH.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 relative z-10">
-          <button
-            onClick={() => navigate('/mos')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-600/20 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Buat Form MOS Baru
-          </button>
-          <button
-            onClick={fetchData}
-            className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
-            title="Muat Ulang Data"
-          >
-            <RotateCcw className={`w-4 h-4 ${loading ? 'animate-spin text-red-600' : ''}`} />
-          </button>
-        </div>
-      </div>
-
       {/* 4 Personal Metric Parallelogram Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 py-2">
         <ParallelogramCard
@@ -237,7 +208,7 @@ export default function UserDashboard() {
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition-colors text-left group cursor-pointer"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">GIS Tools &amp; Pengembalian</div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Tracking Tools &amp; Pengembalian</div>
                   <div className="text-[10px] text-slate-500">Lihat lokasi tracker perkakas GPS</div>
                 </div>
                 <Compass className="w-4 h-4 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />

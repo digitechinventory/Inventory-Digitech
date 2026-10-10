@@ -30,9 +30,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('ims_session');
       localStorage.removeItem('ims_user');
+      localStorage.removeItem('token');
       // Redirect to login if not already there
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        window.location.href = '/login?reason=session_expired';
       }
     }
     return Promise.reject(error);

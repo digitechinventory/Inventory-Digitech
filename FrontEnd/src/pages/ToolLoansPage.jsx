@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Wrench,
@@ -11,20 +11,47 @@ import {
   Calendar,
   User,
   ShieldCheck,
-  X
+  X,
+  MoreVertical,
+  Trash2,
+  Edit3,
+  Eye,
+  CheckSquare,
+  Square,
+  MinusSquare,
+  Loader2,
+  Check,
+  FileSpreadsheet
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 
 export default function ToolLoansPage() {
   const { user, role } = useAuth();
+  const { addToast } = useToast();
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [showBorrowModal, setShowBorrowModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(null); // tool item to return
   const [returnCondition, setReturnCondition] = useState('Baik');
   const [returnNotes, setReturnNotes] = useState('');
+
+  // Checkbox selection & 3-dots action state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const [detailLoan, setDetailLoan] = useState(null);
+  const [editLoan, setEditLoan] = useState(null);
+  const [editForm, setEditForm] = useState({
+    borrower_name: '',
+    expected_return_date: '',
+    condition: 'Baik',
+    notes: ''
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch loans
   const { data: loansData, refetch, isLoading } = useQuery({
@@ -48,6 +75,86 @@ export default function ToolLoansPage() {
   const overdueCount = loans.filter(l => l.status === 'overdue' || (l.status === 'borrowed' && l.expected_return_date < today)).length;
   const returnedCount = loans.filter(l => l.status === 'returned').length;
 
+  // Selection handlers
+  const filteredIds = filtered.map(l => l.id);
+  const isAllSelected = filtered.length > 0 && filteredIds.every(id => selectedIds.includes(id));
+  const isSomeSelected = filtered.length > 0 && filteredIds.some(id => selectedIds.includes(id)) && !isAllSelected;
+
+  const handleToggleAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !filteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...filteredIds])));
+    }
+  };
+
+  const handleToggleRow = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuId(null);
+    if (activeMenuId) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [activeMenuId]);
+
+  // Open edit modal
+  const handleOpenEdit = (loan) => {
+    setEditLoan(loan);
+    setEditForm({
+      borrower_name: loan.borrower_name || '',
+      expected_return_date: loan.expected_return_date || '',
+      condition: loan.condition || 'Baik',
+      notes: loan.notes || ''
+    });
+    setActiveMenuId(null);
+  };
+
+  // Save edit
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editLoan) return;
+    setIsUpdating(true);
+    try {
+      await api.patch(`/tools/loans/${editLoan.id}`, editForm);
+      refetch();
+      addToast('Informasi peminjaman perkakas berhasil diperbarui.', 'success');
+      setEditLoan(null);
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Gagal memperbarui peminjaman.', 'error');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Execute delete (single or bulk)
+  const handleExecuteDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
+    try {
+      if (deleteConfirm.type === 'bulk') {
+        await api.post('/tools/loans/bulk-delete', { ids: deleteConfirm.ids });
+        setSelectedIds(prev => prev.filter(id => !deleteConfirm.ids.includes(id)));
+        addToast(`${deleteConfirm.ids.length} catatan peminjaman berhasil dihapus.`, 'success');
+      } else {
+        await api.delete(`/tools/loans/${deleteConfirm.item.id}`);
+        setSelectedIds(prev => prev.filter(id => id !== deleteConfirm.item.id));
+        addToast('Catatan peminjaman berhasil dihapus.', 'success');
+      }
+      refetch();
+      setDeleteConfirm(null);
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Gagal menghapus catatan peminjaman.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Handle Return Tool
   const handleConfirmReturn = async () => {
     if (!showReturnModal) return;
@@ -59,8 +166,9 @@ export default function ToolLoansPage() {
       setShowReturnModal(null);
       setReturnNotes('');
       refetch();
+      addToast('Pengembalian perkakas berhasil dikonfirmasi.', 'success');
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal mengembalikan alat.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal mengembalikan alat.', 'error');
     }
   };
 
@@ -68,7 +176,7 @@ export default function ToolLoansPage() {
     <div className="p-4 sm:p-6 lg:p-7 space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Tool Tracking (Peminjaman Alat Kerja)
           </h1>
@@ -79,7 +187,7 @@ export default function ToolLoansPage() {
 
         <button
           onClick={() => setShowBorrowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer ml-auto shrink-0 justify-end"
         >
           <Plus className="w-4 h-4" />
           Pinjam Alat Baru
@@ -144,7 +252,7 @@ export default function ToolLoansPage() {
           />
         </div>
 
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl ml-auto shrink-0 justify-end">
           {['ALL', 'borrowed', 'overdue', 'returned'].map((st) => (
             <button
               key={st}
@@ -159,33 +267,118 @@ export default function ToolLoansPage() {
         </div>
       </div>
 
+      {/* Bulk Action Bar (When loans are selected) */}
+      {selectedIds.length > 0 && (
+        <div className="bg-slate-900 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
+              {selectedIds.length}
+            </span>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {selectedIds.length} catatan peminjaman dipilih
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Pilih aksi massal untuk catatan peminjaman alat yang ditandai
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+            >
+              Batal Pilih
+            </button>
+
+            <button
+              onClick={() =>
+                setDeleteConfirm({
+                  type: 'bulk',
+                  count: selectedIds.length,
+                  ids: [...selectedIds]
+                })
+              }
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Hapus Terpilih ({selectedIds.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                {/* Checkbox Header */}
+                <th className="px-3.5 py-3 text-center w-10">
+                  <button
+                    type="button"
+                    onClick={handleToggleAll}
+                    className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                    title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
+                  >
+                    {isAllSelected ? (
+                      <CheckSquare className="w-4 h-4 text-red-600" />
+                    ) : isSomeSelected ? (
+                      <MinusSquare className="w-4 h-4 text-red-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </th>
                 <th className="px-4 py-3 text-left">Nama Perkakas / Alat Kerja</th>
                 <th className="px-4 py-3 text-left">No. Seri</th>
                 <th className="px-4 py-3 text-left">Personel Peminjam</th>
                 <th className="px-4 py-3 text-left">Tanggal Pinjam</th>
                 <th className="px-4 py-3 text-left">Estimasi Kembali</th>
                 <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-center">Aksi</th>
+                <th className="px-4 py-3 text-center w-24">Aksi Cepat</th>
+                <th className="px-4 py-3 text-center w-14">Opsi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                     Tidak ada catatan peminjaman alat yang sesuai.
                   </td>
                 </tr>
               ) : (
                 filtered.map((item) => {
                   const isOverdue = item.status === 'overdue' || (item.status === 'borrowed' && item.expected_return_date < today);
+                  const isSelected = selectedIds.includes(item.id);
+
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={item.id}
+                      className={`transition ${
+                        isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      {/* Checkbox Cell */}
+                      <td className="px-3.5 py-3 text-center w-10">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleRow(item.id);
+                          }}
+                          className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-red-600" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                          )}
+                        </button>
+                      </td>
+
                       <td className="px-4 py-3 font-bold text-slate-900">{item.tool_name}</td>
                       <td className="px-4 py-3 font-mono text-slate-600">{item.serial_number || '-'}</td>
                       <td className="px-4 py-3 text-slate-700 font-medium">{item.borrower_name}</td>
@@ -202,16 +395,94 @@ export default function ToolLoansPage() {
                           {item.status === 'returned' ? 'Kembali' : isOverdue ? '⚠️ Overdue' : 'Dipinjam'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+
+                      {/* Quick Return Button */}
+                      <td className="px-4 py-3 text-center w-24">
                         {item.status !== 'returned' ? (
                           <button
                             onClick={() => setShowReturnModal(item)}
-                            className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer"
+                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer"
                           >
                             Kembalikan
                           </button>
                         ) : (
                           <span className="text-[11px] text-slate-400 font-mono">Kondisi: {item.condition || 'Baik'}</span>
+                        )}
+                      </td>
+
+                      {/* 3-Dots Action Cell */}
+                      <td className="px-4 py-3 text-center relative w-14">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuId(activeMenuId === item.id ? null : item.id);
+                          }}
+                          className={`p-1.5 rounded-xl border transition cursor-pointer ${
+                            activeMenuId === item.id
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                          }`}
+                          title="Opsi Peminjaman"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {activeMenuId === item.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDetailLoan(item);
+                                setActiveMenuId(null);
+                              }}
+                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Lihat Detail Pinjam</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(item)}
+                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Edit Data Pinjam</span>
+                            </button>
+
+                            {item.status !== 'returned' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowReturnModal(item);
+                                  setActiveMenuId(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Kembalikan Alat</span>
+                              </button>
+                            )}
+
+                            <div className="border-t border-slate-100 my-1"></div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteConfirm({ type: 'single', item });
+                                setActiveMenuId(null);
+                              }}
+                              className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                              <span>Hapus Catatan</span>
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -222,6 +493,229 @@ export default function ToolLoansPage() {
           </table>
         </div>
       </div>
+
+      {/* MODAL: DETAIL PEMINJAMAN ALAT */}
+      {detailLoan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Detail Peminjaman Alat</h3>
+                  <p className="text-[11px] font-mono text-slate-500">ID: {detailLoan.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailLoan(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                <span className="text-[10px] font-mono uppercase text-slate-400">NAMA ALAT</span>
+                <h4 className="text-sm font-black text-slate-900">{detailLoan.tool_name}</h4>
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/60 font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-400">NO. SERI:</span>
+                    <p className="font-bold text-slate-800">{detailLoan.serial_number || '-'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400">STATUS:</span>
+                    <p className="font-bold uppercase text-slate-800">{detailLoan.status}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                  <span className="text-slate-500">Peminjam:</span>
+                  <span className="font-bold text-slate-900">{detailLoan.borrower_name}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl font-mono text-[11px]">
+                  <span className="text-slate-500">Tanggal Pinjam:</span>
+                  <span className="font-semibold text-slate-800">{detailLoan.loan_date}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl font-mono text-[11px]">
+                  <span className="text-slate-500">Estimasi Kembali:</span>
+                  <span className="font-semibold text-slate-800">{detailLoan.expected_return_date}</span>
+                </div>
+                {detailLoan.actual_return_date && (
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl font-mono text-[11px] text-emerald-800">
+                    <span>Dikembalikan Tanggal:</span>
+                    <span className="font-bold">{detailLoan.actual_return_date}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-slate-400">Catatan Peminjaman</span>
+                  <div className="mt-1 p-3 bg-amber-50/50 border border-amber-100 rounded-xl text-slate-700">
+                    {detailLoan.notes || 'Tidak ada catatan khusus.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailLoan(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT INFORMASI PEMINJAMAN */}
+      {editLoan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Edit Data Peminjaman</h3>
+                  <p className="text-[11px] font-mono text-slate-500">{editLoan.tool_name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditLoan(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit}>
+              <div className="p-6 space-y-4 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Nama Peminjam / Teknisi
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.borrower_name}
+                    onChange={(e) => setEditForm({ ...editForm, borrower_name: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Estimasi Tanggal Pengembalian
+                  </label>
+                  <input
+                    type="date"
+                    value={editForm.expected_return_date}
+                    onChange={(e) => setEditForm({ ...editForm, expected_return_date: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Kondisi Perkakas
+                  </label>
+                  <select
+                    value={editForm.condition}
+                    onChange={(e) => setEditForm({ ...editForm, condition: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                  >
+                    <option value="Baik">Baik / Siap Pakai</option>
+                    <option value="Perlu Kalibrasi">Perlu Kalibrasi</option>
+                    <option value="Perlu Perbaikan">Perlu Perbaikan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Catatan / Keperluan Operasional
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditLoan(null)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: KONFIRMASI HAPUS (SINGLE / BULK) */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                {deleteConfirm.type === 'bulk'
+                  ? `Hapus ${deleteConfirm.count} Catatan Peminjaman?`
+                  : 'Hapus Catatan Peminjaman Ini?'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {deleteConfirm.type === 'bulk'
+                  ? `Anda akan menghapus ${deleteConfirm.count} data peminjaman alat secara permanen.`
+                  : `Catatan peminjaman "${deleteConfirm.item?.tool_name}" oleh "${deleteConfirm.item?.borrower_name}" akan dihapus permanen.`}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition cursor-pointer flex-1"
+              >
+                Batalkan
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteDelete}
+                disabled={isDeleting}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex-1 disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: PINJAM ALAT BARU */}
       {showBorrowModal && (

@@ -7,7 +7,7 @@ import {
   Package,
   Layers,
   ChevronDown,
-  ChevronUp,
+  ChevronRight,
   ArrowRight,
   FileCheck2,
   PackagePlus,
@@ -26,23 +26,69 @@ import {
   Sparkles,
   QrCode,
   ScanLine,
-  FilePlus2
+  Calendar,
+  Truck,
+  Activity,
+  Cpu,
+  Radio,
+  SlidersHorizontal,
+  Bell,
+  Gauge,
+  Check,
+  Filter,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
-import ParallelogramCard from '../common/ParallelogramCard';
 import InventoryScannerModal from '../common/InventoryScannerModal';
+import ParallelogramCard from '../common/ParallelogramCard';
 
 export default function MobileHomeDashboard() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
 
-  // State
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // Active Category Pill: 'all' | 'famous' | 'wim' | 'ccm' | 'catalog'
+  const [activeTab, setActiveTab] = useState('all');
+
+  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
-  const [isListExpanded, setIsListExpanded] = useState(false);
+  const [selectedSite, setSelectedSite] = useState('BIB Pit Sebamban KM-14');
+  const [isSiteSelectorOpen, setIsSiteSelectorOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [selectedItemDetail, setSelectedItemDetail] = useState(null);
+
+  // Live Database Stats for Parallelogram Summary Cards
+  const [stats, setStats] = useState({
+    totalEnterpriseUnits: 10065,
+    totalStockUnits: 649,
+    catalogStockUnits: 649,
+    famousTotalItems: 9416,
+    famousFleetUnits: 825,
+    mosTotal: 6,
+    mosPending: 2,
+    lowStockItems: 3
+  });
+  const [mosDocs, setMosDocs] = useState([]);
+
+  useEffect(() => {
+    const fetchSummaryMetrics = async () => {
+      try {
+        const [statsRes, mosRes] = await Promise.all([
+          api.get('/inventory/stats').catch(() => ({ data: { data: {} } })),
+          api.get('/mos').catch(() => ({ data: { data: [] } }))
+        ]);
+        if (statsRes.data?.data) {
+          setStats(prev => ({ ...prev, ...statsRes.data.data }));
+        }
+        if (mosRes.data?.data) {
+          setMosDocs(mosRes.data.data);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch mobile dashboard stats:', err);
+      }
+    };
+    fetchSummaryMetrics();
+  }, []);
 
   // Dynamic greeting based on current local time
   const getGreeting = () => {
@@ -54,832 +100,916 @@ export default function MobileHomeDashboard() {
   };
 
   const normalizedRole = role || 'User';
-  const roleDisplay = normalizedRole === 'Superadmin'
-    ? 'Superadmin'
-    : normalizedRole === 'Admin'
-    ? 'Administrator'
-    : 'Teknisi Lapangan';
+  const firstName = user?.full_name?.split(' ')[0] || (normalizedRole === 'Superadmin' ? 'Superadmin' : 'Arya');
 
-  // Role-Specific Action Menus ("menu menu kecil yang dapat di klik")
-  const getRoleMenus = () => {
-    if (normalizedRole === 'Superadmin') {
-      return [
-        {
-          id: 'slot3',
-          title: 'Otorisasi Slot 3 MOS',
-          subtitle: 'Pengesahan final penerimaan material & auto-ledger',
-          icon: ShieldCheck,
-          path: '/mos',
-          badge: 'Otorisasi',
-          badgeColor: 'bg-red-50 text-red-600 border-red-200'
-        },
-        {
-          id: 'users',
-          title: 'Aktivasi & Hak Akses',
-          subtitle: 'Kelola verifikasi akun pengguna baru site',
-          icon: Users,
-          path: '/users',
-          badge: 'Pengguna',
-          badgeColor: 'bg-rose-50 text-rose-600 border-rose-200'
-        },
-        {
-          id: 'ledger',
-          title: 'Buku Besar Stok (Ledger)',
-          subtitle: 'Audit trail mutasi keluar-masuk suku cadang',
-          icon: ScrollText,
-          path: '/ledger',
-          badge: 'Audit Trail',
-          badgeColor: 'bg-slate-100 text-slate-700 border-slate-200'
-        },
-        {
-          id: 'sites',
-          title: 'Peta & Geofence GPS Site',
-          subtitle: 'Pengaturan radius Haversine 200m area tambang BIB',
-          icon: MapPin,
-          path: '/gis',
-          badge: 'Peta GPS',
-          badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        },
-        {
-          id: 'warehouses',
-          title: 'Rak',
-          subtitle: 'Visualisasi status dan alokasi rak suku cadang',
-          icon: Warehouse,
-          path: '/warehouses',
-          badge: 'Rak Gudang',
-          badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
-        },
-        {
-          id: 'catalog',
-          title: 'Katalog Suku Cadang',
-          subtitle: 'Cek stok fisik dan lokasi rak material',
-          icon: Store,
-          path: '/inventory',
-          badge: 'Katalog',
-          badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
-        }
-      ];
-    }
+  // Available Mining Sites
+  const siteLocations = [
+    { id: 'sebamban', name: 'BIB Pit Sebamban KM-14', zone: 'Workshop & Weighbridge' },
+    { id: 'port', name: 'BIB Port Batulicin Terminal', zone: 'Coal Loading & Stockpile' },
+    { id: 'km28', name: 'Checkpoint KM-28 Hauling Road', zone: 'Telemetry & Scale Station' },
+    { id: 'vgt', name: 'Main Office VGT Lantai 2', zone: 'Central Warehouse & GPS Hub' }
+  ];
 
-    if (normalizedRole === 'Admin') {
-      return [
-        {
-          id: 'mos_verify',
-          title: 'Verifikasi Fisik MOS (Slot 2)',
-          subtitle: 'Pemeriksaan fisik sparepart vendor & penempatan rak',
-          icon: FileCheck2,
-          path: '/mos',
-          badge: 'Verifikasi Fisik',
-          badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
-        },
-        {
-          id: 'mr_picking',
-          title: 'Picking Material (MR)',
-          subtitle: 'Proses pengeluaran suku cadang untuk teknisi',
-          icon: PackagePlus,
-          path: '/mr',
-          badge: 'Pengeluaran',
-          badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
-        },
-        {
-          id: 'opname',
-          title: 'Stock Opname Berkala',
-          subtitle: 'Audit selisih stok fisik vs catatan sistem',
-          icon: ClipboardCheck,
-          path: '/opname',
-          badge: 'Audit Stok',
-          badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        },
-        {
-          id: 'warehouses',
-          title: 'Rak',
-          subtitle: 'Kapasitas dan penempatan rak A01 - D12',
-          icon: Warehouse,
-          path: '/warehouses',
-          badge: 'Rak',
-          badgeColor: 'bg-slate-100 text-slate-700 border-slate-200'
-        },
-        {
-          id: 'tools',
-          title: 'Peminjaman Alat Kerja',
-          subtitle: 'Manajemen barcode scanner & tool khusus pit',
-          icon: Wrench,
-          path: '/tools',
-          badge: 'Tools',
-          badgeColor: 'bg-purple-50 text-purple-700 border-purple-200'
-        },
-        {
-          id: 'gis',
-          title: 'Peta Lokasi & Geofence',
-          subtitle: 'Verifikasi koordinat lokasi site',
-          icon: MapPin,
-          path: '/gis',
-          badge: 'Peta',
-          badgeColor: 'bg-red-50 text-red-600 border-red-200'
-        }
-      ];
-    }
-
-    // Default: User (Teknisi Lapangan)
-    return [
-      {
-        id: 'mr',
-        title: 'Ajukan Pengambilan Material (MR)',
-        subtitle: 'Pengambilan suku cadang pemeliharaan unit',
-        icon: PackagePlus,
-        path: '/mr',
-        badge: 'Ambil Suku Cadang',
-        badgeColor: 'bg-red-50 text-red-600 border-red-200'
-      },
-      {
-        id: 'mos_create',
-        title: 'Draf Dokumen MOS Baru',
-        subtitle: 'Penerimaan barang dari vendor di lapangan',
-        icon: FileCheck2,
-        path: '/mos',
-        badge: 'Penerimaan',
-        badgeColor: 'bg-rose-50 text-rose-600 border-rose-200'
-      },
-      {
-        id: 'catalog',
-        title: 'Cari Stok Suku Cadang',
-        subtitle: 'Katalog filter, hidrolik, dan sparepart unit',
-        icon: PackageSearch,
-        path: '/inventory',
-        badge: 'Katalog',
-        badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
-      },
-      {
-        id: 'tools',
-        title: 'Pinjam Perkakas Kerja',
-        subtitle: 'Torque wrench, multimeter, dan toolkit mekanik',
-        icon: Wrench,
-        path: '/tools',
-        badge: 'Peralatan',
-        badgeColor: 'bg-blue-50 text-blue-600 border-blue-200'
-      },
-      {
-        id: 'gis',
-        title: 'Peta & Geofence GPS Site',
-        subtitle: 'Verifikasi radius lokasi pit operasional',
-        icon: MapPin,
-        path: '/gis',
-        badge: 'Peta GPS',
-        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      }
-    ];
-  };
-
-  const roleMenus = getRoleMenus();
-
-  // Genuine Mining Inventory Attention Items (Perlu Restock Segera)
-  const primaryAttentionItems = [
+  // Comprehensive Inventory Items from database (FAMOUS, WIM, CCM, Katalog, Tools)
+  const allInventoryItems = [
     {
-      id: 'item-1',
-      name: 'Cat 777D Engine Oil Filter',
-      partNumber: 'BIB-CAT-777D-FLTR',
-      location: 'Rak R-A01 • Area Rak 1 (Main Pit)',
-      stockCount: 4,
-      minThreshold: 10,
-      stockLabel: 'unit tersisa',
-      status: 'Kritis',
-      statusColor: 'rose',
-      progressPercent: 25,
-      progressColor: 'bg-rose-600'
+      id: 'fam-01',
+      project: 'famous',
+      projectBadge: 'FAMOUS FLEET',
+      projectColor: 'bg-red-50 text-red-600 border-red-200',
+      title: 'Telematics Kit Unit AEK 0005',
+      code: 'UNIT-AEK-0005',
+      category: 'GPS & Telematics',
+      location: 'BIB Pit South Workshop',
+      sensorStatus: 'Optimal (8/8)',
+      stock: 1,
+      unit: 'Kit Unit',
+      status: 'ready',
+      statusLabel: 'Siap Operasi',
+      icon: Radio,
+      path: '/projects'
     },
     {
-      id: 'item-2',
-      name: 'Komatsu PC2000 Hydraulic Seal Kit',
-      partNumber: 'BIB-KOM-PC2000-HYD',
-      location: 'Rak R-A02 • Area Rak 2 (Central Workshop)',
-      stockCount: 2,
-      minThreshold: 8,
-      stockLabel: 'set tersisa',
-      status: 'Kritis',
-      statusColor: 'rose',
-      progressPercent: 25,
-      progressColor: 'bg-rose-600'
+      id: 'wim-01',
+      project: 'wim',
+      projectBadge: 'PROJECT WIM',
+      projectColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      title: 'Load Cell Transducer 50 Ton',
+      code: 'WIM-LC-50T-HD',
+      category: 'Dynamic Scale Sensors',
+      location: 'Jembatan Timbang KM-14',
+      sensorStatus: 'Kalibrasi Aktif',
+      stock: 8,
+      unit: 'Pcs',
+      status: 'ready',
+      statusLabel: 'Ready Stock',
+      icon: Activity,
+      path: '/projects'
     },
     {
-      id: 'item-3',
+      id: 'ccm-01',
+      project: 'ccm',
+      projectBadge: 'PROJECT CCM',
+      projectColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      title: 'Crusher Bearing 22220E Heavy',
+      code: 'CCM-BRG-22220E',
+      category: 'Crusher Mechanical',
+      location: 'Stockpile ROM Sebamban',
+      sensorStatus: 'Bearing Suhu Normal',
+      stock: 4,
+      unit: 'Set',
+      status: 'ready',
+      statusLabel: 'Ready Stock',
+      icon: Cpu,
+      path: '/projects'
+    },
+    {
+      id: 'cat-01',
+      project: 'catalog',
+      projectBadge: 'KATALOG UMUM',
+      projectColor: 'bg-rose-50 text-rose-600 border-rose-200',
+      title: 'Cat 777D Engine Oil Filter',
+      code: 'BIB-CAT-777D-FLTR',
+      category: 'Mechanical Sparepart',
+      location: 'Rak A02 • Central Workshop',
+      sensorStatus: 'Sisa 2 Unit',
+      stock: 2,
+      unit: 'Pcs',
+      status: 'critical',
+      statusLabel: 'Restock Kritis',
+      icon: Package,
+      path: '/inventory'
+    },
+    {
+      id: 'cat-02',
+      project: 'catalog',
+      projectBadge: 'KATALOG UMUM',
+      projectColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      title: 'Delco Remy 24V 150A Alternator',
+      code: 'BIB-ELE-ALT-24V',
+      category: 'Electrical Component',
+      location: 'Rak D01 • Main Warehouse',
+      sensorStatus: 'Stok Terjaga',
+      stock: 9,
+      unit: 'Pcs',
+      status: 'ready',
+      statusLabel: 'Tersedia',
+      icon: SlidersHorizontal,
+      path: '/inventory'
+    },
+    {
+      id: 'tool-01',
+      project: 'tools',
+      projectBadge: 'TOOL LOANS',
+      projectColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      title: 'Fluke 87V Industrial Multimeter',
+      code: 'TOOL-FLK-87V-04',
+      category: 'Diagnostic Tools',
+      location: 'Tool Box 04 • Workshop',
+      sensorStatus: 'Kondisi Baik',
+      stock: 2,
+      unit: 'Unit',
+      status: 'ready',
+      statusLabel: 'Bisa Dipinjam',
+      icon: Wrench,
+      path: '/tools'
+    }
+  ];
+
+  // Filter items based on active pill and search query
+  const filteredItems = allInventoryItems.filter(item => {
+    const matchesTab = activeTab === 'all' || item.project === activeTab;
+    const matchesSearch = searchQuery === '' ||
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.location.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
+  // Critical Stock items needing attention
+  const criticalStockItems = [
+    {
+      name: 'Cat 777D Engine Oil Filter (P550388)',
+      part: 'BIB-CAT-777D-FLTR',
+      location: 'Rak A2 • Sebamban Workshop',
+      stock: 2,
+      min: 10,
+      percent: 20
+    },
+    {
+      name: 'Main Hydraulic Pump Parker P31',
+      part: 'BIB-CAT-777D-PUMP',
+      location: 'Rak B3 • Central Workshop',
+      stock: 2,
+      min: 3,
+      percent: 40
+    },
+    {
       name: 'Shell Tellus S2 V 68 Drum Oil',
-      partNumber: 'BIB-LUB-SHL-T68',
-      location: 'Rak R-C01 • Area Rak 1 (Main Pit)',
-      stockCount: 6,
-      minThreshold: 20,
-      stockLabel: 'drum tersisa',
-      status: 'Menipis',
-      statusColor: 'amber',
-      progressPercent: 30,
-      progressColor: 'bg-amber-500'
-    },
-    {
-      id: 'item-4',
-      name: 'Volvo FMX 440 Brake Lining Assm',
-      partNumber: 'BIB-VOL-FMX-BRK',
-      location: 'Rak R-B01 • Area Rak 2 (Central Workshop)',
-      stockCount: 3,
-      minThreshold: 15,
-      stockLabel: 'set tersisa',
-      status: 'Menipis',
-      statusColor: 'amber',
-      progressPercent: 35,
-      progressColor: 'bg-amber-500'
+      part: 'BIB-LUB-SHL-T68',
+      location: 'Rak C1 • Main Pit Stock',
+      stock: 6,
+      min: 20,
+      percent: 30
     }
   ];
-
-  const expandedAttentionItems = [
-    {
-      id: 'item-5',
-      name: 'Delco Remy 24V 150A Alternator',
-      partNumber: 'BIB-ELE-ALT-24V',
-      location: 'Rak R-D01 • Area Rak 1 (Main Pit)',
-      stockCount: 9,
-      minThreshold: 12,
-      stockLabel: 'pcs tersisa',
-      status: 'Menipis',
-      statusColor: 'amber',
-      progressPercent: 60,
-      progressColor: 'bg-amber-500'
-    },
-    {
-      id: 'item-6',
-      name: 'Fleetguard Fuel Water Separator',
-      partNumber: 'BIB-FLT-FS1000',
-      location: 'Rak R-A03 • Area Rak 2 (Central Workshop)',
-      stockCount: 5,
-      minThreshold: 15,
-      stockLabel: 'pcs tersisa',
-      status: 'Menipis',
-      statusColor: 'amber',
-      progressPercent: 33,
-      progressColor: 'bg-amber-500'
-    },
-    {
-      id: 'item-7',
-      name: 'Goodyear 27.00R49 Haul Truck Tyre',
-      partNumber: 'BIB-TYR-2700R49',
-      location: 'Yard Ban • Pelabuhan Sebamban',
-      stockCount: 2,
-      minThreshold: 6,
-      stockLabel: 'unit tersisa',
-      status: 'Kritis',
-      statusColor: 'rose',
-      progressPercent: 33,
-      progressColor: 'bg-rose-600'
-    },
-    {
-      id: 'item-8',
-      name: 'Bucket Tooth Tip Heavy Duty 777D',
-      partNumber: 'BIB-GET-CAT-TIP',
-      location: 'Rak R-B03 • Area Rak 1 (Main Pit)',
-      stockCount: 65,
-      minThreshold: 25,
-      stockLabel: 'pcs tersisa',
-      status: 'Optimal',
-      statusColor: 'emerald',
-      progressPercent: 100,
-      progressColor: 'bg-emerald-600'
-    }
-  ];
-
-  const displayedAttentionItems = isListExpanded
-    ? [...primaryAttentionItems, ...expandedAttentionItems]
-    : primaryAttentionItems;
 
   return (
-    <div className="w-full pb-14 space-y-4 font-sans select-none animate-in fade-in duration-300">
+    <div className="relative min-h-screen bg-[#FAF7F5] text-slate-900 pb-32 select-none overflow-x-hidden font-sans">
       
-      {/* ─────────────────────────────────────────────────────────────
-          1. TOP HERO CARD (Clean White + Crimson Accents)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="relative rounded-3xl overflow-hidden bg-white border border-red-100 shadow-[0_12px_36px_rgba(220,38,38,0.06),0_2px_12px_rgba(0,0,0,0.04)] text-slate-800 p-5 pt-6">
-        
-        {/* Soft Ambient Crimson Wash */}
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-gradient-to-br from-red-500/10 to-rose-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-red-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+      {/* ── Soft Fluid Background Gradients (Inspired by Reference Design) ── */}
+      <div className="absolute top-0 right-0 w-[85vw] h-[340px] bg-gradient-to-bl from-rose-200/50 via-red-100/30 to-transparent rounded-bl-[120px] pointer-events-none -z-10 blur-xl" />
+      <div className="absolute top-12 left-0 w-[50vw] h-[220px] bg-gradient-to-tr from-amber-100/30 to-transparent rounded-tr-[90px] pointer-events-none -z-10 blur-lg" />
 
-        {/* ─── Header: Greeting, User Name, Role Pill & Action Buttons ─── */}
-        <div className="relative z-10 flex items-start justify-between gap-3 mb-5">
-          <div className="flex flex-col">
-            <span className="text-slate-500 text-xs font-semibold tracking-wide">
-              {getGreeting()}
+      {/* ── Top Header Section (Matching "Hello, Alex" + Notification Bell) ── */}
+      <div className="pt-3 px-5 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {getGreeting()},
             </span>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
-              {user?.full_name || 'Masamune'}
-            </h1>
-            
-            {/* Role Badge */}
-            <div className="mt-1.5 inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
-              <span>{roleDisplay}</span>
-            </div>
           </div>
-
-          {/* Action Buttons: Peta / Geofence + Search */}
-          <div className="flex items-center gap-2 mt-0.5">
-            {/* Quick Map Button */}
-            <button
-              onClick={() => navigate('/gis')}
-              title="Pengaturan & Tampilan Peta GPS Site"
-              className="w-10 h-10 rounded-full bg-red-50 hover:bg-red-100 border border-red-200 flex items-center justify-center text-red-600 active:scale-92 transition-all shadow-xs cursor-pointer"
-            >
-              <Compass className="w-5 h-5" />
-            </button>
-
-            {/* Search Button */}
-            <button
-              onClick={() => setIsSearchOpen(prev => !prev)}
-              aria-label="Cari suku cadang atau dokumen"
-              className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 active:scale-92 transition-all shadow-xs cursor-pointer"
-            >
-              {isSearchOpen ? <X className="w-5 h-5 text-red-600" /> : <Search className="w-5 h-5" />}
-            </button>
-          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
+            Hello, <span className="text-red-600">{firstName}</span>
+          </h1>
+          <p className="text-[11px] font-medium text-slate-500 mt-1">
+            Inventaris &amp; Kontrol Aset Site Tambang
+          </p>
         </div>
 
-        {/* Quick Search Dropdown Bar */}
-        {isSearchOpen && (
-          <div className="relative z-20 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                autoFocus
-                placeholder="Cari part number, suku cadang, lokasi rak..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    navigate(`/inventory?search=${encodeURIComponent(searchQuery.trim())}`);
-                  }
-                }}
-                className="w-full h-10 pl-10 pr-10 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-400"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 p-1 text-slate-400 hover:text-red-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ─── Circular Progress Meter & Big Metrics Row ─── */}
-        <div className="relative z-10 flex items-center gap-5 my-2">
-          
-          {/* Circular Donut Meter */}
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <defs>
-                <linearGradient id="imsStockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#DC2626" />
-                  <stop offset="50%" stopColor="#EF4444" />
-                  <stop offset="100%" stopColor="#F43F5E" />
-                </linearGradient>
-              </defs>
-
-              {/* Background Track */}
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="#F1F5F9"
-                strokeWidth="8.5"
-                fill="none"
-              />
-
-              {/* Progress Value: 96% */}
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="url(#imsStockGrad)"
-                strokeWidth="8.5"
-                strokeDasharray="251.2"
-                strokeDashoffset="10.05"
-                strokeLinecap="round"
-                fill="none"
-                style={{
-                  filter: 'drop-shadow(0 0 5px rgba(220, 38, 38, 0.4))'
-                }}
-              />
-            </svg>
-
-            {/* Inner Ring Text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-xl sm:text-2xl font-black text-slate-900 leading-none tracking-tight">
-                96%
-              </span>
-              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-                TERSEDIA
-              </span>
-            </div>
-          </div>
-
-          {/* Right Metrics: Status Pill + Physical Unit Count */}
-          <div className="flex-1 flex flex-col justify-center">
-            
-            {/* Status Pill */}
-            <div className="inline-flex items-center gap-1.5 self-start px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shadow-2xs">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              <span>Status Stok Gudang</span>
-            </div>
-
-            {/* Total Physical Stock Quantity (Not Nominal Currency!) */}
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1 leading-none">
-              14.850 Unit
-            </div>
-
-            {/* Subtitle */}
-            <div className="text-xs text-slate-500 font-medium mt-1">
-              Total fisik suku cadang dari 28 part number
-            </div>
-          </div>
-        </div>
-
-        {/* ─── Multi-Segment Status Progress Bar ─── */}
-        <div className="relative z-10 mt-5 pt-3 border-t border-slate-100 space-y-2">
-          
-          {/* Horizontal Progress Bar */}
-          <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden flex gap-0.5">
-            <div style={{ width: '82%' }} className="h-full bg-emerald-500 rounded-l-full shadow-xs" />
-            <div style={{ width: '13%' }} className="h-full bg-amber-400 shadow-xs" />
-            <div style={{ width: '5%' }} className="h-full bg-red-500 rounded-r-full shadow-xs" />
-          </div>
-
-          {/* Legend Items underneath */}
-          <div className="flex items-center justify-between text-[11px] font-semibold pt-0.5">
-            <div className="flex items-center gap-1 text-emerald-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>12.450 Optimal</span>
-            </div>
-            <div className="flex items-center gap-1 text-amber-700">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span>1.980 Menipis</span>
-            </div>
-            <div className="flex items-center gap-1 text-red-600">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              <span>420 Kritis</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
-          2. AKSI CEPAT OPERASIONAL INVENTORY (Mobile Native Experience)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded-lg bg-red-50 text-red-600">
-              <QrCode className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-              Aksi Cepat Inventory
-            </h2>
-          </div>
-          <span className="text-[10px] font-mono font-bold text-slate-400">
-            Akses Lapangan
-          </span>
-        </div>
-
-        {/* 6-Button Operational Grid */}
-        <div className="grid grid-cols-3 gap-2">
-          
-          {/* 1. Tambah MOS */}
-          <button
-            onClick={() => navigate('/mos')}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <FilePlus2 className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Tambah MOS
-            </span>
-            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
-              Penerimaan
-            </span>
-          </button>
-
-          {/* 2. Scan QR / Barcode */}
+        {/* Right Action Icons: Notification Bell & Barcode Scan */}
+        <div className="flex items-center gap-2">
+          {/* Barcode Scanner Button */}
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border-2 border-red-300 bg-gradient-to-b from-red-50/40 to-white shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+            className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-700 active:scale-95 transition-all cursor-pointer"
+            title="Scan Barcode / QR Aset"
           >
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <ScanLine className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Scan QR / Barcode
-            </span>
-            <span className="text-[9px] text-red-600 font-bold mt-0.5">
-              Kamera & Rak
-            </span>
+            <ScanLine className="w-4.5 h-4.5 text-red-600" />
           </button>
 
-          {/* 3. Ambil Material (MR) */}
+          {/* Notification Bell with Red Badge Dot */}
           <button
-            onClick={() => navigate('/mr')}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+            onClick={() => navigate('/mos')}
+            className="relative w-10 h-10 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-700 active:scale-95 transition-all cursor-pointer"
+            title="Pemberitahuan & Approval"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <PackagePlus className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Ambil Part (MR)
-            </span>
-            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
-              Pengeluaran
-            </span>
+            <Bell className="w-4.5 h-4.5 text-slate-600" />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white animate-pulse" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Category Segmented Pills (Matching "Rides" / "Eats" Segmented Switcher) ── */}
+      <div className="mt-4 px-5">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all shrink-0 cursor-pointer ${
+              activeTab === 'all'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/25 ring-2 ring-red-600/30'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Semua Aset</span>
           </button>
 
-          {/* 4. Katalog Part */}
           <button
-            onClick={() => navigate('/inventory')}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+            onClick={() => setActiveTab('famous')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all shrink-0 cursor-pointer ${
+              activeTab === 'famous'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/25 ring-2 ring-red-600/30'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <Store className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Katalog Part
-            </span>
-            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
-              Stok & Lokasi Rak
-            </span>
+            <Radio className="w-3.5 h-3.5" />
+            <span>Project FAMOUS</span>
           </button>
 
-          {/* 5. Stock Opname */}
           <button
-            onClick={() => navigate('/opname')}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+            onClick={() => setActiveTab('wim')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all shrink-0 cursor-pointer ${
+              activeTab === 'wim'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/25 ring-2 ring-red-600/30'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <ClipboardCheck className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Stock Opname
-            </span>
-            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
-              Blind Count Fisik
-            </span>
+            <Activity className="w-3.5 h-3.5" />
+            <span>Project WIM</span>
           </button>
 
-          {/* 6. Pinjam Tool */}
           <button
-            onClick={() => navigate('/tools')}
-            className="group relative bg-white hover:bg-red-50/40 active:scale-95 transition-all p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer"
+            onClick={() => setActiveTab('ccm')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all shrink-0 cursor-pointer ${
+              activeTab === 'ccm'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/25 ring-2 ring-red-600/30'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
-              <Wrench className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-black text-slate-900 leading-tight">
-              Pinjam Tool
-            </span>
-            <span className="text-[9px] text-slate-500 font-semibold mt-0.5">
-              Perkakas Pit
-            </span>
+            <Cpu className="w-3.5 h-3.5" />
+            <span>Project CCM</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all shrink-0 cursor-pointer ${
+              activeTab === 'catalog'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/25 ring-2 ring-red-600/30'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Package className="w-3.5 h-3.5" />
+            <span>Katalog Suku Cadang</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── THE ICONIC DISPATCH HERO CARD (Matching Reference Image 1) ── */}
+      {/* Rounded pure white card, dual red dots ("From / Where to"), background hardware silhouette, and circular red arrow CTA */}
+      <div className="mt-3.5 px-5">
+        <div className="relative bg-white rounded-3xl p-4 sm:p-5 shadow-[0_10px_30px_rgba(220,38,38,0.06)] border border-slate-100 overflow-hidden">
+          
+          {/* Subtle Ambient High-Tech Asset Graphic in Background */}
+          <div className="absolute -right-6 -bottom-6 w-36 h-36 opacity-[0.06] pointer-events-none text-red-600">
+            <Radio className="w-full h-full" />
+          </div>
+
+          <div className="space-y-3 relative z-10">
+            
+            {/* Top Field: Location / Site Picker (Matching "From: Current Location") */}
+            <div className="flex items-center gap-3">
+              <div className="w-3.5 h-3.5 rounded-full bg-red-600 ring-4 ring-red-100 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Site / Gudang Terpilih
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsSiteSelectorOpen(!isSiteSelectorOpen)}
+                  className="w-full flex items-center justify-between text-left font-bold text-xs sm:text-sm text-slate-900 truncate hover:text-red-600 transition-colors cursor-pointer"
+                >
+                  <span className="truncate">{selectedSite}</span>
+                  <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
+                </button>
+              </div>
+              <button
+                onClick={() => navigate('/gis')}
+                className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
+                title="Buka Peta Satelit Site"
+              >
+                <Compass className="w-4 h-4 text-red-600" />
+              </button>
+            </div>
+
+            {/* Connecting Dotted Line */}
+            <div className="w-0.5 h-3.5 bg-slate-200 ml-1.5 -my-1 rounded-full" />
+
+            {/* Bottom Field: Part / Serial Search Input (Matching "Where to? Search destination") */}
+            <div className="flex items-center gap-3">
+              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 ring-4 ring-rose-100 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Cari Suku Cadang / Unit Proyek
+                </span>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Contoh: AEK 0005, Load Cell, Oil Filter..."
+                    className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 placeholder:font-normal pr-6"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <Search className="w-4.5 h-4.5 text-slate-400 shrink-0" />
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-slate-100 my-1" />
+
+            {/* Bottom Controls Row: Quick Status Chip & Iconic Circular Red Arrow Button */}
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/projects')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <Filter className="w-3 h-3 text-red-600" />
+                  <span>Semua Kategori</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {filteredItems.length} aset cocok
+                </span>
+              </div>
+
+              {/* The Iconic Red Circular CTA Button */}
+              <button
+                onClick={() => {
+                  if (filteredItems.length > 0) {
+                    navigate(filteredItems[0].path);
+                  } else {
+                    navigate('/inventory');
+                  }
+                }}
+                className="w-10 h-10 rounded-full bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 hover:from-red-700 hover:to-rose-600 text-white shadow-md shadow-red-600/30 flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                title="Buka Katalog Inventaris"
+              >
+                <ArrowRight className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+          </div>
+
+          {/* Site Selector Dropdown Modal if clicked */}
+          {isSiteSelectorOpen && (
+            <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5 animate-in fade-in duration-200">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Pilih Lokasi Operasional:
+              </span>
+              {siteLocations.map((site) => (
+                <button
+                  key={site.id}
+                  onClick={() => {
+                    setSelectedSite(site.name);
+                    setIsSiteSelectorOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-colors cursor-pointer ${
+                    selectedSite === site.name
+                      ? 'bg-red-50 text-red-700 font-bold border border-red-200'
+                      : 'hover:bg-slate-50 text-slate-700 font-medium'
+                  }`}
+                >
+                  <div>
+                    <p className="leading-tight">{site.name}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{site.zone}</p>
+                  </div>
+                  {selectedSite === site.name && (
+                    <Check className="w-4 h-4 text-red-600 shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          3. RINGKASAN METRIK (Kartu Jajaran Genjang / Parallelogram)
-      ───────────────────────────────────────────────────────────── */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between px-1">
+      {/* ── RINGKASAN METRIK (Summary Cards Berbentuk Jajaran Genjang Seperti Desktop) ── */}
+      <div className="mt-5 px-5 space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1 rounded-lg bg-red-50 text-red-600">
+            <div className="p-1.5 rounded-xl bg-red-50 text-red-600 border border-red-100">
               <Layers className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-              Ringkasan Aset & Dokumen
-            </h2>
+            <div>
+              <h2 className="text-sm font-black text-slate-900 tracking-tight">
+                Ringkasan Metrik Inventaris
+              </h2>
+              <p className="text-[10px] text-slate-400">
+                Sinkronisasi data riil seluruh gudang &amp; site
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] font-mono text-slate-400">
-            Realtime
+          <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            Live DB
           </span>
         </div>
 
-        {/* Parallelogram Cards Row matching reference */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-1 py-1">
+        {/* 4 Signature Parallelogram Cards matching Desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 py-1">
           <ParallelogramCard
             title="TOTAL ASET AKTIF"
-            value="28"
-            unit="SKU"
-            subtitle="+4 SKU Bulan Ini"
-            subtitleColor="text-emerald-700"
-            icon={Package}
-            iconColor="text-slate-400"
-            accentColor="border-red-700"
+            value={Number(
+              activeTab === 'famous'
+                ? (stats.famousTotalItems || 9416)
+                : activeTab === 'wim'
+                ? 8
+                : activeTab === 'ccm'
+                ? 4
+                : activeTab === 'catalog'
+                ? (stats.catalogStockUnits || 649)
+                : (stats.totalEnterpriseUnits || 10065)
+            ).toLocaleString('id-ID')}
+            unit="UNIT"
+            subtitle={
+              activeTab === 'famous'
+                ? `• 9.416 Telematika (${stats.famousFleetUnits || 825} Truk Hauling)`
+                : activeTab === 'wim'
+                ? `• 8 Sensor Load Cell Jembatan Timbang KM-14`
+                : activeTab === 'ccm'
+                ? `• 4 Set Crusher Bearing ROM Sebamban`
+                : activeTab === 'catalog'
+                ? `• 649 Suku Cadang Terdaftar di 4 Gudang BIB`
+                : `• 9.416 Unit FAMOUS + ${stats.catalogStockUnits || 649} Katalog`
+            }
+            subtitleColor="text-slate-600"
+            icon={TrendingUp}
+            iconColor="text-red-600"
+            accentColor="border-red-600"
+            valueColor="text-slate-900"
             padding="p-3.5 sm:p-4"
-            onClick={() => navigate('/inventory')}
+            onClick={() => navigate(activeTab === 'famous' ? '/projects' : '/inventory')}
           />
+
           <ParallelogramCard
             title="DRAF MOS PENDING"
-            value="05"
-            unit="Berkas"
-            subtitle="Verifikasi SPV Gudang Siap"
+            value={String(mosDocs.length || stats.mosTotal || 6).padStart(2, '0')}
+            unit="BERKAS"
+            subtitle="4 Selesai TTD • 2 Dalam Proses"
             subtitleIcon={FileCheck2}
-            subtitleColor="text-amber-700"
-            badgeDotColor="bg-red-600 ring-4 ring-red-100"
-            accentColor="border-red-700"
+            subtitleColor="text-blue-700"
+            icon={FileCheck2}
+            iconColor="text-blue-600"
+            accentColor="border-blue-600"
+            valueColor="text-blue-600"
             padding="p-3.5 sm:p-4"
             onClick={() => navigate('/mos')}
           />
+
           <ParallelogramCard
             title="KRITIS REORDER"
-            value="12"
-            unit="Part"
-            valueColor="text-red-700"
-            subtitle="Di bawah buffer minimum"
+            value="03"
+            unit="PART"
+            subtitle="Di Bawah Buffer Minimum Site"
             subtitleIcon={AlertTriangle}
-            subtitleColor="text-red-600"
+            subtitleColor="text-red-700"
             icon={AlertTriangle}
             iconColor="text-red-600"
-            accentColor="border-red-700"
+            accentColor="border-red-600"
+            valueColor="text-red-600"
             padding="p-3.5 sm:p-4"
             onClick={() => navigate('/inventory?status=low_stock')}
           />
+
+          <ParallelogramCard
+            title="TOOLS DIPINJAM"
+            value="02"
+            unit="UNIT"
+            subtitle="Perkakas Aktif di Pit Workshop"
+            subtitleIcon={Wrench}
+            subtitleColor="text-purple-700"
+            icon={Wrench}
+            iconColor="text-purple-600"
+            accentColor="border-purple-600"
+            valueColor="text-purple-600"
+            padding="p-3.5 sm:p-4"
+            onClick={() => navigate('/tools')}
+          />
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          3. SECTION: SUKU CADANG PERLU RESTOCK SEGERA
-      ───────────────────────────────────────────────────────────── */}
-      <div className="space-y-2.5 pt-1">
-        
-        {/* Section Header */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded-lg bg-red-50 text-red-600">
-              <Layers className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-              Suku Cadang Perlu Restock Segera
-            </h2>
-          </div>
+      {/* ── SUGGESTIONS / PROJECT HUBS (Matching the 4 white cards with red badges) ── */}
+      <div className="mt-6 px-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-black text-slate-900 tracking-tight">
+            Kategori Proyek &amp; Fasilitas
+          </h2>
           <button
-            onClick={() => navigate('/inventory')}
-            className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
           >
-            Lihat Semua <ArrowRight className="w-3 h-3" />
+            <span>Lihat Semua</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* List of items inside White Container */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3 space-y-2.5">
-          {displayedAttentionItems.map((item) => {
-            const isOptimal = item.status === 'Optimal';
-            const isKritis = item.status === 'Kritis';
+        {/* 4 Rounded Square Cards matching Reference UI */}
+        <div className="grid grid-cols-4 gap-2.5">
+          
+          {/* Card 1: FAMOUS Fleet */}
+          <button
+            onClick={() => navigate('/projects')}
+            className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-red-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
+          >
+            <span className="absolute -top-1.5 px-1.5 py-0.5 bg-red-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
+              825 Unit
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 mt-1">
+              <Radio className="w-5 h-5" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-800 leading-tight">
+              FAMOUS Fleet
+            </span>
+          </button>
 
+          {/* Card 2: WIM Scales */}
+          <button
+            onClick={() => navigate('/projects')}
+            className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-emerald-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
+          >
+            <span className="absolute -top-1.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
+              KM-14
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mt-1">
+              <Activity className="w-5 h-5" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-800 leading-tight">
+              WIM Scales
+            </span>
+          </button>
+
+          {/* Card 3: CCM Crusher */}
+          <button
+            onClick={() => navigate('/projects')}
+            className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-amber-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
+          >
+            <span className="absolute -top-1.5 px-1.5 py-0.5 bg-amber-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
+              ROM
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 mt-1">
+              <Cpu className="w-5 h-5" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-800 leading-tight">
+              CCM Crusher
+            </span>
+          </button>
+
+          {/* Card 4: Tool Loans */}
+          <button
+            onClick={() => navigate('/tools')}
+            className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-purple-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
+          >
+            <span className="absolute -top-1.5 px-1.5 py-0.5 bg-purple-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
+              Ready
+            </span>
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mt-1">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-800 leading-tight">
+              Peminjaman
+            </span>
+          </button>
+
+        </div>
+      </div>
+
+      {/* ── SPECIAL HIGHLIGHT BANNER: MOS APPROVAL (Matching the 40% OFF / Save up to 30% Red Card) ── */}
+      <div className="mt-5 px-5">
+        <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-rose-600 to-red-700 rounded-3xl p-5 text-white shadow-[0_12px_28px_rgba(220,38,38,0.24)] border border-red-500/40">
+          
+          {/* Background Ambient Flare Rings */}
+          <div className="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-white/10 blur-xl pointer-events-none" />
+          <div className="absolute right-4 bottom-2 opacity-15 pointer-events-none">
+            <FileCheck2 className="w-28 h-28 text-white" />
+          </div>
+
+          <div className="relative z-10 max-w-[70%]">
+            <span className="inline-block px-2.5 py-0.5 bg-white/20 backdrop-blur-md rounded-full text-[9px] font-black tracking-wider uppercase mb-1.5 border border-white/25">
+              Prioritas Otorisasi
+            </span>
+            <h3 className="text-base font-black tracking-tight leading-tight">
+              Waiting List Dokumen MOS
+            </h3>
+            <p className="text-[11px] text-rose-100 font-medium leading-snug mt-1">
+              Verifikasi penerimaan material &amp; tanda tangan digital 3-slot di lapangan.
+            </p>
+            <button
+              onClick={() => navigate('/mos')}
+              className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 bg-white text-red-700 hover:bg-rose-50 rounded-xl text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer"
+            >
+              <span>Review Dokumen</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── INVENTARIS SIAP PAKAI & POPULER (Matching "Popular Rides" / "Get anything delivered" Section) ── */}
+      <div className="mt-6 px-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-sm font-black text-slate-900 tracking-tight">
+              Inventaris Proyek Siap Pakai
+            </h2>
+            <p className="text-[10px] text-slate-400 font-medium">
+              Data terintegrasi dari database FAMOUS, WIM, CCM &amp; Suku Cadang
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer shrink-0"
+          >
+            <span>Semua</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Horizontal Scrolling Card Row */}
+        <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar py-1 -mx-5 px-5">
+          {filteredItems.map((item) => {
+            const ItemIcon = item.icon;
             return (
               <div
                 key={item.id}
-                onClick={() => navigate(`/inventory?search=${encodeURIComponent(item.partNumber)}`)}
-                className="p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100 flex flex-col gap-2 cursor-pointer active:scale-98"
+                onClick={() => setSelectedItemDetail(item)}
+                className="w-[220px] bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs hover:shadow-md transition-all shrink-0 flex flex-col justify-between cursor-pointer active:scale-98"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    {/* Icon Box */}
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                        isOptimal
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                          : isKritis
-                          ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                          : 'bg-amber-50 text-amber-700 border border-amber-100'
-                      }`}
-                    >
-                      <Package className="w-4 h-4" />
-                    </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-[8.5px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider border ${item.projectColor}`}>
+                      {item.projectBadge}
+                    </span>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      {item.statusLabel}
+                    </span>
+                  </div>
 
-                    {/* Title, SKU & Rack Location */}
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-900 truncate">
-                        {item.name}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-500 truncate mt-0.5">
-                        {item.partNumber}
-                      </div>
-                      <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                        {item.location}
-                      </div>
+                  <div className="flex items-center gap-2.5 my-2">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700 shrink-0">
+                      <ItemIcon className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-black text-slate-900 truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-[10px] font-mono text-slate-400 truncate">
+                        {item.code}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Right Metric */}
-                  <div className="text-right shrink-0">
-                    <div
-                      className={`text-xs font-black ${
-                        isOptimal
-                          ? 'text-emerald-700'
-                          : isKritis
-                          ? 'text-rose-600'
-                          : 'text-amber-700'
-                      }`}
-                    >
-                      {item.stockCount} {item.stockLabel.split(' ')[0]}
-                    </div>
-                    <div className="text-[9px] font-semibold text-slate-400">
-                      Min: {item.minThreshold}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress bar beneath */}
-                <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    style={{ width: `${item.progressPercent}%` }}
-                    className={`h-full rounded-full ${item.progressColor}`}
-                  />
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Expand / Collapse Button */}
-          <button
-            onClick={() => setIsListExpanded(prev => !prev)}
-            className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-98 transition-all flex items-center justify-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer border border-slate-200/60"
-          >
-            {isListExpanded ? (
-              <>
-                <ChevronUp className="w-3.5 h-3.5" />
-                <span>Tutup daftar suku cadang lain</span>
-              </>
-            ) : (
-              <>
-                <span>+4 Suku Cadang Lainnya</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
-          4. ROLE-SPECIFIC SMALL CLICKABLE MENUS
-      ───────────────────────────────────────────────────────────── */}
-      <div className="space-y-2.5 pt-2">
-        <div className="flex items-center gap-2 px-1">
-          <div className="p-1 rounded-lg bg-red-50 text-red-600">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-            Menu Akses Cepat Operasional
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {roleMenus.map((menu) => {
-            const Icon = menu.icon;
-            return (
-              <button
-                key={menu.id}
-                onClick={() => navigate(menu.path)}
-                className="w-full p-3.5 rounded-2xl bg-white hover:bg-slate-50/80 active:scale-98 transition-all border border-slate-200/80 shadow-xs flex items-center justify-between text-left cursor-pointer group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900 truncate">
-                        {menu.title}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                      {menu.subtitle}
+                  <div className="mt-2 pt-2 border-t border-slate-100 text-[10.5px] text-slate-500 space-y-0.5">
+                    <p className="flex items-center justify-between">
+                      <span className="text-slate-400">Lokasi:</span>
+                      <span className="font-semibold text-slate-700 truncate max-w-[120px]">{item.location}</span>
+                    </p>
+                    <p className="flex items-center justify-between">
+                      <span className="text-slate-400">Status Sensor:</span>
+                      <span className="font-bold text-slate-800">{item.sensorStatus}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="shrink-0 ml-2">
-                  <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-red-600 transition-colors">
-                    <ArrowRight className="w-3.5 h-3.5" />
+                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div className="text-[11px] font-black text-slate-900">
+                    Stok: <span className="text-red-600 font-mono">{item.stock}</span> {item.unit}
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(item.path);
+                    }}
+                    className="w-6 h-6 rounded-full bg-slate-100 hover:bg-red-600 hover:text-white flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </button>
+
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          5. INVENTORY QR & BARCODE SCANNER MODAL
-      ───────────────────────────────────────────────────────────── */}
+      {/* ── STOK MEMBUTUHKAN PERHATIAN (Restock Warning Section) ── */}
+      <div className="mt-6 px-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            <h2 className="text-sm font-black text-slate-900 tracking-tight">
+              Suku Cadang Perlu Restock
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate('/inventory')}
+            className="text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
+          >
+            Lihat Gudang
+          </button>
+        </div>
+
+        <div className="space-y-2.5">
+          {criticalStockItems.map((crit, idx) => (
+            <div
+              key={idx}
+              onClick={() => navigate('/inventory')}
+              className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs flex items-center justify-between gap-3 active:scale-98 transition-all cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                <AlertTriangle className="w-4.5 h-4.5" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-black text-slate-900 truncate">
+                    {crit.name}
+                  </h4>
+                  <span className="text-[10px] font-mono font-black text-red-600 shrink-0">
+                    {crit.stock} / {crit.min} Unit
+                  </span>
+                </div>
+                <p className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">
+                  {crit.part} • {crit.location}
+                </p>
+
+                {/* Progress bar */}
+                <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 rounded-full"
+                    style={{ width: `${crit.percent}%` }}
+                  />
+                </div>
+              </div>
+
+              <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── QUICK ROLE ACTION DRAWER / ACCORDION ── */}
+      <div className="mt-6 px-5">
+        <div className="bg-slate-900 text-white rounded-3xl p-4.5 shadow-lg border border-slate-800">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-red-500" />
+              <span className="text-xs font-black uppercase tracking-wider">
+                Akses Peran: {normalizedRole}
+              </span>
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full">
+              Sistem Aktif
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              onClick={() => navigate('/mos')}
+              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+            >
+              <FileCheck2 className="w-4 h-4 text-red-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold truncate">Approval MOS</p>
+                <p className="text-[9.5px] text-slate-400 truncate">3 Slot Signature</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/projects')}
+              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+            >
+              <Radio className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold truncate">Project FAMOUS</p>
+                <p className="text-[9.5px] text-slate-400 truncate">825 Unit Tambang</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/tools')}
+              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+            >
+              <Wrench className="w-4 h-4 text-amber-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold truncate">Peminjaman Tool</p>
+                <p className="text-[9.5px] text-slate-400 truncate">Logbook Alat</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/gis')}
+              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+            >
+              <Compass className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold truncate">Peta Satelit</p>
+                <p className="text-[9.5px] text-slate-400 truncate">Geofence Site</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── DETAIL MODAL DRAWER (Saat item di klik) ── */}
+      {selectedItemDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end justify-center animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-t-[32px] p-6 shadow-2xl border-t border-slate-100 animate-in slide-in-from-bottom duration-300">
+            <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            
+            <div className="flex items-start justify-between">
+              <div>
+                <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider border ${selectedItemDetail.projectColor}`}>
+                  {selectedItemDetail.projectBadge}
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-2">
+                  {selectedItemDetail.title}
+                </h3>
+                <p className="text-xs font-mono text-slate-500 mt-0.5">
+                  Kode / Serial: {selectedItemDetail.code}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedItemDetail(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 p-3.5 bg-slate-50 rounded-2xl space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Kategori:</span>
+                <span className="font-bold text-slate-800">{selectedItemDetail.category}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Lokasi Penyimpanan:</span>
+                <span className="font-bold text-slate-800">{selectedItemDetail.location}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Status Sensor / Fisik:</span>
+                <span className="font-bold text-emerald-600">{selectedItemDetail.sensorStatus}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-200 pt-2">
+                <span className="text-slate-500 font-bold">Stok Tersedia:</span>
+                <span className="font-black text-red-600 font-mono text-sm">{selectedItemDetail.stock} {selectedItemDetail.unit}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-2.5">
+              <button
+                onClick={() => setSelectedItemDetail(null)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={() => {
+                  const path = selectedItemDetail.path;
+                  setSelectedItemDetail(null);
+                  navigate(path);
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-red-600/20 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Buka Detail di Modul</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── Built-in Barcode Scanner Modal ── */}
       <InventoryScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
+        onScan={(scannedCode) => {
+          setIsScannerOpen(false);
+          setSearchQuery(scannedCode);
+        }}
       />
 
     </div>

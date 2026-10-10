@@ -1,4 +1,16 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure .env is loaded regardless of execution working directory
+if (!process.env.SMTP_HOST) {
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+  dotenv.config();
+}
 
 /**
  * Transaksional Email Service (Nodemailer)
@@ -82,7 +94,7 @@ export const sendActivationEmail = async (email, fullName, role, company) => {
         </p>
       </div>
       <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
-        © 2026 Digitech. Hak cipta dilindungi undang-undang.
+        &copy; 2026 Digitech. Hak cipta dilindungi undang-undang.
       </div>
     </div>
   `;
@@ -96,7 +108,7 @@ export const sendActivationEmail = async (email, fullName, role, company) => {
 export const sendNewUserAlertToAdmin = async (adminEmail, newUser) => {
   const subject = `🔔 Pendaftaran Akun Baru Menunggu Aktivasi: ${newUser.full_name} (${newUser.company})`;
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
       <h3 style="color: #0f172a; margin-top: 0;">Pengajuan Akun Pengguna Baru</h3>
       <p style="color: #475569;">Terdapat pengguna baru yang mendaftar ke portal IMS dan memerlukan verifikasi:</p>
       <ul style="color: #334155; line-height: 1.8;">
@@ -106,25 +118,25 @@ export const sendNewUserAlertToAdmin = async (adminEmail, newUser) => {
         <li><strong>Departemen:</strong> ${newUser.department}</li>
         <li><strong>No. Telp / WA:</strong> ${newUser.phone || '-'}</li>
       </ul>
-      <p style="color: #475569;">Silakan buka menu <strong>Manajemen Akun &gt; Antrean Aktivasi</strong> untuk menyetujui atau menolak akun ini.</p>
+      <p style="color: #475569;">Silakan buka menu <strong>Manajemen Pengguna &gt; Antrean Aktivasi</strong> untuk menyetujui atau menolak akun ini.</p>
     </div>
   `;
   return sendEmail({ to: adminEmail, subject, html, text: `Pendaftar baru: ${newUser.full_name} (${newUser.email}) menunggu aktivasi.` });
 };
 
 /**
- * Template Email: Update Status MOS (Completed / Rejected)
+ * Template Email: Update Status MOS & Dokumen Approval (Completed / Rejected / Step Signed)
  */
 export const sendMosNotificationEmail = async (email, docNumber, status, actionBy, notes = '') => {
   const isCompleted = status === 'completed';
   const subject = isCompleted 
     ? `✅ Dokumen MOS ${docNumber} Telah Disahkan (Completed)` 
-    : `⚠️ Dokumen MOS ${docNumber} Memerlukan Revisi`;
+    : `⚠️ Dokumen MOS ${docNumber}: Status ${status.toUpperCase()}`;
 
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
       <h3 style="color: ${isCompleted ? '#15803d' : '#b91c1c'}; margin-top: 0;">
-        ${isCompleted ? 'Persetujuan Final Dokumen MOS Selesai' : 'Catatan Revisi Dokumen MOS'}
+        ${isCompleted ? 'Persetujuan Final Dokumen MOS Selesai' : 'Pemberitahuan Status Dokumen MOS'}
       </h3>
       <p style="color: #475569;">Nomor Dokumen: <strong>${docNumber}</strong></p>
       <p style="color: #475569;">Diproses Oleh: <strong>${actionBy}</strong></p>
@@ -134,4 +146,77 @@ export const sendMosNotificationEmail = async (email, docNumber, status, actionB
     </div>
   `;
   return sendEmail({ to: email, subject, html, text: `Status MOS ${docNumber}: ${status}. Catatan: ${notes}` });
+};
+
+/**
+ * Template Email: Pemberitahuan Perubahan Pengaturan Akun & Keamanan
+ */
+export const sendAccountSettingsChangeEmail = async (email, fullName, changeType, details = '') => {
+  const subject = `🔒 [Keamanan Akun] Perubahan Pengaturan Akun Digitech IMS: ${changeType}`;
+  const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar' });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px;">
+      <div style="background-color: #0f172a; padding: 16px; border-radius: 8px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ef4444;">DIGITECH SECURITY ALERT</h2>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Notifikasi Perubahan Pengaturan Akun</p>
+      </div>
+      <div style="padding: 20px 0;">
+        <h3 style="color: #1e293b;">Halo, ${fullName}!</h3>
+        <p style="color: #475569; line-height: 1.6;">
+          Kami mengonfirmasi bahwa terdapat perubahan pada pengaturan akun Anda di portal operasional <strong>Digitech IMS</strong>:
+        </p>
+        <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 16px 0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Aktivitas:</strong> <span style="color: #b91c1c; font-weight: bold;">${changeType}</span></p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Waktu (WITA):</strong> ${timestamp} WITA</p>
+          ${details ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Detail:</strong> ${details}</p>` : ''}
+        </div>
+        <p style="color: #64748b; font-size: 12px; line-height: 1.6;">
+          Bila Anda tidak merasa melakukan perubahan ini, segera hubungi Superadmin IMS Digitech atau lakukan reset kata sandi akun Anda segera.
+        </p>
+      </div>
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+        &copy; 2026 Digitech Security Ops. Pesan otomatis dikirim oleh sistem.
+      </div>
+    </div>
+  `;
+  const text = `Halo ${fullName}, terdapat perubahan pengaturan akun Anda (${changeType}) pada ${timestamp} WITA.`;
+  return sendEmail({ to: email, subject, html, text });
+};
+
+/**
+ * Template Email: Pemberitahuan Agenda & Jadwal Site Baru / Diperbarui
+ */
+export const sendAgendaNotificationEmail = async (email, { title, date, time, site, pic, category, description, actionType = 'dijadwalkan' }) => {
+  const subject = `📅 [Agenda Site] ${title} (${date})`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px;">
+      <div style="background-color: #0f172a; padding: 16px; border-radius: 8px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ef4444;">AGENDA OPERASIONAL SITE</h2>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Digitech Mining Operations Calendar</p>
+      </div>
+      <div style="padding: 20px 0;">
+        <p style="color: #475569; line-height: 1.6;">
+          Agenda operasional berikut telah <strong>${actionType}</strong> di kalender site:
+        </p>
+        <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 14px 16px; margin: 16px 0; border-radius: 4px;">
+          <h3 style="margin: 0 0 8px 0; color: #1e293b;">${title}</h3>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Tanggal:</strong> ${date}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Waktu:</strong> ${time || '08:00 - Selesai'}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Lokasi / Site:</strong> ${site || 'Area Tambang Sebamban'}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Kategori:</strong> <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: bold;">${category || 'Operasional'}</span></p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>PIC Penanggung Jawab:</strong> ${pic || 'Tim Operasional'}</p>
+          ${description ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px;"><em>${description}</em></p>` : ''}
+        </div>
+        <p style="color: #64748b; font-size: 12px;">
+          Silakan buka menu <strong>Agenda &amp; Kalender Site</strong> pada portal untuk detail dan konfirmasi kehadiran.
+        </p>
+      </div>
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+        &copy; 2026 Digitech Mining Operations.
+      </div>
+    </div>
+  `;
+  const text = `Agenda Site: ${title} pada tanggal ${date} (${time}) di ${site}. PIC: ${pic}.`;
+  return sendEmail({ to: email, subject, html, text });
 };

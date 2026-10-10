@@ -23,13 +23,19 @@ import {
   Globe,
   Clock,
   Trash2,
-  MapPin
+  MapPin,
+  Timer,
+  Hourglass,
+  SlidersHorizontal,
+  Sparkles
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 
 export default function AccountSettingsPage() {
-  const { user, role, logout } = useAuth();
+  const navigate = useNavigate();
+  const { user, role, logout, session, isSuperadmin } = useAuth();
 
   // Tabs: 'profile' | 'security' | 'sessions'
   const [activeTab, setActiveTab] = useState('profile');
@@ -53,9 +59,78 @@ export default function AccountSettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Superadmin JWT Session Duration State
+  const [sessionDuration, setSessionDuration] = useState(8);
+  const [customHoursInput, setCustomHoursInput] = useState('');
+  const [sessionConfigSaving, setSessionConfigSaving] = useState(false);
+  const [sessionConfigMeta, setSessionConfigMeta] = useState(null);
+  const [remainingTimeStr, setRemainingTimeStr] = useState('');
+
   // UI State
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null); // { type: 'success' | 'error', text: '' }
+
+  // Live countdown timer for active user session
+  useEffect(() => {
+    if (!session?.expires_at) return;
+    const updateCountdown = () => {
+      const now = Date.now();
+      const diff = Math.max(0, Number(session.expires_at) - now);
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setRemainingTimeStr(
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      );
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [session?.expires_at]);
+
+  // Load session duration config from backend
+  useEffect(() => {
+    async function loadSessionConfig() {
+      try {
+        const res = await api.get('/auth/session-config');
+        if (res.data?.data) {
+          const cfg = res.data.data;
+          setSessionDuration(cfg.durationHours || 8);
+          setSessionConfigMeta(cfg);
+        }
+      } catch (err) {
+        console.warn('Gagal memuat konfigurasi durasi sesi:', err);
+      }
+    }
+    loadSessionConfig();
+  }, []);
+
+  const handleSaveSessionDuration = async (hoursToSave) => {
+    const val = parseFloat(hoursToSave);
+    if (isNaN(val) || val < 0.25 || val > 72) {
+      setMessage({ type: 'error', text: 'Durasi sesi harus berupa angka antara 0.25 jam (15 menit) hingga 72 jam.' });
+      return;
+    }
+
+    setSessionConfigSaving(true);
+    setMessage(null);
+    try {
+      const res = await api.put('/auth/session-config', { durationHours: val });
+      setSessionDuration(val);
+      setSessionConfigMeta(res.data?.data);
+      setMessage({
+        type: 'success',
+        text: `Kebijakan masa berlaku sesi login sistem berhasil diset ke ${val} Jam (${Math.round(val * 60)} Menit). Sesi pengguna yang telah habis waktu akan otomatis terpental keluar (auto kick-out) ke halaman login.`
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.error?.message || err.response?.data?.message || 'Gagal menyimpan kebijakan sesi.'
+      });
+    } finally {
+      setSessionConfigSaving(false);
+    }
+  };
 
   // Load existing profile from backend
   useEffect(() => {
@@ -202,7 +277,7 @@ export default function AccountSettingsPage() {
       
       {/* ─── Header ────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <User className="w-6 h-6 text-red-600" />
             Pengaturan Akun & Keamanan
@@ -213,7 +288,7 @@ export default function AccountSettingsPage() {
         </div>
 
         {/* User Identity Chip */}
-        <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-xs">
+        <div className="inline-flex items-center gap-2 self-start sm:self-center px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-xs ml-auto shrink-0 justify-end">
           <ShieldCheck className="w-4 h-4 text-red-600" />
           <span>{role || 'User'}</span>
         </div>
@@ -601,6 +676,37 @@ export default function AccountSettingsPage() {
       {/* ─── TAB 3: SESI AKTIF & DEVICE LOGIN INFO ────────────────── */}
       {activeTab === 'sessions' && (
         <div className="space-y-6">
+
+          {/* Superadmin Global Policy Notice Banner */}
+          {(isSuperadmin || role === 'Superadmin') && (
+            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200/80 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-black shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <span>Kebijakan Masa Berlaku JWT Sesi Global:</span>
+                    <span className="px-2 py-0.5 rounded-full bg-red-600 text-white font-mono text-[11px] font-black">{sessionDuration} Jam</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Pengguna otomatis terpental keluar (auto kick-out) ke halaman login bila sesi melewati batas waktu.
+                  </p>
+                </div>
+              </div>
+
+              {isSuperadmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/users')}
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-red-300 text-red-700 text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Kelola di Manajemen User</span>
+                </button>
+              )}
+            </div>
+          )}
           
           {/* 1. Current Active Device Card */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">

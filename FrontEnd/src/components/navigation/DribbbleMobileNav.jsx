@@ -18,24 +18,28 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import LogoutConfirmModal from '../common/LogoutConfirmModal';
 
 /**
- * Mobile Bottom Floating Glassmorphism Capsule Navbar
- * Inspired by Dribbble Mobile Nav with Liquid Gliding Lens Indicator
+ * Mobile Bottom Floating Liquid Glass Capsule Navbar
+ * Inspired by WhatsApp Swipe Navigation & Liquid Glassmorphism Aesthetics
  * 
  * Features:
- * - Floating rounded capsule docked at bottom center on mobile devices (lg:hidden)
- * - Prismatic liquid glass lens indicator with physics spring glide transition
+ * - Fluid Liquid Glass Capsule with dynamic blur, specular reflection, and crimson glow
+ * - Sliding Liquid Lens Indicator that tracks touch drag continuously like a slider
+ * - WhatsApp-style horizontal screen swipe listener (window 'app:swipe-tab')
+ * - Snappy spring physics on release
  * - Role-adaptive 5-slot navigation tabs (User, Admin, Superadmin)
- * - Digitech brand colors: Clean white capsule, crimson/rose active indicator (#DC2626)
- * - Interactive Account Drawer for viewing profile details & logout
+ * - Interactive Account Profile Drawer
  */
 export default function DribbbleMobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, logout } = useAuth();
 
+  const navRef = useRef(null);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const normalizedRole = role || 'User';
 
@@ -88,6 +92,7 @@ export default function DribbbleMobileNav() {
     setActiveIndex(getActiveIndex());
   }, [location.pathname, normalizedRole]);
 
+  // Handle clicking or snapping to a tab
   const handleItemClick = (item, index) => {
     if (item.isAction) {
       if (item.id === 'account') {
@@ -95,88 +100,256 @@ export default function DribbbleMobileNav() {
       }
       return;
     }
+    setIsAccountDrawerOpen(false);
     setActiveIndex(index);
     navigate(item.path);
   };
 
+  // WhatsApp-style horizontal screen swipe event listener
+  useEffect(() => {
+    const handleSwipeTab = (e) => {
+      const direction = e.detail?.direction;
+      if (!direction) return;
+
+      setActiveIndex((prev) => {
+        let target = prev;
+        if (direction === 'next' && prev < navItems.length - 1) {
+          target = prev + 1;
+        } else if (direction === 'prev' && prev > 0) {
+          target = prev - 1;
+        }
+
+        if (target !== prev) {
+          const targetItem = navItems[target];
+          if (targetItem.isAction) {
+            if (targetItem.id === 'account') {
+              setIsAccountDrawerOpen(true);
+            }
+          } else {
+            setIsAccountDrawerOpen(false);
+            navigate(targetItem.path);
+          }
+        }
+        return target;
+      });
+    };
+
+    window.addEventListener('app:swipe-tab', handleSwipeTab);
+    return () => window.removeEventListener('app:swipe-tab', handleSwipeTab);
+  }, [navItems, navigate]);
+
+  // Pointer / Touch Drag & Slider Support on the navbar itself
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragRatio, setDragRatio] = useState(null);
+  const [dragDirection, setDragDirection] = useState(0); // -1: left, 1: right
+
+  const pointerStartPos = useRef({ x: 0, y: 0, time: 0 });
+  const isPointerDownRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const draggedRecentlyRef = useRef(false);
+
+  const updatePointerPosition = (clientX) => {
+    if (!navRef.current) return;
+    const rect = navRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const clampedRatio = Math.max(0, Math.min(1, x / rect.width));
+    setDragRatio(clampedRatio);
+  };
+
+  const handlePointerDown = (e) => {
+    // Only primary mouse button or touch
+    if (e.button !== undefined && e.button !== 0) return;
+    isPointerDownRef.current = true;
+    hasDraggedRef.current = false;
+    pointerStartPos.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    // NOTE: Do NOT setPointerCapture here so child buttons can receive normal click events if it's a tap!
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isPointerDownRef.current) return;
+    const deltaX = e.clientX - pointerStartPos.current.x;
+    const deltaY = e.clientY - pointerStartPos.current.y;
+
+    // Detect intentional drag movement (> 6px)
+    if (!hasDraggedRef.current && Math.hypot(deltaX, deltaY) > 6) {
+      hasDraggedRef.current = true;
+      setIsDragging(true);
+      // Once user is definitely dragging, capture the pointer
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {}
+    }
+
+    if (hasDraggedRef.current) {
+      updatePointerPosition(e.clientX);
+      setDragDirection(deltaX > 0 ? 1 : -1);
+    }
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    if (hasDraggedRef.current && dragRatio !== null) {
+      draggedRecentlyRef.current = true;
+      setTimeout(() => {
+        draggedRecentlyRef.current = false;
+      }, 160);
+
+      const targetIndex = Math.min(
+        Math.max(Math.floor(dragRatio * navItems.length), 0),
+        navItems.length - 1
+      );
+      handleItemClick(navItems[targetIndex], targetIndex);
+    } else if (!hasDraggedRef.current) {
+      // Tap / Click fallback: resolve which tab was clicked directly from pointer coordinates
+      if (navRef.current) {
+        const rect = navRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        if (x >= 0 && x <= rect.width) {
+          const tappedIndex = Math.min(
+            Math.max(Math.floor((x / rect.width) * navItems.length), 0),
+            navItems.length - 1
+          );
+          handleItemClick(navItems[tappedIndex], tappedIndex);
+        }
+      }
+    }
+
+    setIsDragging(false);
+    setDragRatio(null);
+    setDragDirection(0);
+    hasDraggedRef.current = false;
+  };
+
+  const handlePointerCancel = () => {
+    isPointerDownRef.current = false;
+    setIsDragging(false);
+    setDragRatio(null);
+    setDragDirection(0);
+    hasDraggedRef.current = false;
+  };
+
+  const handleButtonClick = (item, index, e) => {
+    if (hasDraggedRef.current || isDragging || draggedRecentlyRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    handleItemClick(item, index);
+  };
+
   const slotPercent = 100 / navItems.length;
+
+  // Real-time Slider Position calculation (smooth continuous position during dragging)
+  const calculatedSlotPos = isDragging && dragRatio !== null
+    ? Math.max(0, Math.min((navItems.length - 1) * 100, (dragRatio * navItems.length - 0.5) * 100))
+    : activeIndex * 100;
+
+  // Active or dragged highlight index
+  const highlightedIndex = isDragging && dragRatio !== null
+    ? Math.min(Math.max(Math.floor(dragRatio * navItems.length), 0), navItems.length - 1)
+    : activeIndex;
+
+  // Elastic liquid deformation during sliding ala iOS
+  const liquidScaleX = isDragging ? 1.08 : 1;
+  const liquidOrigin = dragDirection > 0 ? 'left center' : dragDirection < 0 ? 'right center' : 'center';
 
   return (
     <>
       {/* ─────────────────────────────────────────────────────────────
-          1. FLOATING LIQUID GLASS CAPSULE NAVBAR (lg:hidden)
+          1. FLOATING APPLE-STYLE LIQUID GLASS CAPSULE NAVBAR (lg:hidden)
       ───────────────────────────────────────────────────────────── */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 w-[94vw] max-w-[420px] lg:hidden select-none pointer-events-auto"
+        className="fixed bottom-3.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-50 w-[94vw] max-w-[390px] lg:hidden select-none pointer-events-auto nav-safe-bottom"
       >
-        {/* Outer Floating Liquid Glass Capsule with Specular Highlight */}
+        {/* Outer Floating Apple Liquid Glass Dock with Refraction & Specular Bevel */}
         <div
-          className="relative w-full h-[68px] rounded-full p-1.5 flex items-center justify-between transition-all duration-300"
+          ref={navRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          className={`relative w-full h-[54px] rounded-full p-1 flex items-center justify-between transition-all duration-300 touch-none select-none ${
+            isDragging ? 'cursor-grabbing scale-[1.01]' : 'cursor-grab'
+          }`}
           style={{
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.52) 100%)',
-            backdropFilter: 'blur(32px) saturate(210%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(210%) brightness(105%)',
-            border: '1.5px solid rgba(255, 255, 255, 0.88)',
-            boxShadow: '0 20px 48px -8px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.55) inset, 0 2px 4px 0 rgba(255, 255, 255, 0.95) inset'
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.45) 100%)',
+            backdropFilter: 'blur(30px) saturate(190%) contrast(105%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(190%) contrast(105%)',
+            border: '1px solid rgba(255, 255, 255, 0.85)',
+            boxShadow: isDragging
+              ? '0 24px 50px -6px rgba(0, 0, 0, 0.18), 0 8px 20px -4px rgba(0, 0, 0, 0.10), inset 0 1px 1px 0 rgba(255, 255, 255, 1)'
+              : '0 16px 40px -6px rgba(0, 0, 0, 0.12), 0 4px 14px -2px rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.03)'
           }}
         >
-          {/* Sliding Liquid Glass Lens */}
+          {/* Sliding Apple-style Liquid Glass Lens */}
           <div
-            className="absolute top-1.5 bottom-1.5 pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0"
+            className={`absolute top-1 bottom-1 pointer-events-none z-0 ${
+              isDragging
+                ? 'transition-none'
+                : 'transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]'
+            }`}
             style={{
               width: `calc(${slotPercent}% - 4px)`,
               left: '2px',
-              transform: `translateX(${activeIndex * 100}%)`,
+              transform: `translateX(${calculatedSlotPos}%) scaleX(${liquidScaleX})`,
+              transformOrigin: liquidOrigin,
             }}
           >
-            {/* Liquid Lens Capsule with Specular Reflection & Prismatic Rim */}
+            {/* Pure Optical White Liquid Lens with Apple Soft Depth Shadow */}
             <div
-              className="relative w-full h-full rounded-full flex items-center justify-center overflow-hidden"
+              className={`relative w-full h-full rounded-full flex flex-col items-center justify-center overflow-hidden transition-all duration-300 ${
+                isDragging
+                  ? 'shadow-[0_8px_24px_rgba(0,0,0,0.18),0_2px_6px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)]'
+                  : 'shadow-[0_3px_12px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,1)]'
+              }`}
               style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(254, 242, 242, 0.88) 100%)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255, 255, 255, 0.95)',
-                boxShadow: '0 6px 18px rgba(220, 38, 38, 0.22), inset 0 2px 3px rgba(255, 255, 255, 1), inset 0 -2px 3px rgba(220, 38, 38, 0.08)'
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)',
+                border: '0.5px solid rgba(0, 0, 0, 0.04)',
               }}
             >
-              {/* Specular Liquid Glint Highlight */}
-              <div className="absolute top-1 left-2 right-2 h-1.5 bg-gradient-to-r from-transparent via-white to-transparent rounded-full opacity-90 blur-[0.3px]" />
-              {/* Bottom Liquid Depth Highlight */}
-              <div className="absolute bottom-0.5 inset-x-3 h-1 bg-gradient-to-r from-transparent via-red-500/25 to-transparent rounded-full" />
+              {/* Apple Specular Gloss Line at top edge */}
+              <div className="absolute top-0 inset-x-2 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-95" />
             </div>
           </div>
 
           {/* Interactive Navigation Item Slots */}
           {navItems.map((item, index) => {
             const Icon = item.icon;
-            const isActive = activeIndex === index && !isAccountDrawerOpen;
+            const isSelected = highlightedIndex === index && !isAccountDrawerOpen;
 
             return (
               <button
                 key={item.id}
-                onClick={() => handleItemClick(item, index)}
-                className="relative z-10 flex-1 h-full rounded-full flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-transform active:scale-92"
+                type="button"
+                onClick={(e) => handleButtonClick(item, index, e)}
+                className="relative z-10 flex-1 h-full rounded-full flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-transform active:scale-95"
                 aria-label={item.label}
               >
-                {/* Icon with Spring Lift on Active */}
+                {/* Icon with Apple Spring Pop on Active */}
                 <div className="transition-transform duration-200">
                   <Icon
-                    className={`w-5 h-5 transition-all duration-200 ${
-                      isActive
-                        ? 'text-red-600 scale-110 drop-shadow-[0_2px_8px_rgba(220,38,38,0.4)]'
+                    className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all duration-200 ${
+                      isSelected
+                        ? 'text-red-600 scale-105'
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
-                    strokeWidth={isActive ? 2.5 : 2}
+                    strokeWidth={isSelected ? 2.3 : 1.85}
                   />
                 </div>
 
                 {/* Label */}
                 <span
-                  className={`text-[10px] font-sans tracking-tight transition-all duration-200 leading-none ${
-                    isActive
-                      ? 'font-black text-red-600 scale-105'
-                      : 'font-semibold text-slate-500'
+                  className={`text-[9px] sm:text-[9.5px] font-sans tracking-tight transition-all duration-200 leading-none ${
+                    isSelected
+                      ? 'font-bold text-red-600 scale-105'
+                      : 'font-medium text-slate-500'
                   }`}
                 >
                   {item.label}
@@ -269,10 +442,8 @@ export default function DribbbleMobileNav() {
 
             {/* Logout Action Button */}
             <button
-              onClick={async () => {
-                setIsAccountDrawerOpen(false);
-                await logout();
-                navigate('/login');
+              onClick={() => {
+                setShowLogoutConfirm(true);
               }}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(220,38,38,0.3)] active:scale-98 transition-all cursor-pointer"
             >
@@ -282,6 +453,17 @@ export default function DribbbleMobileNav() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          setIsAccountDrawerOpen(false);
+          await logout();
+          navigate('/login');
+        }}
+      />
     </>
   );
 }

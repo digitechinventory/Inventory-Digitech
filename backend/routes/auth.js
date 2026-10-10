@@ -6,11 +6,25 @@ import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { sendNewUserAlertToAdmin } from '../services/mailer.js';
 import { sendNewUserTelegramAlert } from '../services/telegram.js';
+import { bruteForceProtection, authRateLimit } from '../middlewares/security.js';
+import { getSessionDurationConfig, updateSessionDurationConfig } from '../services/systemSettings.js';
+import localDb from '../services/localDb.js';
 
 const router = Router();
 
 const FALLBACK_USERS = {
   'arya-user@digitech.co.id': {
+    id: 'demo-user-001',
+    email: 'arya-user@digitech.co.id',
+    full_name: 'arya-user',
+    role: 'User',
+    company: 'Digitech',
+    department: 'Operations',
+    site_id: 'site-bib-02',
+    is_active: true,
+    phone: '+6281200000001'
+  },
+  'user@digitech.co.id': {
     id: 'demo-user-001',
     email: 'arya-user@digitech.co.id',
     full_name: 'arya-user',
@@ -32,7 +46,29 @@ const FALLBACK_USERS = {
     is_active: true,
     phone: '+6281200000002'
   },
+  'admin@digitech.co.id': {
+    id: 'demo-admin-001',
+    email: 'arya-admin@digitech.co.id',
+    full_name: 'arya-admin',
+    role: 'Admin',
+    company: 'Digitech',
+    department: 'Inventory Control',
+    site_id: 'site-bib-02',
+    is_active: true,
+    phone: '+6281200000002'
+  },
   'arya-superadmin@digitech.co.id': {
+    id: 'demo-sa-001',
+    email: 'arya-superadmin@digitech.co.id',
+    full_name: 'arya-superadmin',
+    role: 'Superadmin',
+    company: 'Digitech',
+    department: 'System Administration',
+    site_id: null,
+    is_active: true,
+    phone: '+6281200000003'
+  },
+  'superadmin@digitech.co.id': {
     id: 'demo-sa-001',
     email: 'arya-superadmin@digitech.co.id',
     full_name: 'arya-superadmin',
@@ -142,7 +178,7 @@ router.post('/register', async (req, res, next) => {
 });
 
 // POST /api/auth/login — PRD Section 3.4 & 3.5
-router.post('/login', async (req, res, next) => {
+router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -175,27 +211,44 @@ router.post('/login', async (req, res, next) => {
       }
     } catch {}
 
-    // Fallback lookup if Supabase auth didn't return (e.g. dev/demo accounts)
+    // Fallback lookup if Supabase auth didn't return (e.g. dev/demo accounts or local PostgreSQL)
     if (!profile) {
-      const { data: p } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-      if (p) {
-        profile = p;
-      } else if (FALLBACK_USERS[cleanEmail]) {
+      try {
+        const { data: p } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+        if (p) profile = p;
+      } catch {}
+
+      if (!profile && localDb.isConnected()) {
+        try {
+          const { rows } = await localDb.query(
+            'SELECT * FROM user_profiles WHERE LOWER(email) = $1 LIMIT 1',
+            [cleanEmail]
+          );
+          if (rows && rows.length > 0) {
+            profile = rows[0];
+          }
+        } catch {}
+      }
+
+      if (!profile && FALLBACK_USERS[cleanEmail]) {
         profile = FALLBACK_USERS[cleanEmail];
       }
     }
 
     if (!profile) {
+      // Panggil brute force fail tracker
+      if (req._bruteForceFail) req._bruteForceFail();
       throw new AppError('Kredensial tidak valid. Periksa kembali email dan kata sandi Anda.', 401, 'AUTH_INVALID_CREDENTIALS');
     }
 
     // 2. Validate is_active status (PRD Section 3.5 & SDD 2.3)
     const isActive = profile.is_active ?? profile.is_approved ?? false;
     if (!isActive) {
+      // Akun tidak aktif — tidak menambah counter brute force
       throw new AppError(
         'Akun Anda sedang menunggu persetujuan dan aktivasi oleh Superadmin. Silakan hubungi pengawas site.',
         403,
@@ -204,12 +257,21 @@ router.post('/login', async (req, res, next) => {
       );
     }
 
+    // Login berhasil — reset brute force counter
+    if (req._bruteForceSuccess) req._bruteForceSuccess();
+
+    // Ambil konfigurasi durasi sesi terkini (dinamis dari Superadmin, default 8 jam)
+    const sessionConfig = await getSessionDurationConfig();
+    const sessionDurationMs = sessionConfig.durationMs || (8 * 3600 * 1000);
+    const expiresAt = Date.now() + sessionDurationMs;
+
     const tokenPayload = {
       id: profile.id,
       email: profile.email,
       role: profile.role || 'User',
       company: profile.company,
-      exp: Date.now() + 86400000
+      exp: expiresAt,
+      session_duration_hours: sessionConfig.durationHours
     };
 
     const token = `bearer.${Buffer.from(JSON.stringify(tokenPayload)).toString('base64')}`;
@@ -225,17 +287,20 @@ router.post('/login', async (req, res, next) => {
       is_active: true
     };
 
-    // Cache user info in Redis for 24h
-    await cacheSet(`user:${profile.id}`, JSON.stringify(userInfo), 86400).catch(() => {});
+    // Cache user info in Redis dengan TTL sesuai durasi sesi aktif
+    const cacheTtlSeconds = Math.max(60, Math.round(sessionDurationMs / 1000));
+    await cacheSet(`user:${profile.id}`, JSON.stringify(userInfo), cacheTtlSeconds).catch(() => {});
 
     return sendSuccess(
       res,
       {
         user: userInfo,
         session: {
-          access_token: authSession?.access_token || token,
+          access_token: token,
           refresh_token: authSession?.refresh_token || null,
-          expires_at: authSession?.expires_at || Date.now() + 86400000
+          expires_at: expiresAt,
+          duration_hours: sessionConfig.durationHours,
+          duration_minutes: sessionConfig.durationMinutes
         }
       },
       'Autentikasi berhasil.'
@@ -266,6 +331,43 @@ router.get('/me', requireAuth, async (req, res, next) => {
       return sendSuccess(res, user, 'Data profil pengguna.');
     }
     return sendSuccess(res, req.user, 'Data profil pengguna.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/auth/session-config — Mendapatkan pengaturan masa berlaku sesi login
+router.get('/session-config', async (req, res, next) => {
+  try {
+    const config = await getSessionDurationConfig();
+    return sendSuccess(res, config, 'Konfigurasi masa aktif sesi login sistem.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/auth/session-config — Mengubah pengaturan masa berlaku sesi login (Khusus Superadmin)
+router.put('/session-config', requireAuth, async (req, res, next) => {
+  try {
+    if (req.user?.role !== 'Superadmin') {
+      throw new AppError(
+        'Akses ditolak: Hanya Superadmin yang memiliki otorisasi untuk mengubah kebijakan durasi masa berlaku sesi login sistem.',
+        403,
+        'FORBIDDEN_ROLE'
+      );
+    }
+
+    const hours = req.body?.durationHours ?? req.body?.hours;
+    if (hours === undefined || hours === null) {
+      throw new AppError('Parameter durationHours wajib disertakan.', 400, 'VALIDATION_FAILED');
+    }
+
+    const updated = await updateSessionDurationConfig(hours, req.user?.email || 'Superadmin');
+    return sendSuccess(
+      res,
+      updated,
+      `Kebijakan masa berlaku sesi login sistem berhasil diperbarui menjadi ${updated.durationHours} jam (${updated.durationMinutes} menit). Pengguna akan otomatis dikeluarkan (auto kick-out) saat sesi berakhir.`
+    );
   } catch (err) {
     next(err);
   }

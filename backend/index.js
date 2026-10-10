@@ -1,8 +1,19 @@
-import 'dotenv/config';
+// Digitech IMS Server Entrypoint
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Explicitly load .env from backend directory and fallback to root
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config();
 
 import authRoutes from './routes/auth.js';
 import inventoryRoutes from './routes/inventory.js';
@@ -12,36 +23,61 @@ import sitesRoutes from './routes/sites.js';
 import geoRoutes from './routes/geo.js';
 import toolsRoutes from './routes/tools.js';
 import opnameRoutes from './routes/opname.js';
+import agendasRoutes from './routes/agendas.js';
+import notificationsRoutes from './routes/notifications.js';
+import projectInventoryRoutes from './routes/projectInventory.js';
 
 import { errorHandler } from './middlewares/errorHandler.js';
 import { sendSuccess } from './middlewares/responseHandler.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import {
+  globalRateLimit,
+  strictRateLimit,
+  xssInjectionGuard,
+  additionalSecurityHeaders
+} from './middlewares/security.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+// Dengarkan di 0.0.0.0 agar bisa diakses via CasaOS / jaringan lokal
+const HOST = process.env.HOST || '0.0.0.0';
 
-
-// ─── Security & Parsing ────────────────────────────────────────────────────
+// ─── Security Layer 1: Helmet ──────────────────────────────────────────────
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false, // Diperlukan agar iframe Spline bisa akses resource
+  hsts: false, // Jangan paksa HTTPS pada port lokal / Tailscale tanpa SSL
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      // 'wasm-unsafe-eval' diperlukan untuk Spline WebAssembly runtime
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "'wasm-unsafe-eval'", 'blob:', 'https://prod.spline.design', 'https://cdn.spline.design', 'https://unpkg.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      connectSrc: ["'self'", 'https:', 'wss:', 'http:', 'blob:'],
+      // blob: diperlukan untuk Spline Web Workers
+      workerSrc: ["'self'", 'blob:'],
+      frameSrc: ["'self'"],
+      mediaSrc: ["'self'", 'blob:', 'data:'],
+      upgradeInsecureRequests: null, // PENTING: Mencegah browser memaksa https:// pada port 3001
+    }
+  }
 }));
 
+// ─── Security Layer 2: Custom Headers ──────────────────────────────────────
+app.use(additionalSecurityHeaders);
+
+// ─── Security Layer 3: Global Rate Limit (200 req/menit per IP) ────────────
+app.use(globalRateLimit);
+
+// ─── CORS ──────────────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests or same-origin
     if (!origin) return callback(null, true);
-    // In development mode, allow any origin (e.g. mobile IP, localhost, custom ports)
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
     if (
       origin === process.env.CLIENT_URL ||
-      /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin)
+      /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|100\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin)
     ) {
       return callback(null, true);
     }
@@ -56,17 +92,23 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ─── Routes ───────────────────────────────────────────────────────────────
+// ─── Security Layer 4: XSS & SQL Injection Guard ───────────────────────────
+app.use('/api', xssInjectionGuard);
+
+// ─── Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/mos', mosRoutes);
-app.use('/api/users', usersRoutes);
+app.use('/api/mos', strictRateLimit, mosRoutes);
+app.use('/api/users', strictRateLimit, usersRoutes);
 app.use('/api/sites', sitesRoutes);
 app.use('/api/geo', geoRoutes);
 app.use('/api/tools', toolsRoutes);
 app.use('/api/opname', opnameRoutes);
+app.use('/api/agendas', agendasRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/project-inventory', projectInventoryRoutes);
 
-// ─── Health Check (SDD Unified Response) ──────────────────────────────────
+// ─── Health Check ──────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   return sendSuccess(res, {
     status: 'ok',
@@ -74,13 +116,13 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0 (Production Architecture)',
     environment: process.env.NODE_ENV || 'development',
     supabase: !!process.env.SUPABASE_URL,
-    redis: !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
+    redis: !!(process.env.REDIS_URL || (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)),
     mailer: !!process.env.SMTP_USER,
-    telegram: false
+    security: { rateLimit: true, bruteForce: true, xssGuard: true, helmetHeaders: true }
   }, 'API Server Digitech IMS berjalan normal.');
 });
 
-// ─── Frontend Static Files & SPA Routing ─────────────────────────────────
+// ─── Frontend Static Files & SPA Routing ───────────────────────────────────
 const possibleDistPaths = [
   path.join(__dirname, 'dist'),
   path.join(__dirname, 'public'),
@@ -100,14 +142,12 @@ if (distDir) {
   console.log(`[Static] Serving frontend SPA from: ${distDir}`);
   app.use(express.static(distDir));
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      return next();
-    }
+    if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(distDir, 'index.html'));
   });
 }
 
-// ─── 404 Route Handler for unmatched API routes ──────────────────────────
+// ─── 404 Handler ───────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   const err = new Error(`Route ${req.method} ${req.originalUrl} tidak ditemukan pada server`);
   err.statusCode = 404;
@@ -115,20 +155,20 @@ app.use((req, res, next) => {
   next(err);
 });
 
-// ─── Global Error Handler (SDD RFC 7807 / JSend) ───────────────────────────
+// ─── Global Error Handler ──────────────────────────────────────────────────
 app.use(errorHandler);
 
-// ─── Server Start ─────────────────────────────────────────────────────────
+// ─── Server Start ──────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  app.listen(PORT, HOST, () => {
     console.log(`
-              Digitech IMS — API Server v1.0           
-            Inventory Management System                
-  Port: http://localhost:${PORT}                      
-  Supabase: ${process.env.SUPABASE_URL ? ' Connected' : ' Not configured'}                    
-  Redis: ${process.env.UPSTASH_REDIS_REST_URL ? ' Upstash' : ' In-memory fallback'}                  
-  Mailer: ${process.env.SMTP_USER ? ' Gmail SMTP Active' : ' Simulated Logger'}             
-  Telegram:  Takedown (Roadmap)                   
+
+      Digitech IMS API Server v1.0 (SECURE)          
+
+  URL     : http://${HOST}:${PORT}
+  Supabase: ${process.env.SUPABASE_URL ? 'Connected' : 'Not configured'}
+  Redis   : ${process.env.REDIS_URL ? 'Local Redis' : process.env.UPSTASH_REDIS_REST_URL ? 'Upstash' : 'In-memory'}
+  Mailer  : ${process.env.SMTP_USER ? 'Gmail SMTP Active' : 'Not configured'}
     `);
   });
 }

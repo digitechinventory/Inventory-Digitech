@@ -74,12 +74,73 @@ export function AuthProvider({ children }) {
     }
   }, [user, session]);
 
+  const handleSessionExpired = useCallback(() => {
+    setUser(null);
+    setSession(null);
+    localStorage.removeItem('ims_user');
+    localStorage.removeItem('ims_session');
+    localStorage.removeItem('token');
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login?reason=session_expired';
+    }
+  }, []);
+
+  // Monitor token expiration & auto kick-out saat waktu expired tercapai
+  useEffect(() => {
+    if (!session?.expires_at) return;
+
+    const expiresAt = Number(session.expires_at);
+
+    const checkExpiration = () => {
+      const now = Date.now();
+      if (now >= expiresAt) {
+        console.warn('[Auth] Masa aktif sesi telah habis (Session Expired). Auto kick-out initiated.');
+        handleSessionExpired();
+      }
+    };
+
+    // 1. Cek langsung saat mount / update
+    const now = Date.now();
+    if (now >= expiresAt) {
+      handleSessionExpired();
+      return;
+    }
+
+    // 2. Set timeout presisi pas waktu kedaluwarsa tiba
+    const msUntilExpiry = expiresAt - now;
+    const timer = setTimeout(() => {
+      handleSessionExpired();
+    }, Math.min(msUntilExpiry, 2147483640));
+
+    // 3. Watchdog interval per 15 detik (mengantisipasi tab idle atau laptop mode tidur/sleep)
+    const interval = setInterval(checkExpiration, 15000);
+
+    // 4. Cek saat tab browser kembali aktif
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkExpiration();
+      }
+    };
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', checkExpiration);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', checkExpiration);
+    };
+  }, [session?.expires_at, handleSessionExpired]);
+
   const switchDemoRole = useCallback((roleName) => {
     const targetUser = DEMO_USERS[roleName] || DEMO_USERS.User;
     setUser(targetUser);
+    const durationMs = 8 * 3600 * 1000;
+    const expiresAt = Date.now() + durationMs;
     const newSession = {
-      access_token: `bearer.${btoa(JSON.stringify({ id: targetUser.id, email: targetUser.email, role: targetUser.role, exp: Date.now() + 86400000 }))}`,
-      expires_at: Date.now() + 86400000
+      access_token: `bearer.${btoa(JSON.stringify({ id: targetUser.id, email: targetUser.email, role: targetUser.role, exp: expiresAt }))}`,
+      expires_at: expiresAt,
+      duration_hours: 8
     };
     setSession(newSession);
     localStorage.setItem('token', newSession.access_token);
@@ -108,9 +169,12 @@ export function AuthProvider({ children }) {
       if (matchedDemoKey && (!err.response || err.message === 'Network Error' || err.code === 'ERR_NETWORK')) {
         const demoUser = DEMO_USERS[matchedDemoKey];
         setUser(demoUser);
+        const durationMs = 8 * 3600 * 1000;
+        const expiresAt = Date.now() + durationMs;
         const newSession = {
-          access_token: `bearer.${btoa(JSON.stringify({ id: demoUser.id, email: demoUser.email, role: demoUser.role, exp: Date.now() + 86400000 }))}`,
-          expires_at: Date.now() + 86400000
+          access_token: `bearer.${btoa(JSON.stringify({ id: demoUser.id, email: demoUser.email, role: demoUser.role, exp: expiresAt }))}`,
+          expires_at: expiresAt,
+          duration_hours: 8
         };
         setSession(newSession);
         localStorage.setItem('token', newSession.access_token);

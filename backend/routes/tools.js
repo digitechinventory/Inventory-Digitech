@@ -161,4 +161,63 @@ router.put('/loans/:id/return', requireAuth, async (req, res, next) => {
   }
 });
 
+// DELETE /api/tools/loans/:id — Hapus satu catatan peminjaman
+router.delete('/loans/:id', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    try {
+      await supabase.from('tool_loans').delete().eq('id', id);
+    } catch (e) {
+      console.warn('[Tool Loan Delete] Supabase error:', e.message);
+    }
+    return sendSuccess(res, { id }, 'Catatan peminjaman perkakas berhasil dihapus.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/tools/loans/bulk-delete — Hapus massal catatan peminjaman
+router.post('/loans/bulk-delete', requireAuth, async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new AppError('Daftar ID peminjaman wajib disertakan.', 400, 'VALIDATION_FAILED');
+    }
+    try {
+      await supabase.from('tool_loans').delete().in('id', ids);
+    } catch (e) {
+      console.warn('[Tool Loan Bulk Delete] Supabase error:', e.message);
+    }
+    return sendSuccess(res, { count: ids.length, ids }, `${ids.length} catatan peminjaman perkakas berhasil dihapus.`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/tools/loans/:id — Edit informasi peminjaman
+router.patch('/loans/:id', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { expected_return_date, condition, notes, borrower_name } = req.body;
+
+    const updatePayload = {};
+    if (expected_return_date !== undefined) updatePayload.expected_return_date = expected_return_date;
+    if (condition !== undefined) updatePayload.condition = condition;
+    if (notes !== undefined) updatePayload.notes = notes;
+    if (borrower_name !== undefined) updatePayload.borrower_name = borrower_name;
+
+    let updated = null;
+    try {
+      const { data } = await supabase.from('tool_loans').update(updatePayload).eq('id', id).select().maybeSingle();
+      updated = data;
+    } catch (e) {
+      console.warn('[Tool Loan Patch] Supabase error:', e.message);
+    }
+
+    return sendSuccess(res, updated || { id, ...updatePayload }, 'Informasi peminjaman berhasil diperbarui.');
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

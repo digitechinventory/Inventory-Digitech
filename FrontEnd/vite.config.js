@@ -8,17 +8,33 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'digitech-emblem.png', 'digitech-logo-light.png', 'digitech-logo-dark.png'],
+      includeAssets: ['favicon.png', 'digitech-emblem.png', 'digitech-logo-light.png', 'digitech-logo-dark.png', 'logo_animation.mp4'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
-        runtimeCaching: []
+        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024, // 25 MiB
+        globIgnores: ['**/spline-robot.html'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'video' || request.url.endsWith('.mp4'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'pwa-video-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 60 // 60 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       },
       manifest: {
         name: 'Digitech IMS',
         short_name: 'Digitech IMS',
         description: 'Digitech IMS — Inventory Management System',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        theme_color: '#DC2626',
+        background_color: '#000000',
         display: 'standalone',
         icons: [
           {

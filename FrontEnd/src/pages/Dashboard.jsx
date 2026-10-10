@@ -30,9 +30,15 @@ export default function Dashboard({ mode }) {
   }
 
   const renderDesktopDashboard = () => {
-    if (mode === 'admin') return <AdminDashboard />;
-    if (mode === 'user') return <UserDashboard />;
-    if (mode === 'superadmin' || mode === 'overview') return <SuperadminDashboard />;
+    if ((mode === 'superadmin' || mode === 'overview') && normalizedRole === 'Superadmin') {
+      return <SuperadminDashboard />;
+    }
+    if (mode === 'admin' && ['Admin', 'Superadmin'].includes(normalizedRole)) {
+      return <AdminDashboard />;
+    }
+    if (mode === 'user') {
+      return <UserDashboard />;
+    }
 
     if (normalizedRole === 'Superadmin') return <SuperadminDashboard />;
     if (normalizedRole === 'Admin') return <AdminDashboard />;

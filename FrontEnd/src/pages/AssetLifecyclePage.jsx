@@ -61,8 +61,7 @@ const STAGES = [
     output: 'Dokumen MOS Sah & Trigger Stok Masuk',
     desc: 'Pemeriksaan fisik langsung saat barang tiba di gerbang/gudang site, verifikasi kesesuaian DO, geofencing lokasi penerimaan, unggah bukti fisik, dan pembubuhan 3-slot digital signature.',
     status: 'Critical Gate',
-    badgeCls: 'bg-red-50 text-red-700 border-red-300 font-bold',
-    highlight: true
+    badgeCls: 'bg-red-50 text-red-700 border-red-300 font-bold'
   },
   {
     num: 6,
@@ -129,8 +128,6 @@ export default function AssetLifecyclePage() {
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs transition-all shadow-md ${
                   isSelected
                     ? 'bg-red-700 text-white ring-4 ring-red-700/20 shadow-red-950/30'
-                    : st.highlight
-                    ? 'bg-red-50 text-red-700 border-2 border-red-500'
                     : 'bg-white text-slate-700 border border-slate-300'
                 }`}>
                   {st.num}

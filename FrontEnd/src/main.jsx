@@ -28,9 +28,15 @@ class ErrorBoundary extends Component {
               </svg>
             </div>
             <h1 className="text-lg font-bold mb-1 text-slate-900">Pemulihan Tampilan Sistem</h1>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
               Komponen tampilan sedang disinkronkan. Klik tombol di bawah untuk melanjutkan secara aman ke portal Digitech IMS.
             </p>
+            {this.state.error && (
+              <div className="w-full text-left bg-slate-900 text-red-400 p-3 rounded-xl font-mono text-[11px] mb-4 overflow-auto max-h-36 border border-red-900/50">
+                <div className="font-bold text-red-300 mb-1">{this.state.error.toString()}</div>
+                <div className="text-slate-400 text-[10px] whitespace-pre-wrap">{this.state.error.stack}</div>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-2.5 w-full">
               <button
                 onClick={() => this.setState({ hasError: false, error: null })}

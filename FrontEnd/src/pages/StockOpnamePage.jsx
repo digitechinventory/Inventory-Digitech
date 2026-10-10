@@ -49,7 +49,7 @@ export default function StockOpnamePage() {
     <div className="p-4 sm:p-6 lg:p-7 space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Stock Opname &amp; Variance Approval
           </h1>
@@ -61,7 +61,7 @@ export default function StockOpnamePage() {
         {['Admin', 'Superadmin'].includes(role) && (
           <button
             onClick={() => setShowStartModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer ml-auto shrink-0 justify-end"
           >
             <Plus className="w-4 h-4" />
             Mulai Sesi Opname Baru

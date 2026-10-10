@@ -9,9 +9,11 @@ import {
   Lock,
   Sparkles,
   ShieldCheck,
-  Upload
+  Upload,
+  Camera
 } from 'lucide-react';
 import SignatureCanvas from './SignatureCanvas';
+import CameraSignatureScanner from './CameraSignatureScanner';
 
 /**
  * DocumentSignatureBox
@@ -21,8 +23,9 @@ import SignatureCanvas from './SignatureCanvas';
  * 1. Direct Paste: Click 'Paste' button or Ctrl+V to paste signature image from clipboard.
  * 2. Direct Copy: Click 'Salin' to copy signature data/hash to clipboard.
  * 3. In-place Drawing: Draw on canvas directly.
- * 4. Quick-Sign: 1-click verified cryptographic digital signature with user credentials.
- * 5. Light Theme only: Crisp white/rose styling, no black or dark colors.
+ * 4. Scan via Camera: Client-side AI Computer Vision paper signature scanner.
+ * 5. Quick-Sign: 1-click verified cryptographic digital signature with user credentials.
+ * 6. Light Theme only: Crisp white/rose styling, no black or dark colors.
  */
 export default function DocumentSignatureBox({
   slotKey = 'slot1',
@@ -38,6 +41,7 @@ export default function DocumentSignatureBox({
   onReset
 }) {
   const [isDrawingOpen, setIsDrawingOpen] = useState(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pasteError, setPasteError] = useState(null);
   const fileInputRef = useRef(null);
@@ -278,7 +282,19 @@ export default function DocumentSignatureBox({
               </button>
             </div>
 
+            {/* Quick Certified Sign & Camera AI Scan Buttons */}
             <div className="grid grid-cols-2 gap-1.5">
+              {/* Scan Kamera AI Button */}
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                title="Scan tanda tangan kertas fisik via kamera webcam/ponsel dengan AI lokal"
+                className="flex items-center justify-center gap-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 active:scale-96 text-emerald-800 rounded-lg text-[10px] font-bold border border-emerald-200 transition-all cursor-pointer shadow-2xs"
+              >
+                <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Scan Kamera AI</span>
+              </button>
+
               {/* Quick Certified Sign Button */}
               <button
                 type="button"
@@ -289,18 +305,18 @@ export default function DocumentSignatureBox({
                 <Sparkles className="w-3 h-3 text-red-100" />
                 <span>TTD Cepat</span>
               </button>
-
-              {/* Upload image button */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title="Pilih file gambar tanda tangan"
-                className="flex items-center justify-center gap-1 py-1.5 px-2 bg-white hover:bg-slate-50 active:scale-96 text-slate-600 rounded-lg text-[10px] font-semibold border border-slate-200 transition-all cursor-pointer shadow-2xs"
-              >
-                <Upload className="w-3 h-3 text-slate-500" />
-                <span>Upload</span>
-              </button>
             </div>
+
+            {/* Upload image button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Pilih file gambar tanda tangan"
+              className="w-full flex items-center justify-center gap-1 py-1 px-2 bg-white hover:bg-slate-50 active:scale-96 text-slate-600 rounded-lg text-[10px] font-semibold border border-slate-200 transition-all cursor-pointer shadow-2xs"
+            >
+              <Upload className="w-3 h-3 text-slate-500" />
+              <span>Upload Gambar TTD</span>
+            </button>
 
             <input
               ref={fileInputRef}
@@ -380,6 +396,22 @@ export default function DocumentSignatureBox({
           </div>
         </div>
       )}
+
+      {/* ── 5. Camera AI Scanner Modal ── */}
+      <CameraSignatureScanner
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onCapture={(extractedPng) => {
+          if (onSign) {
+            onSign({
+              signatureImage: extractedPng,
+              signerName: signerName || 'Staff Lapangan',
+              signerTitle: roleTitle,
+              method: 'camera_ai_scan'
+            });
+          }
+        }}
+      />
     </div>
   );
 }

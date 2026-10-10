@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,10 +23,19 @@ import {
   PackagePlus,
   ExternalLink,
   ShieldCheck,
-  Eye
+  Eye,
+  MoreVertical,
+  Trash2,
+  Edit3,
+  CheckSquare,
+  Square,
+  MinusSquare,
+  Loader2,
+  FileSpreadsheet
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockData.js';
 
@@ -41,6 +50,7 @@ const WAREHOUSES = [
 export default function InventoryPage() {
   const navigate = useNavigate();
   const { role, isAdmin } = useAuth();
+  const { addToast } = useToast();
 
   const [selectedWarehouse, setSelectedWarehouse] = useState('wh-1');
   const [search, setSearch] = useState('');
@@ -50,6 +60,23 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedSku, setCopiedSku] = useState(null);
+
+  // Table selection & 3-dots action state
+  const [selectedTableSkus, setSelectedTableSkus] = useState([]);
+  const [activeKebabSku, setActiveKebabSku] = useState(null);
+  const [editCatalogItem, setEditCatalogItem] = useState(null);
+  const [editCatalogForm, setEditCatalogForm] = useState({
+    name: '',
+    category: '',
+    current_stock: 0,
+    min_threshold: 5,
+    unit: 'PCS',
+    rack: 'R-A01',
+    price: 0
+  });
+  const [catalogDeleteConfirm, setCatalogDeleteConfirm] = useState(null); // { type: 'single', item } | { type: 'bulk', count, skus }
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [isUpdatingItem, setIsUpdatingItem] = useState(false);
 
   // Fetch real inventory from API (falls back gracefully to INVENTORY_LEDGER)
   const { data: inventoryData, isLoading, refetch } = useQuery({
@@ -117,6 +144,89 @@ export default function InventoryPage() {
     setTimeout(() => setCopiedSku(null), 2000);
   };
 
+  // Table selection logic
+  const tableSkus = filteredItems.map(i => i.sku || i.SKU).filter(Boolean);
+  const isAllTableSelected = tableSkus.length > 0 && tableSkus.every(sku => selectedTableSkus.includes(sku));
+  const isSomeTableSelected = tableSkus.length > 0 && tableSkus.some(sku => selectedTableSkus.includes(sku)) && !isAllTableSelected;
+
+  const handleToggleAllTable = () => {
+    if (isAllTableSelected) {
+      setSelectedTableSkus(prev => prev.filter(sku => !tableSkus.includes(sku)));
+    } else {
+      setSelectedTableSkus(prev => Array.from(new Set([...prev, ...tableSkus])));
+    }
+  };
+
+  const handleToggleTableSku = (sku) => {
+    setSelectedTableSkus(prev =>
+      prev.includes(sku) ? prev.filter(x => x !== sku) : [...prev, sku]
+    );
+  };
+
+  // Close kebab on outside click
+  useEffect(() => {
+    const handleClickOutside = () => setActiveKebabSku(null);
+    if (activeKebabSku) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [activeKebabSku]);
+
+  // Handle edit catalog item
+  const handleOpenEditCatalog = (item) => {
+    setEditCatalogItem(item);
+    setEditCatalogForm({
+      name: item.name || '',
+      category: item.category || 'General Spareparts',
+      current_stock: Number(item.current_stock ?? item.currentStock ?? 0),
+      min_threshold: Number(item.min_threshold ?? item.minThreshold ?? 5),
+      unit: item.unit || 'PCS',
+      rack: item.rack || 'R-A01',
+      price: Number(item.price || 0)
+    });
+    setActiveKebabSku(null);
+  };
+
+  const handleSaveEditCatalog = async (e) => {
+    e.preventDefault();
+    if (!editCatalogItem) return;
+    const sku = editCatalogItem.sku || editCatalogItem.SKU;
+    setIsUpdatingItem(true);
+    try {
+      await api.patch(`/inventory/items/${sku}`, editCatalogForm);
+      refetch();
+      addToast('Data suku cadang berhasil diperbarui.', 'success');
+      setEditCatalogItem(null);
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Gagal memperbarui suku cadang.', 'error');
+    } finally {
+      setIsUpdatingItem(false);
+    }
+  };
+
+  const handleExecuteDeleteCatalog = async () => {
+    if (!catalogDeleteConfirm) return;
+    setIsDeletingItem(true);
+    try {
+      if (catalogDeleteConfirm.type === 'bulk') {
+        await api.post('/inventory/items/bulk-delete', { skus: catalogDeleteConfirm.skus });
+        setSelectedTableSkus(prev => prev.filter(sku => !catalogDeleteConfirm.skus.includes(sku)));
+        addToast(`${catalogDeleteConfirm.skus.length} suku cadang berhasil dihapus dari katalog.`, 'success');
+      } else {
+        const sku = catalogDeleteConfirm.item.sku || catalogDeleteConfirm.item.SKU;
+        await api.delete(`/inventory/items/${sku}`);
+        setSelectedTableSkus(prev => prev.filter(s => s !== sku));
+        addToast('Suku cadang berhasil dihapus dari katalog.', 'success');
+      }
+      refetch();
+      setCatalogDeleteConfirm(null);
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Gagal menghapus suku cadang.', 'error');
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-16 font-sans select-none animate-in fade-in duration-200">
       
@@ -133,7 +243,7 @@ export default function InventoryPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 relative z-10">
+        <div className="flex items-center gap-2.5 relative z-10 ml-auto justify-end shrink-0">
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
@@ -258,58 +368,61 @@ export default function InventoryPage() {
             )}
           </div>
 
-          {/* Status Filter Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 hidden sm:inline">Status:</span>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
-            >
-              <option value="ALL">Semua Status</option>
-              <option value="optimal">Optimal (Cukup)</option>
-              <option value="low">Menipis (Low Stock)</option>
-              <option value="critical">Kritis (Hampir Habis)</option>
-            </select>
-          </div>
+          {/* Controls: Status Filter & View Mode Toggle — Pushed to right edge */}
+          <div className="flex items-center gap-3 ml-auto justify-end shrink-0">
+            {/* Status Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Status:</span>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+              >
+                <option value="ALL">Semua Status</option>
+                <option value="optimal">Optimal (Cukup)</option>
+                <option value="low">Menipis (Low Stock)</option>
+                <option value="critical">Kritis (Hampir Habis)</option>
+              </select>
+            </div>
 
-          {/* View Mode Toggle Buttons */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-red-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Kartu Grid</span>
-            </button>
+            {/* View Mode Toggle Buttons */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold shrink-0">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-red-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Kartu Grid</span>
+              </button>
 
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white text-red-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span>Tabel</span>
-            </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white text-red-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>Tabel</span>
+              </button>
 
-            <button
-              onClick={() => setViewMode('rack')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'rack'
-                  ? 'bg-white text-red-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Matriks Rak</span>
-            </button>
+              <button
+                onClick={() => setViewMode('rack')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  viewMode === 'rack'
+                    ? 'bg-white text-red-600 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Matriks Rak</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -503,71 +616,224 @@ export default function InventoryPage() {
 
       {/* MODE 2: MODERN CLEAN TABLE VIEW */}
       {viewMode === 'table' && (
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                  <th className="px-4 py-3.5 text-left">SKU / Part Number</th>
-                  <th className="px-4 py-3.5 text-left">Nama Suku Cadang</th>
-                  <th className="px-4 py-3.5 text-left">Kategori</th>
-                  <th className="px-4 py-3.5 text-center">Stok Fisik</th>
-                  <th className="px-4 py-3.5 text-center">Safety Stock</th>
-                  <th className="px-4 py-3.5 text-left">Lokasi Rak</th>
-                  <th className="px-4 py-3.5 text-left">Status</th>
-                  <th className="px-4 py-3.5 text-center">Aksi Cepat</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredItems.map((item) => {
-                  const sku = item.sku || item.SKU;
-                  const curr = Number(item.current_stock ?? item.currentStock ?? 0);
-                  const min = Number(item.min_threshold ?? item.minThreshold ?? 10);
-                  const unit = item.unit || 'PCS';
-                  const isLow = curr <= min;
+        <div className="space-y-4">
+          {/* Bulk Action Bar (When items in table are selected) */}
+          {selectedTableSkus.length > 0 && (
+            <div className="bg-slate-900 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
+                  {selectedTableSkus.length}
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    {selectedTableSkus.length} suku cadang dipilih
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Pilih aksi massal untuk suku cadang yang ditandai dalam katalog
+                  </p>
+                </div>
+              </div>
 
-                  return (
-                    <tr
-                      key={sku}
-                      onClick={() => setSelectedItem(item)}
-                      className="hover:bg-red-50/30 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3 font-mono font-bold text-red-600">{sku}</td>
-                      <td className="px-4 py-3 font-bold text-slate-900 max-w-xs truncate">{item.name}</td>
-                      <td className="px-4 py-3 text-slate-600">{item.category}</td>
-                      <td className="px-4 py-3 text-center font-black text-slate-900">
-                        {curr} <span className="text-[10px] font-normal text-slate-500">{unit}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center font-mono text-slate-500">{min} {unit}</td>
-                      <td className="px-4 py-3 font-mono font-semibold text-slate-700">{item.rack || '-'}</td>
-                      <td className="px-4 py-3">
-                        {isLow ? (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                            Low Stock
-                          </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedTableSkus([])}
+                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                >
+                  Batal Pilih
+                </button>
+
+                <button
+                  onClick={() =>
+                    setCatalogDeleteConfirm({
+                      type: 'bulk',
+                      count: selectedTableSkus.length,
+                      skus: [...selectedTableSkus]
+                    })
+                  }
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus Terpilih ({selectedTableSkus.length})
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                    {/* Checkbox Header */}
+                    <th className="px-3.5 py-3.5 text-center w-10">
+                      <button
+                        type="button"
+                        onClick={handleToggleAllTable}
+                        className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                        title={isAllTableSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
+                      >
+                        {isAllTableSelected ? (
+                          <CheckSquare className="w-4 h-4 text-red-600" />
+                        ) : isSomeTableSelected ? (
+                          <MinusSquare className="w-4 h-4 text-red-600" />
                         ) : (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Optimal
-                          </span>
+                          <Square className="w-4 h-4 text-slate-400" />
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate('/mr');
-                          }}
-                          className="px-2.5 py-1 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-lg text-xs font-bold transition border border-red-200 hover:border-red-600 cursor-pointer"
+                      </button>
+                    </th>
+                    <th className="px-4 py-3.5 text-left">SKU / Part Number</th>
+                    <th className="px-4 py-3.5 text-left">Nama Suku Cadang</th>
+                    <th className="px-4 py-3.5 text-left">Kategori</th>
+                    <th className="px-4 py-3.5 text-center">Stok Fisik</th>
+                    <th className="px-4 py-3.5 text-center">Safety Stock</th>
+                    <th className="px-4 py-3.5 text-left">Lokasi Rak</th>
+                    <th className="px-4 py-3.5 text-left">Status</th>
+                    <th className="px-4 py-3.5 text-center w-20">Aksi Cepat</th>
+                    <th className="px-4 py-3.5 text-center w-14">Opsi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredItems.map((item) => {
+                    const sku = item.sku || item.SKU;
+                    const curr = Number(item.current_stock ?? item.currentStock ?? 0);
+                    const min = Number(item.min_threshold ?? item.minThreshold ?? 10);
+                    const unit = item.unit || 'PCS';
+                    const isLow = curr <= min;
+                    const isSelected = selectedTableSkus.includes(sku);
+
+                    return (
+                      <tr
+                        key={sku}
+                        onClick={() => setSelectedItem(item)}
+                        className={`transition-colors cursor-pointer ${
+                          isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-red-50/30'
+                        }`}
+                      >
+                        {/* Checkbox Cell */}
+                        <td
+                          className="px-3.5 py-3 text-center w-10"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          MR
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTableSku(sku)}
+                            className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-red-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                            )}
+                          </button>
+                        </td>
+
+                        <td className="px-4 py-3 font-mono font-bold text-red-600">{sku}</td>
+                        <td className="px-4 py-3 font-bold text-slate-900 max-w-xs truncate">{item.name}</td>
+                        <td className="px-4 py-3 text-slate-600">{item.category}</td>
+                        <td className="px-4 py-3 text-center font-black text-slate-900">
+                          {curr} <span className="text-[10px] font-normal text-slate-500">{unit}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center font-mono text-slate-500">{min} {unit}</td>
+                        <td className="px-4 py-3 font-mono font-semibold text-slate-700">{item.rack || '-'}</td>
+                        <td className="px-4 py-3">
+                          {isLow ? (
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                              Low Stock
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Optimal
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Quick MR Button */}
+                        <td className="px-4 py-3 text-center w-20" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => navigate('/mr')}
+                            className="px-2.5 py-1 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-lg text-xs font-bold transition border border-red-200 hover:border-red-600 cursor-pointer"
+                          >
+                            MR
+                          </button>
+                        </td>
+
+                        {/* 3-Dots Action Cell */}
+                        <td className="px-4 py-3 text-center relative w-14" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => setActiveKebabSku(activeKebabSku === sku ? null : sku)}
+                            className={`p-1.5 rounded-xl border transition cursor-pointer ${
+                              activeKebabSku === sku
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                            }`}
+                            title="Opsi Suku Cadang"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {activeKebabSku === sku && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedItem(item);
+                                  setActiveKebabSku(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Detail & Barcode QR</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigate('/mr');
+                                  setActiveKebabSku(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <PackagePlus className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Ajukan Tiket MR</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditCatalog(item)}
+                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Edit Suku Cadang</span>
+                              </button>
+
+                              <div className="border-t border-slate-100 my-1"></div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCatalogDeleteConfirm({ type: 'single', item });
+                                  setActiveKebabSku(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                <span>Hapus dari Katalog</span>
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -796,6 +1062,188 @@ export default function InventoryPage() {
                 Simpan ke Katalog
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT DATA SUKU CADANG */}
+      {editCatalogItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Edit Data Suku Cadang</h3>
+                  <p className="text-[11px] font-mono text-slate-500">{editCatalogItem.sku || editCatalogItem.SKU}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditCatalogItem(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCatalog}>
+              <div className="p-6 space-y-4 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Nama Suku Cadang
+                  </label>
+                  <input
+                    type="text"
+                    value={editCatalogForm.name}
+                    onChange={(e) => setEditCatalogForm({ ...editCatalogForm, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Kategori Sparepart
+                  </label>
+                  <input
+                    type="text"
+                    value={editCatalogForm.category}
+                    onChange={(e) => setEditCatalogForm({ ...editCatalogForm, category: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Stok Fisik
+                    </label>
+                    <input
+                      type="number"
+                      value={editCatalogForm.current_stock}
+                      onChange={(e) => setEditCatalogForm({ ...editCatalogForm, current_stock: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Min Threshold
+                    </label>
+                    <input
+                      type="number"
+                      value={editCatalogForm.min_threshold}
+                      onChange={(e) => setEditCatalogForm({ ...editCatalogForm, min_threshold: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Satuan
+                    </label>
+                    <input
+                      type="text"
+                      value={editCatalogForm.unit}
+                      onChange={(e) => setEditCatalogForm({ ...editCatalogForm, unit: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Lokasi Rak (Bin)
+                    </label>
+                    <input
+                      type="text"
+                      value={editCatalogForm.rack}
+                      onChange={(e) => setEditCatalogForm({ ...editCatalogForm, rack: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Harga Estimasi (IDR)
+                    </label>
+                    <input
+                      type="number"
+                      value={editCatalogForm.price}
+                      onChange={(e) => setEditCatalogForm({ ...editCatalogForm, price: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditCatalogItem(null)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingItem}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdatingItem ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: KONFIRMASI HAPUS DARI KATALOG */}
+      {catalogDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                {catalogDeleteConfirm.type === 'bulk'
+                  ? `Hapus ${catalogDeleteConfirm.count} Suku Cadang?`
+                  : 'Hapus Suku Cadang dari Katalog?'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {catalogDeleteConfirm.type === 'bulk'
+                  ? `Anda akan menghapus ${catalogDeleteConfirm.count} item suku cadang dari katalog inventaris.`
+                  : `Item "${catalogDeleteConfirm.item?.name}" (SKU: ${catalogDeleteConfirm.item?.sku || catalogDeleteConfirm.item?.SKU}) akan dihapus dari katalog.`}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setCatalogDeleteConfirm(null)}
+                disabled={isDeletingItem}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition cursor-pointer flex-1"
+              >
+                Batalkan
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteDeleteCatalog}
+                disabled={isDeletingItem}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex-1 disabled:opacity-50"
+              >
+                {isDeletingItem ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                Ya, Hapus
+              </button>
+            </div>
           </div>
         </div>
       )}

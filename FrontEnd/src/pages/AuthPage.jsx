@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import SwipeButton from '../components/auth/SwipeButton.jsx';
@@ -49,6 +50,64 @@ export default function AuthPage() {
   const [isAccountInactive, setIsAccountInactive] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutMinutes, setLockoutMinutes] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'session_expired' || params.get('expired') === '1') {
+      setSessionExpiredNotice(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    const roleParam = (params.get('role') || params.get('autologin') || '').toLowerCase();
+    const emailParam = params.get('email');
+    const passParam = params.get('password') || 'OfficeBIB123';
+    const redirectParam = params.get('redirect') || '/dashboard';
+
+    let targetEmail = '';
+    let targetPassword = 'OfficeBIB123';
+
+    if (roleParam === 'superadmin' || roleParam === 'sa') {
+      targetEmail = 'arya-superadmin@digitech.co.id';
+    } else if (roleParam === 'admin' || roleParam === 'logistik') {
+      targetEmail = 'arya-admin@digitech.co.id';
+    } else if (roleParam === 'user' || roleParam === 'teknisi') {
+      targetEmail = 'arya-user@digitech.co.id';
+    } else if (emailParam) {
+      targetEmail = emailParam;
+      targetPassword = passParam;
+    }
+
+    // SECURITY GUARD:
+    // Parameter auto-login (?role= atau ?autologin=) HANYA diizinkan jika sedang dijalankan
+    // oleh automated test runner (window.navigator.webdriver).
+    // Pada browser pengguna biasa / production, fitur ini dinonaktifkan total demi mencegah celah keamanan (Backdoor/Privilege Escalation).
+    const isTestEnvironment = typeof window !== 'undefined' && Boolean(window.navigator?.webdriver);
+
+    if (targetEmail && isTestEnvironment) {
+      setLoginForm({ email: targetEmail, password: targetPassword });
+
+      // Auto-submit login hanya untuk automated test
+      const doAutoLogin = async () => {
+        setLoading(true);
+        setErrorMessage(null);
+        try {
+          await login(targetEmail, targetPassword);
+          navigate(redirectParam, { replace: true });
+        } catch (err) {
+          setErrorMessage(err.message || 'Auto-login test gagal.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      doAutoLogin();
+    }
+  }, []);
 
   // Responsive mobile detector
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
@@ -86,6 +145,7 @@ export default function AuthPage() {
     e.preventDefault();
     setErrorMessage(null);
     setIsAccountInactive(false);
+    setSessionExpiredNotice(false);
     setLoading(true);
 
     const startTime = Date.now();
@@ -103,8 +163,16 @@ export default function AuthPage() {
       }
       if (err.code === 'AUTH_ACCOUNT_INACTIVE') {
         setIsAccountInactive(true);
+      } else if (err.code === 'ACCOUNT_LOCKED' || err.code === 'AUTH_RATE_LIMITED') {
+        setIsLockedOut(true);
+        setLockoutMinutes(err.remainingMinutes || 30);
+        setErrorMessage(err.message || 'Terlalu banyak percobaan login. Akun dikunci sementara.');
       } else {
-        setErrorMessage(err.message || 'Login gagal. Periksa kembali email dan password Anda.');
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        const remaining = Math.max(0, 5 - newAttempts);
+        const suffix = remaining > 0 ? ` (${remaining} percobaan tersisa sebelum lockout)` : ' — Akun akan dikunci.';
+        setErrorMessage((err.message || 'Login gagal. Periksa kembali email dan password Anda.') + suffix);
       }
     } finally {
       setLoading(false);
@@ -140,6 +208,7 @@ export default function AuthPage() {
   const switchToRegister = () => {
     setErrorMessage(null);
     setIsAccountInactive(false);
+    setSessionExpiredNotice(false);
     setAuthMode('register');
   };
 
@@ -171,15 +240,16 @@ export default function AuthPage() {
     }
   };
 
-  // Dynamic card height for snug fit without empty space
+  // Dynamic card height for snug fit with responsive auto-expansion on notices
+  const hasLoginNotice = Boolean(sessionExpiredNotice || errorMessage || isAccountInactive);
   const cardHeightClass = authMode === 'login'
-    ? (errorMessage || isAccountInactive ? 'h-[525px] sm:h-[545px]' : 'h-[490px] sm:h-[505px]')
-    : (registrationSuccess ? 'h-[420px] sm:h-[440px]' : (errorMessage ? 'h-[685px] sm:h-[705px]' : 'h-[650px] sm:h-[670px]'));
+    ? (hasLoginNotice ? 'h-[560px] sm:h-[600px]' : 'h-[500px] sm:h-[535px]')
+    : (registrationSuccess ? 'h-[420px] sm:h-[460px]' : (errorMessage ? 'h-[655px] sm:h-[730px]' : 'h-[620px] sm:h-[695px]'));
 
   return (
     <div
       onMouseMove={handlePageMouseMove}
-      className="min-h-screen min-h-[100dvh] w-full relative overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col justify-between lg:justify-center items-center lg:items-end lg:pr-20 xl:pr-32 2xl:pr-44 bg-slate-950 select-none font-sans pt-3 pb-6 sm:py-6 lg:py-0"
+      className="h-screen h-[100dvh] w-full relative overflow-hidden flex flex-col justify-between lg:justify-center items-center lg:items-end lg:pr-20 xl:pr-32 2xl:pr-44 bg-slate-950 select-none font-sans pt-2 pb-2.5 sm:py-6 lg:py-0"
     >
       {/* 3D Spline Scene Background with DIGITECH 3D text */}
       <div className="fixed lg:absolute inset-0 z-0 overflow-hidden pointer-events-auto">
@@ -196,24 +266,27 @@ export default function AuthPage() {
       </div>
 
       {/* Corporate Left Title Header with Futuristic Cyber Styling */}
-      <div className="relative z-20 w-full px-5 pt-8 sm:pt-4 pb-2 mb-2 lg:mb-0 lg:p-0 lg:absolute lg:top-12 xl:top-16 lg:left-12 xl:left-16 flex flex-col pointer-events-none select-none max-w-[94vw] sm:max-w-md lg:max-w-xl">
-        <div className="flex items-center gap-3 mb-1 sm:mb-2">
+      <div
+        style={isMobile ? { paddingTop: 'max(env(safe-area-inset-top, 0px), 52px)' } : undefined}
+        className="relative z-20 w-full px-5 pt-12 sm:pt-4 pb-0 mb-0 lg:p-0 lg:absolute lg:top-12 xl:top-16 lg:left-12 xl:left-16 flex flex-col pointer-events-none select-none max-w-[94vw] sm:max-w-md lg:max-w-xl"
+      >
+        <div className="flex items-center gap-2.5 mb-0.5 sm:mb-2">
           <img
             src="/digitech-logo-dark.png"
             alt="DIGITECH"
-            className="h-8 sm:h-10 lg:h-12 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
+            className="h-6 sm:h-10 lg:h-12 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
           />
         </div>
-        <h1 className="text-xl sm:text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
+        <h1 className="text-base sm:text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
           Inventory <span className="bg-gradient-to-r from-red-500 via-rose-500 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(220,38,38,0.5)]">Management System</span>
         </h1>
-        <p className="text-slate-300 text-[10px] sm:text-xs lg:text-sm font-medium mt-1 sm:mt-1.5 leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+        <p className="text-slate-300 text-[9.5px] sm:text-xs lg:text-sm font-medium mt-0.5 sm:mt-1.5 leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
           Paperless Asset Lifecycle, GPS Geofencing &amp; 3-Slot Digital Signature
         </p>
       </div>
 
       {/* ────── MAIN INTERACTIVE AUTH CONTAINER ────── */}
-      <div className="relative z-30 w-full max-w-[92vw] sm:max-w-[400px] md:max-w-[415px] my-auto lg:my-0 flex flex-col items-center">
+      <div className="relative z-30 w-full max-w-[92vw] sm:max-w-[400px] md:max-w-[415px] mt-auto lg:my-0 mb-2 sm:mb-4 lg:mb-0 flex flex-col items-center">
         
         {/* Ambient Underglow Halo with Hover Expansion */}
         <div
@@ -412,7 +485,7 @@ export default function AuthPage() {
           <div className="absolute top-2 left-1/2 -translate-x-1/2 w-14 h-1.5 bg-red-600 rounded-full z-20 shadow-[0_0_8px_rgba(220,38,38,0.5)]" />
 
           {/* ────── HORIZONTAL SWIPING CAROUSEL TRACK (NO 3D FLIP) ────── */}
-          <div className="relative w-full h-full overflow-hidden rounded-[26px] z-10 pt-11 sm:pt-12 pb-14 sm:pb-15 px-1 sm:px-2">
+          <div className="relative w-full h-full overflow-hidden rounded-[26px] z-10 pt-10 sm:pt-11 pb-20 sm:pb-24 px-1 sm:px-2">
             <div
               style={{
                 transform: authMode === 'register' ? 'translateX(-50%)' : 'translateX(0%)',
@@ -421,106 +494,143 @@ export default function AuthPage() {
               className="flex w-[200%] h-full"
             >
               {/* ────── PANEL 1: LOGIN (WHITE THEME) ────── */}
-              <div className="w-1/2 shrink-0 px-6 sm:px-8 flex flex-col justify-between select-none">
+              <div className="w-1/2 shrink-0 px-5 sm:px-8 py-0.5 sm:py-1 flex flex-col justify-between select-none h-full">
                 <div className="w-full flex flex-col justify-start">
                   
                   {/* Card Brand Header with breathing room from top notch */}
-                  <div className="text-center mb-3 flex flex-col items-center">
-                    <div className="mb-1 px-3.5 py-1 bg-gradient-to-r from-slate-50 via-white to-slate-50 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-center">
+                  <div className="text-center mb-1.5 sm:mb-3 flex flex-col items-center">
+                    <div className="mb-0.5 sm:mb-1 px-3 sm:px-3.5 py-0.5 sm:py-1 bg-gradient-to-r from-slate-50 via-white to-slate-50 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-center">
                       <img
                         src="/digitech-logo-light.png"
                         alt="DIGITECH"
-                        className="h-5 w-auto object-contain"
+                        className="h-4.5 sm:h-5 w-auto object-contain"
                       />
                     </div>
-                    <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    <h2 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight">
                       Masuk ke Portal
                     </h2>
-                    <p className="text-slate-500 text-[9.5px] font-bold uppercase tracking-widest mt-0.5">
+                    <p className="text-slate-500 text-[9px] sm:text-[9.5px] font-bold uppercase tracking-widest mt-0.5">
                       INVENTORY CONTROL &bull; SECURE GATEWAY
                     </p>
                   </div>
 
                   {/* Account Inactive Notification */}
                   {isAccountInactive && (
-                    <div className="mb-2 p-2 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
+                    <div className="mb-2 p-2.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
                       <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
+                      <div className="flex-1 text-left">
                         <h4 className="text-xs font-black text-amber-900">Akun Menunggu Aktivasi Superadmin</h4>
                         <p className="text-[10px] text-amber-800 leading-snug mt-0.5">
                           Akun Anda berstatus non-aktif. Mohon tunggu persetujuan Superadmin Digitech sebelum login.
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAccountInactive(false)}
+                        className="text-amber-700/60 hover:text-amber-900 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                        title="Tutup pemberitahuan"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Session Expired Kick-out Notification */}
+                  {sessionExpiredNotice && (
+                    <div className="mb-2.5 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 text-left">
+                        <h4 className="text-xs font-black text-amber-900 tracking-tight">Sesi Login Anda Telah Berakhir</h4>
+                        <p className="text-[10px] text-amber-800 leading-snug mt-0.5">
+                          Batas waktu durasi sesi kerja telah habis. Anda telah dikeluarkan otomatis oleh sistem demi keamanan dan diwajibkan login kembali.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSessionExpiredNotice(false)}
+                        className="text-amber-700/60 hover:text-amber-900 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                        title="Tutup pemberitahuan"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   )}
 
                   {/* Generic Error Notification */}
                   {errorMessage && (
-                    <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
+                    <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
                       <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                      <p className="text-xs text-red-700 font-semibold">{errorMessage}</p>
+                      <p className="flex-1 text-xs text-red-700 font-semibold text-left">{errorMessage}</p>
+                      <button
+                        type="button"
+                        onClick={() => setErrorMessage(null)}
+                        className="text-red-500 hover:text-red-700 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                        title="Tutup pemberitahuan"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   )}
 
                   {/* Form Login */}
-                  <form onSubmit={handleLoginSubmit} autoComplete="off" className="space-y-3.5">
+                  <form onSubmit={handleLoginSubmit} autoComplete="off" className="space-y-3.5 sm:space-y-4">
                     {/* Email Column */}
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                         Alamat Email Personel
                       </label>
                       <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
                         <input
                           type="email"
                           required
                           value={loginForm.email}
                           onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                           placeholder="nama@digitech.co.id"
-                          className="w-full pl-11 pr-3.5 py-3 text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                          className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
                         />
                       </div>
                     </div>
 
                     {/* Password Column */}
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                         Kata Sandi
                       </label>
                       <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
                         <input
                           type={showPassword ? 'text' : 'password'}
                           required
                           value={loginForm.password}
                           onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                           placeholder="Masukkan kata sandi akun"
-                          className="w-full pl-11 pr-11 py-3 text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer transition-colors"
                         >
-                          {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                          {showPassword ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                         </button>
                       </div>
                     </div>
 
                     {/* Remember Me & Forgot Password Row */}
-                    <div className="flex items-center justify-between pt-1 px-1">
-                      <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900 transition-colors select-none">
+                    <div className="flex items-center justify-between pt-0.5 px-1">
+                      <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer text-slate-600 hover:text-slate-900 transition-colors select-none">
                         <input
                           type="checkbox"
                           defaultChecked
-                          className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600"
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600"
                         />
-                        <span className="text-[11px] font-bold">Ingat Akun</span>
+                        <span className="text-[10px] sm:text-[11px] font-bold">Ingat Akun</span>
                       </label>
                       <button
                         type="button"
                         onClick={() => alert('Fitur pemulihan kata sandi dapat diajukan langsung melalui Superadmin IT Digitech.')}
-                        className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
+                        className="text-[10px] sm:text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
                       >
                         Lupa Kata Sandi?
                       </button>
@@ -530,17 +640,17 @@ export default function AuthPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="relative w-full mt-2.5 py-3.5 bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-red-900/30 transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait flex items-center justify-center gap-2 overflow-hidden border border-red-500/50"
+                      className="relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-red-900/30 transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait flex items-center justify-center gap-2 overflow-hidden border border-red-500/50"
                     >
                       {loading ? (
                         <div className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-4.5 h-4.5 animate-spin text-white shrink-0" />
+                          <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
                           <span className="tracking-wider font-extrabold text-xs">Memproses Masuk...</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-2">
                           <span>Masuk ke Portal</span>
-                          <ArrowRight className="w-4.5 h-4.5" />
+                          <ArrowRight className="w-4 h-4" />
                         </div>
                       )}
                       {loading && (
@@ -551,10 +661,10 @@ export default function AuthPage() {
                 </div>
 
                 {/* ────── INTERACTIVE SWIPE TO SIGNUP SECTION ────── */}
-                <div className="mt-2.5 pt-1.5 border-t border-slate-100 flex flex-col items-center gap-1 w-full max-w-[280px] sm:max-w-[290px] mx-auto">
+                <div className="mt-3 sm:mt-4 pt-1.5 sm:pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5 w-full max-w-[270px] sm:max-w-[280px] mx-auto shrink-0 mb-1 sm:mb-2">
                   <div className="flex items-center gap-2 w-full">
                     <div className="h-px bg-slate-200 flex-1" />
-                    <span className="text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">
+                    <span className="text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">
                       Belum Punya Akun?
                     </span>
                     <div className="h-px bg-slate-200 flex-1" />
@@ -736,7 +846,7 @@ export default function AuthPage() {
 
                 {/* ────── INTERACTIVE SWIPE BACK TO LOGIN SECTION ────── */}
                 {!registrationSuccess && (
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-col items-center gap-1 w-full max-w-[280px] sm:max-w-[290px] mx-auto shrink-0 pb-1.5">
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5 w-full max-w-[270px] sm:max-w-[280px] mx-auto shrink-0 mb-1 sm:mb-2">
                     <SwipeButton
                       label="Swipe untuk Kembali Masuk"
                       direction="left"

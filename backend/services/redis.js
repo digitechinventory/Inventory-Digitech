@@ -1,21 +1,25 @@
 import 'dotenv/config';
 
-// Graceful Redis service — supports local Redis (ioredis), Upstash, or in-memory fallback
-// Priority: REDIS_URL (local/native) > UPSTASH credentials > in-memory
-
+// Dedicated Local Redis Service (ioredis) with high-performance in-memory fallback
 let redisClient = null;
 const memoryCache = new Map();
 
 async function initRedis() {
   const localRedisUrl = process.env.REDIS_URL;
-  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // 1. Try local Redis via ioredis (connection string: redis://host:port or redis://:password@host:port)
-  if (localRedisUrl && !localRedisUrl.includes('upstash.io')) {
+  if (localRedisUrl) {
     try {
       const { default: Redis } = await import('ioredis');
-      const client = new Redis(localRedisUrl, { lazyConnect: true, connectTimeout: 3000 });
+      const client = new Redis(localRedisUrl, {
+        lazyConnect: true,
+        connectTimeout: 4000,
+        maxRetriesPerRequest: 1,
+        retryStrategy: () => null // Don't retry endlessly if Redis is unreachable
+      });
+      client.on('error', (err) => {
+        // Prevent unhandled error event from throwing in Node.js
+        console.warn('[Redis] Connection warning:', err.message);
+      });
       await client.connect();
       redisClient = {
         _type: 'ioredis',
@@ -29,25 +33,13 @@ async function initRedis() {
         del: (key) => client.del(key),
         keys: (pattern) => client.keys(pattern),
       };
-      console.log('[Redis] ✅ Local Redis connected via:', localRedisUrl);
+      console.log('[Redis] ✅ Local Redis connected via:', localRedisUrl.replace(/:[^@]+@/, ':***@'));
     } catch (err) {
       redisClient = null;
-      console.warn('[Redis] ⚠️  Local Redis connection failed, trying Upstash:', err.message);
+      console.warn('[Redis] ⚠️ Local Redis connection failed (' + err.message + '). In-memory cache will serve as fallback.');
     }
-  }
-
-  // 2. Try Upstash if local Redis failed or not configured
-  if (!redisClient && upstashUrl && upstashToken && upstashUrl !== 'https://your-redis-url.upstash.io') {
-    try {
-      const { Redis } = await import('@upstash/redis');
-      redisClient = new Redis({ url: upstashUrl, token: upstashToken });
-      redisClient._type = 'upstash';
-      console.log('[Redis] ✅ Upstash Redis connected');
-    } catch (err) {
-      console.warn('[Redis] ⚠️  Upstash init failed, using in-memory cache:', err.message);
-    }
-  } else if (!redisClient) {
-    console.log('[Redis] ℹ️  No Redis credentials — using in-memory cache (dev mode)');
+  } else {
+    console.log('[Redis] ℹ️ No REDIS_URL configured — using in-memory cache.');
   }
 }
 

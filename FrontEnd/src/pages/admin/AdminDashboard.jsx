@@ -8,7 +8,8 @@ import {
   ArrowRight,
   Layers,
   RotateCcw,
-  PenLine
+  PenLine,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
@@ -85,35 +86,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Operational Command Banner — Pure White Timbul Card with Amber Accent */}
-      <div className="bg-white/95 backdrop-blur-md rounded-[1.75rem] p-6 text-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-slate-200/90 flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-amber-500/10 via-amber-500/5 to-transparent pointer-events-none rounded-r-[1.75rem]" />
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Halo, {user?.full_name || 'Admin Logistik'} (Admin Gudang)
-          </h1>
-          <p className="text-slate-600 text-xs mt-1">
-            Verifikasi fisik DO/PO, pembubuhan tanda tangan Slot 2, dan pemantauan status penempatan rak inventaris.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 relative z-10">
-          <button
-            onClick={() => navigate('/warehouses')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-amber-600/20 cursor-pointer"
-          >
-            <Layers className="w-4 h-4" />
-            Buka Rak Suku Cadang
-          </button>
-          <button
-            onClick={fetchData}
-            className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
-            title="Muat Ulang Data"
-          >
-            <RotateCcw className={`w-4 h-4 ${loading ? 'animate-spin text-amber-600' : ''}`} />
-          </button>
-        </div>
-      </div>
-
       {/* 4 Warehouse Operational Parallelogram Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 py-2">
         <ParallelogramCard

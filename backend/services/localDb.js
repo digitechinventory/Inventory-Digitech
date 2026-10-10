@@ -1,16 +1,26 @@
+import 'dotenv/config';
 import pg from 'pg';
 const { Pool } = pg;
 
-const pool = new Pool({
-  host: process.env.LOCAL_PG_HOST || 'localhost',
-  port: parseInt(process.env.LOCAL_PG_PORT || '5432', 10),
-  database: process.env.LOCAL_PG_DATABASE || 'digitech_ims',
-  user: process.env.LOCAL_PG_USER || 'ims_user',
-  password: process.env.LOCAL_PG_PASSWORD || 'ims_password_2026',
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 3000,
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 3000,
+    }
+  : {
+      host: process.env.LOCAL_PG_HOST || 'localhost',
+      port: parseInt(process.env.LOCAL_PG_PORT || '5432', 10),
+      database: process.env.LOCAL_PG_DATABASE || 'digitech_ims',
+      user: process.env.LOCAL_PG_USER || 'ims_user',
+      password: process.env.LOCAL_PG_PASSWORD || 'ims_password_2026',
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 3000,
+    };
+
+const pool = new Pool(poolConfig);
 
 let isLocalDbConnected = false;
 
