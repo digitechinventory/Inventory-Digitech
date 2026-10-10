@@ -5,6 +5,10 @@ let redisClient = null;
 const memoryCache = new Map();
 
 async function initRedis() {
+  if (process.env.VERCEL) {
+    console.log('[Redis] Vercel Serverless environment: using in-memory cache.');
+    return;
+  }
   const localRedisUrl = process.env.REDIS_URL;
 
   if (localRedisUrl) {

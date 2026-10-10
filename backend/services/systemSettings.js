@@ -27,8 +27,10 @@ async function ensureTable() {
   }
 }
 
-// Inisialisasi tabel saat startup
-ensureTable();
+// Inisialisasi tabel saat startup (hanya di server biasa, skip di Vercel)
+if (!process.env.VERCEL) {
+  ensureTable();
+}
 
 /**
  * Mendapatkan konfigurasi durasi masa aktif sesi login (JWT)

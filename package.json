@@ -1,6 +1,7 @@
 {
     "name": "digitech-gems-ims-monorepo",
     "version": "2.0.0",
+    "type": "module",
     "scripts": {
         "start": "node backend/index.js",
         "dev": "npm --prefix backend run dev",
@@ -21,10 +22,13 @@
         "express-rate-limit": "^8.6.2",
         "googleapis": "^173.0.0",
         "helmet": "^8.3.0",
+        "ioredis": "^5.4.1",
         "jsonwebtoken": "^9.0.3",
+        "morgan": "^1.10.0",
         "multer": "^2.0.2",
         "node-cron": "^4.6.0",
         "nodemailer": "^9.0.3",
+        "pg": "^8.13.1",
         "qrcode": "^1.5.4",
         "redis": "^6.2.1",
         "speakeasy": "^2.0.0",

@@ -19,27 +19,39 @@ const poolConfig = process.env.DATABASE_URL
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 3000,
     };
-
-const pool = new Pool(poolConfig);
-
 let isLocalDbConnected = false;
+let pool = null;
 
-// Attempt an initial health check
-pool.query('SELECT 1 AS health_check')
-  .then(() => {
-    isLocalDbConnected = true;
-    console.log('[Local DB] PostgreSQL local database connected successfully (digitech_ims).');
-  })
-  .catch((err) => {
+if (!process.env.VERCEL) {
+  try {
+    pool = new Pool(poolConfig);
+    pool.query('SELECT 1 AS health_check')
+      .then(() => {
+        isLocalDbConnected = true;
+        console.log('[Local DB] PostgreSQL local database connected successfully (digitech_ims).');
+      })
+      .catch((err) => {
+        isLocalDbConnected = false;
+        console.log('[Local DB] Local PostgreSQL not connected or waiting for server (' + err.message + '). Supabase Cloud will serve as primary.');
+      });
+  } catch (e) {
     isLocalDbConnected = false;
-    console.log('[Local DB] Local PostgreSQL not connected or waiting for server (' + err.message + '). Supabase Cloud will serve as primary.');
-  });
+  }
+} else {
+  console.log('[Local DB] Vercel Serverless environment detected: Supabase Cloud is primary DB.');
+}
 
 export const query = async (text, params) => {
+  if (!pool || !isLocalDbConnected) {
+    return { rows: [] };
+  }
   return pool.query(text, params);
 };
 
 export const getClient = async () => {
+  if (!pool || !isLocalDbConnected) {
+    throw new Error('Local database pool is not connected');
+  }
   return pool.connect();
 };
 

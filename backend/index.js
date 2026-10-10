@@ -159,7 +159,9 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // ─── Server Start ──────────────────────────────────────────────────────────
-if (process.env.NODE_ENV !== 'test') {
+const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
+if (process.env.NODE_ENV !== 'test' && !isVercel) {
+  const HOST = process.env.HOST || '0.0.0.0';
   app.listen(PORT, HOST, () => {
     console.log(`
 

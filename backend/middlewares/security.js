@@ -16,7 +16,7 @@ import rateLimit from 'express-rate-limit';
 const loginAttempts = new Map();
 
 // Bersihkan entri lama setiap 1 jam
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, data] of loginAttempts.entries()) {
     if (now - data.lastAttempt > 60 * 60 * 1000) {
@@ -24,6 +24,7 @@ setInterval(() => {
     }
   }
 }, 60 * 60 * 1000);
+if (cleanupTimer && cleanupTimer.unref) cleanupTimer.unref();
 
 // ─── 1. GLOBAL RATE LIMITER ────────────────────────────────────────────────
 export const globalRateLimit = rateLimit({
