@@ -120,10 +120,13 @@ export function ThemeProvider({ children }) {
     const { primaryHex, primaryRgb, screenScale, fontFamily, fontSize, colorMode, sidebarBg, activePillBg, activePillText } = preferences;
 
     // Primary Colors
-    root.style.setProperty('--primary-color', primaryHex);
-    root.style.setProperty('--primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
-    root.style.setProperty('--primary-light', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.12)`);
-    root.style.setProperty('--primary-hover', `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.85)`);
+    const r = primaryRgb?.r ?? 245;
+    const g = primaryRgb?.g ?? 158;
+    const b = primaryRgb?.b ?? 11;
+    root.style.setProperty('--primary-color', primaryHex || '#F59E0B');
+    root.style.setProperty('--primary-rgb', `${r}, ${g}, ${b}`);
+    root.style.setProperty('--primary-light', `rgba(${r}, ${g}, ${b}, 0.12)`);
+    root.style.setProperty('--primary-hover', `rgba(${r}, ${g}, ${b}, 0.85)`);
     
     // Sidebar & Navigation
     root.style.setProperty('--sidebar-bg', sidebarBg);

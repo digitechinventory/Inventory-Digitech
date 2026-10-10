@@ -215,6 +215,15 @@ export default function App() {
     return () => window.removeEventListener('app:play-splash', handleReplaySplash);
   }, []);
 
+  // Safety fallback: if showSplash is active, ensure it unconditionally unmounts after 6.0s
+  useEffect(() => {
+    if (!showSplash) return;
+    const safetyTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 6000);
+    return () => clearTimeout(safetyTimer);
+  }, [showSplash]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

@@ -20,32 +20,57 @@ import React, { useState, useEffect } from 'react';
 export default function StartupSplashScreen({ onFinish }) {
   const [phase, setPhase] = useState(1);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const completedRef = React.useRef(false);
+
+  const handleComplete = React.useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setIsFadingOut(true);
+    setTimeout(() => {
+      if (onFinish) onFinish();
+    }, 400); // 400ms smooth dissolve into app
+  }, [onFinish]);
 
   useEffect(() => {
+    // 1. Eagerly preload all graphical layers immediately into memory to prevent network lag or popping
+    const assets = [
+      '/dims_splash/layer_dims.png',
+      '/dims_splash/layer_digitech.png',
+      '/dims_splash/layer_inventory.png'
+    ];
+    assets.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+
+    // 2. Proportional Accelerated Timeline (Total ~4.8s + 0.4s fadeout vs old 11.0s)
     // Stage 1 (0ms): Vector outline stroke drawing begins (D -> I -> M -> S)
-    // Stage 2 (2000ms): Concentric sonar shockwaves radiate from 'D' inner node
-    const t1 = setTimeout(() => setPhase(2), 2000);
+    // Stage 2 (850ms): Concentric sonar shockwaves radiate from 'D' inner node
+    const t1 = setTimeout(() => setPhase(2), 850);
 
-    // Stage 3 (3200ms): Solid glossy red fill wipe (left to right) across DIMS
-    const t2 = setTimeout(() => setPhase(3), 3200);
+    // Stage 3 (1450ms): Solid glossy red fill wipe (left to right) across DIMS
+    const t2 = setTimeout(() => setPhase(3), 1450);
 
-    // Stage 4 (4600ms): Specular metallic sheen sweep beam across DIMS
-    const t3 = setTimeout(() => setPhase(4), 4600);
+    // Stage 4 (2050ms): Specular metallic sheen sweep beam across DIMS
+    const t3 = setTimeout(() => setPhase(4), 2050);
 
-    // Stage 5 (5800ms): DIGITECH smooth left-to-right wipe reveal
-    const t4 = setTimeout(() => setPhase(5), 5800);
+    // Stage 5 (2650ms): DIGITECH smooth left-to-right wipe reveal
+    const t4 = setTimeout(() => setPhase(5), 2650);
 
-    // Stage 6 (7200ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
-    const t5 = setTimeout(() => setPhase(6), 7200);
+    // Stage 6 (3200ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
+    const t5 = setTimeout(() => setPhase(6), 3200);
 
-    // Stage 7 (8100ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
-    const t6 = setTimeout(() => setPhase(7), 8100);
+    // Stage 7 (3700ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
+    const t6 = setTimeout(() => setPhase(7), 3700);
 
-    // Stage 8 (9400ms): Flares resolve into pristine completed logo lockup hold
-    const t7 = setTimeout(() => setPhase(8), 9400);
+    // Stage 8 (4300ms): Flares resolve into pristine completed logo lockup hold
+    const t7 = setTimeout(() => setPhase(8), 4300);
 
-    // Stage 9 (10400ms): Animation completes, smooth dissolve fade-out into app
-    const t8 = setTimeout(() => handleComplete(), 10400);
+    // Stage 9 (4800ms): Animation completes, smooth dissolve fade-out into app
+    const t8 = setTimeout(() => handleComplete(), 4800);
+
+    // Safety watchdog: ensure preload NEVER hangs or freezes if browser throttles inactive tabs
+    const tSafety = setTimeout(() => handleComplete(), 5800);
 
     return () => {
       clearTimeout(t1);
@@ -56,15 +81,9 @@ export default function StartupSplashScreen({ onFinish }) {
       clearTimeout(t6);
       clearTimeout(t7);
       clearTimeout(t8);
+      clearTimeout(tSafety);
     };
-  }, []);
-
-  const handleComplete = () => {
-    setIsFadingOut(true);
-    setTimeout(() => {
-      if (onFinish) onFinish();
-    }, 600); // 600ms smooth dissolve into app
-  };
+  }, [handleComplete]);
 
   return (
     <div
@@ -350,23 +369,23 @@ export default function StartupSplashScreen({ onFinish }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                {/* Letter 'D' - Draws first (0.0s - 1.8s) from inner circular node outward */}
+                {/* Letter 'D' - Draws first (0.0s - 0.8s) from inner circular node outward */}
                 <path
                   d="M 0 0 L 0 215 L 110 215 L 111 214 L 121 214 L 146 208 L 166 200 L 182 189 L 196 176 L 207 160 L 216 140 L 220 121 L 220 101 L 187 101 L 185 96 L 185 90 L 182 77 L 174 62 L 157 44 L 142 35 L 125 29 L 105 26 L 33 26 L 31 27 L 31 100 L 33 101 L 76 100 L 80 90 L 84 86 L 94 80 L 94 79 L 91 79 L 81 85 L 75 93 L 73 98 L 35 98 L 33 96 L 33 30 L 35 28 L 36 29 L 92 28 L 93 29 L 118 30 L 138 36 L 146 40 L 160 50 L 167 57 L 177 72 L 181 82 L 183 91 L 183 102 L 185 104 L 186 103 L 188 104 L 217 104 L 218 105 L 217 124 L 213 141 L 209 151 L 203 162 L 193 175 L 175 191 L 153 203 L 134 209 L 104 213 L 3 213 L 2 212 L 2 1 L 3 0 L 117 0 L 124 2 L 130 2 L 150 8 L 167 16 L 176 22 L 197 42 L 209 62 L 216 84 L 215 89 L 197 89 L 195 86 L 194 77 L 190 67 L 180 51 L 166 37 L 159 33 L 158 31 L 142 23 L 139 23 L 130 19 L 106 15 L 20 15 L 19 16 L 19 197 L 106 197 L 126 194 L 145 188 L 160 180 L 178 164 L 192 140 L 196 125 L 196 118 L 194 117 L 161 118 L 159 116 L 160 96 L 156 82 L 148 69 L 133 56 L 116 49 L 105 47 L 53 47 L 51 48 L 51 84 L 62 85 L 68 77 L 75 71 L 84 66 L 96 63 L 104 63 L 117 66 L 135 77 L 130 70 L 116 63 L 108 61 L 91 61 L 73 69 L 65 76 L 61 82 L 57 83 L 54 82 L 53 80 L 54 55 L 53 54 L 55 50 L 109 50 L 118 52 L 128 56 L 137 62 L 150 76 L 157 94 L 156 120 L 192 120 L 193 126 L 191 129 L 179 130 L 176 137 L 168 147 L 148 161 L 137 165 L 118 168 L 55 168 L 53 166 L 53 155 L 54 154 L 53 141 L 55 128 L 61 128 L 73 140 L 82 145 L 91 148 L 111 148 L 123 144 L 134 136 L 139 130 L 144 120 L 146 113 L 146 97 L 144 91 L 142 90 L 141 91 L 143 95 L 144 109 L 141 120 L 133 133 L 119 143 L 108 146 L 89 145 L 73 137 L 62 125 L 51 126 L 51 170 L 125 170 L 147 164 L 160 157 L 170 148 L 171 150 L 160 163 L 145 173 L 136 177 L 113 183 L 34 183 L 33 182 L 33 116 L 34 115 L 33 113 L 34 112 L 73 112 L 77 120 L 86 128 L 99 132 L 103 132 L 104 130 L 92 128 L 86 125 L 80 120 L 74 109 L 73 110 L 72 109 L 33 109 L 31 110 L 31 186 L 105 186 L 132 181 L 152 172 L 164 163 L 178 145 L 180 138 L 184 132 L 189 132 L 190 135 L 183 152 L 174 164 L 161 176 L 141 187 L 120 193 L 105 195 L 22 195 L 21 194 L 21 19 L 23 17 L 25 18 L 101 17 L 118 19 L 138 24 L 151 30 L 163 38 L 179 54 L 189 71 L 193 83 L 193 89 L 195 92 L 218 92 L 219 86 L 216 73 L 210 58 L 196 37 L 182 23 L 163 11 L 149 5 L 132 0 Z"
                   style={{
                     strokeDasharray: 5350,
                     strokeDashoffset: 5350,
-                    animation: 'strokeDrawD 1.7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards'
+                    animation: 'strokeDrawD 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards'
                   }}
                 />
 
-                {/* Letter 'I' - Draws starting at ~0.45s */}
+                {/* Letter 'I' - Draws starting at ~0.18s */}
                 <path
                   d="M 230 5 L 229 7 L 230 9 L 229 11 L 230 18 L 230 89 L 229 90 L 230 186 L 229 187 L 229 199 L 230 205 L 231 206 L 239 205 L 242 206 L 280 206 L 282 205 L 282 5 Z"
                   style={{
                     strokeDasharray: 500,
                     strokeDashoffset: 500,
-                    animation: 'strokeDrawI 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) 0.45s forwards'
+                    animation: 'strokeDrawI 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) 0.18s forwards'
                   }}
                 />
                 <path
@@ -374,17 +393,17 @@ export default function StartupSplashScreen({ onFinish }) {
                   style={{
                     strokeDasharray: 500,
                     strokeDashoffset: 500,
-                    animation: 'strokeDrawI 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) 0.45s forwards'
+                    animation: 'strokeDrawI 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) 0.18s forwards'
                   }}
                 />
 
-                {/* Letter 'M' - Draws starting at ~0.75s */}
+                {/* Letter 'M' - Draws starting at ~0.32s */}
                 <path
                   d="M 297 5 L 296 6 L 296 205 L 297 206 L 299 205 L 300 206 L 346 206 L 346 110 L 348 106 L 381 156 L 404 156 L 428 118 L 437 106 L 438 107 L 438 205 L 439 206 L 487 206 L 488 205 L 488 5 L 444 5 L 427 31 L 425 36 L 405 65 L 405 67 L 392 85 L 340 5 Z"
                   style={{
                     strokeDasharray: 1150,
                     strokeDashoffset: 1150,
-                    animation: 'strokeDrawM 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) 0.75s forwards'
+                    animation: 'strokeDrawM 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) 0.32s forwards'
                   }}
                 />
                 <path
@@ -392,17 +411,17 @@ export default function StartupSplashScreen({ onFinish }) {
                   style={{
                     strokeDasharray: 1150,
                     strokeDashoffset: 1150,
-                    animation: 'strokeDrawM 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) 0.75s forwards'
+                    animation: 'strokeDrawM 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) 0.32s forwards'
                   }}
                 />
 
-                {/* Letter 'S' - Draws starting at ~1.05s */}
+                {/* Letter 'S' - Draws starting at ~0.44s */}
                 <path
                   d="M 590 34 L 556 34 L 541 41 L 535 47 L 531 55 L 530 61 L 531 76 L 535 85 L 542 92 L 550 96 L 558 98 L 589 98 L 601 101 L 611 106 L 621 116 L 627 128 L 628 150 L 623 165 L 609 179 L 591 186 L 584 187 L 530 187 L 529 186 L 528 187 L 522 186 L 499 187 L 499 205 L 500 206 L 588 206 L 601 204 L 604 202 L 613 200 L 626 192 L 638 180 L 642 174 L 644 169 L 644 161 L 643 166 L 636 178 L 623 191 L 609 199 L 594 203 L 503 203 L 502 202 L 502 190 L 503 189 L 593 188 L 609 182 L 616 177 L 624 168 L 628 160 L 628 156 L 630 152 L 630 131 L 628 124 L 621 112 L 614 105 L 599 98 L 589 96 L 561 96 L 549 93 L 540 87 L 534 78 L 532 69 L 533 58 L 536 50 L 543 42 L 551 38 L 559 36 L 590 36 L 591 35 Z"
                   style={{
                     strokeDasharray: 2250,
                     strokeDashoffset: 2250,
-                    animation: 'strokeDrawS 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) 1.05s forwards'
+                    animation: 'strokeDrawS 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) 0.44s forwards'
                   }}
                 />
                 <path
@@ -410,7 +429,7 @@ export default function StartupSplashScreen({ onFinish }) {
                   style={{
                     strokeDasharray: 2250,
                     strokeDashoffset: 2250,
-                    animation: 'strokeDrawS 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) 1.05s forwards'
+                    animation: 'strokeDrawS 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) 0.44s forwards'
                   }}
                 />
               </g>
@@ -430,12 +449,12 @@ export default function StartupSplashScreen({ onFinish }) {
                 height: 0
               }}
             >
-              {[0, 0.25, 0.5, 0.75, 1.0].map((delay, idx) => (
+              {[0, 0.1, 0.2, 0.3, 0.4].map((delay, idx) => (
                 <div
                   key={idx}
                   className="absolute w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-red-500 shadow-[0_0_14px_rgba(239,68,68,0.55)]"
                   style={{
-                    animation: `sonarWave 1.6s cubic-bezier(0.12, 0.8, 0.32, 1) ${delay}s both`
+                    animation: `sonarWave 0.75s cubic-bezier(0.12, 0.8, 0.32, 1) ${delay}s both`
                   }}
                 />
               ))}
@@ -449,7 +468,7 @@ export default function StartupSplashScreen({ onFinish }) {
             <div
               className="absolute inset-0 pointer-events-none z-20 overflow-hidden"
               style={{
-                animation: 'fillWipeLeftToRight 1.3s cubic-bezier(0.25, 0.85, 0.35, 1) forwards'
+                animation: 'fillWipeLeftToRight 0.55s cubic-bezier(0.25, 0.85, 0.35, 1) forwards'
               }}
             >
               <img
@@ -463,7 +482,7 @@ export default function StartupSplashScreen({ onFinish }) {
                 <div
                   className="absolute inset-0 w-20 sm:w-28 md:w-36 h-[160%] bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none z-30"
                   style={{
-                    animation: 'sheenSweep 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
+                    animation: 'sheenSweep 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
                   }}
                 />
               )}
@@ -477,7 +496,7 @@ export default function StartupSplashScreen({ onFinish }) {
             <div
               className="absolute inset-0 pointer-events-none z-20"
               style={{
-                animation: 'digitechWipe 1.1s cubic-bezier(0.2, 0.85, 0.3, 1) forwards'
+                animation: 'digitechWipe 0.5s cubic-bezier(0.2, 0.85, 0.3, 1) forwards'
               }}
             >
               <img
@@ -501,7 +520,7 @@ export default function StartupSplashScreen({ onFinish }) {
                   <div
                     className="absolute inset-0"
                     style={{
-                      animation: 'inventoryRevealLeft 0.9s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
+                      animation: 'inventoryRevealLeft 0.45s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
                     }}
                   >
                     <img
@@ -515,7 +534,7 @@ export default function StartupSplashScreen({ onFinish }) {
                   <div
                     className="absolute inset-0"
                     style={{
-                      animation: 'inventoryRevealRight 0.9s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
+                      animation: 'inventoryRevealRight 0.45s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
                     }}
                   >
                     <img
@@ -529,7 +548,7 @@ export default function StartupSplashScreen({ onFinish }) {
                   <div
                     className="absolute top-[95.3%] -translate-y-1/2 -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 pointer-events-none z-30"
                     style={{
-                      animation: 'laserLeftInward 0.9s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
+                      animation: 'laserLeftInward 0.45s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
                     }}
                   >
                     {/* Laser Spark Core */}
@@ -542,7 +561,7 @@ export default function StartupSplashScreen({ onFinish }) {
                   <div
                     className="absolute top-[95.3%] -translate-y-1/2 -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 pointer-events-none z-30"
                     style={{
-                      animation: 'laserRightInward 0.9s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
+                      animation: 'laserRightInward 0.45s cubic-bezier(0.2, 0.7, 0.25, 1) forwards'
                     }}
                   >
                     {/* Laser Spark Core */}
@@ -574,19 +593,19 @@ export default function StartupSplashScreen({ onFinish }) {
               {/* Soft Crimson Ambient Halo Breathing Behind DIMS */}
               <div
                 className="absolute left-1/2 top-[-50px] sm:top-[-70px] md:top-[-80px] -translate-x-1/2 -translate-y-1/2 w-56 sm:w-72 md:w-96 h-32 sm:h-40 md:h-48 bg-red-500/25 blur-3xl rounded-full pointer-events-none"
-                style={{ animation: 'ambientAuraBreath 1.3s ease-out forwards' }}
+                style={{ animation: 'ambientAuraBreath 0.55s ease-out forwards' }}
               />
 
               {/* Horizontal Core Laser Flare Line */}
               <div
                 className="absolute top-0 left-0 w-[120vw] max-w-[850px] h-[3px] bg-gradient-to-r from-transparent via-white via-40% via-[#ff1e38] to-transparent shadow-[0_0_20px_#ff002b]"
-                style={{ animation: 'horizontalFlareBeam 1.3s cubic-bezier(0.15, 0.8, 0.25, 1) forwards' }}
+                style={{ animation: 'horizontalFlareBeam 0.55s cubic-bezier(0.15, 0.8, 0.25, 1) forwards' }}
               />
 
               {/* Optical Starburst Flare Core */}
               <div
                 className="absolute top-0 left-0 w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center pointer-events-none"
-                style={{ animation: 'flareCoreEruption 1.3s ease-out forwards' }}
+                style={{ animation: 'flareCoreEruption 0.55s ease-out forwards' }}
               >
                 <div className="w-3 sm:w-4 h-3 sm:h-4 bg-white rounded-full shadow-[0_0_25px_#ff0033,0_0_50px_#ff1144]" />
               </div>
@@ -594,7 +613,7 @@ export default function StartupSplashScreen({ onFinish }) {
               {/* Four Giant Anamorphic Diagonal Laser Rays (The 'X' Cross Flare) */}
               <div
                 className="absolute top-0 left-0 pointer-events-none flex items-center justify-center"
-                style={{ animation: 'xFlareRays 1.3s cubic-bezier(0.15, 0.8, 0.25, 1) forwards' }}
+                style={{ animation: 'xFlareRays 0.55s cubic-bezier(0.15, 0.8, 0.25, 1) forwards' }}
               >
                 {/* Ray 1: Diagonal Top-Right to Bottom-Left (+32 deg) */}
                 <div className="absolute w-[140vw] max-w-[950px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ff2244] via-48% via-white via-52% via-[#ff2244] to-transparent rotate-[32deg] shadow-[0_0_14px_#ff002b,0_0_28px_rgba(255,0,50,0.6)]" />
