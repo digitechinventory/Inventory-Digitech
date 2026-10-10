@@ -1,41 +1,22 @@
-self.addEventListener('push', function (event) {
-    if (event.data) {
-        try {
-            const data = event.data.json();
-            const options = {
-                body: data.body,
-                icon: '/gems-digitech-official-light.png',
-                badge: '/gems-digitech-official-light.png',
-                vibrate: [100, 50, 100],
-                data: {
-                    dateOfArrival: Date.now(),
-                    primaryKey: '2'
-                }
-            };
-            event.waitUntil(self.registration.showNotification(data.title || 'Digitech IMS', options));
-        } catch (e) {
-            const options = {
-                body: event.data.text(),
-                icon: '/gems-digitech-official-light.png'
-            };
-            event.waitUntil(self.registration.showNotification('Digitech IMS Notification', options));
-        }
-    }
+// Self-destructing Service Worker to kill stale PWA cache across all client browsers
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
-self.addEventListener('notificationclick', function(event) {
-    event.notification.close();
-    event.waitUntil(
-        self.clients.matchAll({ type: 'window' }).then(windowClients => {
-            for (var i = 0; i < windowClients.length; i++) {
-                var client = windowClients[i];
-                if (client.url === '/' && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            if (self.clients.openWindow) {
-                return self.clients.openWindow('/');
-            }
-        })
-    );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(keys.map((key) => caches.delete(key)));
+    }).then(() => {
+      return self.registration.unregister();
+    }).then(() => {
+      return self.clients.matchAll();
+    }).then((clients) => {
+      clients.forEach((client) => {
+        if (client.url && 'navigate' in client) {
+          client.navigate(client.url);
+        }
+      });
+    })
+  );
 });
