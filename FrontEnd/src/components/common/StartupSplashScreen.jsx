@@ -21,18 +21,23 @@ export default function StartupSplashScreen({ onFinish }) {
   const [phase, setPhase] = useState(1);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const completedRef = React.useRef(false);
+  const onFinishRef = React.useRef(onFinish);
+
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
 
   const handleComplete = React.useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
     setIsFadingOut(true);
     setTimeout(() => {
-      if (onFinish) onFinish();
-    }, 400); // 400ms smooth dissolve into app
-  }, [onFinish]);
+      if (onFinishRef.current) onFinishRef.current();
+    }, 300); // 300ms clean dissolve
+  }, []);
 
   useEffect(() => {
-    // 1. Eagerly preload all graphical layers immediately into memory to prevent network lag or popping
+    // 1. Eagerly preload all graphical layers immediately into memory
     const assets = [
       '/dims_splash/layer_dims.png',
       '/dims_splash/layer_digitech.png',
@@ -43,34 +48,34 @@ export default function StartupSplashScreen({ onFinish }) {
       img.src = src;
     });
 
-    // 2. Proportional Accelerated Timeline (Total ~4.8s + 0.4s fadeout vs old 11.0s)
+    // 2. High-speed cinematic timeline (~4.0s total, crisp and responsive)
     // Stage 1 (0ms): Vector outline stroke drawing begins (D -> I -> M -> S)
-    // Stage 2 (850ms): Concentric sonar shockwaves radiate from 'D' inner node
-    const t1 = setTimeout(() => setPhase(2), 850);
+    // Stage 2 (650ms): Concentric sonar shockwaves radiate from 'D' inner node
+    const t1 = setTimeout(() => setPhase(2), 650);
 
-    // Stage 3 (1450ms): Solid glossy red fill wipe (left to right) across DIMS
-    const t2 = setTimeout(() => setPhase(3), 1450);
+    // Stage 3 (1150ms): Solid glossy red fill wipe (left to right) across DIMS
+    const t2 = setTimeout(() => setPhase(3), 1150);
 
-    // Stage 4 (2050ms): Specular metallic sheen sweep beam across DIMS
-    const t3 = setTimeout(() => setPhase(4), 2050);
+    // Stage 4 (1650ms): Specular metallic sheen sweep beam across DIMS
+    const t3 = setTimeout(() => setPhase(4), 1650);
 
-    // Stage 5 (2650ms): DIGITECH smooth left-to-right wipe reveal
-    const t4 = setTimeout(() => setPhase(5), 2650);
+    // Stage 5 (2150ms): DIGITECH smooth left-to-right wipe reveal
+    const t4 = setTimeout(() => setPhase(5), 2150);
 
-    // Stage 6 (3200ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
-    const t5 = setTimeout(() => setPhase(6), 3200);
+    // Stage 6 (2650ms): Two colliding laser beams revealing INVENTORY MANAGEMENT SYSTEM
+    const t5 = setTimeout(() => setPhase(6), 2650);
 
-    // Stage 7 (3700ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
-    const t6 = setTimeout(() => setPhase(7), 3700);
+    // Stage 7 (3100ms): Lasers collide in center -> Giant X-Cross Anamorphic Optical Flare eruption
+    const t6 = setTimeout(() => setPhase(7), 3100);
 
-    // Stage 8 (4300ms): Flares resolve into pristine completed logo lockup hold
-    const t7 = setTimeout(() => setPhase(8), 4300);
+    // Stage 8 (3600ms): Flares resolve into pristine completed logo lockup hold
+    const t7 = setTimeout(() => setPhase(8), 3600);
 
-    // Stage 9 (4800ms): Animation completes, smooth dissolve fade-out into app
-    const t8 = setTimeout(() => handleComplete(), 4800);
+    // Stage 9 (4050ms): Animation completes, smooth dissolve fade-out into app
+    const t8 = setTimeout(() => handleComplete(), 4050);
 
-    // Safety watchdog: ensure preload NEVER hangs or freezes if browser throttles inactive tabs
-    const tSafety = setTimeout(() => handleComplete(), 5800);
+    // Safety watchdog: ensure preload NEVER hangs if tab is throttled
+    const tSafety = setTimeout(() => handleComplete(), 4900);
 
     return () => {
       clearTimeout(t1);

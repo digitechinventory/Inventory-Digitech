@@ -89,7 +89,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!session?.expires_at) return;
 
-    const expiresAt = Number(session.expires_at);
+    const rawExpiry = Number(session.expires_at);
+    if (!rawExpiry || isNaN(rawExpiry)) return;
+
+    // Normalize Unix seconds (10 digits) to milliseconds (13 digits)
+    const expiresAt = rawExpiry < 10000000000 ? rawExpiry * 1000 : rawExpiry;
 
     const checkExpiration = () => {
       const now = Date.now();

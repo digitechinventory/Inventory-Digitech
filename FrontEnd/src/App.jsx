@@ -202,6 +202,10 @@ export default function App() {
       if (params.get('nosplash') === 'true' || params.get('nosplash') === '1') {
         return false;
       }
+      // Do not display splash screen on /login route so login form is immediately clean and accessible
+      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+        return false;
+      }
       return true;
     } catch {
       return true;
@@ -215,12 +219,16 @@ export default function App() {
     return () => window.removeEventListener('app:play-splash', handleReplaySplash);
   }, []);
 
-  // Safety fallback: if showSplash is active, ensure it unconditionally unmounts after 6.0s
+  const handleFinishSplash = React.useCallback(() => {
+    setShowSplash(false);
+  }, []);
+
+  // Safety fallback: if showSplash is active, ensure it unconditionally unmounts after 4.5s
   useEffect(() => {
     if (!showSplash) return;
     const safetyTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 6000);
+    }, 4500);
     return () => clearTimeout(safetyTimer);
   }, [showSplash]);
 
@@ -230,7 +238,7 @@ export default function App() {
         <AuthProvider>
           <ToastProvider>
             <Toast />
-            {showSplash && <StartupSplashScreen onFinish={() => setShowSplash(false)} />}
+            {showSplash && <StartupSplashScreen onFinish={handleFinishSplash} />}
             <Router>
               <AppRoutes />
             </Router>
