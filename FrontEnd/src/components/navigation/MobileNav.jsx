@@ -32,7 +32,7 @@ import LogoutConfirmModal from '../common/LogoutConfirmModal';
  * - Role-adaptive 5-slot navigation tabs (User, Admin, Superadmin)
  * - Interactive Account Profile Drawer
  */
-export default function DribbbleMobileNav() {
+export default function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, logout } = useAuth();

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import IronNestSidebar from '../components/inventory/IronNestSidebar';
 import IronNestHeader from '../components/inventory/IronNestHeader';
-import DribbbleMobileNav from '../components/navigation/DribbbleMobileNav';
+import MobileNav from '../components/navigation/MobileNav';
 
 export default function IronNestLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -115,7 +115,7 @@ export default function IronNestLayout() {
       </div>
 
       {/* 3. Mobile Bottom Floating Capsule Navbar */}
-      <DribbbleMobileNav />
+      <MobileNav />
     </div>
   );
 }

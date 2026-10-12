@@ -14,6 +14,7 @@ import {
   Clock,
   ArrowRight,
   Loader2,
+  Building2,
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -40,7 +41,7 @@ export default function AuthPage() {
     email: '',
     password: '',
     phone: '',
-    company: 'DIGITECH',
+    company: '',
     department: ''
   });
 
@@ -577,7 +578,7 @@ export default function AuthPage() {
                     {/* Email Column */}
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
-                        Alamat Email Personel
+                        Alamat Email
                       </label>
                       <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
@@ -693,7 +694,7 @@ export default function AuthPage() {
                       />
                     </div>
                     <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                      Pendaftaran Personel Baru
+                      Pendaftaran Akun Baru
                     </h2>
                     <p className="text-red-700 text-[9px] sm:text-[9.5px] font-bold uppercase tracking-widest mt-0.5">
                       VERIFIKASI & AKTIVASI OLEH SUPERADMIN
@@ -805,20 +806,39 @@ export default function AuthPage() {
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                          Divisi / Departemen Kerja
-                        </label>
-                        <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
-                          <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
-                          <input
-                            type="text"
-                            required
-                            value={registerForm.department}
-                            onChange={(e) => setRegisterForm({ ...registerForm, department: e.target.value })}
-                            placeholder="Masukkan divisi kerja"
-                            className="w-full pl-11 pr-3.5 py-3 sm:py-3.2 text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
-                          />
+                      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                        <div>
+                          <label className="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                            Perusahaan
+                          </label>
+                          <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
+                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                            <input
+                              type="text"
+                              required
+                              value={registerForm.company}
+                              onChange={(e) => setRegisterForm({ ...registerForm, company: e.target.value })}
+                              placeholder="Nama perusahaan"
+                              className="w-full pl-9 pr-2.5 py-3 sm:py-3.2 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] sm:text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                            Divisi / Departemen
+                          </label>
+                          <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
+                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                            <input
+                              type="text"
+                              required
+                              value={registerForm.department}
+                              onChange={(e) => setRegisterForm({ ...registerForm, department: e.target.value })}
+                              placeholder="Divisi kerja"
+                              className="w-full pl-9 pr-2.5 py-3 sm:py-3.2 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                            />
+                          </div>
                         </div>
                       </div>
 
