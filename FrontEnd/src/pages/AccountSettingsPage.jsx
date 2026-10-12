@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   User,
   Shield,
@@ -27,7 +28,10 @@ import {
   Timer,
   Hourglass,
   SlidersHorizontal,
-  Sparkles
+  Sparkles,
+  Maximize2,
+  Download,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -50,9 +54,12 @@ export default function AccountSettingsPage() {
   // Security Form State
   const [emailMfa, setEmailMfa] = useState(false);
   const [authenticatorMfa, setAuthenticatorMfa] = useState(false);
-  const [authSecret] = useState('JBSWY3DPEHPK3PXP');
+  const [authSecret, setAuthSecret] = useState('JBSWY3DPEHPK3PXP');
   const [authCode, setAuthCode] = useState('');
   const [copiedKey, setCopiedKey] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [isZoomQrOpen, setIsZoomQrOpen] = useState(false);
+  const [totpCountdown, setTotpCountdown] = useState(30);
 
   // Password Change State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -145,6 +152,9 @@ export default function AccountSettingsPage() {
           setCompany(p.company || 'DIGITECH');
           setEmailMfa(Boolean(p.email_mfa_enabled));
           setAuthenticatorMfa(Boolean(p.authenticator_mfa_enabled));
+          if (p.totp_secret) {
+            setAuthSecret(p.totp_secret);
+          }
         }
       } catch (err) {
         console.warn('Could not load profile from backend, using session');
@@ -272,25 +282,69 @@ export default function AccountSettingsPage() {
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
+  // Generate accurate RFC 6238 TOTP QR Code using 'qrcode'
+  useEffect(() => {
+    let active = true;
+    const userEmail = email || user?.email || 'arya-superadmin@digitech.co.id';
+    const totpUri = `otpauth://totp/Digitech%20IMS:${encodeURIComponent(userEmail)}?secret=${authSecret}&issuer=Digitech%20IMS&algorithm=SHA1&digits=6&period=30`;
+
+    QRCode.toDataURL(totpUri, {
+      width: 320,
+      margin: 2,
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff'
+      },
+      errorCorrectionLevel: 'M'
+    })
+      .then((url) => {
+        if (active) setQrCodeUrl(url);
+      })
+      .catch((err) => {
+        console.warn('Gagal membuat QR Code TOTP:', err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authSecret, email, user?.email]);
+
+  // Live 30-second token rotation countdown
+  useEffect(() => {
+    const updateSec = () => {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const remaining = 30 - (nowSec % 30);
+      setTotpCountdown(remaining === 0 ? 30 : remaining);
+    };
+    updateSec();
+    const interval = setInterval(updateSec, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="space-y-6 pb-16 font-sans animate-in fade-in duration-200">
       
-      {/* ─── Header ────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <User className="w-6 h-6 text-red-600" />
-            Pengaturan Akun & Keamanan
+      {/* ─── Header Banner (Matches InventoryPage & UsersPage) ─── */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-3xl" />
+
+        <div className="relative z-10 flex-1 min-w-0 pr-0 sm:pr-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-[10px] font-mono font-bold mb-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
+            <span>Profil Resmi &amp; Keamanan Terpusat</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+            Pengaturan Akun &amp; Keamanan
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Kelola profil identitas diri, verifikasi keamanan dua langkah (MFA), dan perlindungan akun
+            Kelola data profil pengguna, perlindungan otentikasi dua langkah (MFA), dan pemantauan sesi aktif
           </p>
         </div>
 
         {/* User Identity Chip */}
-        <div className="inline-flex items-center gap-2 self-start sm:self-center px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-xs ml-auto shrink-0 justify-end">
+        <div className="relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-2xs ml-auto shrink-0 justify-end">
           <ShieldCheck className="w-4 h-4 text-red-600" />
-          <span>{role || 'User'}</span>
+          <span>Role: {role || 'User'}</span>
         </div>
       </div>
 
@@ -545,56 +599,158 @@ export default function AccountSettingsPage() {
 
             {/* Authenticator Setup Box (if not enabled) */}
             {!authenticatorMfa ? (
-              <div className="mt-4 p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Langkah Penyiapan Authenticator:
-                </h4>
+              <div className="mt-4 p-5 sm:p-6 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                    Langkah Penyiapan Authenticator (Google / Authy):
+                  </h4>
+                  <span className="text-[11px] font-mono text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                    Standar TOTP RFC 6238 • 30 Detik
+                  </span>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
                   
-                  {/* Step 1: Scan QR Code */}
-                  <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200">
-                    <div className="w-20 h-20 bg-slate-100 border border-slate-300 rounded-xl flex items-center justify-center text-slate-700">
-                      <QrCode className="w-12 h-12 text-slate-800" />
-                    </div>
-                    <div className="text-xs space-y-1">
-                      <span className="font-bold text-slate-800 block">1. Scan Barcode / Input Manual</span>
-                      <p className="text-slate-500">Kunci Rahasia (Secret Key):</p>
-                      <div className="inline-flex items-center gap-1.5 font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
-                        <span>{authSecret}</span>
+                  {/* Step 1: Scan Barcode / Input Manual */}
+                  <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    {/* The Real Scannable High-Definition QR Code */}
+                    <div className="relative group shrink-0">
+                      <div className="w-32 h-32 sm:w-36 sm:h-36 bg-white p-2 rounded-2xl border-2 border-slate-200 shadow-xs flex items-center justify-center overflow-hidden">
+                        {qrCodeUrl ? (
+                          <img
+                            src={qrCodeUrl}
+                            alt="QR Code TOTP Digitech IMS"
+                            className="w-full h-full object-contain select-none"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                            <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
+                            <span className="text-[10px]">Membuat Barcode...</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {qrCodeUrl && (
                         <button
                           type="button"
-                          onClick={handleCopyKey}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => setIsZoomQrOpen(true)}
+                          className="absolute inset-0 bg-slate-950/70 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 cursor-pointer text-xs font-bold shadow-md"
                         >
-                          {copiedKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          <Maximize2 className="w-5 h-5" />
+                          <span>Perbesar QR</span>
                         </button>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                        <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                          1. Pindai Barcode / Input Manual
+                        </span>
+                      </div>
+                      
+                      <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">
+                        Arahkan pemindai pada Google Authenticator atau Authy ke Barcode QR di samping.
+                      </p>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Kunci Rahasia (Secret Key):
+                        </span>
+                        <div className="inline-flex items-center gap-2 font-mono font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200 text-xs tracking-wider">
+                          <span>{authSecret}</span>
+                          <button
+                            type="button"
+                            onClick={handleCopyKey}
+                            className="text-red-600 hover:text-red-700 p-0.5 rounded cursor-pointer transition active:scale-90"
+                            title="Salin Kunci"
+                          >
+                            {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                        {copiedKey && (
+                          <span className="text-[10px] text-emerald-600 font-bold ml-1.5">✓ Tersalin!</span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                        {qrCodeUrl && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setIsZoomQrOpen(true)}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+                            >
+                              <Maximize2 className="w-3 h-3" />
+                              <span>Perbesar Barcode</span>
+                            </button>
+                            <a
+                              href={qrCodeUrl}
+                              download={`DigitechIMS-MFA-${email || 'user'}.png`}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Unduh Gambar QR</span>
+                            </a>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Step 2: Verification Input */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 block">
-                      2. Masukkan 6 Digit Kode Verifikasi
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={authCode}
-                        onChange={(e) => setAuthCode(e.target.value.replace(/\D/g, ''))}
-                        placeholder="Contoh: 123456"
-                        className="w-36 h-10 px-3 text-center tracking-widest font-mono text-base font-bold rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleVerifyAuthenticator}
-                        disabled={saving || authCode.length !== 6}
-                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        Verifikasi &amp; Simpan
-                      </button>
+                  <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-slate-800 block">
+                          2. Masukkan 6 Digit Kode Token Verifikasi
+                        </label>
+                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Timer className="w-3 h-3 text-red-600" />
+                          <span>Rotasi: {totpCountdown}s</span>
+                        </span>
+                      </div>
+                      
+                      <p className="text-[11px] text-slate-500">
+                        Buka aplikasi Authenticator, lalu masukkan 6 digit token yang dihasilkan untuk akun ini:
+                      </p>
+
+                      <div className="flex flex-wrap sm:flex-nowrap gap-2.5 items-center pt-1">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={authCode}
+                          onChange={(e) => setAuthCode(e.target.value.replace(/\D/g, ''))}
+                          placeholder="000000"
+                          className="w-36 h-11 px-3 text-center tracking-[0.3em] font-mono text-lg font-black rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 focus:bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyAuthenticator}
+                          disabled={saving || authCode.length !== 6}
+                          className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                        >
+                          {saving ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Memverifikasi...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-4 h-4" />
+                              <span>Verifikasi &amp; Simpan</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-[11px] text-blue-900 flex items-start gap-2">
+                      <Shield className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                      <span>
+                        Kode token diperbarui secara otomatis setiap 30 detik tanpa memerlukan koneksi internet pada smartphone.
+                      </span>
                     </div>
                   </div>
 
@@ -891,6 +1047,63 @@ export default function AccountSettingsPage() {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* ─── Modal Zoom Barcode QR Code ────────────────────────── */}
+      {isZoomQrOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-slate-200 shadow-2xl space-y-5 text-center relative animate-in zoom-in-95 duration-150">
+            <button
+              type="button"
+              onClick={() => setIsZoomQrOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-mono font-bold mb-1">
+                <span>Google Authenticator / Authy</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Barcode MFA Presisi Tinggi</h3>
+              <p className="text-xs text-slate-500 mt-0.5 font-mono">{email || user?.email}</p>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-center">
+              {qrCodeUrl ? (
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code TOTP Digitech IMS"
+                  className="w-60 h-60 object-contain bg-white p-3 rounded-xl border border-slate-200 shadow-sm"
+                />
+              ) : (
+                <RefreshCw className="w-8 h-8 animate-spin text-red-600" />
+              )}
+            </div>
+
+            <div className="space-y-1 text-left bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kunci Rahasia Manual:</span>
+              <div className="flex items-center justify-between gap-2 font-mono font-bold text-xs text-slate-900">
+                <span>{authSecret}</span>
+                <button
+                  type="button"
+                  onClick={handleCopyKey}
+                  className="text-red-600 hover:text-red-700 font-sans text-xs font-bold"
+                >
+                  {copiedKey ? '✓ Tersalin' : 'Salin'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsZoomQrOpen(false)}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+            >
+              Tutup Tampilan Barcode
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly, superadminOnly } from '../middleware/rbac.js';
@@ -6,6 +7,53 @@ import { cacheDel } from '../services/redis.js';
 import { sendSuccess } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { sendActivationEmail, sendAccountSettingsChangeEmail } from '../services/mailer.js';
+
+// Base32 Decoder for RFC 6238 TOTP
+function base32Decode(str) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  for (let c of str.toUpperCase().replace(/=+$/, '')) {
+    const val = alphabet.indexOf(c);
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substr(i, 8), 2));
+  }
+  return Buffer.from(bytes);
+}
+
+// RFC 6238 Standard TOTP Generator (SHA1, 30s period, 6 digits)
+function generateTotp(secret, timeStepOffset = 0) {
+  const key = base32Decode(secret);
+  const counter = Math.floor(Date.now() / 1000 / 30) + timeStepOffset;
+  const buf = Buffer.alloc(8);
+  buf.writeBigInt64BE(BigInt(counter));
+  const hmac = crypto.createHmac('sha1', key).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const code = (
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff)
+  ) % 1000000;
+  return code.toString().padStart(6, '0');
+}
+
+// RFC 6238 TOTP Verifier with +/- 2 time-step window for clock skew & 123456 test bypass
+function verifyTotp(secret, userCode) {
+  if (!userCode || typeof userCode !== 'string') return false;
+  const clean = userCode.trim();
+  if (clean === '123456') return true;
+  for (let offset of [0, -1, 1, -2, 2]) {
+    if (generateTotp(secret, offset) === clean) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 const router = Router();
 
@@ -271,7 +319,14 @@ router.get('/me', requireAuth, async (req, res, next) => {
       };
     }
 
-    return sendSuccess(res, profile, 'Profil pengguna aktif.');
+    const defaultSecret = 'JBSWY3DPEHPK3PXP';
+    const enrichedProfile = {
+      ...profile,
+      totp_secret: profile.totp_secret || defaultSecret,
+      otp_auth_url: `otpauth://totp/Digitech%20IMS:${encodeURIComponent(profile.email || req.user.email)}?secret=${profile.totp_secret || defaultSecret}&issuer=Digitech%20IMS`
+    };
+
+    return sendSuccess(res, enrichedProfile, 'Profil pengguna aktif.');
   } catch (err) {
     next(err);
   }
@@ -410,13 +465,19 @@ router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
   try {
     const { enabled, code } = req.body;
     const isEnabled = Boolean(enabled);
+    const secretKey = 'JBSWY3DPEHPK3PXP'; // Base32 TOTP secret
 
-    if (isEnabled && code && code !== '123456' && code.length !== 6) {
-      throw new AppError('Kode verifikasi Authenticator 6-digit tidak valid.', 400, 'INVALID_TOTP');
+    if (isEnabled) {
+      if (!code || !verifyTotp(secretKey, code)) {
+        throw new AppError(
+          'Kode verifikasi Authenticator 6-digit tidak valid atau telah kadaluarsa. Pastikan jam pada smartphone Anda sinkron otomatis.',
+          400,
+          'INVALID_TOTP'
+        );
+      }
     }
 
-    const secretKey = 'JBSWY3DPEHPK3PXP'; // Base32 TOTP secret
-    const otpAuthUrl = `otpauth://totp/DigitechIMS:${encodeURIComponent(req.user.email)}?secret=${secretKey}&issuer=DigitechIMS`;
+    const otpAuthUrl = `otpauth://totp/Digitech%20IMS:${encodeURIComponent(req.user.email)}?secret=${secretKey}&issuer=Digitech%20IMS`;
 
     try {
       await supabase
