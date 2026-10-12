@@ -24,7 +24,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Office, Reports & Non-code Documents (PRD, SDD, Absensi, Magang, Docx)
+# Office, Reports & Non-code Documents
 *.docx
 *.xlsx
 *.xls

@@ -244,32 +244,36 @@ let FALLBACK_MOS = [
 ];
 
 // Helper to normalize MOS/Approval document
-const normalizeMosDoc = (d) => ({
-  id: d.id,
-  doc_number: d.doc_number || d.mos_number || d.id,
-  mos_number: d.mos_number || d.doc_number,
-  template_type: d.template_type || (d.doc_number?.includes('MDT') ? 'MDT' : d.doc_number?.includes('MRP') ? 'MRP' : 'MOS'),
-  title: d.title || `Dokumen Approval ${d.doc_number || d.id}`,
-  subtitle: d.subtitle || '',
-  vendor_name: d.vendor_name || 'PT Trakindo Utama',
-  site_location: d.site_location || d.site_name || 'Office VGT',
-  site_id: d.site_id,
-  pic_receiver_name: d.pic_receiver_name || d.requester_name || 'Rayhans Najib Al-Faruq',
-  received_date: d.received_date || d.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-  po_do_number: d.po_do_number || '-',
-  package_condition: d.package_condition || 'Baik',
-  photo_attachment_url: d.photo_attachment_url || d.photo_url || null,
-  orientation: d.orientation || 'landscape',
-  pages: Array.isArray(d.pages) ? d.pages : [],
-  status: d.status || 'draft',
-  purpose: d.purpose || 'Dokumen persetujuan dan otorisasi operasional.',
-  rejection_notes: d.rejection_notes || null,
-  items: Array.isArray(d.items) ? d.items : [],
-  signatures_placed: Array.isArray(d.signatures_placed) ? d.signatures_placed : [],
-  signatures: d.signatures || {},
-  created_by_id: d.created_by,
-  created_at: d.created_at
-});
+const normalizeMosDoc = (d) => {
+  const sigs = d.signatures || {};
+  const placed = sigs.signatures_placed || sigs.placed || d.signatures_placed || [];
+  return {
+    id: d.id,
+    doc_number: d.doc_number || d.mos_number || d.id,
+    mos_number: d.mos_number || d.doc_number,
+    template_type: d.template_type || sigs.template_type || (d.doc_number?.includes('MDT') ? 'MDT' : d.doc_number?.includes('MRP') ? 'MRP' : 'MOS'),
+    title: d.title || `Dokumen Approval ${d.doc_number || d.id}`,
+    subtitle: d.subtitle || sigs.subtitle || '',
+    vendor_name: d.vendor_name || 'PT Trakindo Utama',
+    site_location: d.site_location || d.site_name || 'Office VGT',
+    site_id: d.site_id,
+    pic_receiver_name: d.pic_receiver_name || d.requester_name || 'Rayhans Najib Al-Faruq',
+    received_date: d.received_date || d.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    po_do_number: d.po_do_number || '-',
+    package_condition: d.package_condition || 'Baik',
+    photo_attachment_url: d.photo_attachment_url || d.photo_url || null,
+    orientation: d.orientation || sigs.orientation || 'landscape',
+    pages: Array.isArray(d.pages) && d.pages.length > 0 ? d.pages : (Array.isArray(sigs.pages) ? sigs.pages : []),
+    status: d.status || 'draft',
+    purpose: d.purpose || 'Dokumen persetujuan dan otorisasi operasional.',
+    rejection_notes: d.rejection_notes || null,
+    items: Array.isArray(d.items) ? d.items : [],
+    signatures_placed: Array.isArray(placed) ? placed : [],
+    signatures: sigs,
+    created_by_id: d.created_by,
+    created_at: d.created_at
+  };
+};
 
 // GET /api/mos/templates — Get available official templates
 router.get('/templates', (req, res) => {
@@ -443,7 +447,38 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     // Save to Supabase if available
     try {
-      await supabase.from('mos_documents').insert(newDoc);
+      const dbPayload = {
+        id: newDoc.id,
+        doc_number: newDoc.doc_number,
+        mos_number: newDoc.mos_number,
+        title: newDoc.title,
+        purpose: newDoc.purpose,
+        site_location: newDoc.site_location,
+        site_id: newDoc.site_id,
+        pic_receiver_name: newDoc.pic_receiver_name,
+        requester_name: newDoc.requester_name,
+        requester_email: newDoc.requester_email,
+        department: newDoc.department,
+        received_date: newDoc.received_date,
+        po_do_number: newDoc.po_do_number,
+        package_condition: newDoc.package_condition,
+        photo_attachment_url: newDoc.photo_attachment_url,
+        status: newDoc.status,
+        items: newDoc.items,
+        signatures: {
+          template_type: newDoc.template_type,
+          subtitle: newDoc.subtitle,
+          orientation: newDoc.orientation,
+          pages: newDoc.pages,
+          signatures_placed: newDoc.signatures_placed
+        },
+        created_by: newDoc.created_by,
+        created_at: newDoc.created_at
+      };
+      const { error: insErr } = await supabase.from('mos_documents').insert(dbPayload);
+      if (insErr) {
+        console.warn('[MOS] Supabase insert error:', insErr.message);
+      }
     } catch (e) {
       console.warn('[MOS] Supabase insert warning:', e.message);
     }
@@ -573,7 +608,7 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
             part_number: item.spec || item.part_number,
             bin_location: 'R-A01',
             qty_change: qtyReceived,
-            transaction_type: `${doc.template_type || 'MOS'}_IN`,
+            transaction_type: 'MOS_IN',
             reference_doc_id: doc.doc_number,
             notes: `Auto-commit approval ttd (${doc.doc_number})`,
             performed_by: req.user.full_name,
@@ -584,13 +619,36 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
     }
 
     try {
+      const existingSigs = (typeof doc.signatures === 'object' && doc.signatures !== null) ? doc.signatures : {};
+      const updatedSigs = {
+        ...existingSigs,
+        signatures_placed: updatedStamps,
+        placed: updatedStamps
+      };
+      const updatePayload = {
+        signatures: updatedSigs,
+        status: nextStatus,
+        updated_at: new Date().toISOString()
+      };
+      if (updatedStamps.length >= 1) {
+        updatePayload.slot1_signature = updatedStamps[0].signature_image;
+        updatePayload.slot1_signer = updatedStamps[0].signer_name;
+        updatePayload.slot1_signed_at = new Date().toISOString();
+      }
+      if (updatedStamps.length >= 2) {
+        updatePayload.slot2_signature = updatedStamps[1].signature_image;
+        updatePayload.slot2_signer = updatedStamps[1].signer_name;
+        updatePayload.slot2_signed_at = new Date().toISOString();
+      }
+      if (updatedStamps.length >= 3) {
+        updatePayload.slot3_signature = updatedStamps[2].signature_image;
+        updatePayload.slot3_signer = updatedStamps[2].signer_name;
+        updatePayload.slot3_signed_at = new Date().toISOString();
+      }
+
       await supabase
         .from('mos_documents')
-        .update({
-          signatures_placed: updatedStamps,
-          status: nextStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', req.params.id);
     } catch {}
 

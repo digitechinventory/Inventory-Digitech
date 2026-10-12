@@ -289,8 +289,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       full_name: full_name.trim(),
       phone: phone || '',
       department: department || '',
-      company: company || 'DIGITECH',
-      updated_at: new Date().toISOString()
+      company: company || 'DIGITECH'
     };
 
     try {
