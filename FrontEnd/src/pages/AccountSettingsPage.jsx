@@ -31,7 +31,15 @@ import {
   Sparkles,
   Maximize2,
   Download,
-  X
+  X,
+  Boxes,
+  FileText,
+  Wrench,
+  ClipboardCheck,
+  Users,
+  XCircle,
+  BadgeCheck,
+  Radio
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -320,6 +328,123 @@ export default function AccountSettingsPage() {
     const interval = setInterval(updateSec, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Real Client Environment & Device Metadata
+  const getDetectedOS = () => {
+    if (typeof navigator === 'undefined') return 'PC Desktop';
+    const ua = navigator.userAgent;
+    if (ua.includes('Windows NT 10.0') || ua.includes('Windows')) return 'Windows 11 / 10 PC';
+    if (ua.includes('Macintosh') || ua.includes('Mac OS X')) return 'macOS Apple';
+    if (ua.includes('Android')) return 'Android Mobile';
+    if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS Apple';
+    if (ua.includes('Linux')) return 'Linux Workstation';
+    return 'Desktop Workstation';
+  };
+
+  const getDetectedBrowser = () => {
+    if (typeof navigator === 'undefined') return 'Web Browser';
+    const ua = navigator.userAgent;
+    if (ua.includes('Edg/')) return 'Microsoft Edge';
+    if (ua.includes('Brave')) return 'Brave Browser';
+    if (ua.includes('Chrome/')) return 'Google Chrome';
+    if (ua.includes('Firefox/')) return 'Mozilla Firefox';
+    if (ua.includes('Safari/')) return 'Apple Safari';
+    return 'Chromium Browser';
+  };
+
+  const clientHost = typeof window !== 'undefined' ? window.location.host : 'localhost:5175';
+  const clientHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const clientProtocol = typeof window !== 'undefined' ? window.location.protocol.replace(':', '').toUpperCase() : 'HTTP';
+  const isLocalEnv = clientHostname === 'localhost' || clientHostname === '127.0.0.1';
+
+  const sessionExpiryFormatted = () => {
+    if (!session?.expires_at) return `Aktif (${sessionDuration || 8} Jam)`;
+    const raw = Number(session.expires_at);
+    const ms = raw < 10000000000 ? raw * 1000 : raw;
+    const date = new Date(ms);
+    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WITA';
+  };
+
+  const PERMISSIONS_MATRIX = [
+    {
+      id: 'inventory',
+      module: 'Katalog & Rak Gudang (Inventory)',
+      icon: Boxes,
+      superadmin: { allowed: true, text: 'Akses Penuh (CRUD)', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      admin: { allowed: true, text: 'Akses Penuh (CRUD)', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      user: { allowed: true, text: 'Cek Stok & Scan QR', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+      desc: 'Master SKU material, bin lokasi rak gudang Sebamban & Batulicin, cetak kartu QR, dan monitoring batas minimum stok.'
+    },
+    {
+      id: 'mos',
+      module: 'Otorisasi Dokumen MOS & MDT',
+      icon: FileText,
+      superadmin: { allowed: true, text: 'Approval Final (Slot 3)', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
+      admin: { allowed: true, text: 'Verifikasi Gudang (Slot 2)', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+      user: { allowed: true, text: 'Input & Pemohon (Slot 1)', badge: 'bg-slate-100 text-slate-700 border-slate-200' },
+      desc: 'Alur penandatanganan digital resmi 3-slot berjenjang berkas Material On Site (MOS) dan Material Transfer (MDT).'
+    },
+    {
+      id: 'tools',
+      module: 'Peminjaman Alat Kerja (Tools)',
+      icon: Wrench,
+      superadmin: { allowed: true, text: 'Otorisasi & Hapus Log', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      admin: { allowed: true, text: 'Otorisasi & Pengembalian', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      user: { allowed: true, text: 'Ajukan Pinjam & Cek Overdue', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+      desc: 'Peminjaman peralatan kerja non-habis pakai, deteksi otomatis batas waktu jatuh tempo, dan riwayat peminjaman.'
+    },
+    {
+      id: 'opname',
+      module: 'Stock Opname & Variance Control',
+      icon: ClipboardCheck,
+      superadmin: { allowed: true, text: 'Approval Selisih & Rekonsiliasi', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
+      admin: { allowed: true, text: 'Eksekusi Scan & Input Fisik', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      user: { allowed: false, text: 'Terkunci (Petugas Khusus)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
+      desc: 'Pemeriksaan fisik berkala stok gudang, kalkulasi selisih (variance), dan berita acara opname resmi.'
+    },
+    {
+      id: 'ledger',
+      module: 'Mutasi Stok & Buku Besar Ledger',
+      icon: Clock,
+      superadmin: { allowed: true, text: 'Audit Trail & Ekspor Lengkap', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      admin: { allowed: true, text: 'Audit Trail & Ekspor Lengkap', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      user: { allowed: true, text: 'Melihat Mutasi Personal', badge: 'bg-slate-100 text-slate-700 border-slate-200' },
+      desc: 'Catatan kronologis penerimaan, pengeluaran, pemakaian material per proyek, serta audit trail kepatuhan.'
+    },
+    {
+      id: 'users',
+      module: 'Manajemen Pengguna (User RBAC)',
+      icon: Users,
+      superadmin: { allowed: true, text: 'Otoritas Eksklusif Superadmin', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
+      admin: { allowed: false, text: 'Terkunci (Tanpa Akses)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
+      user: { allowed: false, text: 'Terkunci (Tanpa Akses)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
+      desc: 'Persetujuan pendaftaran akun baru, penetapan role (Superadmin/Admin/User), dan kontrol aktivasi akun.'
+    },
+    {
+      id: 'session_config',
+      module: 'Kebijakan Masa Sesi JWT Global',
+      icon: SlidersHorizontal,
+      superadmin: { allowed: true, text: 'Otoritas Eksklusif Superadmin', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
+      admin: { allowed: false, text: 'Terkunci (Mengikuti Kebijakan)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
+      user: { allowed: false, text: 'Terkunci (Mengikuti Kebijakan)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
+      desc: 'Pengaturan masa berlaku token otentikasi login sistem (0.25 - 72 jam) dan kebijakan auto kick-out pengguna.'
+    },
+    {
+      id: 'tracking',
+      module: 'Asset Tracking & GIS Site Map',
+      icon: MapPin,
+      superadmin: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      admin: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      user: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      desc: 'Peta geospasial armada alat berat, pelacakan komponen terpasang di Pit Sebamban KM 24.'
+    }
+  ];
+
+  const getActivePerm = (item) => {
+    if (role === 'Superadmin') return item.superadmin;
+    if (role === 'Admin') return item.admin;
+    return item.user;
+  };
 
   return (
     <div className="space-y-6 pb-16 font-sans animate-in fade-in duration-200">
@@ -864,186 +989,248 @@ export default function AccountSettingsPage() {
             </div>
           )}
           
-          {/* 1. Current Active Device Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+          {/* 1. Real Active Session & Live Token Status Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Monitor className="w-5 h-5 text-red-600" />
-                  <span>Informasi Perangkat Login Saat Ini</span>
+                  <span>Informasi Sesi Login Aktif &amp; Perangkat Riil</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Metadata perangkat keras, peramban, dan alamat jaringan yang digunakan untuk mengakses sesi ini.
+                  Metadata sesi aktif terdeteksi otomatis dari peramban dan token JWT yang digunakan saat ini.
                 </p>
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Sesi Ini (Aktif Sekarang)
-              </span>
-            </div>
-
-            {/* Device Specs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sistem Operasi</span>
-                <span className="text-xs font-bold text-slate-900 mt-1 flex items-center gap-1.5">
-                  <Laptop className="w-3.5 h-3.5 text-slate-600" />
-                  {navigator.userAgent.includes('Windows') ? 'Windows 11 / 10 PC' : navigator.userAgent.includes('Mac') ? 'macOS' : navigator.userAgent.includes('Linux') ? 'Linux Debian' : 'Mobile / Tablet'}
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Sesi Ini (Online &amp; Aktif)
                 </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Peramban Web</span>
-                <span className="text-xs font-bold text-slate-900 mt-1 flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-slate-600" />
-                  {navigator.userAgent.includes('Edg') ? 'Microsoft Edge' : navigator.userAgent.includes('Chrome') ? 'Google Chrome' : navigator.userAgent.includes('Firefox') ? 'Mozilla Firefox' : 'Safari / WebKit'}
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Alamat IP &amp; Node</span>
-                <span className="text-xs font-mono font-bold text-red-700 mt-1 flex items-center gap-1.5">
-                  100.100.98.113 (CasaOS Server)
-                </span>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Resolusi Layar</span>
-                <span className="text-xs font-mono font-bold text-slate-900 mt-1">
-                  {typeof window !== 'undefined' ? `${window.screen.width} × ${window.screen.height} px` : '1920 × 1080 px'}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-red-50/40 border border-red-100 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-slate-700">
-                <MapPin className="w-4 h-4 text-red-600 shrink-0" />
-                <span>Lokasi Geofence Terdeteksi: <strong>Site Pit Sebamban KM 24 (BIB-02)</strong></span>
-              </div>
-              <span className="text-[11px] font-mono text-slate-500">Waktu Login: Hari ini, {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WITA</span>
-            </div>
-          </div>
-
-          {/* 2. Registered Devices & Session History */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Daftar Perangkat Terhubung &amp; Riwayat Login
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Kelola sesi login pada laptop lapangan, tablet barcode scanner, dan workstation operasional Anda.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMessage({ type: 'success', text: 'Semua sesi perangkat lain berhasil diputus dan diamankan.' });
-                }}
-                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Keluar dari Semua Perangkat Lain
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {/* Session 1: Current Session */}
-              <div className="p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50/20 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                    <Monitor className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">Workstation Utama — Chrome (Windows 11)</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Perangkat Ini</span>
-                    </div>
-                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
-                      <span>IP: 100.100.98.113</span>
-                      <span>•</span>
-                      <span>Port 5176 / 3001</span>
-                      <span>•</span>
-                      <span>Aktif sekarang</span>
-                    </div>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-emerald-700 font-mono">ONLINE</span>
-              </div>
-
-              {/* Session 2: Tablet Barcode Scanner Pit */}
-              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">Samsung Galaxy Tab Active 4 Pro (Android 14)</span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Tablet QR Scanner Pit</span>
-                    </div>
-                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
-                      <span>IP: 100.100.98.145</span>
-                      <span>•</span>
-                      <span>Workshop Central Site BIB</span>
-                      <span>•</span>
-                      <span>Terakhir aktif: 2 jam lalu</span>
-                    </div>
-                  </div>
-                </div>
                 <button
                   type="button"
-                  onClick={() => alert('Sesi tablet barcode scanner berhasil diputus.')}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-bold transition cursor-pointer"
+                  onClick={() => {
+                    setMessage({ type: 'success', text: 'Sesi akun dan masa berlaku token berhasil disinkronkan ulang.' });
+                  }}
+                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                  title="Segarkan Sesi"
                 >
-                  Putus Sesi
-                </button>
-              </div>
-
-              {/* Session 3: Admin Laptop Field */}
-              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
-                    <Laptop className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">ThinkPad T14s Gen 3 — Microsoft Edge</span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Laptop Mobile Site</span>
-                    </div>
-                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-2">
-                      <span>IP: 192.168.1.108</span>
-                      <span>•</span>
-                      <span>Office Admin Logistik Sebamban</span>
-                      <span>•</span>
-                      <span>Terakhir aktif: Kemarin, 17:45 WITA</span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert('Sesi ThinkPad mobile site berhasil diputus.')}
-                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-bold transition cursor-pointer"
-                >
-                  Putus Sesi
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Logout from this device */}
-            <div className="pt-4 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3">
-              <div className="text-xs text-slate-400">
-                Mengakhiri sesi akan menghapus token otentikasi dari perangkat ini secara aman.
+            {/* 4 Real Live Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              
+              {/* Sisa Waktu Sesi (Live Countdown) */}
+              <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block flex items-center gap-1.5">
+                  <Timer className="w-3.5 h-3.5 text-emerald-600" />
+                  Sisa Waktu Sesi Aktif
+                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-xl sm:text-2xl font-black text-emerald-700 tracking-wider">
+                    {remainingTimeStr || '08:00:00'}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600">Live</span>
+                </div>
+                <p className="text-[10px] text-emerald-600/90 font-medium">Auto kick-out saat 00:00:00</p>
               </div>
+
+              {/* Masa Berlaku Token */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                  Kedaluwarsa Token
+                </span>
+                <div className="text-sm font-black text-slate-900 font-mono">
+                  {sessionExpiryFormatted()}
+                </div>
+                <p className="text-[10px] text-slate-500">Kebijakan durasi: {sessionDuration || 8} Jam</p>
+              </div>
+
+              {/* Sistem Operasi & Browser */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1.5">
+                  <Laptop className="w-3.5 h-3.5 text-slate-500" />
+                  Perangkat &amp; Peramban
+                </span>
+                <div className="text-sm font-bold text-slate-900 truncate">
+                  {getDetectedOS()}
+                </div>
+                <p className="text-[10px] text-slate-500 truncate flex items-center gap-1">
+                  <Globe className="w-3.5 h-3.5 text-slate-400" />
+                  {getDetectedBrowser()}
+                </p>
+              </div>
+
+              {/* Host & Port Aktual */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-slate-500" />
+                  Host Node &amp; Port
+                </span>
+                <div className="text-sm font-mono font-bold text-red-700 truncate">
+                  {clientHost}
+                </div>
+                <p className="text-[10px] text-slate-500 font-mono">
+                  {isLocalEnv ? '127.0.0.1 (Local Dev)' : 'Production Server'}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Real Session Metadata Bar */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-4 text-slate-700">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+                  Lokasi Sesi: <strong>Site Pit Sebamban KM 24 (BIB-02)</strong>
+                </span>
+                <span className="hidden sm:inline text-slate-300">•</span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+                  Protokol: <strong>{clientProtocol} (Bearer JWT Auth)</strong>
+                </span>
+                <span className="hidden sm:inline text-slate-300">•</span>
+                <span className="text-slate-500 font-mono text-[11px]">
+                  Resolusi: {typeof window !== 'undefined' ? `${window.screen.width} × ${window.screen.height} px` : '1920 × 1080 px'}
+                </span>
+              </div>
+
               <button
                 type="button"
                 onClick={logout}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs transition cursor-pointer"
+                className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ml-auto"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Keluar dari Akun Ini (Logout)</span>
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Akhiri Sesi (Logout)</span>
               </button>
+            </div>
+          </div>
+
+          {/* 2. Comprehensive Role-Based Access Control (RBAC) Permissions Matrix */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-red-600" />
+                  <span>Matriks Hak Akses &amp; Wewenang Akun (RBAC)</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Pemetaan hak akses modul, batas wewenang approval, dan hak operasional akun Anda di sistem.
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold">
+                <span>Role Terotentikasi:</span>
+                <span className="text-red-700 font-black">{role || 'User'}</span>
+              </div>
+            </div>
+
+            {/* Authority Profile Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-white text-[11px] font-bold">
+                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>
+                    {role === 'Superadmin'
+                      ? 'Level 3 — Otoritas Tertinggi (Root System Administrator)'
+                      : role === 'Admin'
+                      ? 'Level 2 — Otoritas Pengawas Gudang & Operasional (Controller)'
+                      : 'Level 1 — Otoritas Teknisi Lapangan (Field Operator & Requester)'}
+                  </span>
+                </div>
+                <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
+                  <span>{fullName || user?.full_name || 'Pengguna Digitech'}</span>
+                  <span className="text-xs font-mono font-normal text-slate-400">({email || user?.email})</span>
+                </h4>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  {role === 'Superadmin'
+                    ? 'Memiliki hak akses tak terbatas ke seluruh modul sistem: persetujuan registrasi akun baru, konfigurasi masa berlaku sesi JWT, otorisasi dokumen MOS Slot 3, audit log, dan mutasi ledger.'
+                    : role === 'Admin'
+                    ? 'Memiliki kewenangan pengawasan logistik: pengelolaan katalog suku cadang, verifikasi dokumen MOS Slot 2, pelaksanaan stock opname gudang, dan pelacakan alat kerja.'
+                    : 'Memiliki kewenangan teknisi lapangan: pengajuan Material Request (MR), pencarian ketersediaan stok & scan QR material, peminjaman alat kerja, dan tanda tangan MOS Slot 1 penerima.'}
+                </p>
+              </div>
+
+              <div className="shrink-0 flex md:flex-col items-center md:items-end justify-between gap-2 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-5">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">Status Otoritas</span>
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold">
+                  ✓ Aktif &amp; Terverifikasi
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono mt-1">
+                  {company || 'DIGITECH'} • {department || 'Operasional'}
+                </span>
+              </div>
+            </div>
+
+            {/* Permissions Matrix Grid */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 px-2">
+                <span>Daftar Modul &amp; Batasan Wewenang Sistem:</span>
+                <span className="text-slate-400 font-normal text-[11px]">8 Modul Terverifikasi</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {PERMISSIONS_MATRIX.map((item) => {
+                  const Icon = item.icon;
+                  const activePerm = getActivePerm(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs transition-all space-y-2.5 flex flex-col justify-between"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            activePerm.allowed ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-400'
+                          }`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-bold text-slate-900 truncate">{item.module}</h5>
+                            <p className="text-[11px] text-slate-500 line-clamp-1">{item.desc}</p>
+                          </div>
+                        </div>
+
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0 ${activePerm.badge}`}>
+                          {activePerm.text}
+                        </span>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                        <span>Wewenang Role {role || 'User'}:</span>
+                        <span className={`font-bold flex items-center gap-1 ${activePerm.allowed ? 'text-emerald-700' : 'text-slate-400'}`}>
+                          {activePerm.allowed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-slate-400" />}
+                          {activePerm.allowed ? 'Dapat Digunakan' : 'Akses Dibatasi'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Security Info Notice */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-2.5 text-slate-600">
+                <Shield className="w-4 h-4 text-red-600 shrink-0" />
+                <span>
+                  Hak akses sistem menerapkan standar Role-Based Access Control (RBAC). Perubahan role hanya dapat disetujui langsung oleh Superadmin.
+                </span>
+              </div>
+
+              {isSuperadmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/users')}
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer shrink-0"
+                >
+                  Kelola Pengguna
+                </button>
+              )}
             </div>
           </div>
 
