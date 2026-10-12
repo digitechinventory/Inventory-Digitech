@@ -21,9 +21,6 @@ import SwipeButton from '../components/auth/SwipeButton.jsx';
 
 
 export default function AuthPage() {
-  if (typeof window !== 'undefined' && window.self !== window.top) {
-    return null;
-  }
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const iframeRef = useRef(null);
