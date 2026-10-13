@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const CATEGORY_CONFIG = {
   Shift: {
@@ -74,6 +75,7 @@ const MONTH_NAMES = [
 
 export default function RealWorldCalendar({ isModal = false, onClose }) {
   const { user, isAdmin, isSuperadmin } = useAuth();
+  const { addToast } = useToast();
   const canManage = isAdmin || isSuperadmin;
   const queryClient = useQueryClient();
 
@@ -130,11 +132,12 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
     mutationFn: (newAgenda) => api.post('/agendas', newAgenda),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendas'] });
+      addToast('Agenda operasional baru berhasil disimpan.', 'success');
       setFormModalOpen(false);
       resetForm();
     },
     onError: (err) => {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menyimpan agenda.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menyimpan agenda.', 'error');
     }
   });
 
@@ -142,12 +145,13 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
     mutationFn: ({ id, updates }) => api.put(`/agendas/${id}`, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendas'] });
+      addToast('Perubahan agenda operasional berhasil disimpan.', 'success');
       setFormModalOpen(false);
       setEditingAgenda(null);
       resetForm();
     },
     onError: (err) => {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal memperbarui agenda.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal memperbarui agenda.', 'error');
     }
   });
 
@@ -155,10 +159,11 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
     mutationFn: (id) => api.delete(`/agendas/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendas'] });
+      addToast('Agenda berhasil dihapus.', 'info');
       setDeleteConfirmId(null);
     },
     onError: (err) => {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menghapus agenda.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menghapus agenda.', 'error');
     }
   });
 
@@ -211,7 +216,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.date) {
-      alert('Judul agenda dan tanggal wajib diisi.');
+      addToast('Judul agenda dan tanggal wajib diisi.', 'warning');
       return;
     }
 

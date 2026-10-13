@@ -24,6 +24,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import api from '../../api/client.js';
+import { useToast } from '../../context/ToastContext.jsx';
 
 /**
  * InteractiveDocumentSheet
@@ -45,6 +46,7 @@ export default function InteractiveDocumentSheet({
   onDocumentUpdated,
   onBackToList
 }) {
+  const { addToast } = useToast();
   const doc = documentData || {};
   const isCustom = doc.template_type === 'CUSTOM' || (!['MOS', 'MDT', 'MRP'].includes(doc.template_type) && doc.pages?.length > 0);
   const tplType = doc.template_type || 'MOS';
@@ -128,11 +130,11 @@ export default function InteractiveDocumentSheet({
   // Buka mode penempatan tanda tangan dengan auto-snap pintar
   const handleStartPlacing = () => {
     if (isAlreadySignedByCurrentUser) {
-      alert('Anda sudah menandatangani dokumen ini.');
+      addToast('Anda sudah menandatangani dokumen ini.', 'warning');
       return;
     }
     if (isUserSlotOccupied) {
-      alert(`Kolom "${getSlotLabel(userAllowedSlot)}" untuk hak akses Anda sudah ditandatangani.`);
+      addToast(`Kolom "${getSlotLabel(userAllowedSlot)}" untuk hak akses Anda sudah ditandatangani.`, 'warning');
       return;
     }
 
@@ -220,7 +222,7 @@ export default function InteractiveDocumentSheet({
   // Lock position ("Kunci Posisi")
   const handleLockPosition = () => {
     if (!isPositionValidForRole) {
-      alert(`Validasi Tata Letak Gagal: Sebagai ${currentUser?.role || 'User'}, Anda hanya berhak menandatangani di kolom "${getSlotLabel(userAllowedSlot)}".`);
+      addToast(`Validasi Tata Letak Gagal: Sebagai ${currentUser?.role || 'User'}, Anda hanya berhak menandatangani di kolom "${getSlotLabel(userAllowedSlot)}".`, 'warning');
       return;
     }
     setIsPositionLocked(true);
@@ -238,15 +240,15 @@ export default function InteractiveDocumentSheet({
       return;
     }
     if (isAlreadySignedByCurrentUser) {
-      alert('Anda sudah menandatangani dokumen ini.');
+      addToast('Anda sudah menandatangani dokumen ini.', 'warning');
       return;
     }
     if (!isPositionValidForRole) {
-      alert(`Validasi Tata Letak Gagal: Sebagai ${currentUser?.role || 'User'}, Anda hanya berhak menandatangani di kolom "${getSlotLabel(userAllowedSlot)}".`);
+      addToast(`Validasi Tata Letak Gagal: Sebagai ${currentUser?.role || 'User'}, Anda hanya berhak menandatangani di kolom "${getSlotLabel(userAllowedSlot)}".`, 'warning');
       return;
     }
     if (!isCustom && isSlotSigned(currentSlot)) {
-      alert(`Kolom tanda tangan "${getSlotLabel(currentSlot)}" sudah terisi pada dokumen ini.`);
+      addToast(`Kolom tanda tangan "${getSlotLabel(currentSlot)}" sudah terisi pada dokumen ini.`, 'warning');
       return;
     }
     if (!isPositionLocked) {
@@ -299,10 +301,11 @@ export default function InteractiveDocumentSheet({
       setIsPlacingSignature(false);
       setIsPositionLocked(false);
       setStampSuccess(true);
+      addToast('Tanda tangan digital berhasil dibubuhkan pada dokumen.', 'success');
       onDocumentUpdated?.(updatedDoc || doc);
       setTimeout(() => setStampSuccess(false), 4500);
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menandatangani dokumen.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menandatangani dokumen.', 'error');
     } finally {
       setStamping(false);
     }

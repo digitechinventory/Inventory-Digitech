@@ -790,6 +790,7 @@ export default function ToolLoansPage() {
 }
 
 function BorrowToolModal({ user, onClose, onSuccess }) {
+  const { addToast } = useToast();
   const [toolName, setToolName] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [returnDate, setReturnDate] = useState(() => {
@@ -810,10 +811,10 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
         expected_return_date: returnDate,
         notes
       });
-      alert('Peminjaman alat kerja berhasil dicatat.');
+      addToast('Peminjaman alat kerja berhasil dicatat.', 'success');
       onSuccess();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal meminjam alat.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal meminjam alat.', 'error');
     } finally {
       setLoading(false);
     }

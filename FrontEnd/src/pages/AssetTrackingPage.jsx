@@ -23,7 +23,9 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import { INITIAL_SITES, calculateHaversineDistance } from '../mockData.js';
 
 // Fix Leaflet marker icons with clean CDN links
@@ -122,6 +124,7 @@ function MapClickHandler({ onMapClick }) {
 
 export default function AssetTrackingPage() {
   const { role } = useAuth();
+  const { addToast } = useToast();
   const isSuperadmin = role === 'Superadmin';
 
   // Map Tile Layers: HD Satellite (Esri), Hybrid, or OpenStreetMap
@@ -132,7 +135,7 @@ export default function AssetTrackingPage() {
   const [showAllAssets, setShowAllAssets] = useState(true);
   const [showGeofences, setShowGeofences] = useState(true);
 
-  // Sites state initialized from localStorage or mockData
+  // Sites state initialized from localStorage or mockData, then synced from DB
   const [sites, setSites] = useState(() => {
     try {
       const saved = localStorage.getItem('digitech_gis_sites');
@@ -141,6 +144,32 @@ export default function AssetTrackingPage() {
       return INITIAL_SITES;
     }
   });
+
+  // Sync master sites from backend database
+  React.useEffect(() => {
+    async function loadSites() {
+      try {
+        const res = await api.get('/sites');
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          const mapped = res.data.data.map(s => ({
+            id: s.id,
+            name: s.name,
+            code: s.code,
+            lat: Number(s.lat),
+            lng: Number(s.lng),
+            radius: Number(s.radius || 200),
+            areaName: s.area_name || s.name,
+            activeStaffCount: s.activeStaffCount || 20,
+            status: s.status || 'active'
+          }));
+          setSites(mapped);
+        }
+      } catch (err) {
+        console.warn('[AssetTracking] Using cached sites:', err.message);
+      }
+    }
+    loadSites();
+  }, []);
 
   const [selectedSiteId, setSelectedSiteId] = useState(sites[1]?.id || sites[0]?.id);
   const selectedSite = useMemo(() => {
@@ -197,8 +226,8 @@ export default function AssetTrackingPage() {
     }
   };
 
-  // Save updated geofence to sites list & localStorage
-  const handleSaveGeofence = () => {
+  // Save updated geofence to sites list & localStorage & database
+  const handleSaveGeofence = async () => {
     const updated = sites.map(s => {
       if (s.id === selectedSite.id) {
         return {
@@ -216,12 +245,23 @@ export default function AssetTrackingPage() {
       localStorage.setItem('digitech_gis_sites', JSON.stringify(updated));
     } catch {}
 
+    if (isSuperadmin) {
+      try {
+        await api.put(`/sites/${selectedSite.id}`, {
+          lat: centerLat,
+          lng: centerLng,
+          radius: radiusMeters
+        });
+      } catch {}
+    }
+
     setSaveSuccess(true);
+    addToast(`Koordinat geofence ${selectedSite.name} berhasil diperbarui.`, 'success');
     setTimeout(() => setSaveSuccess(false), 4000);
   };
 
   // Add new site
-  const handleCreateNewSite = (e) => {
+  const handleCreateNewSite = async (e) => {
     e.preventDefault();
     const newSite = {
       id: `site-${Date.now()}`,
@@ -235,6 +275,19 @@ export default function AssetTrackingPage() {
       status: 'Active'
     };
 
+    if (isSuperadmin) {
+      try {
+        await api.post('/sites', {
+          name: newSite.name,
+          code: newSite.code,
+          lat: newSite.lat,
+          lng: newSite.lng,
+          radius: newSite.radius,
+          area_name: newSite.areaName
+        });
+      } catch {}
+    }
+
     const updated = [...sites, newSite];
     setSites(updated);
     try {
@@ -244,6 +297,7 @@ export default function AssetTrackingPage() {
     handleSiteChange(newSite);
     setShowAddSiteModal(false);
     setSaveSuccess(true);
+    addToast(`Master lokasi site ${newSite.name} berhasil didaftarkan ke sistem.`, 'success');
     setTimeout(() => setSaveSuccess(false), 4000);
   };
 

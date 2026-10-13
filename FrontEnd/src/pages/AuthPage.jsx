@@ -18,12 +18,14 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import SwipeButton from '../components/auth/SwipeButton.jsx';
 
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const { login, register } = useAuth();
+  const { addToast } = useToast();
   const iframeRef = useRef(null);
 
   // Active mode: 'login' | 'register' (swipes horizontally, no 3D flip)
@@ -630,7 +632,7 @@ export default function AuthPage() {
                       </label>
                       <button
                         type="button"
-                        onClick={() => alert('Fitur pemulihan kata sandi dapat diajukan langsung melalui Superadmin IT Digitech.')}
+                        onClick={() => addToast('Fitur pemulihan kata sandi dapat diajukan langsung melalui Superadmin IT Digitech.', 'info')}
                         className="text-[10px] sm:text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
                       >
                         Lupa Kata Sandi?

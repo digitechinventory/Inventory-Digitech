@@ -19,10 +19,12 @@ import {
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import DirectDocumentSheet from '../components/common/DirectDocumentSheet.jsx';
 
 export default function MaterialRequestPage() {
   const { user, role } = useAuth();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('document'); // 'document' | 'history'
   
   // Document state for direct interaction
@@ -146,11 +148,11 @@ export default function MaterialRequestPage() {
   // Submit the completed official document to backend
   const handleSubmitDocument = async () => {
     if (docItems.length === 0) {
-      alert('Tambahkan minimal 1 item material pada dokumen.');
+      addToast('Tambahkan minimal 1 item material pada dokumen.', 'warning');
       return;
     }
     if (!signatures.slot1?.signed) {
-      alert('Tanda tangan pemohon (Slot 1) wajib diisi atau di-paste langsung pada kolom dokumen.');
+      addToast('Tanda tangan pemohon (Slot 1) wajib diisi atau di-paste langsung pada kolom dokumen.', 'warning');
       return;
     }
 
@@ -166,12 +168,13 @@ export default function MaterialRequestPage() {
         });
       }
       setSubmitSuccess(true);
+      addToast('Dokumen MR berhasil diajukan dan dibukukan ke buku besar mutasi.', 'success');
       setTimeout(() => {
         setSubmitSuccess(false);
         setDocNumber(`MR-2026-${String(Date.now()).slice(-4)}`);
       }, 4000);
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal membukukan dokumen MR.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal membukukan dokumen MR.', 'error');
     } finally {
       setLoading(false);
     }

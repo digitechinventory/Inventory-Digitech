@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 export default function StockOpnamePage() {
   const { user, role, isSuperadmin } = useAuth();
+  const { addToast } = useToast();
   const [showStartModal, setShowStartModal] = useState(false);
   const [selectedOpname, setSelectedOpname] = useState(null);
   const [showBlindCountModal, setShowBlindCountModal] = useState(null);
@@ -37,11 +39,11 @@ export default function StockOpnamePage() {
   const handleApproveVariance = async (opnameId) => {
     try {
       await api.put(`/opname/${opnameId}/approve-variance`);
-      alert('Otorisasi varians disetujui. Penyesuaian stok telah dibukukan ke buku besar mutasi secara otomatis.');
+      addToast('Otorisasi varians disetujui. Penyesuaian stok telah dibukukan ke buku besar mutasi secara otomatis.', 'success');
       refetch();
       setSelectedOpname(null);
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menyetujui varians.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menyetujui varians.', 'error');
     }
   };
 
@@ -244,6 +246,7 @@ export default function StockOpnamePage() {
 }
 
 function StartOpnameModal({ onClose, onSuccess }) {
+  const { addToast } = useToast();
   const [zone, setZone] = useState('Zona A (Fast Moving)');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -253,10 +256,10 @@ function StartOpnameModal({ onClose, onSuccess }) {
     setLoading(true);
     try {
       await api.post('/opname/start', { zone, notes });
-      alert('Sesi stock opname baru berhasil dimulai.');
+      addToast('Sesi stock opname baru berhasil dimulai.', 'success');
       onSuccess();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal memulai opname.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal memulai opname.', 'error');
     } finally {
       setLoading(false);
     }
@@ -314,6 +317,7 @@ function StartOpnameModal({ onClose, onSuccess }) {
 }
 
 function BlindCountInputModal({ opname, onClose, onSuccess }) {
+  const { addToast } = useToast();
   const [items, setItems] = useState([
     { sku: 'BIB-CAT-777D-FLTR', item_name: 'Cat 777D Engine Oil Filter', rack: 'R-A01', physical_qty: 4, variance_reason: '' },
     { sku: 'BIB-KOM-PC2000-HYD', item_name: 'Komatsu PC2000 Seal Kit', rack: 'R-A02', physical_qty: 18, variance_reason: '' },
@@ -326,10 +330,10 @@ function BlindCountInputModal({ opname, onClose, onSuccess }) {
     setLoading(true);
     try {
       await api.post(`/opname/${opname.id}/submit-count`, { items });
-      alert('Hasil cacah fisik (Blind Count) berhasil disimpan dan selisih varians telah dikalkulasi.');
+      addToast('Hasil cacah fisik (Blind Count) berhasil disimpan dan selisih varians telah dikalkulasi.', 'success');
       onSuccess();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menyimpan hasil cacah.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menyimpan hasil cacah.', 'error');
     } finally {
       setLoading(false);
     }

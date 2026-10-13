@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { RotateCcw, Check, PenTool } from 'lucide-react';
+import { useToast } from '../../context/ToastContext.jsx';
 
 export default function SignatureCanvas({ onSave, onCancel, title = 'Tanda Tangan Digital Layar Sentuh' }) {
+  const { addToast } = useToast();
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
@@ -74,7 +76,7 @@ export default function SignatureCanvas({ onSave, onCancel, title = 'Tanda Tanga
 
   const handleConfirm = () => {
     if (!hasDrawn) {
-      alert('Silakan goreskan tanda tangan Anda terlebih dahulu pada kanvas.');
+      addToast('Silakan goreskan tanda tangan Anda terlebih dahulu pada kanvas.', 'warning');
       return;
     }
     const canvas = canvasRef.current;

@@ -28,10 +28,12 @@ import {
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import { Navigate } from 'react-router-dom';
 
 export default function UsersPage() {
   const { user, role, isSuperadmin, session } = useAuth();
+  const { addToast } = useToast();
 
   // Strict Superadmin-only guard: prevent User and Admin from accessing
   if (!isSuperadmin && role !== 'Superadmin') {
@@ -146,10 +148,10 @@ export default function UsersPage() {
     const assignedRole = selectedRoleForApproval[userId] || 'User';
     try {
       await api.put(`/users/${userId}/approve`, { role: assignedRole });
-      alert(`Akun pengguna berhasil diaktifkan dengan role ${assignedRole}. Notifikasi email telah dikirim.`);
+      addToast(`Akun pengguna berhasil diaktifkan dengan role ${assignedRole}. Notifikasi email telah dikirim.`, 'success');
       refetch();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal mengaktifkan akun.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal mengaktifkan akun.', 'error');
     }
   };
 
@@ -157,20 +159,20 @@ export default function UsersPage() {
     if (!confirm('Apakah Anda yakin ingin menolak dan menghapus pendaftaran pengguna ini?')) return;
     try {
       await api.put(`/users/${userId}/reject`, { notes: 'Data tidak sesuai verifikasi pengawas site' });
-      alert('Pendaftaran akun ditolak.');
+      addToast('Pendaftaran akun ditolak.', 'info');
       refetch();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal menolak akun.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menolak akun.', 'error');
     }
   };
 
   const handleChangeRole = async (userId, newRole) => {
     try {
       await api.put(`/users/${userId}/role`, { role: newRole });
-      alert(`Role berhasil diubah menjadi ${newRole}.`);
+      addToast(`Role pengguna berhasil diubah menjadi ${newRole}.`, 'success');
       refetch();
     } catch (err) {
-      alert(err.response?.data?.error?.message || err.message || 'Gagal mengubah role.');
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal mengubah role.', 'error');
     }
   };
 

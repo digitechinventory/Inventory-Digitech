@@ -48,7 +48,11 @@ let FALLBACK_LEDGER = [
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const { warehouse_id, category, search } = req.query;
-    const cacheKey = `inventory:${warehouse_id || 'all'}:${category || 'all'}:${search || ''}`;
+    let normalizedWh = warehouse_id;
+    if (normalizedWh && /^wh-\d$/i.test(normalizedWh)) {
+      normalizedWh = normalizedWh.replace(/wh-/i, 'wh-0');
+    }
+    const cacheKey = `inventory:${normalizedWh || 'all'}:${category || 'all'}:${search || ''}`;
     
     const cached = await cacheGet(cacheKey).catch(() => null);
     if (cached) {
@@ -59,7 +63,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
     let items = FALLBACK_INVENTORY;
     try {
       let query = supabase.from('inventory_items').select('*').order('name');
-      if (warehouse_id) query = query.eq('warehouse_id', warehouse_id);
+      if (normalizedWh) query = query.eq('warehouse_id', normalizedWh);
       if (category) query = query.eq('category', category);
       if (search) query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,rack.ilike.%${search}%`);
       const { data, error } = await query;

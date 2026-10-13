@@ -41,10 +41,10 @@ import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockD
 
 
 const WAREHOUSES = [
-  { id: 'wh-1', name: 'Area Rak 1', code: 'BIB-WH-01', location: 'Pit Sebamban KM 24' },
-  { id: 'wh-2', name: 'Area Rak 2', code: 'BIB-PORT-01', location: 'Port Batulicin' },
-  { id: 'wh-3', name: 'Area Rak 3', code: 'BIB-WH-03', location: 'Logistics Hub Angsana' },
-  { id: 'wh-4', name: 'Area Rak 4', code: 'BIB-REG-04', location: 'Transit Banjarmasin' },
+  { id: 'wh-01', name: 'Area Rak 1', code: 'BIB-WH-01', location: 'Pit Sebamban KM 24' },
+  { id: 'wh-02', name: 'Area Rak 2', code: 'BIB-PORT-01', location: 'Port Batulicin' },
+  { id: 'wh-03', name: 'Area Rak 3', code: 'BIB-WH-03', location: 'Logistics Hub Angsana' },
+  { id: 'wh-04', name: 'Area Rak 4', code: 'BIB-REG-04', location: 'Transit Banjarmasin' },
 ];
 
 export default function InventoryPage() {
@@ -52,7 +52,7 @@ export default function InventoryPage() {
   const { role, isAdmin } = useAuth();
   const { addToast } = useToast();
 
-  const [selectedWarehouse, setSelectedWarehouse] = useState('wh-1');
+  const [selectedWarehouse, setSelectedWarehouse] = useState('wh-01');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL'); // 'ALL' | 'optimal' | 'low' | 'critical'
@@ -937,7 +937,7 @@ export default function InventoryPage() {
 
                 <button
                   type="button"
-                  onClick={() => alert(`Mencetak label QR untuk SKU ${selectedItem.sku}...`)}
+                  onClick={() => addToast(`Mencetak label QR untuk SKU ${selectedItem.sku}...`, 'info')}
                   className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs"
                 >
                   Print QR
@@ -1010,11 +1010,11 @@ export default function InventoryPage() {
                     unit: fd.get('unit'),
                     rack: fd.get('rack')
                   });
-                  alert('Item baru berhasil ditambahkan ke katalog.');
+                  addToast('Item baru berhasil ditambahkan ke katalog.', 'success');
                   setShowAddModal(false);
                   refetch();
                 } catch (err) {
-                  alert(err.response?.data?.error?.message || err.message || 'Gagal menambahkan item.');
+                  addToast(err.response?.data?.error?.message || err.message || 'Gagal menambahkan item.', 'error');
                 }
               }}
               className="space-y-3"
