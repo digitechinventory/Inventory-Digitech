@@ -37,6 +37,8 @@ import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
+import QRLabelPrintModal from '../components/printer/QRLabelPrintModal.jsx';
+import PrinterSetupModal from '../components/printer/PrinterSetupModal.jsx';
 import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockData.js';
 
 
@@ -60,6 +62,8 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedSku, setCopiedSku] = useState(null);
+  const [qrPrintItem, setQrPrintItem] = useState(null);
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
 
   // Table selection & 3-dots action state
   const [selectedTableSkus, setSelectedTableSkus] = useState([]);
@@ -937,9 +941,10 @@ export default function InventoryPage() {
 
                 <button
                   type="button"
-                  onClick={() => addToast(`Mencetak label QR untuk SKU ${selectedItem.sku}...`, 'info')}
-                  className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs"
+                  onClick={() => setQrPrintItem(selectedItem)}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5"
                 >
+                  <QrCode className="w-3.5 h-3.5" />
                   Print QR
                 </button>
               </div>
@@ -1247,6 +1252,20 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+
+      {/* Real Thermal QR Label Print Modal */}
+      <QRLabelPrintModal
+        item={qrPrintItem}
+        isOpen={!!qrPrintItem}
+        onClose={() => setQrPrintItem(null)}
+        onOpenPrinterSetup={() => setShowPrinterSetup(true)}
+      />
+
+      {/* Printer Setup & Integration Modal */}
+      <PrinterSetupModal
+        isOpen={showPrinterSetup}
+        onClose={() => setShowPrinterSetup(false)}
+      />
 
     </div>
   );

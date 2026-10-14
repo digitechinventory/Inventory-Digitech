@@ -18,11 +18,14 @@ import {
   ShieldAlert,
   Info,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Printer
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import RealWorldCalendar from '../calendar/RealWorldCalendar';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
+import PrinterSetupModal from '../printer/PrinterSetupModal';
+import { getPrinterConfig } from '../../services/printerService';
 import { playNotificationSound, isSoundMuted, setSoundMuted } from '../../utils/notificationSound';
 import api from '../../api/client';
 
@@ -35,6 +38,16 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
+  const [printerConfig, setPrinterConfig] = useState(() => getPrinterConfig());
+
+  useEffect(() => {
+    const handlePrinterConfigChange = (e) => {
+      setPrinterConfig(e.detail || getPrinterConfig());
+    };
+    window.addEventListener('digitech:printer-config-changed', handlePrinterConfigChange);
+    return () => window.removeEventListener('digitech:printer-config-changed', handlePrinterConfigChange);
+  }, []);
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -376,6 +389,23 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           )}
         </div>
 
+        {/* Thermal Sticker Printer Quick Button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowPrinterSetup(true)}
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-red-600 hover:border-red-300 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 relative cursor-pointer"
+            aria-label="Setup Printer"
+            title="Setup & Integrasi Printer Stiker QR (Wireless / USB)"
+          >
+            <Printer className="w-4 h-4" />
+            <span
+              className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
+                printerConfig.simulationMode ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+            />
+          </button>
+        </div>
+
         {/* Site Calendar Button & Dropdown Popover */}
         <div className="relative" ref={calendarRef}>
           <button
@@ -485,6 +515,12 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           await logout();
           navigate('/login', { replace: true });
         }}
+      />
+
+      {/* Printer Setup Modal */}
+      <PrinterSetupModal
+        isOpen={showPrinterSetup}
+        onClose={() => setShowPrinterSetup(false)}
       />
     </header>
   );

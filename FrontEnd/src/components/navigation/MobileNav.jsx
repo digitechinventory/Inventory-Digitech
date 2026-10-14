@@ -15,10 +15,12 @@ import {
   ShieldCheck,
   Building2,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  Printer
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
+import PrinterSetupModal from '../printer/PrinterSetupModal';
 
 /**
  * Mobile Bottom Floating Liquid Glass Capsule Navbar
@@ -40,6 +42,7 @@ export default function MobileNav() {
   const navRef = useRef(null);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
 
   const normalizedRole = role || 'User';
 
@@ -425,6 +428,21 @@ export default function MobileNav() {
               </div>
             </div>
 
+            {/* Setup Printer Stiker QR Button */}
+            <button
+              onClick={() => {
+                setIsAccountDrawerOpen(false);
+                setShowPrinterSetup(true);
+              }}
+              className="w-full py-3 mb-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Printer className="w-4 h-4 text-red-600" />
+                Setup Printer Stiker QR (Wireless / USB)
+              </span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+
             {/* Pengaturan Akun & Keamanan Link */}
             <button
               onClick={() => {
@@ -463,6 +481,12 @@ export default function MobileNav() {
           await logout();
           navigate('/login');
         }}
+      />
+
+      {/* Printer Setup Modal for Mobile */}
+      <PrinterSetupModal
+        isOpen={showPrinterSetup}
+        onClose={() => setShowPrinterSetup(false)}
       />
     </>
   );

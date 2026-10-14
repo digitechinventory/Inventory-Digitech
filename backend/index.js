@@ -26,6 +26,7 @@ import opnameRoutes from './routes/opname.js';
 import agendasRoutes from './routes/agendas.js';
 import notificationsRoutes from './routes/notifications.js';
 import projectInventoryRoutes from './routes/projectInventory.js';
+import printerRoutes from './routes/printer.js';
 
 import { errorHandler } from './middlewares/errorHandler.js';
 import { sendSuccess } from './middlewares/responseHandler.js';
@@ -107,6 +108,7 @@ app.use('/api/opname', opnameRoutes);
 app.use('/api/agendas', agendasRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/project-inventory', projectInventoryRoutes);
+app.use('/api/printer', printerRoutes);
 
 // ─── Health Check ──────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -17,10 +17,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   HardHat,
-  FolderGit2
+  FolderGit2,
+  Printer
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import LogoutConfirmModal from '../common/LogoutConfirmModal.jsx';
+import PrinterSetupModal from '../printer/PrinterSetupModal.jsx';
 
 /* ─── Authentic Mega Mendung Batik Ornament (Matching Login Card) ─────────── */
 const MegaMendungDefs = () => (
@@ -130,52 +132,122 @@ export default function IronNestSidebar({
   const { role, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
 
-  const getNavItemsForRole = (currentRole) => {
+  const getNavGroupsForRole = (currentRole) => {
     const normalizedRole = currentRole || 'User';
 
     if (normalizedRole === 'Superadmin') {
       return [
-        { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview' },
-        { id: 'projectInventory', label: 'Project', icon: FolderGit2, path: '/project-inventory' },
-        { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
-        { id: 'orders', label: 'MOS Otorisasi', icon: PackageCheck, path: '/mos', badge: 'Otor' },
-        { id: 'opname', label: 'Stock Opname', icon: Truck, path: '/opname' },
-        { id: 'inventory', label: 'Katalog & QR', icon: Boxes, path: '/inventory' },
-        { id: 'agenda', label: 'Agenda Site', icon: Calendar, path: '/agenda', badge: 'Live' },
-        { id: 'finance', label: 'Mutasi & Ledger', icon: CircleDollarSign, path: '/ledger' },
-        { id: 'users', label: 'Manajemen User', icon: Users, path: '/users', badge: 'Admin' },
-        { id: 'tracking', label: 'Asset Tracking', icon: Compass, path: '/tracking' },
-        { id: 'reports', label: 'Laporan Resmi', icon: FileSpreadsheet, path: '/reports' },
+        {
+          id: 'grp-main',
+          title: 'Utama & Monitoring',
+          items: [
+            { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview' },
+            { id: 'projectInventory', label: 'Project Inventory', icon: FolderGit2, path: '/project-inventory' },
+          ]
+        },
+        {
+          id: 'grp-warehouse',
+          title: 'Gudang & Logistik',
+          items: [
+            { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
+            { id: 'inventory', label: 'Katalog & QR', icon: Boxes, path: '/inventory' },
+            { id: 'orders', label: 'MOS Otorisasi', icon: PackageCheck, path: '/mos', badge: 'Otor' },
+            { id: 'opname', label: 'Stock Opname', icon: Truck, path: '/opname' },
+            { id: 'tracking', label: 'Asset Tracking', icon: Compass, path: '/tracking' },
+          ]
+        },
+        {
+          id: 'grp-ops',
+          title: 'Operasional & Keuangan',
+          items: [
+            { id: 'agenda', label: 'Agenda Site', icon: Calendar, path: '/agenda', badge: 'Live' },
+            { id: 'finance', label: 'Mutasi & Ledger', icon: CircleDollarSign, path: '/ledger' },
+            { id: 'reports', label: 'Laporan Resmi', icon: FileSpreadsheet, path: '/reports' },
+          ]
+        },
+        {
+          id: 'grp-system',
+          title: 'Sistem & Perangkat',
+          items: [
+            { id: 'users', label: 'Manajemen User', icon: Users, path: '/users', badge: 'Admin' },
+            { id: 'printer', label: 'Setup Printer QR', icon: Printer, isAction: true, badge: 'Hardware' },
+          ]
+        }
       ];
     }
 
     if (normalizedRole === 'Admin') {
       return [
-        { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
-        { id: 'projectInventory', label: 'Project', icon: FolderGit2, path: '/project-inventory' },
-        { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
-        { id: 'orders', label: 'MOS Verifikasi', icon: PackageCheck, path: '/mos', badge: 'Verif' },
-        { id: 'opname', label: 'Stock Opname', icon: Truck, path: '/opname' },
-        { id: 'inventory', label: 'Katalog Stok', icon: Boxes, path: '/inventory' },
-        { id: 'agenda', label: 'Agenda & Shift', icon: Calendar, path: '/agenda', badge: 'Live' },
-        { id: 'finance', label: 'Mutasi & Ledger', icon: CircleDollarSign, path: '/ledger' },
-        { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
-        { id: 'reports', label: 'Laporan Logistik', icon: FileSpreadsheet, path: '/reports' },
+        {
+          id: 'grp-main',
+          title: 'Panel Utama',
+          items: [
+            { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
+            { id: 'projectInventory', label: 'Project Inventory', icon: FolderGit2, path: '/project-inventory' },
+          ]
+        },
+        {
+          id: 'grp-warehouse',
+          title: 'Gudang & Stok',
+          items: [
+            { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
+            { id: 'inventory', label: 'Katalog Stok', icon: Boxes, path: '/inventory' },
+            { id: 'orders', label: 'MOS Verifikasi', icon: PackageCheck, path: '/mos', badge: 'Verif' },
+            { id: 'opname', label: 'Stock Opname', icon: Truck, path: '/opname' },
+            { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
+          ]
+        },
+        {
+          id: 'grp-ops',
+          title: 'Operasional & Laporan',
+          items: [
+            { id: 'agenda', label: 'Agenda & Shift', icon: Calendar, path: '/agenda', badge: 'Live' },
+            { id: 'finance', label: 'Mutasi & Ledger', icon: CircleDollarSign, path: '/ledger' },
+            { id: 'reports', label: 'Laporan Logistik', icon: FileSpreadsheet, path: '/reports' },
+          ]
+        },
+        {
+          id: 'grp-hardware',
+          title: 'Hardware & Label',
+          items: [
+            { id: 'printer', label: 'Setup Printer QR', icon: Printer, isAction: true, badge: 'Hardware' },
+          ]
+        }
       ];
     }
 
     return [
-      { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
-      { id: 'projectInventory', label: 'Project', icon: FolderGit2, path: '/project-inventory' },
-      { id: 'orders', label: 'Penerimaan MOS', icon: PackageCheck, path: '/mos' },
-      { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
-      { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
-      { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
+      {
+        id: 'grp-main',
+        title: 'Portal Teknisi',
+        items: [
+          { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
+          { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
+        ]
+      },
+      {
+        id: 'grp-warehouse',
+        title: 'Material & Tools',
+        items: [
+          { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
+          { id: 'orders', label: 'Penerimaan MOS', icon: PackageCheck, path: '/mos' },
+          { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
+        ]
+      },
+      {
+        id: 'grp-ops',
+        title: 'Site & Perangkat',
+        items: [
+          { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
+          { id: 'printer', label: 'Setup Printer QR', icon: Printer, isAction: true, badge: 'Hardware' },
+        ]
+      }
     ];
   };
 
-  const navItems = getNavItemsForRole(role);
+  const navGroups = getNavGroupsForRole(role);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
@@ -449,62 +521,140 @@ export default function IronNestSidebar({
               </div>
             )}
 
-            {/* ── Navigation Items ─────────────────────────────── */}
+            {/* ── Grouped Navigation Items with Moving Hover Animation ── */}
             <nav
-              className={`flex-1 overflow-y-auto py-3 space-y-1 custom-scrollbar ${isCollapsed ? 'px-2' : 'px-3'}`}
+              className={`flex-1 overflow-y-auto py-2.5 custom-scrollbar ${isCollapsed ? 'px-2 space-y-2' : 'px-3 space-y-3'}`}
             >
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive =
-                  location.pathname === item.path ||
-                  ((item.path === '/dashboard' || item.path === '/overview') &&
-                    location.pathname === '/');
+              {navGroups.map((group, groupIdx) => (
+                <div key={group.id} className="space-y-1">
+                  {/* Group Header Label */}
+                  {!isCollapsed ? (
+                    <div className="px-3 pt-2 pb-1 flex items-center justify-between select-none">
+                      <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-600/70" />
+                        {group.title}
+                      </span>
+                      <span className="text-[8.5px] font-bold text-slate-300 font-mono">
+                        {group.items.length}
+                      </span>
+                    </div>
+                  ) : (
+                    groupIdx > 0 && <div className="my-1.5 border-t border-slate-200/60 w-8 mx-auto" />
+                  )}
 
-                return (
-                  <div key={item.id} className="relative group">
-                    <NavLink
-                      to={item.path}
-                      onClick={onClose}
-                      className={`flex items-center rounded-xl transition-all duration-200 cursor-pointer ${
-                        isCollapsed
-                          ? 'w-11 h-11 mx-auto justify-center'
-                          : 'gap-3 px-3.5 py-2.5 text-xs'
-                      } ${
-                        isActive
-                          ? 'bg-gradient-to-r from-red-600 to-red-700 text-white font-bold shadow-[0_4px_16px_rgba(220,38,38,0.28)]'
-                          : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-100 hover:translate-x-0.5'
-                      }`}
-                    >
-                      <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${
-                          isActive ? 'text-white' : 'text-slate-500 group-hover:text-red-600'
-                        }`}
-                      />
-                      {!isCollapsed && (
-                        <span className="truncate flex-1">{item.label}</span>
-                      )}
-                      {!isCollapsed && item.badge && (
-                        <span
-                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md transition-colors ${
-                            isActive
-                              ? 'bg-white/20 text-white border border-white/30'
-                              : 'bg-slate-100 text-slate-500 border border-slate-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </NavLink>
+                  {/* Group Items */}
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive =
+                        item.path &&
+                        (location.pathname === item.path ||
+                          ((item.path === '/dashboard' || item.path === '/overview') &&
+                            location.pathname === '/'));
 
-                    {/* Tooltip for collapsed */}
-                    {isCollapsed && (
-                      <div className="fixed left-[88px] px-3 py-1.5 bg-white/95 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all z-50 whitespace-nowrap backdrop-blur-md">
-                        {item.label}
-                      </div>
-                    )}
+                      if (item.isAction) {
+                        return (
+                          <div key={item.id} className="relative group">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (item.id === 'printer') setShowPrinterSetup(true);
+                                if (isOpen) onClose();
+                              }}
+                              className={`w-full relative flex items-center rounded-xl transition-all duration-300 ease-out cursor-pointer overflow-hidden ${
+                                isCollapsed
+                                  ? 'w-11 h-11 mx-auto justify-center'
+                                  : 'gap-3 px-3.5 py-2 text-xs font-semibold'
+                              } text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1.5 border border-transparent hover:border-red-200/60`}
+                            >
+                              {/* Sliding Indicator on Hover */}
+                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center opacity-0 group-hover:opacity-100" />
+
+                              <Icon className="w-4 h-4 shrink-0 text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6 transition-all duration-300" />
+                              
+                              {!isCollapsed && (
+                                <span className="truncate flex-1 text-left tracking-tight">{item.label}</span>
+                              )}
+
+                              {!isCollapsed && item.badge && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200 transition-all duration-200">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Tooltip for collapsed */}
+                            {isCollapsed && (
+                              <div className="fixed left-[88px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 slide-in-from-left-2">
+                                <span className="text-[9px] font-mono font-bold text-red-600 uppercase">[{group.title.split(' ')[0]}]</span>
+                                <span>{item.label}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={item.id} className="relative group">
+                          <NavLink
+                            to={item.path}
+                            onClick={onClose}
+                            className={`relative flex items-center rounded-xl transition-all duration-300 ease-out cursor-pointer overflow-hidden ${
+                              isCollapsed
+                                ? 'w-11 h-11 mx-auto justify-center'
+                                : 'gap-3 px-3.5 py-2 text-xs font-semibold'
+                            } ${
+                              isActive
+                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white font-bold shadow-[0_4px_16px_rgba(220,38,38,0.28)] translate-x-1'
+                                : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1.5 border border-transparent hover:border-red-200/60'
+                            }`}
+                          >
+                            {/* Animated Left Sliding Red Bar on Hover */}
+                            {!isActive && (
+                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center opacity-0 group-hover:opacity-100" />
+                            )}
+
+                            {/* Micro-animated Icon on hover */}
+                            <Icon
+                              className={`w-4 h-4 shrink-0 transition-all duration-300 ${
+                                isActive
+                                  ? 'text-white scale-105'
+                                  : 'text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6'
+                              }`}
+                            />
+
+                            {!isCollapsed && (
+                              <span className="truncate flex-1 tracking-tight transition-colors duration-200">
+                                {item.label}
+                              </span>
+                            )}
+
+                            {!isCollapsed && item.badge && (
+                              <span
+                                className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md transition-all duration-200 ${
+                                  isActive
+                                    ? 'bg-white/20 text-white border border-white/30'
+                                    : 'bg-slate-100 text-slate-500 border border-slate-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200 group-hover:scale-105'
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            )}
+                          </NavLink>
+
+                          {/* Tooltip for collapsed mode with Group tag */}
+                          {isCollapsed && (
+                            <div className="fixed left-[88px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 slide-in-from-left-2">
+                              <span className="text-[9px] font-mono font-bold text-red-600 uppercase">[{group.title.split(' ')[0]}]</span>
+                              <span>{item.label}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </nav>
 
             {/* ── Footer: Settings & Logout ────────────────────── */}
@@ -576,6 +726,12 @@ export default function IronNestSidebar({
           await logout();
           navigate('/login', { replace: true });
         }}
+      />
+
+      {/* Printer Setup & Test Integration Modal */}
+      <PrinterSetupModal
+        isOpen={showPrinterSetup}
+        onClose={() => setShowPrinterSetup(false)}
       />
     </>
   );
