@@ -38,3 +38,22 @@ export const sendPaginated = (res, items = [], totalItems = 0, page = 1, limit =
     }
   });
 };
+
+export const sendError = (res, message = 'Terjadi kesalahan sistem', statusCode = 400, details = null) => {
+  const req = res.req;
+  const requestId = req?.headers?.['x-request-id'] || 'req-' + crypto.randomUUID();
+  return res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message,
+    error: {
+      message,
+      ...(details && { details })
+    },
+    meta: {
+      timestamp: new Date().toISOString(),
+      requestId,
+      version: 'v1.0'
+    }
+  });
+};
