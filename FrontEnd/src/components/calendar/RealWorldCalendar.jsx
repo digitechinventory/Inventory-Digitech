@@ -726,8 +726,16 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
 
       {/* ── Modal Dialog: Tambah / Edit Agenda ── */}
       {formModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div
+            className="bg-white w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-150"
+            style={{
+              clipPath: 'polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)',
+            }}
+          >
+            <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%' }} />
+            <div className="p-5 sm:p-6 pt-8 pb-9 space-y-4">
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -907,14 +915,23 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Delete Confirmation Dialog ── */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 text-center space-y-3 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div
+            className="bg-white w-full max-w-sm overflow-hidden text-center animate-in zoom-in-95 duration-150"
+            style={{
+              clipPath: 'polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)',
+            }}
+          >
+            <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%' }} />
+            <div className="p-5 pt-8 pb-9 space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 mx-auto flex items-center justify-center border border-red-200">
               <AlertCircle className="w-6 h-6" />
             </div>
@@ -940,6 +957,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
               >
                 {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
+            </div>
             </div>
           </div>
         </div>

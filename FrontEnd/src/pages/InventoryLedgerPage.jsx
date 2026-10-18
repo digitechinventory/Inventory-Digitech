@@ -468,10 +468,10 @@ export default function InventoryLedgerPage() {
 
       {/* MODAL 1: LIHAT JEJAK AUDIT DETAIL */}
       {detailItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="px-6 pt-7 pb-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
                   <FileText className="w-4 h-4" />
@@ -483,7 +483,7 @@ export default function InventoryLedgerPage() {
               </div>
               <button
                 onClick={() => setDetailItem(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-red-600 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -558,11 +558,11 @@ export default function InventoryLedgerPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+            <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setDetailItem(null)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
               >
                 Tutup Detail
               </button>
@@ -573,7 +573,7 @@ export default function InventoryLedgerPage() {
 
       {/* MODAL 2: EDIT CATATAN & REFERENSI */}
       {editItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -675,8 +675,8 @@ export default function InventoryLedgerPage() {
 
       {/* MODAL 3: KONFIRMASI HAPUS (SINGLE ATAU BULK) */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-center p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
             <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -719,3 +719,6 @@ export default function InventoryLedgerPage() {
     </div>
   );
 }
+
+
+

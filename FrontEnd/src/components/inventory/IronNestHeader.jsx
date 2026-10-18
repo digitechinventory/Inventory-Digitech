@@ -424,7 +424,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           {/* Calendar Modal Overlay (Real World Interactive Calendar) via Portal */}
           {showCalendarModal && createPortal(
             <div
-              className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+              className="fixed inset-0 z-[99999] bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
               onClick={(e) => {
                 if (e.target === e.currentTarget) {
                   setShowCalendarModal(false);

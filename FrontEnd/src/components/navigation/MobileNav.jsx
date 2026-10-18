@@ -16,7 +16,8 @@ import {
   Building2,
   MapPin,
   ChevronRight,
-  Printer
+  Printer,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
@@ -371,7 +372,7 @@ export default function MobileNav() {
           {/* Backdrop Blur */}
           <div
             onClick={() => setIsAccountDrawerOpen(false)}
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
+            className="absolute inset-0 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-200"
           />
 
           {/* Drawer Container */}
@@ -428,35 +429,36 @@ export default function MobileNav() {
               </div>
             </div>
 
-            {/* Setup Printer Stiker QR Button */}
-            <button
-              onClick={() => {
-                setIsAccountDrawerOpen(false);
-                setShowPrinterSetup(true);
-              }}
-              className="w-full py-3 mb-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-            >
-              <span className="flex items-center gap-2.5">
-                <Printer className="w-4 h-4 text-red-600" />
-                Setup Printer Stiker QR (Wireless / USB)
-              </span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </button>
+            {/* ── Pengaturan Section ── */}
+            <div className="mb-3">
+              <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                <Settings className="w-3 h-3 text-red-500" />
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Pengaturan</span>
+              </div>
+              <div className="space-y-1.5 pl-1 border-l-2 border-red-100">
+                <button
+                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/settings'); }}
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <UserIcon className="w-4 h-4 text-red-600" />
+                    Pengaturan Akun &amp; Keamanan
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
 
-            {/* Pengaturan Akun & Keamanan Link */}
-            <button
-              onClick={() => {
-                setIsAccountDrawerOpen(false);
-                navigate('/settings');
-              }}
-              className="w-full py-3 mb-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-            >
-              <span className="flex items-center gap-2.5">
-                <UserIcon className="w-4 h-4 text-red-600" />
-                Pengaturan Akun &amp; Keamanan MFA
-              </span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </button>
+                <button
+                  onClick={() => { setIsAccountDrawerOpen(false); setShowPrinterSetup(true); }}
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Printer className="w-4 h-4 text-red-600" />
+                    Pengaturan Web (Printer QR)
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
 
             {/* Logout Action Button */}
             <button

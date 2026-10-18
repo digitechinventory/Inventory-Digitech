@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { supabase } from '../services/supabase.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { adminOnly } from '../middleware/rbac.js';
 import { cacheGet, cacheSet } from '../services/redis.js';
 import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
@@ -170,7 +171,7 @@ router.get('/ledger', requireAuth, async (req, res, next) => {
 });
 
 // POST /api/inventory/ledger/bulk-delete — Hapus banyak baris mutasi sekaligus
-router.post('/ledger/bulk-delete', requireAuth, async (req, res, next) => {
+router.post('/ledger/bulk-delete', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -191,7 +192,7 @@ router.post('/ledger/bulk-delete', requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/inventory/ledger/:id — Hapus satu baris mutasi
-router.delete('/ledger/:id', requireAuth, async (req, res, next) => {
+router.delete('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     try {
@@ -208,7 +209,7 @@ router.delete('/ledger/:id', requireAuth, async (req, res, next) => {
 });
 
 // PATCH /api/inventory/ledger/:id — Edit referensi & catatan baris mutasi
-router.patch('/ledger/:id', requireAuth, async (req, res, next) => {
+router.patch('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { reference_doc_id, notes, bin_location, performed_by } = req.body;
@@ -297,7 +298,7 @@ router.post('/mr', requireAuth, async (req, res, next) => {
 });
 
 // POST /api/inventory — Tambah Item Suku Cadang Baru ke Katalog
-router.post('/', requireAuth, async (req, res, next) => {
+router.post('/', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { name, sku, category, current_stock, min_threshold, unit, rack, warehouse_id, price } = req.body;
     if (!name || !sku) {
@@ -340,7 +341,7 @@ router.post('/', requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/inventory/items/:sku — Hapus suku cadang dari katalog
-router.delete('/items/:sku', requireAuth, async (req, res, next) => {
+router.delete('/items/:sku', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { sku } = req.params;
     try {
@@ -356,7 +357,7 @@ router.delete('/items/:sku', requireAuth, async (req, res, next) => {
 });
 
 // POST /api/inventory/items/bulk-delete — Hapus massal suku cadang
-router.post('/items/bulk-delete', requireAuth, async (req, res, next) => {
+router.post('/items/bulk-delete', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { skus } = req.body;
     if (!Array.isArray(skus) || skus.length === 0) {
@@ -375,7 +376,7 @@ router.post('/items/bulk-delete', requireAuth, async (req, res, next) => {
 });
 
 // PATCH /api/inventory/items/:sku — Edit informasi suku cadang
-router.patch('/items/:sku', requireAuth, async (req, res, next) => {
+router.patch('/items/:sku', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { sku } = req.params;
     const { name, category, current_stock, min_threshold, unit, rack, price } = req.body;

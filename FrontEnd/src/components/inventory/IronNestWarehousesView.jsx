@@ -690,8 +690,8 @@ export default function IronNestWarehousesView() {
 
       {/* ── 3. INTERACTIVE MODAL: Shelf Detail Popover ── */}
       {selectedShelf && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
             <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center font-display font-bold text-lg">
@@ -798,8 +798,8 @@ export default function IronNestWarehousesView() {
 
       {/* ── 4. MODAL: Add Material Request (+ Add Request) ── */}
       {showAddRequestModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
@@ -876,8 +876,8 @@ export default function IronNestWarehousesView() {
 
       {/* ── 5. MODAL: Edit Section ── */}
       {showEditSectionModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-display font-bold text-base text-slate-900">Edit Section {activeSectionCode}</h3>
               <button onClick={() => setShowEditSectionModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
@@ -922,8 +922,8 @@ export default function IronNestWarehousesView() {
 
       {/* ── 6. MODAL: Delete Section ── */}
       {showDeleteSectionModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 text-center">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 text-center p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
             <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 mx-auto flex items-center justify-center mb-3">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -951,8 +951,8 @@ export default function IronNestWarehousesView() {
 
       {/* ── 7. MODAL: Add Warehouse ── */}
       {showAddWarehouseModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
@@ -1008,3 +1008,5 @@ export default function IronNestWarehousesView() {
     </div>
   );
 }
+
+

@@ -162,7 +162,7 @@ router.put('/loans/:id/return', requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/tools/loans/:id — Hapus satu catatan peminjaman
-router.delete('/loans/:id', requireAuth, async (req, res, next) => {
+router.delete('/loans/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     try {
@@ -177,7 +177,7 @@ router.delete('/loans/:id', requireAuth, async (req, res, next) => {
 });
 
 // POST /api/tools/loans/bulk-delete — Hapus massal catatan peminjaman
-router.post('/loans/bulk-delete', requireAuth, async (req, res, next) => {
+router.post('/loans/bulk-delete', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -195,7 +195,7 @@ router.post('/loans/bulk-delete', requireAuth, async (req, res, next) => {
 });
 
 // PATCH /api/tools/loans/:id — Edit informasi peminjaman
-router.patch('/loans/:id', requireAuth, async (req, res, next) => {
+router.patch('/loans/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { expected_return_date, condition, notes, borrower_name } = req.body;

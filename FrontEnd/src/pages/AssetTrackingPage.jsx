@@ -791,8 +791,8 @@ export default function AssetTrackingPage() {
 
       {/* Modal Tambah Site / Gudang Baru */}
       {showAddSiteModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md overflow-hidden p-6 pt-8 pb-8 space-y-4" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <Plus className="w-4 h-4 text-red-600" />
@@ -800,7 +800,7 @@ export default function AssetTrackingPage() {
               </h3>
               <button
                 onClick={() => setShowAddSiteModal(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 cursor-pointer"
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-red-600 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -878,17 +878,17 @@ export default function AssetTrackingPage() {
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-3 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddSiteModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-600/20 cursor-pointer"
                 >
                   Simpan Lokasi Baru
                 </button>
@@ -900,3 +900,5 @@ export default function AssetTrackingPage() {
     </div>
   );
 }
+
+

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import Toast from './components/Toast';
 
@@ -20,6 +19,7 @@ import ToolLoansPage from './pages/ToolLoansPage';
 import StockOpnamePage from './pages/StockOpnamePage';
 import AssetLifecyclePage from './pages/AssetLifecyclePage';
 import InventoryLedgerPage from './pages/InventoryLedgerPage';
+import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import AssetTrackingPage from './pages/AssetTrackingPage';
@@ -161,7 +161,7 @@ function AppRoutes() {
           path="reports"
           element={
             <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
-              <InventoryLedgerPage />
+              <ReportsPage />
             </RoleRoute>
           }
         />
@@ -230,17 +230,15 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <Toast />
-            {showSplash && <StartupSplashScreen onFinish={handleFinishSplash} />}
-            <Router>
-              <AppRoutes />
-            </Router>
-          </ToastProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <Toast />
+          {showSplash && <StartupSplashScreen onFinish={handleFinishSplash} />}
+          <Router>
+            <AppRoutes />
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

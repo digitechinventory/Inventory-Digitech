@@ -211,7 +211,7 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
         </div>
 
         {/* Camera / Preview Viewport */}
-        <div className="relative flex-1 bg-slate-950 min-h-[300px] sm:min-h-[360px] flex items-center justify-center overflow-hidden">
+        <div className="relative flex-1 bg-slate-800 min-h-[300px] sm:min-h-[360px] flex items-center justify-center overflow-hidden">
           {cameraError ? (
             <div className="p-6 text-center text-white space-y-2">
               <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />

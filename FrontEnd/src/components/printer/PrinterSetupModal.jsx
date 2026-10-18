@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Printer,
   Wifi,
@@ -112,45 +113,51 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] bg-slate-800/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200 font-sans">
+      <div
+        className="w-full max-w-4xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200 font-sans"
+        style={{
+          clipPath: 'polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.15), 0 8px 30px rgba(220,38,38,0.12)',
+        }}
+      >
         
         {/* ─── Modal Header ────────────────────────────────────────── */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white flex items-center justify-between border-b border-red-900/40 relative">
+        <div className="px-8 pt-7 pb-5 text-white flex items-center justify-between border-b border-red-800/40 relative" style={{ background: 'linear-gradient(135deg, #991B1B 0%, #DC2626 50%, #EF4444 100%)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-red-400 shadow-inner">
-              <Printer className="w-5 h-5 text-red-400" />
+            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center text-white shadow-inner">
+              <Printer className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black tracking-wide uppercase">
-                  Setup & Integrasi Printer Stiker QR
+                  Setup &amp; Integrasi Printer Stiker QR
                 </h2>
                 <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   config.simulationMode
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                    ? 'bg-amber-500/25 text-amber-200 border-amber-400/40'
                     : testResult?.success
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
-                    : 'bg-red-500/20 text-red-300 border-red-400/40'
+                    ? 'bg-emerald-500/25 text-emerald-200 border-emerald-400/40'
+                    : 'bg-white/15 text-white/80 border-white/30'
                 }`}>
                   {config.simulationMode ? 'SIMULASI AKTIF' : testResult?.success ? 'ONLINE' : 'OFFLINE'}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Konfigurasi koneksi wireless (Wi-Fi/LAN) & USB untuk cetak barcode stiker gudang
+              <p className="text-xs text-red-100/80 mt-0.5">
+                Konfigurasi koneksi wireless (Wi-Fi/LAN) &amp; USB untuk cetak barcode stiker gudang
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition flex items-center justify-center cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 text-white transition flex items-center justify-center cursor-pointer"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -735,7 +742,7 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
         </div>
 
         {/* ─── Modal Footer ────────────────────────────────────────── */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <div className="px-8 pt-4 pb-8 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Konfigurasi tersimpan otomatis di perangkat Anda.</span>
@@ -744,12 +751,13 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+            className="px-6 py-2.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 text-white font-bold text-xs rounded-xl shadow-md shadow-red-600/20 transition cursor-pointer"
           >
             Selesai
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -26,24 +26,86 @@ import {
   Trash2,
   MapPin,
   Timer,
-  Hourglass,
   SlidersHorizontal,
   Sparkles,
   Maximize2,
   Download,
   X,
-  Boxes,
-  FileText,
-  Wrench,
-  ClipboardCheck,
-  Users,
-  XCircle,
   BadgeCheck,
-  Radio
+  Radio,
+  Volume2,
+  VolumeX,
+  Crown,
+  Wrench,
+  ChevronRight,
+  ChevronDown,
+  Hash,
+  Activity,
+  Layers,
+  Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { playNotificationSound, isSoundMuted, setSoundMuted } from '../utils/notificationSound';
 import api from '../api/client';
+
+/* ─── Authentic Mega Mendung Batik SVG Pattern (Matching Brand Identity) ─── */
+const MegaMendungDefs = () => (
+  <svg className="absolute -top-10 -right-10 w-80 h-80 opacity-20 pointer-events-none" viewBox="0 0 200 200" fill="none">
+    <defs>
+      <linearGradient id="heroMmCrimson" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#DC2626" stopOpacity="0.95" />
+        <stop offset="100%" stopColor="#991B1B" stopOpacity="0.75" />
+      </linearGradient>
+      <linearGradient id="heroMmRose" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#F87171" stopOpacity="0.95" />
+        <stop offset="100%" stopColor="#EF4444" stopOpacity="0.85" />
+      </linearGradient>
+      <linearGradient id="heroMmWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+        <stop offset="100%" stopColor="#FECDD3" stopOpacity="0.85" />
+      </linearGradient>
+    </defs>
+    {/* Cloud Lobe 1 */}
+    <path
+      d="M-5,-5 L155,-5 C146,18 150,38 128,48 C108,56 112,74 84,84 C62,92 66,116 36,128 C16,136 -4,142 -5,142 Z"
+      fill="url(#heroMmCrimson)"
+    />
+    <path
+      d="M-5,-5 L124,-5 C116,14 120,30 102,38 C84,44 88,60 64,68 C45,75 50,96 24,106 C8,112 -4,116 -5,116 Z"
+      fill="url(#heroMmRose)"
+    />
+    <path
+      d="M-5,-5 L92,-5 C85,10 90,22 74,28 C60,33 64,46 45,52 C30,58 34,74 14,82 C1,87 -4,90 -5,90 Z"
+      fill="url(#heroMmWhite)"
+    />
+    {/* Cloud Lobe 2 */}
+    <path
+      d="M-5,72 C18,72 26,58 46,63 C66,68 62,84 76,88 C90,92 86,112 66,116 C46,120 32,140 -5,150 Z"
+      fill="url(#heroMmCrimson)"
+      opacity="0.85"
+    />
+    <path
+      d="M-5,82 C12,82 18,71 34,75 C50,79 46,91 58,94 C68,97 65,110 50,113 C35,117 24,130 -5,138 Z"
+      fill="url(#heroMmRose)"
+    />
+    {/* Batik Contour Lines */}
+    <path
+      d="M-5,-5 L155,-5 C146,18 150,38 128,48 C108,56 112,74 84,84 C62,92 66,116 36,128 C16,136 -4,142 -5,142"
+      fill="none"
+      stroke="#DC2626"
+      strokeWidth="1.2"
+      opacity="0.8"
+    />
+    <path
+      d="M-5,-5 L124,-5 C116,14 120,30 102,38 C84,44 88,60 64,68 C45,75 50,96 24,106 C8,112 -4,116 -5,116"
+      fill="none"
+      stroke="#F87171"
+      strokeWidth="1.2"
+      opacity="0.85"
+    />
+  </svg>
+);
 
 export default function AccountSettingsPage() {
   const navigate = useNavigate();
@@ -58,6 +120,14 @@ export default function AccountSettingsPage() {
   const [phone, setPhone] = useState(user?.phone || '+62 812-3456-7890');
   const [department, setDepartment] = useState(user?.department || 'Operasional Lapangan & Maintenance');
   const [company, setCompany] = useState(user?.company || 'DIGITECH');
+  const [siteLocation, setSiteLocation] = useState(user?.site_id || 'BIB Pit Sebamban KM-24');
+  const [jobTitle, setJobTitle] = useState(() => {
+    if (role === 'Superadmin') return 'Root System Administrator';
+    if (role === 'Admin') return 'Warehouse Logistics Controller';
+    return 'Field Operations Technician';
+  });
+  const [employeeId] = useState(user?.id || 'DGT-2026-0891');
+  const [soundMutedState, setSoundMutedState] = useState(() => isSoundMuted());
 
   // Security Form State
   const [emailMfa, setEmailMfa] = useState(false);
@@ -65,6 +135,8 @@ export default function AccountSettingsPage() {
   const [authSecret, setAuthSecret] = useState('JBSWY3DPEHPK3PXP');
   const [authCode, setAuthCode] = useState('');
   const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [isZoomQrOpen, setIsZoomQrOpen] = useState(false);
   const [totpCountdown, setTotpCountdown] = useState(30);
@@ -76,7 +148,6 @@ export default function AccountSettingsPage() {
 
   // Superadmin JWT Session Duration State
   const [sessionDuration, setSessionDuration] = useState(8);
-  const [customHoursInput, setCustomHoursInput] = useState('');
   const [sessionConfigSaving, setSessionConfigSaving] = useState(false);
   const [sessionConfigMeta, setSessionConfigMeta] = useState(null);
   const [remainingTimeStr, setRemainingTimeStr] = useState('');
@@ -120,33 +191,6 @@ export default function AccountSettingsPage() {
     loadSessionConfig();
   }, []);
 
-  const handleSaveSessionDuration = async (hoursToSave) => {
-    const val = parseFloat(hoursToSave);
-    if (isNaN(val) || val < 0.25 || val > 72) {
-      setMessage({ type: 'error', text: 'Durasi sesi harus berupa angka antara 0.25 jam (15 menit) hingga 72 jam.' });
-      return;
-    }
-
-    setSessionConfigSaving(true);
-    setMessage(null);
-    try {
-      const res = await api.put('/auth/session-config', { durationHours: val });
-      setSessionDuration(val);
-      setSessionConfigMeta(res.data?.data);
-      setMessage({
-        type: 'success',
-        text: `Kebijakan masa berlaku sesi login sistem berhasil diset ke ${val} Jam (${Math.round(val * 60)} Menit). Sesi pengguna yang telah habis waktu akan otomatis terpental keluar (auto kick-out) ke halaman login.`
-      });
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.error?.message || err.response?.data?.message || 'Gagal menyimpan kebijakan sesi.'
-      });
-    } finally {
-      setSessionConfigSaving(false);
-    }
-  };
-
   // Load existing profile from backend
   useEffect(() => {
     async function loadProfile() {
@@ -158,6 +202,7 @@ export default function AccountSettingsPage() {
           setPhone(p.phone || '+62 812-3456-7890');
           setDepartment(p.department || 'Operasional Lapangan & Maintenance');
           setCompany(p.company || 'DIGITECH');
+          if (p.site_id) setSiteLocation(p.site_id);
           setEmailMfa(Boolean(p.email_mfa_enabled));
           setAuthenticatorMfa(Boolean(p.authenticator_mfa_enabled));
           if (p.totp_secret) {
@@ -178,24 +223,48 @@ export default function AccountSettingsPage() {
     setMessage(null);
 
     try {
-      const res = await api.put('/users/profile', {
+      await api.put('/users/profile', {
         full_name: fullName,
         phone,
         department,
-        company
+        company,
+        site_id: siteLocation,
+        job_title: jobTitle
       });
 
       // Update local storage user profile
       const localUser = JSON.parse(localStorage.getItem('ims_user') || '{}');
-      const updatedUser = { ...localUser, full_name: fullName, phone, department, company };
+      const updatedUser = {
+        ...localUser,
+        full_name: fullName,
+        phone,
+        department,
+        company,
+        site_id: siteLocation,
+        job_title: jobTitle
+      };
       localStorage.setItem('ims_user', JSON.stringify(updatedUser));
 
-      setMessage({ type: 'success', text: 'Data diri akun berhasil diperbarui dan disimpan.' });
+      setMessage({ type: 'success', text: 'Data profil dan penugasan kerja berhasil diperbarui dan disimpan.' });
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.error?.message || 'Gagal menyimpan profil.' });
     } finally {
       setSaving(false);
     }
+  };
+
+  // Handle Audio Chime Toggle & Test
+  const handleToggleSound = () => {
+    const nextState = !soundMutedState;
+    setSoundMutedState(nextState);
+    setSoundMuted(nextState);
+    if (!nextState) {
+      playNotificationSound(true);
+    }
+  };
+
+  const handleTestChime = () => {
+    playNotificationSound(true);
   };
 
   // Handle Toggle Email MFA
@@ -300,7 +369,7 @@ export default function AccountSettingsPage() {
       width: 320,
       margin: 2,
       color: {
-        dark: '#0f172a',
+        dark: '#1e293b',
         light: '#ffffff'
       },
       errorCorrectionLevel: 'M'
@@ -365,91 +434,10 @@ export default function AccountSettingsPage() {
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WITA';
   };
 
-  const PERMISSIONS_MATRIX = [
-    {
-      id: 'inventory',
-      module: 'Katalog & Rak Gudang (Inventory)',
-      icon: Boxes,
-      superadmin: { allowed: true, text: 'Akses Penuh (CRUD)', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      admin: { allowed: true, text: 'Akses Penuh (CRUD)', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      user: { allowed: true, text: 'Cek Stok & Scan QR', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-      desc: 'Master SKU material, bin lokasi rak gudang Sebamban & Batulicin, cetak kartu QR, dan monitoring batas minimum stok.'
-    },
-    {
-      id: 'mos',
-      module: 'Otorisasi Dokumen MOS & MDT',
-      icon: FileText,
-      superadmin: { allowed: true, text: 'Approval Final (Slot 3)', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
-      admin: { allowed: true, text: 'Verifikasi Gudang (Slot 2)', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-      user: { allowed: true, text: 'Input & Pemohon (Slot 1)', badge: 'bg-slate-100 text-slate-700 border-slate-200' },
-      desc: 'Alur penandatanganan digital resmi 3-slot berjenjang berkas Material On Site (MOS) dan Material Transfer (MDT).'
-    },
-    {
-      id: 'tools',
-      module: 'Peminjaman Alat Kerja (Tools)',
-      icon: Wrench,
-      superadmin: { allowed: true, text: 'Otorisasi & Hapus Log', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      admin: { allowed: true, text: 'Otorisasi & Pengembalian', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      user: { allowed: true, text: 'Ajukan Pinjam & Cek Overdue', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-      desc: 'Peminjaman peralatan kerja non-habis pakai, deteksi otomatis batas waktu jatuh tempo, dan riwayat peminjaman.'
-    },
-    {
-      id: 'opname',
-      module: 'Stock Opname & Variance Control',
-      icon: ClipboardCheck,
-      superadmin: { allowed: true, text: 'Approval Selisih & Rekonsiliasi', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
-      admin: { allowed: true, text: 'Eksekusi Scan & Input Fisik', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      user: { allowed: false, text: 'Terkunci (Petugas Khusus)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
-      desc: 'Pemeriksaan fisik berkala stok gudang, kalkulasi selisih (variance), dan berita acara opname resmi.'
-    },
-    {
-      id: 'ledger',
-      module: 'Mutasi Stok & Buku Besar Ledger',
-      icon: Clock,
-      superadmin: { allowed: true, text: 'Audit Trail & Ekspor Lengkap', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      admin: { allowed: true, text: 'Audit Trail & Ekspor Lengkap', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      user: { allowed: true, text: 'Melihat Mutasi Personal', badge: 'bg-slate-100 text-slate-700 border-slate-200' },
-      desc: 'Catatan kronologis penerimaan, pengeluaran, pemakaian material per proyek, serta audit trail kepatuhan.'
-    },
-    {
-      id: 'users',
-      module: 'Manajemen Pengguna (User RBAC)',
-      icon: Users,
-      superadmin: { allowed: true, text: 'Otoritas Eksklusif Superadmin', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
-      admin: { allowed: false, text: 'Terkunci (Tanpa Akses)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
-      user: { allowed: false, text: 'Terkunci (Tanpa Akses)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
-      desc: 'Persetujuan pendaftaran akun baru, penetapan role (Superadmin/Admin/User), dan kontrol aktivasi akun.'
-    },
-    {
-      id: 'session_config',
-      module: 'Kebijakan Masa Sesi JWT Global',
-      icon: SlidersHorizontal,
-      superadmin: { allowed: true, text: 'Otoritas Eksklusif Superadmin', badge: 'bg-red-50 text-red-700 border-red-200 font-bold' },
-      admin: { allowed: false, text: 'Terkunci (Mengikuti Kebijakan)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
-      user: { allowed: false, text: 'Terkunci (Mengikuti Kebijakan)', badge: 'bg-slate-100 text-slate-400 border-slate-200' },
-      desc: 'Pengaturan masa berlaku token otentikasi login sistem (0.25 - 72 jam) dan kebijakan auto kick-out pengguna.'
-    },
-    {
-      id: 'tracking',
-      module: 'Asset Tracking & GIS Site Map',
-      icon: MapPin,
-      superadmin: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      admin: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      user: { allowed: true, text: 'Akses Monitoring Penuh', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      desc: 'Peta geospasial armada alat berat, pelacakan komponen terpasang di Pit Sebamban KM 24.'
-    }
-  ];
-
-  const getActivePerm = (item) => {
-    if (role === 'Superadmin') return item.superadmin;
-    if (role === 'Admin') return item.admin;
-    return item.user;
-  };
-
   return (
     <div className="space-y-6 pb-16 font-sans animate-in fade-in duration-200">
       
-      {/* ─── Header Banner (Matches InventoryPage & UsersPage) ─── */}
+      {/* ─── Top Header Banner ─── */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-3xl" />
 
@@ -459,10 +447,10 @@ export default function AccountSettingsPage() {
             <span>Profil Resmi &amp; Keamanan Terpusat</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            Pengaturan Akun &amp; Keamanan
+            Pengaturan Akun &amp; Profil
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Kelola data profil pengguna, perlindungan otentikasi dua langkah (MFA), dan pemantauan sesi aktif
+            Kelola data diri pengguna, penugasan operasional, perlindungan dua langkah (MFA), dan pemantauan sesi aktif
           </p>
         </div>
 
@@ -470,6 +458,150 @@ export default function AccountSettingsPage() {
         <div className="relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-2xs ml-auto shrink-0 justify-end">
           <ShieldCheck className="w-4 h-4 text-red-600" />
           <span>Role: {role || 'User'}</span>
+        </div>
+      </div>
+
+      {/* ─── Elevated Hero Profile Card with Mega Mendung & Live Authority Metrics ─── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-700 border border-slate-700/80 p-6 sm:p-8 text-white shadow-xl">
+        <MegaMendungDefs />
+        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-red-600/15 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          {/* Avatar & Main Identity */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-lg shadow-red-600/30 ring-4 ring-white/10">
+                {fullName?.charAt(0)?.toUpperCase() || user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-slate-800" title="Akun Aktif & Terverifikasi">
+                <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                  role === 'Superadmin'
+                    ? 'bg-red-500/20 text-rose-300 border-red-500/40 shadow-xs'
+                    : role === 'Admin'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                }`}>
+                  {role === 'Superadmin' ? <Crown className="w-3.5 h-3.5 text-rose-400" /> : role === 'Admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> : <Wrench className="w-3.5 h-3.5 text-emerald-400" />}
+                  <span>
+                    {role === 'Superadmin'
+                      ? 'Level 3 — Root System Administrator'
+                      : role === 'Admin'
+                      ? 'Level 2 — Logistics & Warehouse Controller'
+                      : 'Level 1 — Field Operations Technician'}
+                  </span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-mono font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Online
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                <span>{fullName || user?.full_name || 'Pengguna Digitech'}</span>
+                <BadgeCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+              </h2>
+
+              <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-300 font-medium">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(email || user?.email || '');
+                    setCopiedEmail(true);
+                    setTimeout(() => setCopiedEmail(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 hover:text-white transition cursor-pointer font-mono bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg border border-white/10"
+                  title="Klik untuk salin email"
+                >
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{email || user?.email}</span>
+                  {copiedEmail ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                </button>
+
+                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-mono">
+                  <Building className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{company || 'DIGITECH'}</span>
+                </span>
+
+                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-mono">
+                  <MapPin className="w-3.5 h-3.5 text-red-400" />
+                  <span>{siteLocation}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Navigation in Hero */}
+          <div className="shrink-0 flex sm:flex-col gap-2 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-white/10 lg:pl-6">
+            <button
+              type="button"
+              onClick={() => setActiveTab('security')}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition cursor-pointer active:scale-95"
+            >
+              <Key className="w-3.5 h-3.5 text-rose-400" />
+              <span>Ganti Password</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('sessions')}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition cursor-pointer active:scale-95"
+            >
+              <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Cek Sesi Login</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Glassmorphic Metrics Strip Inside Hero Card */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10 text-xs">
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              Status Akun
+            </span>
+            <span className="font-bold text-emerald-300 block">✓ Aktif &amp; Terverifikasi</span>
+            <span className="text-[10px] text-slate-400 block font-mono">Otentikasi SSO Digitech</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
+              <Crown className="w-3 h-3 text-rose-400" />
+              Tingkat Otoritas
+            </span>
+            <span className="font-bold text-white block">Role: {role || 'User'}</span>
+            <span className="text-[10px] text-slate-400 block font-mono">
+              {role === 'Superadmin' ? 'Akses Penuh Sistem' : role === 'Admin' ? 'Akses Operasional & Rak' : 'Akses Lapangan & MR'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
+              <Lock className="w-3 h-3 text-blue-400" />
+              Proteksi MFA
+            </span>
+            <span className="font-bold text-white block truncate">
+              {authenticatorMfa ? 'Google Auth (Aktif)' : emailMfa ? 'Email OTP (Aktif)' : 'Password Standar'}
+            </span>
+            <span className="text-[10px] text-slate-400 block font-mono">
+              {authenticatorMfa || emailMfa ? 'Perlindungan Ekstra' : 'MFA Disarankan'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
+              <Timer className="w-3 h-3 text-emerald-400" />
+              Sisa Sesi Login
+            </span>
+            <span className="font-bold text-emerald-300 font-mono block text-sm">
+              {remainingTimeStr || '08:00:00'}
+            </span>
+            <span className="text-[10px] text-slate-400 block font-mono">Kedaluwarsa Otomatis</span>
+          </div>
         </div>
       </div>
 
@@ -501,8 +633,8 @@ export default function AccountSettingsPage() {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <User className="w-4 h-4" />
-          Data Diri Profil
+          <User className="w-4 h-4 text-red-600" />
+          Data Diri &amp; Organisasi
         </button>
 
         <button
@@ -525,36 +657,41 @@ export default function AccountSettingsPage() {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Lock className="w-4 h-4" />
-          Sesi &amp; Hak Akses
+          <Monitor className="w-4 h-4 text-red-600" />
+          Sesi Aktif &amp; Perangkat
         </button>
       </div>
 
-      {/* ─── TAB 1: DATA DIRI PROFIL ──────────────────────────── */}
+      {/* ─── TAB 1: DATA DIRI & ORGANISASI ───────────────────── */}
       {activeTab === 'profile' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
+          
+          {/* Section 1: Informasi Personal & Kontak Lapangan */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-            
-            {/* Avatar Section */}
-            <div className="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-slate-100">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-red-600 to-rose-600 text-white flex items-center justify-center text-3xl font-black shadow-md border-2 border-white">
-                {fullName.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-              <div className="text-center sm:text-left space-y-1">
-                <h3 className="text-lg font-bold text-slate-900">{fullName || 'Nama Lengkap'}</h3>
-                <p className="text-xs text-slate-500 font-mono">{email}</p>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold">
-                  <span>Role Sistem: {role || 'User'}</span>
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Identitas &amp; Kontak Resmi Personel</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Data identitas resmi yang terhubung dengan laporan operasional dan logistik.
+                  </p>
                 </div>
               </div>
+
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-mono font-bold">
+                <Hash className="w-3 h-3 text-slate-400" />
+                ID: {employeeId}
+              </span>
             </div>
 
-            {/* Inputs Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Nama Lengkap
+                  Nama Lengkap (Sesuai KTP / SIM)
                 </label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
@@ -564,14 +701,14 @@ export default function AccountSettingsPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Masukkan nama lengkap"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Alamat Email (Login Resmi)
+                  Alamat Email (Login Resmi SSO)
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
@@ -579,14 +716,17 @@ export default function AccountSettingsPage() {
                     type="email"
                     disabled
                     value={email}
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm font-medium cursor-not-allowed outline-none"
+                    className="w-full h-11 pl-10 pr-24 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm font-medium cursor-not-allowed outline-none"
                   />
+                  <span className="absolute right-3 top-3 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                    ✓ Terverifikasi
+                  </span>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Nomor HP / WhatsApp
+                  Nomor HP / WhatsApp Lapangan
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
@@ -595,30 +735,49 @@ export default function AccountSettingsPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+62 812-XXXX-XXXX"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Divisi / Departemen
+                  Jabatan / Posisi Kerja
                 </label>
                 <div className="relative">
                   <Briefcase className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    placeholder="Contoh: Operasional Pit & Heavy Fleet"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="Contoh: Field Maintenance Lead"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-2">
+            </div>
+          </div>
+
+          {/* Section 2: Penugasan Unit & Organisasi Kerja */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                <Building className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Penugasan Unit, Divisi &amp; Site Tambang</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Lokasi penempatan fisik dan divisi operasional yang memandu akses gudang dan approval dokumen.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              
+              <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Perusahaan / Site Tambang
+                  Perusahaan / Kontraktor
                 </label>
                 <div className="relative">
                   <Building className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
@@ -627,26 +786,138 @@ export default function AccountSettingsPage() {
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Contoh: DIGITECH"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
                   />
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Departemen / Divisi Kerja
+                </label>
+                <div className="relative">
+                  <Layers className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Contoh: Operasional Lapangan & Maintenance"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Site Penempatan Operasional Utama
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-red-600" />
+                  <select
+                    value={siteLocation}
+                    onChange={(e) => setSiteLocation(e.target.value)}
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition bg-white"
+                  >
+                    <option value="BIB Pit Sebamban KM-24">Site Pit Sebamban KM-24 (BIB-02) — Workshop &amp; Pit Tambang</option>
+                    <option value="BIB Port Batulicin Terminal">BIB Port Batulicin Terminal — Pelabuhan &amp; Stockpile Batubara</option>
+                    <option value="Checkpoint KM-28 Hauling Road">Checkpoint KM-28 Hauling Road — Stasiun Timbangan &amp; Telemetri</option>
+                    <option value="Main Office VGT Lantai 2">Main Office VGT Lantai 2 — Pusat Pengendali Logistik &amp; GPS Hub</option>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Section 3: Preferensi Kerja & Notifikasi Audio Lapangan */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Preferensi Lingkungan &amp; Notifikasi Audio</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Kustomisasi umpan balik suara dan standar format zona waktu operasional.
+                </p>
+              </div>
             </div>
 
-            {/* Submit Action */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              
+              {/* Audio Chime Notification Toggle Card */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    !soundMutedState ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-200 text-slate-400'
+                  }`}>
+                    {!soundMutedState ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Suara Lonceng Notifikasi (Velvet Chime)</h4>
+                    <p className="text-[11px] text-slate-500">
+                      {!soundMutedState ? 'Aktif — Bunyi saat ada update material / approval' : 'Hening — Mode senyap'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestChime}
+                    className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                    title="Uji bunyi nada notifikasi"
+                  >
+                    Uji Suara
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleSound}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      !soundMutedState ? 'bg-emerald-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        !soundMutedState ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Timezone Standard Card */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Zona Waktu Operasional Tambang</h4>
+                    <p className="text-[11px] text-slate-500">WITA (UTC+08:00) — Kalimantan Selatan</p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold">
+                  WITA
+                </span>
+              </div>
+
+            </div>
+
+            {/* Submit Action Button */}
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-sm shadow-xs transition-all cursor-pointer"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 hover:via-rose-700 hover:to-red-700 active:scale-95 text-white font-bold text-sm shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                {saving ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
               </button>
             </div>
 
           </div>
+
         </form>
       )}
 
@@ -658,15 +929,15 @@ export default function AccountSettingsPage() {
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Otentikasi Dua Langkah (MFA) via Email
+                    Otentikasi Dua Langkah via Email (OTP Gmail)
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    Kirim 6 digit kode OTP verifikasi ke email terdaftar ({email}) via Gmail SMTP setiap kali ada login dari perangkat baru.
+                  <p className="text-xs text-slate-500 mt-1">
+                    Setiap kali login dari peramban baru, sistem akan mengirimkan 6 digit kode keamanan ke alamat email resmi Anda ({email || user?.email}).
                   </p>
                 </div>
               </div>
@@ -675,37 +946,37 @@ export default function AccountSettingsPage() {
                 type="button"
                 onClick={handleToggleEmailMfa}
                 disabled={saving}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer shrink-0 ${
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
                   emailMfa
-                    ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                    : 'bg-red-600 text-white hover:bg-red-700'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                 }`}
               >
-                {emailMfa ? '✓ MFA Email Aktif' : 'Aktifkan MFA Email'}
+                {emailMfa ? '✓ Aktif (Klik untuk Nonaktifkan)' : 'Aktifkan OTP Email'}
               </button>
             </div>
-
-            {emailMfa && (
-              <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center gap-2 text-xs font-semibold text-emerald-800">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Perlindungan login aktif. Kode OTP akan dikirimkan otomatis melalui SMTP Digitech.
-              </div>
-            )}
           </div>
 
-          {/* Section 2: Authenticator App MFA (TOTP) */}
+          {/* Section 2: Google Authenticator / Authy (TOTP MFA) */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
                   <Smartphone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    MFA dengan Aplikasi Authenticator (Google / Authy)
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                    Gunakan aplikasi TOTP pada smartphone untuk menghasilkan token 6-digit dinamis tanpa memerlukan sinyal seluler.
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-slate-900">
+                      Aplikasi Authenticator (Google Authenticator / Authy)
+                    </h3>
+                    {authenticatorMfa && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        Aktif &amp; Terlindungi
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Standar industri RFC 6238 TOTP dengan rotasi kode 30 detik. Berjalan luring (offline) tanpa pulsa atau internet di lokasi tambang.
                   </p>
                 </div>
               </div>
@@ -715,88 +986,56 @@ export default function AccountSettingsPage() {
                   type="button"
                   onClick={handleDisableAuthenticator}
                   disabled={saving}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 font-bold text-xs sm:text-sm transition-all cursor-pointer shrink-0"
+                  className="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition cursor-pointer shrink-0"
                 >
                   Nonaktifkan Authenticator
                 </button>
               ) : null}
             </div>
 
-            {/* Authenticator Setup Box (if not enabled) */}
             {!authenticatorMfa ? (
-              <div className="mt-4 p-5 sm:p-6 bg-slate-50/80 border border-slate-200 rounded-3xl space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-600" />
-                    Langkah Penyiapan Authenticator (Google / Authy):
-                  </h4>
-                  <span className="text-[11px] font-mono text-slate-500 bg-white px-2.5 py-1 rounded-full border border-slate-200">
-                    Standar TOTP RFC 6238 • 30 Detik
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+              <div className="space-y-4 pt-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   
-                  {/* Step 1: Scan Barcode / Input Manual */}
-                  <div className="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                    {/* The Real Scannable High-Definition QR Code */}
-                    <div className="relative group shrink-0">
-                      <div className="w-32 h-32 sm:w-36 sm:h-36 bg-white p-2 rounded-2xl border-2 border-slate-200 shadow-xs flex items-center justify-center overflow-hidden">
-                        {qrCodeUrl ? (
-                          <img
-                            src={qrCodeUrl}
-                            alt="QR Code TOTP Digitech IMS"
-                            className="w-full h-full object-contain select-none"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                            <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
-                            <span className="text-[10px]">Membuat Barcode...</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {qrCodeUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setIsZoomQrOpen(true)}
-                          className="absolute inset-0 bg-slate-950/70 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 cursor-pointer text-xs font-bold shadow-md"
-                        >
-                          <Maximize2 className="w-5 h-5" />
-                          <span>Perbesar QR</span>
-                        </button>
+                  {/* Step 1: Barcode Display */}
+                  <div className="p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs shrink-0 flex items-center justify-center">
+                      {qrCodeUrl ? (
+                        <img
+                          src={qrCodeUrl}
+                          alt="QR Code TOTP Digitech IMS"
+                          className="w-36 h-36 object-contain"
+                        />
+                      ) : (
+                        <div className="w-36 h-36 flex items-center justify-center">
+                          <RefreshCw className="w-6 h-6 animate-spin text-red-600" />
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                        <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                          1. Pindai Barcode / Input Manual
-                        </span>
-                      </div>
-                      
-                      <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">
-                        Arahkan pemindai pada Google Authenticator atau Authy ke Barcode QR di samping.
+                    <div className="space-y-2 text-center sm:text-left min-w-0 flex-1">
+                      <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider block">
+                        1. Pindai Menggunakan Kamera Smartphone
+                      </span>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Buka Google Authenticator, pilih tanda <strong>+</strong> lalu arahkan kamera ke barcode di samping.
                       </p>
 
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                          Kunci Rahasia (Secret Key):
-                        </span>
-                        <div className="inline-flex items-center gap-2 font-mono font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200 text-xs tracking-wider">
-                          <span>{authSecret}</span>
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] font-mono text-slate-400 block">Kunci Rahasia Manual:</span>
+                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                          <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-200 select-all">
+                            {authSecret}
+                          </span>
                           <button
                             type="button"
                             onClick={handleCopyKey}
-                            className="text-red-600 hover:text-red-700 p-0.5 rounded cursor-pointer transition active:scale-90"
-                            title="Salin Kunci"
+                            className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer"
+                            title="Salin Kunci Manual"
                           >
                             {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
-                        {copiedKey && (
-                          <span className="text-[10px] text-emerald-600 font-bold ml-1.5">✓ Tersalin!</span>
-                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -805,7 +1044,7 @@ export default function AccountSettingsPage() {
                             <button
                               type="button"
                               onClick={() => setIsZoomQrOpen(true)}
-                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+                              className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
                             >
                               <Maximize2 className="w-3 h-3" />
                               <span>Perbesar Barcode</span>
@@ -813,7 +1052,7 @@ export default function AccountSettingsPage() {
                             <a
                               href={qrCodeUrl}
                               download={`DigitechIMS-MFA-${email || 'user'}.png`}
-                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition"
+                              className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
                             >
                               <Download className="w-3 h-3" />
                               <span>Unduh Gambar QR</span>
@@ -884,7 +1123,7 @@ export default function AccountSettingsPage() {
             ) : (
               <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center gap-2 text-xs font-semibold text-emerald-800">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Aplikasi Authenticator aktif. Anda dapat menggunakannya untuk login aman.
+                Aplikasi Authenticator aktif. Anda dapat menggunakannya untuk login aman kapan saja di lokasi tambang.
               </div>
             )}
           </div>
@@ -927,7 +1166,7 @@ export default function AccountSettingsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Konfirmasi Password
+                  Konfirmasi Password Baru
                 </label>
                 <input
                   type="password"
@@ -944,7 +1183,7 @@ export default function AccountSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-600/25 transition-all cursor-pointer"
               >
                 Perbarui Password
               </button>
@@ -989,7 +1228,7 @@ export default function AccountSettingsPage() {
             </div>
           )}
           
-          {/* 1. Real Active Session & Live Token Status Card */}
+          {/* Real Active Session & Live Token Status Card */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div>
@@ -998,7 +1237,7 @@ export default function AccountSettingsPage() {
                   <span>Informasi Sesi Login Aktif &amp; Perangkat Riil</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Metadata sesi aktif terdeteksi otomatis dari peramban dan token JWT yang digunakan saat ini.
+                  Metadata sesi aktif terdeteksi otomatis dari peramban dan token otentikasi JWT yang digunakan saat ini.
                 </p>
               </div>
 
@@ -1086,7 +1325,7 @@ export default function AccountSettingsPage() {
               <div className="flex flex-wrap items-center gap-4 text-slate-700">
                 <span className="flex items-center gap-1.5 font-medium">
                   <MapPin className="w-4 h-4 text-red-600 shrink-0" />
-                  Lokasi Sesi: <strong>Site Pit Sebamban KM 24 (BIB-02)</strong>
+                  Lokasi Sesi: <strong>{siteLocation}</strong>
                 </span>
                 <span className="hidden sm:inline text-slate-300">•</span>
                 <span className="flex items-center gap-1.5 font-medium">
@@ -1110,137 +1349,13 @@ export default function AccountSettingsPage() {
             </div>
           </div>
 
-          {/* 2. Comprehensive Role-Based Access Control (RBAC) Permissions Matrix */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-red-600" />
-                  <span>Matriks Hak Akses &amp; Wewenang Akun (RBAC)</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Pemetaan hak akses modul, batas wewenang approval, dan hak operasional akun Anda di sistem.
-                </p>
-              </div>
-
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold">
-                <span>Role Terotentikasi:</span>
-                <span className="text-red-700 font-black">{role || 'User'}</span>
-              </div>
-            </div>
-
-            {/* Authority Profile Card */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
-              <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-white text-[11px] font-bold">
-                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>
-                    {role === 'Superadmin'
-                      ? 'Level 3 — Otoritas Tertinggi (Root System Administrator)'
-                      : role === 'Admin'
-                      ? 'Level 2 — Otoritas Pengawas Gudang & Operasional (Controller)'
-                      : 'Level 1 — Otoritas Teknisi Lapangan (Field Operator & Requester)'}
-                  </span>
-                </div>
-                <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
-                  <span>{fullName || user?.full_name || 'Pengguna Digitech'}</span>
-                  <span className="text-xs font-mono font-normal text-slate-400">({email || user?.email})</span>
-                </h4>
-                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  {role === 'Superadmin'
-                    ? 'Memiliki hak akses tak terbatas ke seluruh modul sistem: persetujuan registrasi akun baru, konfigurasi masa berlaku sesi JWT, otorisasi dokumen MOS Slot 3, audit log, dan mutasi ledger.'
-                    : role === 'Admin'
-                    ? 'Memiliki kewenangan pengawasan logistik: pengelolaan katalog suku cadang, verifikasi dokumen MOS Slot 2, pelaksanaan stock opname gudang, dan pelacakan alat kerja.'
-                    : 'Memiliki kewenangan teknisi lapangan: pengajuan Material Request (MR), pencarian ketersediaan stok & scan QR material, peminjaman alat kerja, dan tanda tangan MOS Slot 1 penerima.'}
-                </p>
-              </div>
-
-              <div className="shrink-0 flex md:flex-col items-center md:items-end justify-between gap-2 border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-5">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">Status Otoritas</span>
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold">
-                  ✓ Aktif &amp; Terverifikasi
-                </span>
-                <span className="text-[11px] text-slate-400 font-mono mt-1">
-                  {company || 'DIGITECH'} • {department || 'Operasional'}
-                </span>
-              </div>
-            </div>
-
-            {/* Permissions Matrix Grid */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700 px-2">
-                <span>Daftar Modul &amp; Batasan Wewenang Sistem:</span>
-                <span className="text-slate-400 font-normal text-[11px]">8 Modul Terverifikasi</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {PERMISSIONS_MATRIX.map((item) => {
-                  const Icon = item.icon;
-                  const activePerm = getActivePerm(item);
-                  return (
-                    <div
-                      key={item.id}
-                      className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs transition-all space-y-2.5 flex flex-col justify-between"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                            activePerm.allowed ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-400'
-                          }`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <h5 className="text-xs font-bold text-slate-900 truncate">{item.module}</h5>
-                            <p className="text-[11px] text-slate-500 line-clamp-1">{item.desc}</p>
-                          </div>
-                        </div>
-
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0 ${activePerm.badge}`}>
-                          {activePerm.text}
-                        </span>
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                        <span>Wewenang Role {role || 'User'}:</span>
-                        <span className={`font-bold flex items-center gap-1 ${activePerm.allowed ? 'text-emerald-700' : 'text-slate-400'}`}>
-                          {activePerm.allowed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-slate-400" />}
-                          {activePerm.allowed ? 'Dapat Digunakan' : 'Akses Dibatasi'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Bottom Security Info Notice */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 text-xs">
-              <div className="flex items-center gap-2.5 text-slate-600">
-                <Shield className="w-4 h-4 text-red-600 shrink-0" />
-                <span>
-                  Hak akses sistem menerapkan standar Role-Based Access Control (RBAC). Perubahan role hanya dapat disetujui langsung oleh Superadmin.
-                </span>
-              </div>
-
-              {isSuperadmin && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/users')}
-                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer shrink-0"
-                >
-                  Kelola Pengguna
-                </button>
-              )}
-            </div>
-          </div>
-
         </div>
       )}
 
       {/* ─── Modal Zoom Barcode QR Code ────────────────────────── */}
       {isZoomQrOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full border border-slate-200 shadow-2xl space-y-5 text-center relative animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm p-6 pt-8 pb-8 overflow-hidden animate-in zoom-in-95 duration-150 text-center relative" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
             <button
               type="button"
               onClick={() => setIsZoomQrOpen(false)}
@@ -1249,7 +1364,7 @@ export default function AccountSettingsPage() {
               <X className="w-4 h-4" />
             </button>
 
-            <div>
+            <div className="mb-4">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-mono font-bold mb-1">
                 <span>Google Authenticator / Authy</span>
               </div>
@@ -1257,7 +1372,7 @@ export default function AccountSettingsPage() {
               <p className="text-xs text-slate-500 mt-0.5 font-mono">{email || user?.email}</p>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-center">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-center mb-4">
               {qrCodeUrl ? (
                 <img
                   src={qrCodeUrl}
@@ -1269,14 +1384,14 @@ export default function AccountSettingsPage() {
               )}
             </div>
 
-            <div className="space-y-1 text-left bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+            <div className="space-y-1 text-left bg-slate-50 p-3 rounded-xl border border-slate-200/80 mb-4">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Kunci Rahasia Manual:</span>
               <div className="flex items-center justify-between gap-2 font-mono font-bold text-xs text-slate-900">
                 <span>{authSecret}</span>
                 <button
                   type="button"
                   onClick={handleCopyKey}
-                  className="text-red-600 hover:text-red-700 font-sans text-xs font-bold"
+                  className="text-red-600 hover:text-red-700 font-sans text-xs font-bold cursor-pointer"
                 >
                   {copiedKey ? '✓ Tersalin' : 'Salin'}
                 </button>
@@ -1286,7 +1401,7 @@ export default function AccountSettingsPage() {
             <button
               type="button"
               onClick={() => setIsZoomQrOpen(false)}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+              className="w-full py-2.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md shadow-red-600/20"
             >
               Tutup Tampilan Barcode
             </button>

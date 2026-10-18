@@ -176,14 +176,14 @@ export default function StockOpnamePage() {
 
       {/* MODAL 3: DETAIL VARIAN & OTORISASI SUPERADMIN */}
       {selectedOpname && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200">
-            <div className="bg-white text-slate-900 px-6 py-4 flex items-center justify-between border-b border-slate-200">
+        <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
+            <div className="bg-white text-slate-900 px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-200">
               <div>
                 <span className="text-[10px] font-mono text-red-600 font-bold uppercase">Laporan Varians Opname</span>
                 <h3 className="text-base font-bold">{selectedOpname.opname_number} — {selectedOpname.zone}</h3>
               </div>
-              <button onClick={() => setSelectedOpname(null)} className="p-1 text-slate-400 hover:text-white">
+              <button onClick={() => setSelectedOpname(null)} className="p-1 text-slate-400 hover:text-red-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -219,11 +219,11 @@ export default function StockOpnamePage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setSelectedOpname(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
               >
                 Tutup
               </button>
@@ -266,10 +266,22 @@ function StartOpnameModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-200 space-y-4">
-        <h3 className="text-base font-black text-slate-900">Mulai Sesi Stock Opname</h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div
+        className="bg-white w-full max-w-md overflow-hidden p-6 pt-8 pb-8"
+        style={{
+          clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)"
+        }}
+      >
+        <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%', marginBottom: '16px' }} />
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 className="text-base font-black text-slate-900">Mulai Sesi Stock Opname</h3>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
               Pilih Zona Rak Penyimpanan
@@ -298,14 +310,14 @@ function StartOpnameModal({ onClose, onSuccess }) {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-slate-600">
+          <div className="flex justify-end gap-2 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
               Batal
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold"
+              className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-md shadow-red-700/20"
             >
               {loading ? 'Memproses...' : 'Mulai Audit'}
             </button>
@@ -340,17 +352,29 @@ function BlindCountInputModal({ opname, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl p-6 border border-slate-200 space-y-4">
-        <div>
-          <span className="text-[10px] font-mono text-amber-600 font-bold uppercase">Formulir Hitung Buta</span>
-          <h3 className="text-base font-black text-slate-900">Input Hasil Cacah Fisik: {opname.opname_number}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Masukkan kuantitas fisik riil yang Anda hitung langsung pada rak (saldo komputer sengaja disembunyikan).
-          </p>
+    <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div
+        className="bg-white w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col p-6 pt-8 pb-8"
+        style={{
+          clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)"
+        }}
+      >
+        <div style={{ background: 'linear-gradient(90deg, #F59E0B, #DC2626)', height: '4px', width: '100%', marginBottom: '14px' }} />
+        <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
+          <div>
+            <span className="text-[10px] font-mono text-amber-600 font-bold uppercase">Formulir Hitung Buta</span>
+            <h3 className="text-base font-black text-slate-900">Input Hasil Cacah Fisik: {opname.opname_number}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Masukkan kuantitas fisik riil yang Anda hitung langsung pada rak (saldo komputer sengaja disembunyikan).
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4">
           <div className="space-y-2.5">
             {items.map((it, idx) => (
               <div key={it.sku} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
@@ -391,14 +415,14 @@ function BlindCountInputModal({ opname, onClose, onSuccess }) {
             ))}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-slate-600">
+          <div className="flex justify-end gap-2 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
               Batal
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold"
+              className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-md shadow-red-700/20"
             >
               {loading ? 'Menghitung Varians...' : 'Kirim Hasil Cacah Fisik'}
             </button>
@@ -408,3 +432,5 @@ function BlindCountInputModal({ opname, onClose, onSuccess }) {
     </div>
   );
 }
+
+

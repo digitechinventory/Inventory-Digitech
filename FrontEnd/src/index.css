@@ -11,11 +11,16 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
-  /* Merah Putih Hitam Palette */
-  --crimson-primary: #DC2626;
-  --crimson-hover: #B91C1C;
-  --crimson-light: #FEE2E2;
-  --crimson-ultra-light: #FEF2F2;
+  /* Primary Brand Dynamic Theme Variables */
+  --primary-color: #DC2626;
+  --primary-rgb: 220, 38, 38;
+  --primary-hover: #B91C1C;
+  --primary-light: rgba(220, 38, 38, 0.12);
+
+  --crimson-primary: var(--primary-color);
+  --crimson-hover: var(--primary-hover);
+  --crimson-light: var(--primary-light);
+  --crimson-ultra-light: rgba(var(--primary-rgb), 0.05);
 
   --charcoal-sidebar: #0F172A;
   --charcoal-card: #1E293B;
@@ -24,6 +29,85 @@
   --canvas-bg: #F8FAFC;
   --border-subtle: #E2E8F0;
 }
+
+/* ─── Global Dark Mode Theme Adaptation ─────────────────────── */
+html.dark {
+  --canvas-bg: #0B132B;
+  --surface-white: #1E293B;
+  --border-subtle: #334155;
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0B132B !important;
+  color: #F1F5F9 !important;
+}
+
+/* Surfaces & cards in dark mode: sleek charcoal/navy, NO pitch black */
+html.dark .bg-white {
+  background-color: #1E293B !important;
+  color: #F1F5F9;
+}
+
+html.dark .bg-white\/90,
+html.dark .bg-white\/95,
+html.dark .bg-white\/98 {
+  background-color: rgba(30, 41, 59, 0.94) !important;
+  color: #F1F5F9;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-100 {
+  background-color: #0F172A !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/60,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-200\/90,
+html.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #F8FAFC !important;
+}
+
+html.dark .text-slate-700 {
+  color: #E2E8F0 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+html.dark .text-slate-400 {
+  color: #64748B !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0F172A !important;
+  color: #F1F5F9 !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+}
+
 
 body {
   background-color: var(--canvas-bg);

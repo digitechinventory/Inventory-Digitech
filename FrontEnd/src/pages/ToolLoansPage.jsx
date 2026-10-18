@@ -29,7 +29,7 @@ import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 
 export default function ToolLoansPage() {
-  const { user, role } = useAuth();
+  const { user, role, isAdmin } = useAuth();
   const { addToast } = useToast();
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
@@ -267,9 +267,9 @@ export default function ToolLoansPage() {
         </div>
       </div>
 
-      {/* Bulk Action Bar (When loans are selected) */}
-      {selectedIds.length > 0 && (
-        <div className="bg-slate-900 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+      {/* Bulk Action Bar (When loans are selected - Admin only) */}
+      {isAdmin && selectedIds.length > 0 && (
+        <div className="bg-gradient-to-r from-red-800 to-red-700 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-red-900/30 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-3">
             <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
               {selectedIds.length}
@@ -315,23 +315,25 @@ export default function ToolLoansPage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                {/* Checkbox Header */}
-                <th className="px-3.5 py-3 text-center w-10">
-                  <button
-                    type="button"
-                    onClick={handleToggleAll}
-                    className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
-                    title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
-                  >
-                    {isAllSelected ? (
-                      <CheckSquare className="w-4 h-4 text-red-600" />
-                    ) : isSomeSelected ? (
-                      <MinusSquare className="w-4 h-4 text-red-600" />
-                    ) : (
-                      <Square className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-                </th>
+                {/* Checkbox Header (Admin Only) */}
+                {isAdmin && (
+                  <th className="px-3.5 py-3 text-center w-10">
+                    <button
+                      type="button"
+                      onClick={handleToggleAll}
+                      className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                      title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
+                    >
+                      {isAllSelected ? (
+                        <CheckSquare className="w-4 h-4 text-red-600" />
+                      ) : isSomeSelected ? (
+                        <MinusSquare className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left">Nama Perkakas / Alat Kerja</th>
                 <th className="px-4 py-3 text-left">No. Seri</th>
                 <th className="px-4 py-3 text-left">Personel Peminjam</th>
@@ -361,23 +363,25 @@ export default function ToolLoansPage() {
                         isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
                       }`}
                     >
-                      {/* Checkbox Cell */}
-                      <td className="px-3.5 py-3 text-center w-10">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleRow(item.id);
-                          }}
-                          className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
-                        >
-                          {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-red-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
-                          )}
-                        </button>
-                      </td>
+                      {/* Checkbox Cell (Admin Only) */}
+                      {isAdmin && (
+                        <td className="px-3.5 py-3 text-center w-10">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleRow(item.id);
+                            }}
+                            className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-red-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                            )}
+                          </button>
+                        </td>
+                      )}
 
                       <td className="px-4 py-3 font-bold text-slate-900">{item.tool_name}</td>
                       <td className="px-4 py-3 font-mono text-slate-600">{item.serial_number || '-'}</td>
@@ -446,14 +450,16 @@ export default function ToolLoansPage() {
                               <span>Lihat Detail Pinjam</span>
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(item)}
-                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
-                            >
-                              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Edit Data Pinjam</span>
-                            </button>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(item)}
+                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Edit Data Pinjam</span>
+                              </button>
+                            )}
 
                             {item.status !== 'returned' && (
                               <button
@@ -469,19 +475,23 @@ export default function ToolLoansPage() {
                               </button>
                             )}
 
-                            <div className="border-t border-slate-100 my-1"></div>
+                            {isAdmin && (
+                              <>
+                                <div className="border-t border-slate-100 my-1"></div>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDeleteConfirm({ type: 'single', item });
-                                setActiveMenuId(null);
-                              }}
-                              className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                              <span>Hapus Catatan</span>
-                            </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeleteConfirm({ type: 'single', item });
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                  <span>Hapus Catatan</span>
+                                </button>
+                              </>
+                            )}
                           </div>
                         )}
                       </td>
@@ -496,9 +506,9 @@ export default function ToolLoansPage() {
 
       {/* MODAL: DETAIL PEMINJAMAN ALAT */}
       {detailLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
+            <div className="px-6 pt-7 pb-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
                   <Wrench className="w-4 h-4" />
@@ -510,7 +520,7 @@ export default function ToolLoansPage() {
               </div>
               <button
                 onClick={() => setDetailLoan(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-red-600 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -560,11 +570,11 @@ export default function ToolLoansPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+            <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setDetailLoan(null)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
               >
                 Tutup
               </button>
@@ -575,9 +585,9 @@ export default function ToolLoansPage() {
 
       {/* MODAL: EDIT INFORMASI PEMINJAMAN */}
       {editLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
+            <div className="px-6 pt-7 pb-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
                   <Edit3 className="w-4 h-4" />
@@ -589,7 +599,7 @@ export default function ToolLoansPage() {
               </div>
               <button
                 onClick={() => setEditLoan(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                className="p-1.5 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-red-600 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -651,7 +661,7 @@ export default function ToolLoansPage() {
                 </div>
               </div>
 
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditLoan(null)}
@@ -675,8 +685,8 @@ export default function ToolLoansPage() {
 
       {/* MODAL: KONFIRMASI HAPUS (SINGLE / BULK) */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-center p-6 pt-8 pb-8" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
             <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -731,12 +741,19 @@ export default function ToolLoansPage() {
 
       {/* MODAL: KONFIRMASI PENGEMBALIAN ALAT */}
       {showReturnModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-200 space-y-4">
-            <h3 className="text-base font-black text-slate-900">Konfirmasi Pengembalian Alat</h3>
-            <p className="text-xs text-slate-500">
-              Alat: <strong>{showReturnModal.tool_name}</strong> ({showReturnModal.serial_number})
-            </p>
+        <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md overflow-hidden p-6 pt-8 pb-8 space-y-4" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Konfirmasi Pengembalian Alat</h3>
+                <p className="text-xs text-slate-500">
+                  Alat: <strong>{showReturnModal.tool_name}</strong> ({showReturnModal.serial_number})
+                </p>
+              </div>
+              <button onClick={() => setShowReturnModal(null)} className="p-1 rounded-lg text-slate-400 hover:text-red-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
@@ -766,18 +783,18 @@ export default function ToolLoansPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-3">
               <button
                 type="button"
                 onClick={() => setShowReturnModal(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReturn}
-                className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-950/20"
+                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-950/20"
               >
                 Konfirmasi Kembali
               </button>
@@ -821,11 +838,11 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-200 space-y-4">
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md overflow-hidden p-6 pt-8 pb-8 space-y-4" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <h3 className="text-base font-black text-slate-900">Form Peminjaman Alat Kerja</h3>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-red-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -884,18 +901,18 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-md shadow-red-950/20"
+              className="px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold shadow-md shadow-red-950/20"
             >
               {loading ? 'Menyimpan...' : 'Ajukan Peminjaman'}
             </button>
@@ -905,3 +922,5 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
     </div>
   );
 }
+
+

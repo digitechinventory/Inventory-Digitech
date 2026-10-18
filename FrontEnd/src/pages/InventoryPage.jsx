@@ -31,7 +31,8 @@ import {
   Square,
   MinusSquare,
   Loader2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Printer
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -621,9 +622,9 @@ export default function InventoryPage() {
       {/* MODE 2: MODERN CLEAN TABLE VIEW */}
       {viewMode === 'table' && (
         <div className="space-y-4">
-          {/* Bulk Action Bar (When items in table are selected) */}
-          {selectedTableSkus.length > 0 && (
-            <div className="bg-slate-900 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Bulk Action Bar (When items in table are selected - Admin only) */}
+          {isAdmin && selectedTableSkus.length > 0 && (
+            <div className="bg-gradient-to-r from-red-800 to-red-700 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-red-900/30 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center gap-3">
                 <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
                   {selectedTableSkus.length}
@@ -668,23 +669,25 @@ export default function InventoryPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                    {/* Checkbox Header */}
-                    <th className="px-3.5 py-3.5 text-center w-10">
-                      <button
-                        type="button"
-                        onClick={handleToggleAllTable}
-                        className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
-                        title={isAllTableSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
-                      >
-                        {isAllTableSelected ? (
-                          <CheckSquare className="w-4 h-4 text-red-600" />
-                        ) : isSomeTableSelected ? (
-                          <MinusSquare className="w-4 h-4 text-red-600" />
-                        ) : (
-                          <Square className="w-4 h-4 text-slate-400" />
-                        )}
-                      </button>
-                    </th>
+                    {/* Checkbox Header (Admin Only) */}
+                    {isAdmin && (
+                      <th className="px-3.5 py-3.5 text-center w-10">
+                        <button
+                          type="button"
+                          onClick={handleToggleAllTable}
+                          className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                          title={isAllTableSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
+                        >
+                          {isAllTableSelected ? (
+                            <CheckSquare className="w-4 h-4 text-red-600" />
+                          ) : isSomeTableSelected ? (
+                            <MinusSquare className="w-4 h-4 text-red-600" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-400" />
+                          )}
+                        </button>
+                      </th>
+                    )}
                     <th className="px-4 py-3.5 text-left">SKU / Part Number</th>
                     <th className="px-4 py-3.5 text-left">Nama Suku Cadang</th>
                     <th className="px-4 py-3.5 text-left">Kategori</th>
@@ -713,23 +716,25 @@ export default function InventoryPage() {
                           isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-red-50/30'
                         }`}
                       >
-                        {/* Checkbox Cell */}
-                        <td
-                          className="px-3.5 py-3 text-center w-10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleToggleTableSku(sku)}
-                            className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                        {/* Checkbox Cell (Admin Only) */}
+                        {isAdmin && (
+                          <td
+                            className="px-3.5 py-3 text-center w-10"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-red-600" />
-                            ) : (
-                              <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
-                            )}
-                          </button>
-                        </td>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleTableSku(sku)}
+                              className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                            >
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-red-600" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                              )}
+                            </button>
+                          </td>
+                        )}
 
                         <td className="px-4 py-3 font-mono font-bold text-red-600">{sku}</td>
                         <td className="px-4 py-3 font-bold text-slate-900 max-w-xs truncate">{item.name}</td>
@@ -807,28 +812,32 @@ export default function InventoryPage() {
                                 <span>Ajukan Tiket MR</span>
                               </button>
 
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEditCatalog(item)}
-                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
-                              >
-                                <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Edit Suku Cadang</span>
-                              </button>
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditCatalog(item)}
+                                    className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Edit Suku Cadang</span>
+                                  </button>
 
-                              <div className="border-t border-slate-100 my-1"></div>
+                                  <div className="border-t border-slate-100 my-1"></div>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCatalogDeleteConfirm({ type: 'single', item });
-                                  setActiveKebabSku(null);
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                <span>Hapus dari Katalog</span>
-                              </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCatalogDeleteConfirm({ type: 'single', item });
+                                      setActiveKebabSku(null);
+                                    }}
+                                    className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                    <span>Hapus dari Katalog</span>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           )}
                         </td>
@@ -893,7 +902,7 @@ export default function InventoryPage() {
       {/* ── 6. ITEM DETAIL & QR MODAL (100% Light Theme) ── */}
       {selectedItem && (
         <div
-          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setSelectedItem(null)}
         >
           <div
@@ -987,19 +996,41 @@ export default function InventoryPage() {
       {/* ── 7. ADD ITEM MODAL (Admin Only) ── */}
       {showAddModal && (
         <div
-          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
           onClick={() => setShowAddModal(false)}
         >
           <div
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 p-6 space-y-4"
+            className="bg-white w-full max-w-md border border-slate-200 p-0 overflow-hidden"
+            style={{
+              clipPath: 'polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.15), 0 8px 24px rgba(220,38,38,0.08)',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.08))'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-base text-slate-900">Tambah Suku Cadang Baru</h3>
-              <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Accent top bar */}
+            <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%' }} />
+            <div className="p-6 pt-8 pb-9 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">Tambah Suku Cadang Baru</h3>
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">Input data material ke katalog gudang</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPrinterSetup(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 hover:bg-red-50 hover:border-red-200 text-slate-600 hover:text-red-600 rounded-xl text-[10px] font-bold transition cursor-pointer"
+                    title="Setup Printer QR Label"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Printer</span>
+                  </button>
+                  <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
             <form
               onSubmit={async (e) => {
@@ -1068,14 +1099,22 @@ export default function InventoryPage() {
               </button>
             </form>
           </div>
+          </div>
         </div>
       )}
 
       {/* MODAL: EDIT DATA SUKU CADANG */}
       {editCatalogItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div
+            className="bg-white w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            style={{
+              clipPath: 'polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(245,158,11,0.10)',
+            }}
+          >
+            <div style={{ background: 'linear-gradient(90deg, #F59E0B, #FBBF24)', height: '4px', width: '100%' }} />
+            <div className="px-6 py-4 pt-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
                   <Edit3 className="w-4 h-4" />
@@ -1187,7 +1226,7 @@ export default function InventoryPage() {
                 </div>
               </div>
 
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditCatalogItem(null)}
@@ -1211,8 +1250,16 @@ export default function InventoryPage() {
 
       {/* MODAL: KONFIRMASI HAPUS DARI KATALOG */}
       {catalogDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <div
+            className="bg-white w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-center"
+            style={{
+              clipPath: 'polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(220,38,38,0.12)',
+            }}
+          >
+            <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%' }} />
+            <div className="p-6 pt-8 pb-9 space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -1248,6 +1295,7 @@ export default function InventoryPage() {
                 {isDeletingItem ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 Ya, Hapus
               </button>
+            </div>
             </div>
           </div>
         </div>

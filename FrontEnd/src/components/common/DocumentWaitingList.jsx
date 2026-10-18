@@ -79,10 +79,10 @@ export default function DocumentWaitingList({
   ).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       
       {/* ── Top Metric Parallelogram Cards (Signature Desktop Shape) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 py-0">
         <ParallelogramCard
           title="TOTAL DOKUMEN MOS"
           value={String(totalCount).padStart(2, '0')}
@@ -94,7 +94,7 @@ export default function DocumentWaitingList({
           accentColor="border-slate-600"
           valueColor="text-slate-900"
           badgeDotColor={statusFilter === 'ALL' ? 'bg-slate-700 ring-4 ring-slate-200' : undefined}
-          padding="p-3.5 sm:p-4"
+          padding="p-3 sm:p-3.5"
           onClick={() => setStatusFilter('ALL')}
         />
 
@@ -110,7 +110,7 @@ export default function DocumentWaitingList({
           accentColor="border-red-600"
           valueColor="text-red-700"
           badgeDotColor={statusFilter === 'waiting_user' ? 'bg-red-600 ring-4 ring-red-100' : undefined}
-          padding="p-3.5 sm:p-4"
+          padding="p-3 sm:p-3.5"
           onClick={() => setStatusFilter('waiting_user')}
         />
 
@@ -126,7 +126,7 @@ export default function DocumentWaitingList({
           accentColor="border-amber-600"
           valueColor="text-amber-700"
           badgeDotColor={statusFilter === 'waiting_admin' ? 'bg-amber-600 ring-4 ring-amber-100' : undefined}
-          padding="p-3.5 sm:p-4"
+          padding="p-3 sm:p-3.5"
           onClick={() => setStatusFilter('waiting_admin')}
         />
 
@@ -142,20 +142,20 @@ export default function DocumentWaitingList({
           accentColor="border-emerald-600"
           valueColor="text-emerald-700"
           badgeDotColor={statusFilter === 'completed' ? 'bg-emerald-600 ring-4 ring-emerald-100' : undefined}
-          padding="p-3.5 sm:p-4"
+          padding="p-3 sm:p-3.5"
           onClick={() => setStatusFilter('completed')}
         />
       </div>
 
       {/* ── Signature Requirement Banner ── */}
-      <div className="bg-gradient-to-r from-red-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 min-w-[260px]">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md text-red-300 flex items-center justify-center border border-white/20 shrink-0">
-            <ShieldCheck className="w-6 h-6" />
+      <div className="bg-gradient-to-r from-red-900 to-slate-900 text-white rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5 flex-1 min-w-[260px]">
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md text-red-300 flex items-center justify-center border border-white/20 shrink-0">
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm sm:text-base font-bold text-white">
+              <h3 className="text-xs sm:text-sm font-bold text-white">
                 Tanda Tangan Digital Transparan Anda
               </h3>
               {userSignature ? (
@@ -168,7 +168,7 @@ export default function DocumentWaitingList({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-300 mt-0.5">
+            <p className="text-[11px] text-slate-300 mt-0.5">
               Setiap user wajib memiliki tanda tangan. Unggah foto atau PDF tanda tangan, background otomatis dihapus transparan.
             </p>
           </div>
@@ -176,27 +176,27 @@ export default function DocumentWaitingList({
 
         <div className="flex items-center gap-2 ml-auto justify-end shrink-0">
           {userSignature && (
-            <div className="h-10 px-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center">
+            <div className="h-9 px-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center">
               <img
                 src={userSignature}
                 alt="My Signature"
-                className="max-h-8 max-w-[100px] object-contain filter drop-shadow-sm invert brightness-200"
+                className="max-h-7 max-w-[90px] object-contain filter drop-shadow-sm invert brightness-200"
               />
             </div>
           )}
 
           <button
             onClick={onOpenSignatureModal}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-lg transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer shrink-0"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>{userSignature ? 'Perbarui TTD' : 'Upload Tanda Tangan Sekarang'}</span>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{userSignature ? 'Perbarui TTD' : 'Upload TTD Sekarang'}</span>
           </button>
         </div>
       </div>
 
       {/* ── Search, Filters, and Add Actions ── */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200/90 px-4 py-3 sm:px-5 sm:py-3.5 shadow-2xs space-y-2.5">
         
         <div className="flex flex-wrap items-center justify-between gap-3">
           
@@ -313,7 +313,7 @@ export default function DocumentWaitingList({
               <div
                 key={doc.id}
                 onClick={() => onSelectDocument(doc)}
-                className="bg-white hover:bg-slate-50/80 p-5 rounded-3xl border border-slate-200/90 hover:border-red-300 shadow-sm transition-all cursor-pointer group"
+                className="bg-white hover:bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-slate-200/90 hover:border-red-300 shadow-2xs transition-all cursor-pointer group"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   

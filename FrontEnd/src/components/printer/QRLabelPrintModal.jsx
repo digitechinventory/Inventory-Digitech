@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Printer,
   QrCode,
@@ -82,17 +83,17 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
     addToast('File QR Code berhasil diunduh.', 'success');
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] bg-slate-800/55 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 font-sans">
+      <div className="w-full max-w-xl bg-white overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 font-sans" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
         
         {/* Header */}
-        <div className="px-6 py-4.5 bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white flex items-center justify-between border-b border-red-900/40">
+        <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white flex items-center justify-between border-b border-red-900/40">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-red-400">
               <QrCode className="w-5 h-5" />
@@ -219,7 +220,7 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <div className="px-6 pt-3 pb-8 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <button
             type="button"
             onClick={handleDownloadImage}
@@ -250,6 +251,9 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
+

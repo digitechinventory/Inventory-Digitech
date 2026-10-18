@@ -119,23 +119,23 @@ export default function MOSPage() {
   const pendingCount = documents.filter(d => d.status !== 'completed').length;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="space-y-4 pt-1 sm:pt-1.5 pb-8">
       
       {/* ── Page Header ── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white px-5 py-3.5 sm:px-6 sm:py-4 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div className="flex-1 min-w-0 pr-0 lg:pr-4">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-full uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               SISTEM APPROVAL &amp; OTORISASI DOKUMEN
             </span>
-            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
               Portrait / Landscape Dinamis
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
             Waiting List &amp; Approval Dokumen
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+          <p className="text-xs text-slate-500 mt-0.5 max-w-2xl">
             Unggah dokumen approval dari PC atau pilih template resmi (MOS, MDT, MRP). Bubuhkan tanda tangan transparan dengan drag &amp; drop.
           </p>
         </div>
