@@ -190,9 +190,10 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1. Check database profile
+    // 1. Check database profile and password
     let profile = null;
     let authSession = null;
+    let isPasswordValid = false;
 
     try {
       const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
@@ -208,6 +209,7 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
           .single();
         profile = p;
         authSession = authData.session;
+        isPasswordValid = true;
       }
     } catch {}
 
@@ -237,12 +239,44 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
       if (!profile && FALLBACK_USERS[cleanEmail]) {
         profile = FALLBACK_USERS[cleanEmail];
       }
+
+      // Validasi password untuk akun fallback / demo / lokal:
+      if (profile) {
+        const allowedPasswords = ['OfficeBIB123', process.env.JWT_SECRET].filter(Boolean);
+        if (allowedPasswords.includes(password)) {
+          isPasswordValid = true;
+        }
+      }
     }
 
-    if (!profile) {
+    if (!profile || !isPasswordValid) {
       // Panggil brute force fail tracker
-      if (req._bruteForceFail) req._bruteForceFail();
-      throw new AppError('Kredensial tidak valid. Periksa kembali email dan kata sandi Anda.', 401, 'AUTH_INVALID_CREDENTIALS');
+      let failInfo = null;
+      if (req._bruteForceFail) {
+        failInfo = req._bruteForceFail();
+      }
+
+      if (failInfo?.isLocked) {
+        throw new AppError(
+          `Akses Anda dikunci sementara selama ${failInfo.remainingMinutes || 15} menit karena terlalu banyak percobaan login yang gagal.`,
+          429,
+          'ACCOUNT_LOCKED',
+          {
+            remainingMinutes: failInfo.remainingMinutes || 15,
+            remainingSeconds: failInfo.remainingSeconds || 900,
+            lockedUntil: failInfo.lockedUntil
+          }
+        );
+      }
+
+      const remaining = failInfo ? failInfo.remainingAttempts : 4;
+      const suffix = remaining > 0 ? ` (${remaining} percobaan tersisa sebelum lockout)` : '';
+      throw new AppError(
+        `Kredensial tidak valid. Periksa kembali email dan kata sandi Anda${suffix}.`,
+        401,
+        'AUTH_INVALID_CREDENTIALS',
+        { remainingAttempts: remaining }
+      );
     }
 
     // 2. Validate is_active status (PRD Section 3.5 & SDD 2.3)

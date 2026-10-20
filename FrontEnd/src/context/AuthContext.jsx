@@ -186,11 +186,16 @@ export function AuthProvider({ children }) {
       }
 
       // Re-throw with server message if available
-      const errMsg = err.response?.data?.error?.message || err.response?.data?.message || err.message;
-      const errCode = err.response?.data?.error?.code || 'AUTH_ERROR';
+      const apiErr = err.response?.data?.error;
+      const errMsg = apiErr?.message || err.response?.data?.message || err.message || 'Login gagal. Periksa kembali email dan kata sandi Anda.';
+      const errCode = apiErr?.code || (err.response?.status === 429 ? 'ACCOUNT_LOCKED' : 'AUTH_ERROR');
       const customErr = new Error(errMsg);
       customErr.code = errCode;
       customErr.status = err.response?.status;
+      customErr.details = apiErr?.details || err.response?.data?.details;
+      customErr.remainingMinutes = apiErr?.remainingMinutes;
+      customErr.remainingSeconds = apiErr?.remainingSeconds;
+      customErr.lockedUntil = apiErr?.lockedUntil;
       throw customErr;
     } finally {
       setLoading(false);

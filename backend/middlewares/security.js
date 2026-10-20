@@ -92,54 +92,111 @@ export const authRateLimit = rateLimit({
   }
 });
 
-// ─── 4. BRUTE FORCE PROTECTION (tracking gagal per IP) ────────────────────
+// ─── 4. BRUTE FORCE PROTECTION (tracking gagal per IP & Email) ───────────
 export function bruteForceProtection(req, res, next) {
   const ip = getClientIp(req);
-  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
-    return next();
-  }
+  const rawEmail = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
   const now = Date.now();
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
-  const LOCKOUT_DURATION_MS = 30 * 60 * 1000;
+  const MAX_ACCOUNT_ATTEMPTS = 5; // 5 kali gagal per akun -> akun dikunci
+  const MAX_IP_ATTEMPTS = 20;      // 20 kali gagal per IP (mencegah credential spraying pada NAT kantor)
+  const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;  // 15 menit window
+  const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 menit durasi lockout
 
-  const record = loginAttempts.get(ip) || { attempts: 0, lockedUntil: 0, lastAttempt: 0 };
+  const ipKey = `ip:${ip}`;
+  const emailKey = rawEmail ? `acc:${rawEmail}` : null;
 
-  // Cek lockout aktif
-  if (record.lockedUntil && now < record.lockedUntil) {
-    const remainingMinutes = Math.ceil((record.lockedUntil - now) / 60000);
-    console.warn(`[Security] Brute force lockout: ${ip} — ${remainingMinutes} mnt tersisa`);
+  const ipRecord = loginAttempts.get(ipKey) || { attempts: 0, lockedUntil: 0, lastAttempt: 0 };
+  const emailRecord = emailKey ? (loginAttempts.get(emailKey) || { attempts: 0, lockedUntil: 0, lastAttempt: 0 }) : null;
+
+  // Cek apakah akun atau IP sedang dalam status lockout aktif
+  const isAccountActiveLock = emailRecord?.lockedUntil && now < emailRecord.lockedUntil;
+  const isIpActiveLock = ipRecord?.lockedUntil && now < ipRecord.lockedUntil;
+
+  if (isAccountActiveLock || isIpActiveLock) {
+    const activeLockRecord = isAccountActiveLock ? emailRecord : ipRecord;
+    const remainingSeconds = Math.max(1, Math.ceil((activeLockRecord.lockedUntil - now) / 1000));
+    const remainingMinutes = Math.ceil(remainingSeconds / 60);
+    const targetLabel = isAccountActiveLock ? `Akun (${rawEmail})` : `IP (${ip})`;
+    console.warn(`[Security] Brute force lockout aktif: ${targetLabel} — ${remainingMinutes} mnt (${remainingSeconds} dtk) tersisa`);
     return res.status(429).json({
       success: false,
       statusCode: 429,
       error: {
         code: 'ACCOUNT_LOCKED',
-        message: `Akses dari IP Anda dikunci ${remainingMinutes} menit lagi karena terlalu banyak percobaan login gagal. Hubungi admin jika ini bukan Anda.`,
-        lockedUntil: new Date(record.lockedUntil).toISOString(),
-        remainingMinutes
+        message: `${targetLabel} dikunci sementara selama ${remainingMinutes} menit (${remainingSeconds} detik lagi) karena terlalu banyak percobaan login yang gagal. Silakan coba kembali nanti.`,
+        lockedUntil: activeLockRecord.lockedUntil,
+        remainingMinutes,
+        remainingSeconds
       }
     });
   }
 
-  // Reset jika window sudah berlalu
-  if (now - record.lastAttempt > LOCKOUT_WINDOW_MS) {
-    record.attempts = 0;
-    record.lockedUntil = 0;
+  // Reset window jika waktu window telah lewat
+  if (now - ipRecord.lastAttempt > LOCKOUT_WINDOW_MS) {
+    ipRecord.attempts = 0;
+    ipRecord.lockedUntil = 0;
+  }
+  if (emailRecord && (now - emailRecord.lastAttempt > LOCKOUT_WINDOW_MS)) {
+    emailRecord.attempts = 0;
+    emailRecord.lockedUntil = 0;
   }
 
-  // Expose callback ke auth route
+  // Expose callbacks ke auth route
   req._bruteForceIp = ip;
-  req._bruteForceSuccess = () => { loginAttempts.delete(ip); };
+  req._bruteForceEmail = rawEmail;
+
+  req._bruteForceSuccess = () => {
+    if (emailKey) loginAttempts.delete(emailKey);
+  };
+
   req._bruteForceFail = () => {
-    record.attempts += 1;
-    record.lastAttempt = now;
-    if (record.attempts >= MAX_ATTEMPTS) {
-      record.lockedUntil = now + LOCKOUT_DURATION_MS;
-      console.warn(`[Security] IP ${ip} DIKUNCI 30 menit setelah ${record.attempts} percobaan gagal`);
-    } else {
-      console.warn(`[Security] Login gagal dari ${ip}: percobaan ke-${record.attempts}/${MAX_ATTEMPTS}`);
+    const currentTime = Date.now();
+    ipRecord.attempts += 1;
+    ipRecord.lastAttempt = currentTime;
+
+    let emailAttempts = 0;
+    if (emailRecord) {
+      emailRecord.attempts += 1;
+      emailRecord.lastAttempt = currentTime;
+      emailAttempts = emailRecord.attempts;
     }
-    loginAttempts.set(ip, record);
+
+    const isAccountLocked = emailRecord && emailRecord.attempts >= MAX_ACCOUNT_ATTEMPTS;
+    const isIpLocked = ipRecord.attempts >= MAX_IP_ATTEMPTS;
+    const isLocked = Boolean(isAccountLocked || isIpLocked);
+    let lockUntil = 0;
+
+    if (isAccountLocked && emailRecord) {
+      lockUntil = currentTime + LOCKOUT_DURATION_MS;
+      emailRecord.lockedUntil = lockUntil;
+      console.warn(`[Security] LOCKOUT AKUN: ${rawEmail} dikunci 15 menit setelah ${emailRecord.attempts} kegagalan berturut-turut`);
+    }
+
+    if (isIpLocked) {
+      lockUntil = currentTime + LOCKOUT_DURATION_MS;
+      ipRecord.lockedUntil = lockUntil;
+      console.warn(`[Security] LOCKOUT IP: ${ip} dikunci 15 menit setelah ${ipRecord.attempts} kegagalan berturut-turut`);
+    }
+
+    loginAttempts.set(ipKey, ipRecord);
+    if (emailKey && emailRecord) loginAttempts.set(emailKey, emailRecord);
+
+    const remainingAttempts = emailRecord
+      ? Math.max(0, MAX_ACCOUNT_ATTEMPTS - emailRecord.attempts)
+      : Math.max(0, MAX_IP_ATTEMPTS - ipRecord.attempts);
+
+    const remainingMinutes = isLocked ? Math.ceil(LOCKOUT_DURATION_MS / 60000) : 0;
+    const remainingSeconds = isLocked ? Math.ceil(LOCKOUT_DURATION_MS / 1000) : 0;
+
+    return {
+      attempts: emailRecord ? emailRecord.attempts : ipRecord.attempts,
+      maxAttempts: emailRecord ? MAX_ACCOUNT_ATTEMPTS : MAX_IP_ATTEMPTS,
+      remainingAttempts,
+      isLocked,
+      lockedUntil: lockUntil,
+      remainingMinutes,
+      remainingSeconds
+    };
   };
 
   next();

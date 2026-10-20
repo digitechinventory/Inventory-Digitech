@@ -53,10 +53,58 @@ export default function AuthPage() {
   const [isAccountInactive, setIsAccountInactive] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('digitech_auth_failed_attempts');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [isLockedOut, setIsLockedOut] = useState(false);
-  const [lockoutMinutes, setLockoutMinutes] = useState(0);
-  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutRemainingSeconds, setLockoutRemainingSeconds] = useState(0);
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+
+  // Helper format durasi lockout MM:SS
+  const formatLockoutTimer = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  // Watchdog & countdown timer untuk status lockout (Presisten terhadap Refresh Browser)
+  useEffect(() => {
+    const checkLockout = () => {
+      try {
+        const storedUntil = localStorage.getItem('digitech_auth_lockout_until');
+        if (!storedUntil) {
+          setIsLockedOut(false);
+          setLockoutRemainingSeconds(0);
+          return;
+        }
+        const untilMs = parseInt(storedUntil, 10);
+        const now = Date.now();
+        if (now < untilMs) {
+          const secsLeft = Math.ceil((untilMs - now) / 1000);
+          setIsLockedOut(true);
+          setLockoutRemainingSeconds(secsLeft);
+        } else {
+          // Durasi lockout berakhir — bersihkan localStorage
+          localStorage.removeItem('digitech_auth_lockout_until');
+          localStorage.removeItem('digitech_auth_failed_attempts');
+          setIsLockedOut(false);
+          setLockoutRemainingSeconds(0);
+          setFailedAttempts(0);
+        }
+      } catch {
+        setIsLockedOut(false);
+      }
+    };
+
+    checkLockout();
+    const timer = setInterval(checkLockout, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -127,80 +175,111 @@ export default function AuthPage() {
     };
   }, []);
 
-  // Forward mouse events to Spline iframe for 3D dot grid reaction
+  // Forward mouse events to Spline iframe with requestAnimationFrame throttling (Zero UI lag)
+  const mouseRafRef = useRef(null);
   const handlePageMouseMove = (e) => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      try {
-        iframeRef.current.contentWindow.postMessage(
-          {
-            type: 'PARENT_MOUSE_MOVE',
-            normX: e.clientX / window.innerWidth,
-            normY: e.clientY / window.innerHeight
-          },
-          '*'
-        );
-      } catch (_) {}
-    }
+    if (mouseRafRef.current) return;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    mouseRafRef.current = requestAnimationFrame(() => {
+      mouseRafRef.current = null;
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        try {
+          iframeRef.current.contentWindow.postMessage(
+            {
+              type: 'PARENT_MOUSE_MOVE',
+              normX: clientX / window.innerWidth,
+              normY: clientY / window.innerHeight
+            },
+            '*'
+          );
+        } catch (_) {}
+      }
+    });
   };
 
-  // Submit Login
+  // Submit Login — Responsif & Cepat (Tanpa Delay Buatan)
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    if (isLockedOut) return;
+
     setErrorMessage(null);
     setIsAccountInactive(false);
     setSessionExpiredNotice(false);
     setLoading(true);
 
-    const startTime = Date.now();
     try {
       await login(loginForm.email, loginForm.password);
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 600) {
-        await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
-      }
+      // Login sukses — bersihkan rekaman gagal dan lockout dari penyimpanan lokal
+      try {
+        localStorage.removeItem('digitech_auth_failed_attempts');
+        localStorage.removeItem('digitech_auth_lockout_until');
+      } catch {}
+      setFailedAttempts(0);
+      setIsLockedOut(false);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 600) {
-        await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
-      }
       if (err.code === 'AUTH_ACCOUNT_INACTIVE') {
         setIsAccountInactive(true);
-      } else if (err.code === 'ACCOUNT_LOCKED' || err.code === 'AUTH_RATE_LIMITED') {
+      } else if (err.code === 'ACCOUNT_LOCKED' || err.code === 'AUTH_RATE_LIMITED' || err.status === 429) {
+        const secs = err.remainingSeconds || (err.remainingMinutes ? err.remainingMinutes * 60 : 900);
+        const untilMs = err.lockedUntil
+          ? (typeof err.lockedUntil === 'number' ? err.lockedUntil : new Date(err.lockedUntil).getTime())
+          : Date.now() + (secs * 1000);
+
+        try {
+          localStorage.setItem('digitech_auth_lockout_until', String(untilMs));
+          localStorage.setItem('digitech_auth_failed_attempts', '5');
+        } catch {}
+
+        setFailedAttempts(5);
         setIsLockedOut(true);
-        setLockoutMinutes(err.remainingMinutes || 30);
-        setErrorMessage(err.message || 'Terlalu banyak percobaan login. Akun dikunci sementara.');
+        setLockoutRemainingSeconds(Math.max(1, Math.ceil((untilMs - Date.now()) / 1000)));
+        setErrorMessage(err.message || 'Terlalu banyak percobaan login gagal. Akses dikunci sementara demi keamanan.');
       } else {
-        const newAttempts = failedAttempts + 1;
+        const serverRemaining = err.details?.remainingAttempts;
+        let newAttempts;
+        if (typeof serverRemaining === 'number') {
+          newAttempts = Math.max(0, 5 - serverRemaining);
+        } else {
+          newAttempts = failedAttempts + 1;
+        }
+
         setFailedAttempts(newAttempts);
-        const remaining = Math.max(0, 5 - newAttempts);
-        const suffix = remaining > 0 ? ` (${remaining} percobaan tersisa sebelum lockout)` : ' — Akun akan dikunci.';
-        setErrorMessage((err.message || 'Login gagal. Periksa kembali email dan password Anda.') + suffix);
+        try {
+          localStorage.setItem('digitech_auth_failed_attempts', String(newAttempts));
+        } catch {}
+
+        if (newAttempts >= 5) {
+          const untilMs = Date.now() + 15 * 60 * 1000;
+          try {
+            localStorage.setItem('digitech_auth_lockout_until', String(untilMs));
+          } catch {}
+          setIsLockedOut(true);
+          setLockoutRemainingSeconds(15 * 60);
+          setErrorMessage('Akses dikunci sementara selama 15 menit karena 5 kali percobaan login yang gagal.');
+        } else {
+          const remaining = Math.max(0, 5 - newAttempts);
+          const suffix = remaining > 0 ? ` (${remaining} percobaan tersisa sebelum lockout)` : ' — Akun akan dikunci.';
+          const rawMsg = err.message || 'Login gagal. Periksa kembali email dan password Anda.';
+          setErrorMessage(rawMsg.includes('percobaan tersisa') ? rawMsg : (rawMsg + suffix));
+        }
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Submit Register
+  // Submit Register — Responsif & Cepat (Tanpa Delay Buatan)
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage(null);
     setLoading(true);
 
-    const startTime = Date.now();
     try {
       await register(registerForm);
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 600) {
-        await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
-      }
       setRegistrationSuccess(true);
     } catch (err) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 600) {
-        await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
-      }
       setErrorMessage(err.message || 'Pendaftaran gagal. Pastikan seluruh kolom terisi dengan benar.');
     } finally {
       setLoading(false);
@@ -244,9 +323,9 @@ export default function AuthPage() {
   };
 
   // Dynamic card height for snug fit with responsive auto-expansion on notices
-  const hasLoginNotice = Boolean(sessionExpiredNotice || errorMessage || isAccountInactive);
+  const hasLoginNotice = Boolean(sessionExpiredNotice || errorMessage || isAccountInactive || isLockedOut);
   const cardHeightClass = authMode === 'login'
-    ? (hasLoginNotice ? 'h-[560px] sm:h-[600px]' : 'h-[500px] sm:h-[535px]')
+    ? (hasLoginNotice ? (isLockedOut ? 'h-[580px] sm:h-[625px]' : 'h-[560px] sm:h-[600px]') : 'h-[500px] sm:h-[535px]')
     : (registrationSuccess ? 'h-[420px] sm:h-[460px]' : (errorMessage ? 'h-[655px] sm:h-[730px]' : 'h-[620px] sm:h-[695px]'));
 
   return (
@@ -517,6 +596,26 @@ export default function AuthPage() {
                     </p>
                   </div>
 
+                  {/* Account Lockout Notification with Live Countdown (Presisten saat Refresh) */}
+                  {isLockedOut && (
+                    <div className="mb-2.5 p-2.5 sm:p-3 bg-red-950/95 border border-red-500/80 rounded-xl flex items-start gap-2.5 shadow-lg shadow-red-950/40 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5 animate-pulse" />
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="text-xs font-black text-red-200 tracking-tight flex items-center gap-1.5">
+                            <span>Akses Dikunci Sementara</span>
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-md bg-red-900 border border-red-500/70 text-red-100 font-mono text-[10px] font-black tracking-widest shadow-inner">
+                            {formatLockoutTimer(lockoutRemainingSeconds)}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-red-300 leading-snug mt-1 font-medium">
+                          Terlalu banyak percobaan login yang gagal. Demi keamanan aset, formulir dikunci selama 15 menit. Halaman web yang di-refresh tidak akan membatalkan hitung mundur.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Account Inactive Notification */}
                   {isAccountInactive && (
                     <div className="mb-2 p-2.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
@@ -560,7 +659,7 @@ export default function AuthPage() {
                   )}
 
                   {/* Generic Error Notification */}
-                  {errorMessage && (
+                  {errorMessage && !isLockedOut && (
                     <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
                       <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                       <p className="flex-1 text-xs text-red-700 font-semibold text-left">{errorMessage}</p>
@@ -582,15 +681,22 @@ export default function AuthPage() {
                       <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                         Alamat Email
                       </label>
-                      <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                      <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
+                        isLockedOut
+                          ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
+                          : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
+                      }`}>
+                        <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
+                          isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
+                        }`} />
                         <input
                           type="email"
                           required
+                          disabled={loading || isLockedOut}
                           value={loginForm.email}
                           onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                           placeholder="nama@digitech.co.id"
-                          className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                          className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
                         />
                       </div>
                     </div>
@@ -600,20 +706,28 @@ export default function AuthPage() {
                       <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
                         Kata Sandi
                       </label>
-                      <div className="relative group w-full bg-slate-50/95 border border-slate-300 rounded-xl focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15 transition-all shadow-xs">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 text-slate-400 group-focus-within:text-red-600 transition-colors pointer-events-none" />
+                      <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
+                        isLockedOut
+                          ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
+                          : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
+                      }`}>
+                        <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
+                          isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
+                        }`} />
                         <input
                           type={showPassword ? 'text' : 'password'}
                           required
+                          disabled={loading || isLockedOut}
                           value={loginForm.password}
                           onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                           placeholder="Masukkan kata sandi akun"
-                          className="w-full pl-10 sm:pl-11 pr-11 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                          className="w-full pl-10 sm:pl-11 pr-11 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
                         />
                         <button
                           type="button"
+                          disabled={isLockedOut}
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer transition-colors disabled:cursor-not-allowed"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                         </button>
@@ -626,7 +740,8 @@ export default function AuthPage() {
                         <input
                           type="checkbox"
                           defaultChecked
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600"
+                          disabled={isLockedOut}
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600 disabled:cursor-not-allowed"
                         />
                         <span className="text-[10px] sm:text-[11px] font-bold">Ingat Akun</span>
                       </label>
@@ -642,13 +757,22 @@ export default function AuthPage() {
                     {/* Submit Button */}
                     <button
                       type="submit"
-                      disabled={loading}
-                      className="relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-red-900/30 transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait flex items-center justify-center gap-2 overflow-hidden border border-red-500/50"
+                      disabled={loading || isLockedOut}
+                      className={`relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center justify-center gap-2 overflow-hidden border ${
+                        isLockedOut
+                          ? 'bg-slate-900/95 text-red-200 border-red-500/50 cursor-not-allowed shadow-none'
+                          : 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black shadow-lg shadow-red-900/30 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait border-red-500/50'
+                      }`}
                     >
                       {loading ? (
                         <div className="flex items-center justify-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
                           <span className="tracking-wider font-extrabold text-xs">Memproses Masuk...</span>
+                        </div>
+                      ) : isLockedOut ? (
+                        <div className="flex items-center justify-center gap-2 text-red-300">
+                          <Lock className="w-4 h-4 text-red-400" />
+                          <span className="font-extrabold tracking-wide">Akses Terkunci ({formatLockoutTimer(lockoutRemainingSeconds)})</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-2">

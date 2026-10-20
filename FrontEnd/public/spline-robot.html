@@ -301,8 +301,10 @@
 		window.addEventListener('resize', resizeDotCanvas);
 		resizeDotCanvas();
 
-		const cols = 55;
-		const rows = 34;
+		// Responsive dot grid density for ultra-smooth 60fps
+		const isSmallScreen = window.innerWidth < 640;
+		const cols = isSmallScreen ? 18 : 28;
+		const rows = isSmallScreen ? 12 : 18;
 
 		const mousePos = {
 			x: window.innerWidth / 2,
@@ -314,7 +316,7 @@
 		window.addEventListener('mousemove', (e) => {
 			mousePos.targetX = e.clientX;
 			mousePos.targetY = e.clientY;
-		});
+		}, { passive: true });
 
 		window.addEventListener('message', (msg) => {
 			if (msg.data && msg.data.type === 'PARENT_MOUSE_MOVE') {
@@ -324,13 +326,19 @@
 		});
 
 		let gridTime = 0;
-		const animateDotGrid = () => {
+		let lastFrameTimestamp = 0;
+
+		const animateDotGrid = (timestamp) => {
 			requestAnimationFrame(animateDotGrid);
 			if (!dotCtx) return;
 
-			gridTime += 0.025;
-			mousePos.x += (mousePos.targetX - mousePos.x) * 0.12;
-			mousePos.y += (mousePos.targetY - mousePos.y) * 0.12;
+			// Cap animation frame rate to screen refresh rate smoothly
+			if (timestamp - lastFrameTimestamp < 14) return;
+			lastFrameTimestamp = timestamp;
+
+			gridTime += 0.02;
+			mousePos.x += (mousePos.targetX - mousePos.x) * 0.14;
+			mousePos.y += (mousePos.targetY - mousePos.y) * 0.14;
 
 			const w = window.innerWidth;
 			const h = window.innerHeight;
@@ -340,38 +348,43 @@
 			const spacingY = h / rows;
 			const cx = w / 2;
 			const cy = h / 2;
-
-			const influenceRadius = 240;
+			const influenceRadius = 220;
+			const influenceRadiusSq = influenceRadius * influenceRadius;
+			const robotWidthSq = (w * 0.16) * (w * 0.16);
+			const robotHeightSq = (h * 0.32) * (h * 0.32);
 
 			for (let r = 0; r < rows; r++) {
+				const y = (r + 0.5) * spacingY;
+				const dyRobot = (y - cy - h * 0.08);
+				const dyRobotTerm = (dyRobot * dyRobot) / robotHeightSq;
+
 				for (let c = 0; c < cols; c++) {
 					const x = (c + 0.5) * spacingX;
-					const y = (r + 0.5) * spacingY;
+					const dxRobot = (x - cx);
+					if ((dxRobot * dxRobot) / robotWidthSq + dyRobotTerm < 1.0) continue;
 
-					// Mask center robot torso
-					const distRobot = Math.hypot((x - cx) / (w * 0.15), (y - cy - h * 0.08) / (h * 0.32));
-					if (distRobot < 1.0) continue;
-
-					const dMouse = Math.hypot(x - mousePos.x, y - mousePos.y);
+					const dxMouse = x - mousePos.x;
+					const dyMouse = y - mousePos.y;
+					const dMouseSq = dxMouse * dxMouse + dyMouse * dyMouse;
 
 					let dotSize = 2.0;
 					let rCol = 6, gCol = 182, bCol = 212, alpha = 0.28;
 
-					if (dMouse < influenceRadius) {
+					if (dMouseSq < influenceRadiusSq) {
+						const dMouse = Math.sqrt(dMouseSq);
 						const factor = 1 - dMouse / influenceRadius;
-						dotSize = 2.0 + factor * 5.5;
+						dotSize = 2.0 + factor * 5.0;
 
-						// Morph to Radiant Crimson Red on cursor proximity!
+						// Morph to Radiant Crimson Red on cursor proximity
 						rCol = Math.round(6 + (239 - 6) * factor);
 						gCol = Math.round(182 * (1 - factor * 0.85));
 						bCol = Math.round(212 * (1 - factor * 0.85));
 						alpha = 0.35 + factor * 0.65;
 
-						// Glowing halo around active red dots
-						if (factor > 0.4) {
+						if (factor > 0.45) {
 							dotCtx.fillStyle = `rgba(239, 68, 68, ${0.15 * factor})`;
 							dotCtx.beginPath();
-							dotCtx.arc(x, y, dotSize * 2.2, 0, Math.PI * 2);
+							dotCtx.arc(x, y, dotSize * 2.0, 0, Math.PI * 2);
 							dotCtx.fill();
 						}
 					} else {
@@ -386,9 +399,9 @@
 				}
 			}
 		};
-		animateDotGrid();
+		requestAnimationFrame(animateDotGrid);
 
-		// ────── 2. TOWERING 3D "DIGITECH" TYPOGRAPHY BEHIND ROBOT ──────
+		// ────── 2. STATIC 3D "DIGITECH" TYPOGRAPHY (ZERO SWAY / NON-WOBBLING) ──────
 		let is3DConfigured = false;
 		function tryConfigure3DText() {
 			if (is3DConfigured) return true;
@@ -407,7 +420,7 @@
 
 			if (!logoGroup || !shapeMat) return false;
 
-			// Hide original NEXBOT shapes
+			// Sembunyikan bentuk asli NEXBOT
 			logoGroup.children.forEach((c) => {
 				if (c.name && c.name.startsWith('Shape')) {
 					c.visible = false;
@@ -426,27 +439,35 @@
 				const textGeo = new TextGeometry('DIGITECH', {
 					font: font,
 					size: 480,
-					height: 100,
-					curveSegments: 6,
+					height: 60,
+					curveSegments: 3,
 					bevelEnabled: true,
-					bevelThickness: 15,
-					bevelSize: 10,
+					bevelThickness: 10,
+					bevelSize: 6,
 					bevelOffset: 0,
-					bevelSegments: 3
+					bevelSegments: 1
 				});
 				textGeo.center();
 
 				const textMesh = new THREE.Mesh(textGeo, shapeMat);
 				textMesh.name = 'DIGITECH_3D_TEXT';
-				// Position in logo group space (logo pos is 0, 146, -1000, scale 0.3)
-				// y: 500 places the giant text towering proudly across the upper background
 				textMesh.position.set(0, 500, 0);
 				textMesh.frustumCulled = false;
 
 				logoGroup.add(textMesh);
+
+				// Kunci rotasi logoGroup agar tidak bergoyang/swaying
+				const freezeRotation = () => {
+					requestAnimationFrame(freezeRotation);
+					if (logoGroup) {
+						logoGroup.rotation.set(0, 0, 0);
+					}
+				};
+				freezeRotation();
+
 				is3DConfigured = true;
 				if (app.requestRender) app.requestRender();
-				console.log('Towering DIGITECH 3D text rendered behind robot mascot!');
+				console.log('✅ Towering DIGITECH 3D text rendered stationary behind robot!');
 			}, undefined, (err) => {
 				console.error('Error loading 3D font:', err);
 			});
