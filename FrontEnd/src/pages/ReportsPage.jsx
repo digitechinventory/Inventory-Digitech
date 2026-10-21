@@ -60,56 +60,49 @@ export default function ReportsPage() {
   const transactions = useMemo(() => {
     if (ledgerData && ledgerData.length > 0) return ledgerData;
     return [
-      { id: 'tx-01', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: 24, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-001', category: 'Heavy Equipment Parts', performed_by: 'arya-admin', created_at: '2026-10-14T09:15:00.000Z', unit_cost: 1450000 },
-      { id: 'tx-02', item_name: 'Komatsu PC2000 Seal Kit', part_number: 'BIB-KOM-PC2000-HYD', bin_location: 'R-A02', qty_change: -4, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-012', category: 'Hydraulics', performed_by: 'budi-teknisi', created_at: '2026-10-12T14:20:00.000Z', unit_cost: 8900000 },
-      { id: 'tx-03', item_name: 'Volvo FMX Brake Lining Assm', part_number: 'BIB-VOL-FMX-BRK', bin_location: 'R-B01', qty_change: 18, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-003', category: 'Hauling Fleet', performed_by: 'arya-admin', created_at: '2026-10-10T11:00:00.000Z', unit_cost: 3200000 },
-      { id: 'tx-04', item_name: 'Shell Tellus S2 V 68 Drum', part_number: 'BIB-LUB-SHL-T68', bin_location: 'R-C01', qty_change: -8, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-008', category: 'Lubricants & Fuel', performed_by: 'doni-lubricator', created_at: '2026-10-08T08:45:00.000Z', unit_cost: 4750000 },
-      { id: 'tx-05', item_name: 'Bucket Tooth Tip 777D', part_number: 'BIB-GET-CAT-TIP', bin_location: 'R-B03', qty_change: 40, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-08-019', category: 'Ground Engaging Tools', performed_by: 'arya-admin', created_at: '2026-10-05T16:30:00.000Z', unit_cost: 920000 },
-      { id: 'tx-06', item_name: 'Delco Remy 24V Alternator', part_number: 'BIB-ELE-ALT-24V', bin_location: 'R-D01', qty_change: -2, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-002', category: 'Electrical & Sensor', performed_by: 'dani-electrician', created_at: '2026-10-02T10:15:00.000Z', unit_cost: 6100000 }
+      { id: 'tx-01', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: 24, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-001', category: 'Heavy Equipment Parts', performed_by: 'arya-admin', created_at: '2026-10-14T09:15:00.000Z' },
+      { id: 'tx-02', item_name: 'Komatsu PC2000 Seal Kit', part_number: 'BIB-KOM-PC2000-HYD', bin_location: 'R-A02', qty_change: -4, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-012', category: 'Hydraulics', performed_by: 'budi-teknisi', created_at: '2026-10-12T14:20:00.000Z' },
+      { id: 'tx-03', item_name: 'Volvo FMX Brake Lining Assm', part_number: 'BIB-VOL-FMX-BRK', bin_location: 'R-B01', qty_change: 18, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-003', category: 'Hauling Fleet', performed_by: 'arya-admin', created_at: '2026-10-10T11:00:00.000Z' },
+      { id: 'tx-04', item_name: 'Shell Tellus S2 V 68 Drum', part_number: 'BIB-LUB-SHL-T68', bin_location: 'R-C01', qty_change: -8, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-008', category: 'Lubricants & Fuel', performed_by: 'doni-lubricator', created_at: '2026-10-08T08:45:00.000Z' },
+      { id: 'tx-05', item_name: 'Bucket Tooth Tip 777D', part_number: 'BIB-GET-CAT-TIP', bin_location: 'R-B03', qty_change: 40, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-08-019', category: 'Ground Engaging Tools', performed_by: 'arya-admin', created_at: '2026-10-05T16:30:00.000Z' },
+      { id: 'tx-06', item_name: 'Delco Remy 24V Alternator', part_number: 'BIB-ELE-ALT-24V', bin_location: 'R-D01', qty_change: -2, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-002', category: 'Electrical & Sensor', performed_by: 'dani-electrician', created_at: '2026-10-02T10:15:00.000Z' }
     ];
   }, [ledgerData]);
 
-  // Aggregate metrics
+  // Aggregate metrics (Strictly operational logistics: Quantities, Movements & Accuracy)
   const metrics = useMemo(() => {
     let totalInflowQty = 0;
     let totalOutflowQty = 0;
-    let totalInflowValuation = 0;
-    let totalOutflowValuation = 0;
 
     transactions.forEach(t => {
       const qty = Math.abs(t.qty_change || 0);
-      const cost = t.unit_cost || 1500000;
       if (t.transaction_type === 'MOS_IN' || (t.qty_change || 0) > 0) {
         totalInflowQty += qty;
-        totalInflowValuation += qty * cost;
       } else {
         totalOutflowQty += qty;
-        totalOutflowValuation += qty * cost;
       }
     });
 
-    const netValuation = Math.max(0, totalInflowValuation - totalOutflowValuation);
+    const totalMovementQty = totalInflowQty + totalOutflowQty;
 
     return {
       totalInflowQty,
       totalOutflowQty,
-      totalInflowValuation,
-      totalOutflowValuation,
-      netValuation,
+      totalMovementQty,
       accuracyRate: '98.6%',
       activeSkuCount: 649,
       turnoverRatio: '3.4x'
     };
   }, [transactions]);
 
-  // Monthly breakdown trend (Last 6 Months)
+  // Monthly breakdown trend (Last 6 Months) - Focusing purely on physical logistics movements
   const monthlyTrends = [
-    { month: 'Mei 2026', mos: 64, mr: 52, val: 'Rp 412 Juta' },
-    { month: 'Jun 2026', mos: 78, mr: 68, val: 'Rp 530 Juta' },
-    { month: 'Jul 2026', mos: 95, mr: 84, val: 'Rp 680 Juta' },
-    { month: 'Agu 2026', mos: 88, mr: 91, val: 'Rp 620 Juta' },
-    { month: 'Sep 2026', mos: 110, mr: 98, val: 'Rp 785 Juta' },
-    { month: 'Okt 2026', mos: 82, mr: 56, val: 'Rp 540 Juta' }
+    { month: 'Mei 2026', mos: 64, mr: 52, totalActivity: '116 Mutasi Fisik' },
+    { month: 'Jun 2026', mos: 78, mr: 68, totalActivity: '146 Mutasi Fisik' },
+    { month: 'Jul 2026', mos: 95, mr: 84, totalActivity: '179 Mutasi Fisik' },
+    { month: 'Agu 2026', mos: 88, mr: 91, totalActivity: '179 Mutasi Fisik' },
+    { month: 'Sep 2026', mos: 110, mr: 98, totalActivity: '208 Mutasi Fisik' },
+    { month: 'Okt 2026', mos: 82, mr: 56, totalActivity: '138 Mutasi Fisik' }
   ];
 
   // Category Distribution
@@ -141,7 +134,7 @@ export default function ReportsPage() {
       site: 'Semua Site Terintegrasi BIB',
       signer: 'Staff Logistik & Pengawas Material',
       status: 'Aktif & Final',
-      summary: 'Rekap 82 transaksi penerimaan material on site (MOS) senilai Rp 540 Juta dan 56 pengeluaran material (MR) untuk perawatan unit hauling.'
+      summary: 'Rekap 82 transaksi penerimaan material on site (MOS) dan 56 pengeluaran material (MR) untuk perawatan unit hauling tambang.'
     },
     {
       id: 'LBP-2026-10-003',
@@ -177,7 +170,7 @@ export default function ReportsPage() {
         'Lokasi Rak': t.bin_location || '-',
         'Tipe Mutasi': t.transaction_type || '-',
         'Qty Mutasi': t.qty_change || 0,
-        'Estimasi Nilai (IDR)': (Math.abs(t.qty_change || 0) * (t.unit_cost || 1500000)).toLocaleString('id-ID'),
+        'Status Fisik': 'Kondisi Baik & Terverifikasi',
         'No. Dokumen Ref': t.reference_doc_id || '-',
         'Petugas': t.performed_by || '-'
       }));
@@ -356,12 +349,12 @@ export default function ReportsPage() {
         />
 
         <ParallelogramCard
-          title="ESTIMASI VALUASI MUTASI"
-          value="2.05"
-          unit="M"
-          subtitle="Total Perputaran Aset Logistik"
+          title="TOTAL AKTIVITAS MUTASI"
+          value={String(metrics.totalMovementQty).padStart(2, '0')}
+          unit="ITEM"
+          subtitle="Total Perputaran Fisik Suku Cadang"
           subtitleIcon={Boxes}
-          subtitleColor="text-rose-700"
+          subtitleColor="text-red-700"
           icon={Boxes}
           iconColor="text-red-600"
           accentColor="border-red-600"
@@ -408,7 +401,7 @@ export default function ReportsPage() {
                     <div key={idx} className="space-y-1.5">
                       <div className="flex justify-between text-xs font-semibold text-slate-800">
                         <span>{item.month}</span>
-                        <span className="font-mono text-[11px] text-slate-500">Valuasi: {item.val}</span>
+                        <span className="font-mono text-[11px] text-slate-500">{item.totalActivity}</span>
                       </div>
                       <div className="space-y-1">
                         {/* MOS bar */}

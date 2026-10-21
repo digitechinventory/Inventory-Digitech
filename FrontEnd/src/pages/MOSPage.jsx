@@ -48,6 +48,7 @@ export default function MOSPage() {
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadModalDefaultTab, setUploadModalDefaultTab] = useState('local'); // 'local' | 'template'
+  const [documentToEdit, setDocumentToEdit] = useState(null); // When editing existing document
 
   // Fetch document list for Waiting List & Archive
   const { data: documentsData, refetch, isLoading } = useQuery({
@@ -101,18 +102,27 @@ export default function MOSPage() {
   };
 
   // Handle document updated (e.g. after approval stamp)
+  // Handle document updated (e.g. after approval stamp or editing)
   const handleDocumentUpdated = (updatedDoc) => {
     setSelectedDocument(updatedDoc);
     refetch();
   };
 
-  // Handle document uploaded (added to waiting list)
+  // Handle document uploaded or edited
   const handleDocumentUploaded = (newDoc) => {
     refetch();
+    setDocumentToEdit(null);
     if (newDoc) {
       setSelectedDocument(newDoc);
       setActiveView('sheet');
     }
+  };
+
+  // Open edit modal for a document
+  const handleEditDocument = (doc) => {
+    setDocumentToEdit(doc);
+    setUploadModalDefaultTab('template');
+    setIsUploadModalOpen(true);
   };
 
   // Count pending items for waiting list badge
@@ -181,6 +191,7 @@ export default function MOSPage() {
           {/* Quick Action: Upload Modal */}
           <button
             onClick={() => {
+              setDocumentToEdit(null);
               setUploadModalDefaultTab('local');
               setIsUploadModalOpen(true);
             }}
@@ -201,10 +212,12 @@ export default function MOSPage() {
           userSignature={userSignature}
           onSelectDocument={handleOpenDocument}
           onOpenUploadModal={(tab) => {
+            setDocumentToEdit(null);
             setUploadModalDefaultTab(tab);
             setIsUploadModalOpen(true);
           }}
           onOpenSignatureModal={() => setIsSignatureModalOpen(true)}
+          onEditDocument={handleEditDocument}
         />
       )}
 
@@ -216,6 +229,7 @@ export default function MOSPage() {
           onOpenSignatureModal={() => setIsSignatureModalOpen(true)}
           onDocumentUpdated={handleDocumentUpdated}
           onBackToList={() => setActiveView('waiting_list')}
+          onEditDocument={handleEditDocument}
         />
       )}
 
@@ -227,12 +241,17 @@ export default function MOSPage() {
         currentUser={user}
       />
 
-      {/* ── Modal 2: Document Upload & Template Creator ── */}
+      {/* ── Modal 2: Document Upload & Template Creator / Editor ── */}
       <DocumentUploadModal
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setDocumentToEdit(null);
+        }}
         onSuccess={handleDocumentUploaded}
         currentUser={user}
+        defaultTab={uploadModalDefaultTab}
+        editDocument={documentToEdit}
       />
 
     </div>

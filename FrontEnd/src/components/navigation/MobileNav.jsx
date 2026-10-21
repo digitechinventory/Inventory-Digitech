@@ -23,18 +23,6 @@ import { useAuth } from '../../context/AuthContext';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
 import PrinterSetupModal from '../printer/PrinterSetupModal';
 
-/**
- * Mobile Bottom Floating Liquid Glass Capsule Navbar
- * Inspired by WhatsApp Swipe Navigation & Liquid Glassmorphism Aesthetics
- * 
- * Features:
- * - Fluid Liquid Glass Capsule with dynamic blur, specular reflection, and crimson glow
- * - Sliding Liquid Lens Indicator that tracks touch drag continuously like a slider
- * - WhatsApp-style horizontal screen swipe listener (window 'app:swipe-tab')
- * - Snappy spring physics on release
- * - Role-adaptive 5-slot navigation tabs (User, Admin, Superadmin)
- * - Interactive Account Profile Drawer
- */
 export default function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,7 +97,7 @@ export default function MobileNav() {
     navigate(item.path);
   };
 
-  // WhatsApp-style horizontal screen swipe event listener
+  // horizontal screen swipe event listener
   useEffect(() => {
     const handleSwipeTab = (e) => {
       const direction = e.detail?.direction;
@@ -181,7 +169,7 @@ export default function MobileNav() {
       // Once user is definitely dragging, capture the pointer
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
-      } catch {}
+      } catch { }
     }
 
     if (hasDraggedRef.current) {
@@ -196,7 +184,7 @@ export default function MobileNav() {
 
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+    } catch { }
 
     if (hasDraggedRef.current && dragRatio !== null) {
       draggedRecentlyRef.current = true;
@@ -279,9 +267,8 @@ export default function MobileNav() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
-          className={`relative w-full h-[54px] rounded-full p-1 flex items-center justify-between transition-all duration-300 touch-none select-none ${
-            isDragging ? 'cursor-grabbing scale-[1.01]' : 'cursor-grab'
-          }`}
+          className={`relative w-full h-[54px] rounded-full p-1 flex items-center justify-between transition-all duration-300 touch-none select-none ${isDragging ? 'cursor-grabbing scale-[1.01]' : 'cursor-grab'
+            }`}
           style={{
             background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.45) 100%)',
             backdropFilter: 'blur(30px) saturate(190%) contrast(105%)',
@@ -294,11 +281,10 @@ export default function MobileNav() {
         >
           {/* Sliding Apple-style Liquid Glass Lens */}
           <div
-            className={`absolute top-1 bottom-1 pointer-events-none z-0 ${
-              isDragging
-                ? 'transition-none'
-                : 'transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]'
-            }`}
+            className={`absolute top-1 bottom-1 pointer-events-none z-0 ${isDragging
+              ? 'transition-none'
+              : 'transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]'
+              }`}
             style={{
               width: `calc(${slotPercent}% - 4px)`,
               left: '2px',
@@ -308,11 +294,10 @@ export default function MobileNav() {
           >
             {/* Pure Optical White Liquid Lens with Apple Soft Depth Shadow */}
             <div
-              className={`relative w-full h-full rounded-full flex flex-col items-center justify-center overflow-hidden transition-all duration-300 ${
-                isDragging
-                  ? 'shadow-[0_8px_24px_rgba(0,0,0,0.18),0_2px_6px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)]'
-                  : 'shadow-[0_3px_12px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,1)]'
-              }`}
+              className={`relative w-full h-full rounded-full flex flex-col items-center justify-center overflow-hidden transition-all duration-300 ${isDragging
+                ? 'shadow-[0_8px_24px_rgba(0,0,0,0.18),0_2px_6px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)]'
+                : 'shadow-[0_3px_12px_rgba(0,0,0,0.10),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,1)]'
+                }`}
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)',
                 border: '0.5px solid rgba(0, 0, 0, 0.04)',
@@ -339,22 +324,20 @@ export default function MobileNav() {
                 {/* Icon with Apple Spring Pop on Active */}
                 <div className="transition-transform duration-200">
                   <Icon
-                    className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all duration-200 ${
-                      isSelected
-                        ? 'text-red-600 scale-105'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
+                    className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all duration-200 ${isSelected
+                      ? 'text-red-600 scale-105'
+                      : 'text-slate-500 hover:text-slate-800'
+                      }`}
                     strokeWidth={isSelected ? 2.3 : 1.85}
                   />
                 </div>
 
                 {/* Label */}
                 <span
-                  className={`text-[9px] sm:text-[9.5px] font-sans tracking-tight transition-all duration-200 leading-none ${
-                    isSelected
-                      ? 'font-bold text-red-600 scale-105'
-                      : 'font-medium text-slate-500'
-                  }`}
+                  className={`text-[9px] sm:text-[9.5px] font-sans tracking-tight transition-all duration-200 leading-none ${isSelected
+                    ? 'font-bold text-red-600 scale-105'
+                    : 'font-medium text-slate-500'
+                    }`}
                 >
                   {item.label}
                 </span>

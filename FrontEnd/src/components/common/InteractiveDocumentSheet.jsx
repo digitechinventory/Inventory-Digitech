@@ -21,7 +21,8 @@ import {
   Info,
   Check,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Edit3
 } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -44,7 +45,8 @@ export default function InteractiveDocumentSheet({
   userSignature,
   onOpenSignatureModal,
   onDocumentUpdated,
-  onBackToList
+  onBackToList,
+  onEditDocument
 }) {
   const { addToast } = useToast();
   const doc = documentData || {};
@@ -317,7 +319,8 @@ export default function InteractiveDocumentSheet({
 
   // Determine current page content for custom upload
   const currentPageImage = doc.pages?.[activePageIndex]?.image_data;
-  const totalPages = isCustom ? (doc.pages?.length || 1) : 2; // Templates have 2 pages (Doc + Photos)
+  const hasPhotoAttachment = Boolean(doc.photo_attachment_url || (Array.isArray(doc.photo_attachments) && doc.photo_attachments.length > 0));
+  const totalPages = isCustom ? (doc.pages?.length || 1) : (hasPhotoAttachment ? 2 : 1);
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-4 font-sans select-none">
@@ -361,6 +364,19 @@ export default function InteractiveDocumentSheet({
         {/* Right: Signature Actions & Tools — Pushed to right edge */}
         <div className="flex items-center justify-end flex-wrap gap-2 ml-auto shrink-0">
           
+          {/* Edit Document Info Button */}
+          {onEditDocument && (
+            <button
+              type="button"
+              onClick={() => onEditDocument(doc)}
+              className="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100 text-blue-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Sesuaikan Nomor Dokumen, Rute Pengiriman, atau Alur Approval"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Sesuaikan Dokumen</span>
+            </button>
+          )}
+
           {/* Orientation Toggle */}
           <button
             type="button"
@@ -570,42 +586,62 @@ export default function InteractiveDocumentSheet({
                 </h1>
               </div>
 
-              {/* Sub-header Metadata Grid (Matching Official PDF Table) */}
+              {/* Sub-header Metadata Grid (Matching Official PDF Table with Route Details) */}
               <div className="border border-[#16325C]/30 text-xs">
                 <div className="grid grid-cols-2">
-                  {/* Left Column */}
+                  {/* Left Column: Asal -> Tujuan */}
                   <div className="divide-y divide-[#16325C]/20 border-r border-[#16325C]/30">
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
-                      <span className="font-bold text-[#16325C]">Lokasi / Site</span>
-                      <span className="col-span-2 font-medium text-slate-800">{doc.site_location || 'Office VGT'}</span>
+                      <span className="font-bold text-[#16325C]">Lokasi Asal (Dari)</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.origin_location || 'Office VGT'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-2">
-                      <span className="font-bold text-[#16325C]">{tplType === 'MOS' ? 'PIC Penerima' : 'PIC Pekerjaan'}</span>
-                      <span className="col-span-2 font-semibold text-slate-800">{doc.pic_receiver_name || 'Rayhans Najib Al-Faruq'}</span>
+                      <span className="font-bold text-[#16325C]">Lokasi Tujuan (Ke)</span>
+                      <span className="col-span-2 font-semibold text-slate-900">{doc.destination_location || doc.site_location || 'BIB Pit Sebamban KM-14'}</span>
+                    </div>
+                    <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
+                      <span className="font-bold text-[#16325C]">Pengirim / Pembuat</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.sender_name || 'Rayhans Najib Al-Faruq'} ({doc.sender_role || 'Teknisi VGT'})</span>
+                    </div>
+                    <div className="grid grid-cols-3 p-2">
+                      <span className="font-bold text-[#16325C]">Penerima / Tujuan</span>
+                      <span className="col-span-2 font-semibold text-slate-800">{doc.destination_receiver || doc.pic_receiver_name || 'Team Mekanik Pit'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
                       <span className="font-bold text-[#16325C]">No. Dokumen</span>
-                      <span className="col-span-2 font-mono font-bold text-slate-900">{doc.doc_number}</span>
+                      <span className="col-span-2 font-mono font-bold text-red-700">{doc.doc_number}</span>
+                    </div>
+                    <div className="grid grid-cols-3 p-2">
+                      <span className="font-bold text-[#16325C]">No. SPK / WO</span>
+                      <span className="col-span-2 font-mono font-medium text-slate-800">{doc.wo_spk_number || '-'}</span>
                     </div>
                   </div>
 
-                  {/* Right Column */}
+                  {/* Right Column: Tanggal, PO, Kondisi, Peruntukan */}
                   <div className="divide-y divide-[#16325C]/20">
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
                       <span className="font-bold text-[#16325C]">
                         {tplType === 'MDT' ? 'Tanggal Dismantling' : tplType === 'MRP' ? 'Tanggal Replacement' : 'Tanggal Penerimaan'}
                       </span>
-                      <span className="col-span-2 font-medium text-slate-800">{doc.received_date || '07/04/2026'}</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.received_date || '21/10/2026'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-2">
                       <span className="font-bold text-[#16325C]">No. PO / DO</span>
-                      <span className="col-span-2 font-medium text-slate-800">{doc.po_do_number || '-'}</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.po_do_number || '-'} {doc.do_sj_number && doc.do_sj_number !== '-' ? ` / SJ: ${doc.do_sj_number}` : ''}</span>
                     </div>
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
                       <span className="font-bold text-[#16325C]">
                         {tplType === 'MDT' ? 'Kondisi Dismantling' : tplType === 'MRP' ? 'Kondisi Replacement' : 'Kondisi Kemasan'}
                       </span>
                       <span className="col-span-2 font-medium text-slate-800">{doc.package_condition || 'Baik'}</span>
+                    </div>
+                    <div className="grid grid-cols-3 p-2">
+                      <span className="font-bold text-[#16325C]">Target Dibutuhkan</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.required_date || '-'}</span>
+                    </div>
+                    <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
+                      <span className="font-bold text-[#16325C]">Peruntukan / Unit</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.unit_targeted && doc.unit_targeted !== '-' ? doc.unit_targeted : (doc.purpose || 'Verifikasi & Otorisasi Operasional')}</span>
                     </div>
                   </div>
                 </div>
@@ -658,6 +694,18 @@ export default function InteractiveDocumentSheet({
                 </table>
               </div>
 
+              {/* Catatan Teknis / Alasan Pekerjaan (Jika Ada) */}
+              {doc.notes_justification && (
+                <div className="border border-slate-300 rounded-md p-2.5 bg-slate-50/70 text-xs text-slate-800">
+                  <div className="font-bold text-[#16325C] mb-0.5 text-[11px] uppercase tracking-wide">
+                    Catatan Teknis &amp; Justifikasi Pekerjaan:
+                  </div>
+                  <p className="text-[11px] text-slate-700 leading-relaxed italic">
+                    "{doc.notes_justification}"
+                  </p>
+                </div>
+              )}
+
               {/* Official Signature Area Grid Frame (Bottom of Document) */}
               <div className="pt-2">
                 <div className="bg-[#1E3A5F] text-white py-1.5 px-4 text-center font-bold text-xs uppercase tracking-wider">
@@ -683,8 +731,10 @@ export default function InteractiveDocumentSheet({
                       ) : null}
                     </div>
                     <div className="border-t border-slate-200 py-1.5 px-2">
-                      <div className="font-bold text-slate-900">( Rayhans Najib A. )</div>
-                      <div className="text-[10px] text-slate-500 italic">Teknisi VGT</div>
+                      <div className="font-bold text-slate-900">( {doc.approval_maker_name || doc.sender_name || 'Rayhans Najib A.'} )</div>
+                      <div className="text-[10px] text-slate-500 italic">
+                        {doc.approval_maker_role || doc.sender_role || 'Teknisi VGT'} {doc.approval_maker_dept ? `— ${doc.approval_maker_dept}` : ''}
+                      </div>
                     </div>
                   </div>
 
@@ -706,8 +756,10 @@ export default function InteractiveDocumentSheet({
                       ) : null}
                     </div>
                     <div className="border-t border-slate-200 py-1.5 px-2">
-                      <div className="font-bold text-slate-900">( Zainal Fahriandy )</div>
-                      <div className="text-[10px] text-slate-500 italic">Supervisor VGT</div>
+                      <div className="font-bold text-slate-900">( {doc.approval_checker_name || 'Zainal Fahriandy'} )</div>
+                      <div className="text-[10px] text-slate-500 italic">
+                        {doc.approval_checker_role || 'Supervisor VGT'} {doc.approval_checker_dept ? `— ${doc.approval_checker_dept}` : ''}
+                      </div>
                     </div>
                   </div>
 
@@ -729,8 +781,10 @@ export default function InteractiveDocumentSheet({
                       ) : null}
                     </div>
                     <div className="border-t border-slate-200 py-1.5 px-2">
-                      <div className="font-bold text-slate-900">( Harris )</div>
-                      <div className="text-[10px] text-slate-500 italic">Digitech</div>
+                      <div className="font-bold text-slate-900">( {doc.approval_approver_name || 'Harris'} )</div>
+                      <div className="text-[10px] text-slate-500 italic">
+                        {doc.approval_approver_role || 'Digitech'} {doc.approval_approver_dept ? `— ${doc.approval_approver_dept}` : ''}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -745,8 +799,8 @@ export default function InteractiveDocumentSheet({
             </div>
           )}
 
-          {/* ════════ CASE C: PAGE 2 (PHOTO DOCUMENTATION FOR TEMPLATES) ════════ */}
-          {!isCustom && activePageIndex === 1 && (
+          {/* ════════ CASE C: PAGE 2 (REAL DYNAMIC PHOTO ATTACHMENT IF AVAILABLE) ════════ */}
+          {!isCustom && activePageIndex === 1 && hasPhotoAttachment && (
             <div className="p-8 sm:p-10 space-y-6">
               <div className="bg-[#16325C] text-white py-3 px-6 rounded-md text-center shadow-sm">
                 <h2 className="text-lg font-bold uppercase tracking-wider">
@@ -754,37 +808,16 @@ export default function InteractiveDocumentSheet({
                 </h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 pt-4">
-                <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                  <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300">
-                    <img
-                      src="/pdf_previews/001_VGT_MOS_MNTOA_BI_p2.png"
-                      alt="Foto Lampiran 1"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <div className="text-center font-bold text-xs text-slate-800">
-                    LOADCELL INTERCOMP dan AX920 PLATFORM MOUNT
-                  </div>
+              <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+                <div className="max-h-[560px] rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-300">
+                  <img
+                    src={doc.photo_attachment_url || (doc.photo_attachments && doc.photo_attachments[0])}
+                    alt="Foto Dokumentasi Fisik"
+                    className="w-full h-auto max-h-[540px] object-contain"
+                  />
                 </div>
-
-                <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                  <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-200 flex items-center justify-center border border-slate-300">
-                    <img
-                      src="/pdf_previews/Material_Replacement_p2.png"
-                      alt="Foto Lampiran 2"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <div className="text-center font-bold text-xs text-slate-800">
-                    LOADCELL INTERCOMP SPAREPART
-                  </div>
+                <div className="text-center font-bold text-xs text-slate-800">
+                  Foto Dokumentasi Fisik Lapangan &amp; Verifikasi Material
                 </div>
               </div>
             </div>

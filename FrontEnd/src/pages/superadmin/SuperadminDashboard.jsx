@@ -10,8 +10,26 @@ import {
   ArrowRight,
   CheckCircle2,
   UserCheck,
-  RotateCcw
+  RotateCcw,
+  BarChart3,
+  PieChart as PieIcon,
+  ShieldCheck,
+  Clock,
+  Sparkles
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
@@ -156,6 +174,182 @@ export default function SuperadminDashboard() {
           valueColor="text-amber-600"
           onClick={() => navigate('/opname')}
         />
+      </div>
+
+      {/* ── PANEL VISUALISASI EKSEKUTIF SUPERADMIN ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+        
+        {/* Grafik 1: Tren Approval & Throughput Berita Acara (AreaChart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Tren Laju Otorisasi Dokumen Berita Acara
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Perbandingan volume dokumen diajukan vs disetujui 6 bulan terakhir
+              </p>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              ⚡ SLA Rata-rata: 0.9 Hari
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[
+                { period: 'Mei', submitted: 8, approved: 7 },
+                { period: 'Jun', submitted: 12, approved: 11 },
+                { period: 'Jul', submitted: 15, approved: 14 },
+                { period: 'Agu', submitted: 19, approved: 18 },
+                { period: 'Sep', submitted: 22, approved: 20 },
+                { period: 'Okt', submitted: 26, approved: 24 }
+              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorSubmitted" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#DC2626" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="#DC2626" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="period" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label} 2026</div>
+                          <div className="text-blue-400 flex items-center justify-between gap-3">
+                            <span>Diajukan:</span>
+                            <span className="font-mono font-bold">{payload[0]?.value} Dokumen</span>
+                          </div>
+                          <div className="text-red-400 flex items-center justify-between gap-3">
+                            <span>Disetujui:</span>
+                            <span className="font-mono font-bold">{payload[1]?.value} Dokumen</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area type="monotone" dataKey="submitted" name="Diajukan" stroke="#2563EB" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSubmitted)" />
+                <Area type="monotone" dataKey="approved" name="Disetujui" stroke="#DC2626" strokeWidth={2.5} fillOpacity={1} fill="url(#colorApproved)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 pt-3 border-t border-slate-100 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-blue-600" />
+              <span className="text-slate-600 font-semibold text-[11px]">Diajukan (Submitted)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-600" />
+              <span className="text-slate-600 font-semibold text-[11px]">Disetujui Sah (Slot 3)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Grafik 2: Sebaran Aset Fisik per Site / Fasilitas (Donut Chart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Sebaran Stok Aset Fisik per Fasilitas
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Total 10.065 unit material terdaftar di 4 lokasi operasional
+              </p>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md">
+              4 SITE AKTIF
+            </span>
+          </div>
+
+          <div className="h-56 w-full flex items-center justify-center relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Office VGT', value: 3520, color: '#DC2626' },
+                    { name: 'Central Warehouse', value: 4025, color: '#2563EB' },
+                    { name: 'WIM KM 13', value: 1510, color: '#059669' },
+                    { name: 'BIB Pit KM-14', value: 1010, color: '#D97706' }
+                  ]}
+                  innerRadius={60}
+                  outerRadius={88}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {[
+                    { color: '#DC2626' },
+                    { color: '#2563EB' },
+                    { color: '#059669' },
+                    { color: '#D97706' }
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0];
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold mb-1">{data.name}</div>
+                          <div className="font-mono text-emerald-400 font-bold">
+                            {data.value?.toLocaleString('id-ID')} Unit
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {((data.value / 10065) * 100).toFixed(1)}% dari total aset
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center Donut Label */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-base font-black text-slate-900">10.065</span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">UNIT ASET</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="Office VGT (35%)">Office VGT (35%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="Central WH (40%)">Central WH (40%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="WIM KM 13 (15%)">WIM KM 13 (15%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="BIB Pit KM-14 (10%)">BIB Pit (10%)</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Panel Ringkasan Alur 8 Tahap Siklus Aset (PRD Section 4.3.2) */}

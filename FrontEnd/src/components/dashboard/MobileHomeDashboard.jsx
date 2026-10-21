@@ -263,7 +263,11 @@ export default function MobileHomeDashboard() {
       <div className="absolute top-12 left-0 w-[50vw] h-[220px] bg-gradient-to-tr from-amber-100/30 to-transparent rounded-tr-[90px] pointer-events-none -z-10 blur-lg" />
 
       {/* ── Top Header Section (Matching "Hello, Alex" + Notification Bell) ── */}
-      <div className="pt-3 px-5 flex items-center justify-between">
+      {/* Poni / Notch & Dynamic Island Safe-Area Clearance */}
+      <div
+        style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 12px), 56px)' }}
+        className="px-5 flex items-center justify-between"
+      >
         <div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">

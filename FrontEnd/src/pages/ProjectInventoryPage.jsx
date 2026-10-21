@@ -39,7 +39,10 @@ import {
   Send,
   FileText,
   Lock,
-  Eye
+  Eye,
+  FileCheck2,
+  UserCheck,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -227,18 +230,115 @@ export default function ProjectInventoryPage() {
     notes: ''
   });
 
-  // Request Material Form (For regular User role)
-  const [requestForm, setRequestForm] = useState({
-    item_id: '',
-    item_name: '',
-    part_number: '',
-    requested_unit: '',
-    quantity: 1,
-    unit: 'PCS',
+  // Request Material Form (Full Official Material Request Document State)
+  const getInitialMRDocNumber = () => {
+    const monthRoman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][new Date().getMonth()];
+    const year = new Date().getFullYear();
+    const randomSeq = String(Math.floor(Math.random() * 800) + 100).padStart(3, '0');
+    return `${randomSeq}/VGT/MR/MNTOA/BIBOA/${monthRoman}/${year}`;
+  };
+
+  const getInitialRequestForm = () => ({
+    document_number: getInitialMRDocNumber(),
+    doc_date: new Date().toISOString().split('T')[0],
+    required_date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+    work_order_number: `WO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`,
+    source_location: 'Gudang Project WIM',
+    destination_location: 'BIB Pit Sebamban KM-14',
+    requested_unit: 'CAT 777D #HT-08 / KM-14',
+    department: 'Maintenance & Instrumentation Pit',
+    requester_name: user?.full_name || 'Teknisi Lapangan',
+    requester_role: user?.role || 'Teknisi Lapangan',
+    destination_receiver: 'Admin Logistik Site',
     urgency: 'Normal Maintenance',
+    material_condition: 'Baru & Segel Original',
     justification: '',
-    requester_name: user?.full_name || 'Teknisi Lapangan'
+    approval_maker_name: user?.full_name || 'Teknisi Lapangan',
+    approval_maker_role: user?.role || 'Teknisi Lapangan',
+    approval_checker_name: 'Zainal Fahriandy',
+    approval_checker_role: 'Supervisor Logistik VGT',
+    approval_approver_name: 'Harris',
+    approval_approver_role: 'Head of Digitech',
+    publish_to_mos: true,
+    items: [
+      {
+        id: `item-${Date.now()}-1`,
+        item_name: '',
+        part_number: '',
+        serial_number: '',
+        quantity: 1,
+        unit: 'PCS',
+        rack_location: '',
+        condition: 'Baru',
+        notes: ''
+      }
+    ]
   });
+
+  const [requestForm, setRequestForm] = useState(getInitialRequestForm);
+
+  const resetRequestForm = () => {
+    const init = getInitialRequestForm();
+    if (activeProject?.name) {
+      init.source_location = `Gudang Project ${activeProject.name.replace(/^Project\s+/i, '')}`;
+    }
+    if (activeProject?.site_location) {
+      init.destination_location = activeProject.site_location;
+    }
+    setRequestForm(init);
+  };
+
+  const handleAddRequestItemRow = () => {
+    setRequestForm(prev => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          id: `item-${Date.now()}-${prev.items.length + 1}`,
+          item_name: '',
+          part_number: '',
+          serial_number: '',
+          quantity: 1,
+          unit: 'PCS',
+          rack_location: '',
+          condition: 'Baru',
+          notes: ''
+        }
+      ]
+    }));
+  };
+
+  const handleRemoveRequestItemRow = (index) => {
+    if (requestForm.items.length <= 1) {
+      showToast('Minimal harus ada 1 baris material pada permohonan', 'warning');
+      return;
+    }
+    setRequestForm(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleUpdateRequestItemRow = (index, field, value) => {
+    setRequestForm(prev => {
+      const updated = [...prev.items];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, items: updated };
+    });
+  };
+
+  const handleRefreshMRNumber = async () => {
+    try {
+      const res = await api.get('/mos/next-number?type=MR');
+      if (res.data?.data?.next_number) {
+        setRequestForm(prev => ({ ...prev, document_number: res.data.data.next_number }));
+        showToast('Nomor dokumen resmi MR diperbarui!');
+        return;
+      }
+    } catch {}
+    setRequestForm(prev => ({ ...prev, document_number: getInitialMRDocNumber() }));
+    showToast('Nomor dokumen baru dibuat!');
+  };
 
   // Load initial data
   const fetchData = async () => {
@@ -324,11 +424,16 @@ export default function ProjectInventoryPage() {
     };
   }, [items]);
 
-  // User Material Request Handler
+  // User Material Request Handler (Comprehensive Document Submittal)
   const handleRequestSubmit = async (e) => {
     e.preventDefault();
-    if (!requestForm.item_name) {
-      showToast('Nama komponen/material yang diminta wajib diisi', 'error');
+    if (!requestForm.items || requestForm.items.length === 0) {
+      showToast('Minimal cantumkan 1 baris material yang diminta', 'error');
+      return;
+    }
+    const emptyItem = requestForm.items.find(i => !i.item_name?.trim());
+    if (emptyItem) {
+      showToast('Nama komponen/material pada setiap baris wajib diisi', 'error');
       return;
     }
 
@@ -336,21 +441,11 @@ export default function ProjectInventoryPage() {
       await requestProjectItem({
         ...requestForm,
         project_id: selectedProjectId,
-        requester_name: user?.full_name || requestForm.requester_name
+        requester_name: requestForm.requester_name || user?.full_name || 'Teknisi Lapangan'
       });
-      showToast(`Permohonan material "${requestForm.item_name}" berhasil diajukan ke Admin Logistik!`);
+      showToast(`Dokumen Permohonan "${requestForm.document_number}" berhasil diterbitkan & diajukan ke antrean approval!`);
       setShowRequestModal(false);
-      setRequestForm({
-        item_id: '',
-        item_name: '',
-        part_number: '',
-        requested_unit: '',
-        quantity: 1,
-        unit: 'PCS',
-        urgency: 'Normal Maintenance',
-        justification: '',
-        requester_name: user?.full_name || 'Teknisi Lapangan'
-      });
+      resetRequestForm();
       await fetchData();
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal mengirim permohonan material', 'error');
@@ -359,16 +454,26 @@ export default function ProjectInventoryPage() {
 
   // Open Request Modal with preselected item
   const openRequestForSpecificItem = (item) => {
+    const init = getInitialRequestForm();
     setRequestForm({
-      item_id: item.id,
-      item_name: item.name,
-      part_number: item.item_code,
-      requested_unit: item.installed_unit || '',
-      quantity: 1,
-      unit: item.unit || 'PCS',
-      urgency: 'Normal Maintenance',
+      ...init,
+      source_location: warehouses.find(w => w.id === item.warehouse_id)?.name || init.source_location,
+      destination_location: item.installed_unit ? `Site Lapangan (${item.installed_unit})` : init.destination_location,
+      requested_unit: item.installed_unit || 'Unit Operasional',
       justification: `Permohonan pengambilan/penggantian part untuk ${item.installed_unit || 'Unit Operasional'}`,
-      requester_name: user?.full_name || 'Teknisi Lapangan'
+      items: [
+        {
+          id: `item-${item.id}`,
+          item_name: item.name,
+          part_number: item.item_code || '',
+          serial_number: item.serial_number || '',
+          quantity: 1,
+          unit: item.unit || 'PCS',
+          rack_location: item.bin_location || '',
+          condition: item.condition || 'Baru',
+          notes: `Kebutuhan unit ${item.installed_unit || 'lapangan'}`
+        }
+      ]
     });
     setShowRequestModal(true);
   };
@@ -667,32 +772,36 @@ export default function ProjectInventoryPage() {
           </span>
         </div>
 
-        {/* Top Quick Actions (Accessible to Everyone) — Pushed to right edge */}
+        {/* Top Quick Actions — Pushed to right edge */}
         <div className="flex flex-wrap items-center justify-end gap-2 ml-auto shrink-0">
-          <button
-            onClick={() => openEditProjectModal(activeProject)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
-            title="Edit workspace & lokasi"
-          >
-            <Edit className="w-3.5 h-3.5 text-blue-600" />
-            <span>Edit Workspace</span>
-          </button>
+          {isAdminOrSuperadmin && (
+            <>
+              <button
+                onClick={() => openEditProjectModal(activeProject)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
+                title="Edit workspace & lokasi"
+              >
+                <Edit className="w-3.5 h-3.5 text-blue-600" />
+                <span>Edit Workspace</span>
+              </button>
 
-          <button
-            onClick={() => setShowAddProjectModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>+ Tambah Workspace</span>
-          </button>
+              <button
+                onClick={() => setShowAddProjectModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span>+ Tambah Workspace</span>
+              </button>
 
-          <button
-            onClick={() => setShowAddWarehouseModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
-          >
-            <Warehouse className="w-3.5 h-3.5 text-red-600" />
-            <span>+ Tambah Gudang</span>
-          </button>
+              <button
+                onClick={() => setShowAddWarehouseModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
+              >
+                <Warehouse className="w-3.5 h-3.5 text-red-600" />
+                <span>+ Tambah Gudang</span>
+              </button>
+            </>
+          )}
 
           <button
             onClick={() => {
@@ -746,13 +855,15 @@ export default function ProjectInventoryPage() {
             </span>
           </div>
 
-          <button
-            onClick={() => setShowAddProjectModal(true)}
-            className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            Tambah Workspace Baru
-          </button>
+          {isAdminOrSuperadmin && (
+            <button
+              onClick={() => setShowAddProjectModal(true)}
+              className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              Tambah Workspace Baru
+            </button>
+          )}
         </div>
 
         {/* Project Summary Cards Grid (Parallelogram / Merah Putih Design) */}
@@ -844,17 +955,19 @@ export default function ProjectInventoryPage() {
                           <MapPin className="w-3 h-3 text-red-500 shrink-0" />
                           {proj.site_location?.split(' ')[0] || 'Site BIB'}
                         </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditProjectModal(proj);
-                          }}
-                          className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                          title="Edit Workspace & Lokasi"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
+                        {isAdminOrSuperadmin && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditProjectModal(proj);
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="Edit Workspace & Lokasi"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -896,59 +1009,61 @@ export default function ProjectInventoryPage() {
             );
           })}
 
-          {/* 4th Card: + Tambah Workspace Baru */}
-          <div
-            onClick={() => setShowAddProjectModal(true)}
-            style={{
-              filter: 'drop-shadow(0 6px 16px rgba(192,17,27,0.08)) drop-shadow(0 2px 4px rgba(0,0,0,0.04))',
-              willChange: 'transform, filter',
-            }}
-            className="group relative transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:scale-[1.015] active:scale-[0.99]"
-            title="Tambah Workspace Baru"
-          >
-            {/* 3D Accent Shadow Parallelogram */}
+          {/* 4th Card: + Tambah Workspace Baru (Admin/Superadmin only) */}
+          {isAdminOrSuperadmin && (
             <div
-              aria-hidden="true"
+              onClick={() => setShowAddProjectModal(true)}
               style={{
-                position: 'absolute',
-                inset: 0,
-                clipPath: CLIP_PARALLELOGRAM,
-                zIndex: 0,
-                pointerEvents: 'none',
+                filter: 'drop-shadow(0 6px 16px rgba(192,17,27,0.08)) drop-shadow(0 2px 4px rgba(0,0,0,0.04))',
+                willChange: 'transform, filter',
               }}
-              className="transition-all duration-300 ease-out translate-x-[4px] translate-y-[4px] group-hover:translate-x-[8px] group-hover:translate-y-[8px] bg-gradient-to-br from-red-600/20 via-red-500/10 to-transparent group-hover:from-red-600/40 group-hover:via-red-500/25"
-            />
-
-            {/* Main Parallelogram Body — Pure White with Dashed Crimson Red Border */}
-            <div
-              style={{
-                clipPath: CLIP_PARALLELOGRAM,
-              }}
-              className="relative z-10 w-full h-full min-h-[175px] p-5 pt-6 pb-6 flex flex-col justify-between overflow-hidden bg-white group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-red-50/40 border-l-[5px] border-r-[1px] border-l-dashed border-r-dashed border-l-red-600 border-r-slate-300 group-hover:border-l-red-700 group-hover:border-r-red-400 transition-all duration-300 ease-out"
+              className="group relative transition-all duration-300 ease-out cursor-pointer hover:-translate-y-2 hover:scale-[1.015] active:scale-[0.99]"
+              title="Tambah Workspace Baru"
             >
-              <svg aria-hidden="true" className="absolute top-0 left-0 w-full pointer-events-none overflow-visible" style={{ height: '10px', zIndex: 30 }}>
-                <line x1="0" y1="10" x2="100%" y2="0" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="4 4" className="group-hover:stroke-red-400 transition-colors" />
-              </svg>
-              <svg aria-hidden="true" className="absolute bottom-0 left-0 w-full pointer-events-none overflow-visible" style={{ height: '10px', zIndex: 30 }}>
-                <line x1="0" y1="10" x2="100%" y2="0" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="4 4" className="group-hover:stroke-red-400 transition-colors" />
-              </svg>
+              {/* 3D Accent Shadow Parallelogram */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  clipPath: CLIP_PARALLELOGRAM,
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                }}
+                className="transition-all duration-300 ease-out translate-x-[4px] translate-y-[4px] group-hover:translate-x-[8px] group-hover:translate-y-[8px] bg-gradient-to-br from-red-600/20 via-red-500/10 to-transparent group-hover:from-red-600/40 group-hover:via-red-500/25"
+              />
 
-              <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-2 py-2">
-                <div className="w-12 h-12 rounded-2xl bg-red-50 group-hover:bg-red-600 border border-red-200 group-hover:border-red-600 flex items-center justify-center text-red-600 group-hover:text-white transition-all shadow-xs group-hover:shadow-md mb-2 group-hover:scale-110">
-                  <Plus className="w-6 h-6 stroke-[3]" />
+              {/* Main Parallelogram Body — Pure White with Dashed Crimson Red Border */}
+              <div
+                style={{
+                  clipPath: CLIP_PARALLELOGRAM,
+                }}
+                className="relative z-10 w-full h-full min-h-[175px] p-5 pt-6 pb-6 flex flex-col justify-between overflow-hidden bg-white group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-red-50/40 border-l-[5px] border-r-[1px] border-l-dashed border-r-dashed border-l-red-600 border-r-slate-300 group-hover:border-l-red-700 group-hover:border-r-red-400 transition-all duration-300 ease-out"
+              >
+                <svg aria-hidden="true" className="absolute top-0 left-0 w-full pointer-events-none overflow-visible" style={{ height: '10px', zIndex: 30 }}>
+                  <line x1="0" y1="10" x2="100%" y2="0" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="4 4" className="group-hover:stroke-red-400 transition-colors" />
+                </svg>
+                <svg aria-hidden="true" className="absolute bottom-0 left-0 w-full pointer-events-none overflow-visible" style={{ height: '10px', zIndex: 30 }}>
+                  <line x1="0" y1="10" x2="100%" y2="0" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="4 4" className="group-hover:stroke-red-400 transition-colors" />
+                </svg>
+
+                <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-2 py-2">
+                  <div className="w-12 h-12 rounded-2xl bg-red-50 group-hover:bg-red-600 border border-red-200 group-hover:border-red-600 flex items-center justify-center text-red-600 group-hover:text-white transition-all shadow-xs group-hover:shadow-md mb-2 group-hover:scale-110">
+                    <Plus className="w-6 h-6 stroke-[3]" />
+                  </div>
+                  <h3 className="text-sm font-black text-slate-800 group-hover:text-red-600 transition-colors">
+                    + Tambah Workspace
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-[190px] leading-tight">
+                    Daftarkan workspace baru
+                  </p>
+                  <span className="mt-2 text-[10px] font-extrabold uppercase tracking-wider text-red-600 bg-red-50 group-hover:bg-red-600 group-hover:text-white px-2 py-0.5 rounded-full border border-red-200 transition-all">
+                    Klik untuk Tambah
+                  </span>
                 </div>
-                <h3 className="text-sm font-black text-slate-800 group-hover:text-red-600 transition-colors">
-                  + Tambah Workspace
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-1 max-w-[190px] leading-tight">
-                  Daftarkan workspace baru
-                </p>
-                <span className="mt-2 text-[10px] font-extrabold uppercase tracking-wider text-red-600 bg-red-50 group-hover:bg-red-600 group-hover:text-white px-2 py-0.5 rounded-full border border-red-200 transition-all">
-                  Klik untuk Tambah
-                </span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -999,13 +1114,15 @@ export default function ProjectInventoryPage() {
               <MapPin className="w-3.5 h-3.5 text-red-600" />
               {activeProject.site_location || 'Site BIB'}
             </span>
-            <button
-              onClick={() => openEditProjectModal(activeProject)}
-              className="text-slate-400 hover:text-blue-600 p-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Edit Lokasi & Workspace"
-            >
-              <Edit className="w-3.5 h-3.5" />
-            </button>
+            {isAdminOrSuperadmin && (
+              <button
+                onClick={() => openEditProjectModal(activeProject)}
+                className="text-slate-400 hover:text-blue-600 p-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Edit Lokasi & Workspace"
+              >
+                <Edit className="w-3.5 h-3.5" />
+              </button>
+            )}
             <span>•</span>
             <span>PIC: <strong>{user?.full_name || 'arya-admin'}</strong></span>
           </div>
@@ -1032,69 +1149,75 @@ export default function ProjectInventoryPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-            {/* 1. Barang Masuk */}
-            <button
-              onClick={() => setShowAddItemModal(true)}
-              className="group p-3 bg-white hover:bg-red-50/50 border border-slate-200 hover:border-red-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
-            >
-              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
-                <Boxes className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-900 group-hover:text-red-700">Barang Masuk</span>
-              <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Input stok / part baru</span>
-            </button>
+            {/* 1. Barang Masuk (Admin/Superadmin Only) */}
+            {isAdminOrSuperadmin && (
+              <button
+                onClick={() => setShowAddItemModal(true)}
+                className="group p-3 bg-white hover:bg-red-50/50 border border-slate-200 hover:border-red-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
+                  <Boxes className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 group-hover:text-red-700">Barang Masuk</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Input stok / part baru</span>
+              </button>
+            )}
 
-            {/* 2. Pasang ke Unit */}
-            <button
-              onClick={() => {
-                setActiveItem(null);
-                setInstallForm({
-                  item_id: '',
-                  installed_unit: '',
-                  installation_location_detail: '',
-                  installed_date: new Date().toISOString().split('T')[0],
-                  installed_by: user?.full_name || 'Teknisi Lapangan',
-                  unit_hm_at_install: '',
-                  warranty_duration_months: 12,
-                  warranty_provider: '',
-                  notes: '',
-                  document_number: ''
-                });
-                setShowInstallModal(true);
-              }}
-              className="group p-3 bg-white hover:bg-blue-50/50 border border-slate-200 hover:border-blue-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
-            >
-              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
-                <Truck className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Pasang ke Unit</span>
-              <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Alokasi ke unit &amp; HM</span>
-            </button>
+            {/* 2. Pasang ke Unit (Admin/Superadmin Only) */}
+            {isAdminOrSuperadmin && (
+              <button
+                onClick={() => {
+                  setActiveItem(null);
+                  setInstallForm({
+                    item_id: '',
+                    installed_unit: '',
+                    installation_location_detail: '',
+                    installed_date: new Date().toISOString().split('T')[0],
+                    installed_by: user?.full_name || 'Teknisi Lapangan',
+                    unit_hm_at_install: '',
+                    warranty_duration_months: 12,
+                    warranty_provider: '',
+                    notes: '',
+                    document_number: ''
+                  });
+                  setShowInstallModal(true);
+                }}
+                className="group p-3 bg-white hover:bg-blue-50/50 border border-slate-200 hover:border-blue-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Pasang ke Unit</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Alokasi ke unit &amp; HM</span>
+              </button>
+            )}
 
-            {/* 3. Pindah / Kanibal Unit */}
-            <button
-              onClick={() => {
-                setActiveItem(null);
-                setTransferForm({
-                  item_id: '',
-                  origin_unit: '',
-                  target_unit: '',
-                  target_location_detail: '',
-                  transfer_date: new Date().toISOString().split('T')[0],
-                  technician_name: user?.full_name || 'Teknisi Fleet',
-                  transfer_reason: 'Kanibalisasi darurat antar-unit akibat breakdown',
-                  document_number: ''
-                });
-                setShowTransferModal(true);
-              }}
-              className="group p-3 bg-white hover:bg-purple-50/50 border border-slate-200 hover:border-purple-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
-            >
-              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
-                <ArrowRightLeft className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-900 group-hover:text-purple-700">Pindah / Kanibal</span>
-              <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Mutasi antar unit operasional</span>
-            </button>
+            {/* 3. Pindah / Kanibal Unit (Admin/Superadmin Only) */}
+            {isAdminOrSuperadmin && (
+              <button
+                onClick={() => {
+                  setActiveItem(null);
+                  setTransferForm({
+                    item_id: '',
+                    origin_unit: '',
+                    target_unit: '',
+                    target_location_detail: '',
+                    transfer_date: new Date().toISOString().split('T')[0],
+                    technician_name: user?.full_name || 'Teknisi Fleet',
+                    transfer_reason: 'Kanibalisasi darurat antar-unit akibat breakdown',
+                    document_number: ''
+                  });
+                  setShowTransferModal(true);
+                }}
+                className="group p-3 bg-white hover:bg-purple-50/50 border border-slate-200 hover:border-purple-300 rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
+                  <ArrowRightLeft className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 group-hover:text-purple-700">Pindah / Kanibal</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Mutasi antar unit operasional</span>
+              </button>
+            )}
 
             {/* 4. Lapor Rusak & Target Ganti */}
             <button
@@ -1141,17 +1264,7 @@ export default function ProjectInventoryPage() {
             {/* 6. Ajukan Permohonan / Request Material */}
             <button
               onClick={() => {
-                setRequestForm({
-                  item_id: '',
-                  item_name: '',
-                  part_number: '',
-                  requested_unit: '',
-                  quantity: 1,
-                  unit: 'PCS',
-                  urgency: 'Normal Maintenance',
-                  justification: '',
-                  requester_name: user?.full_name || 'Teknisi Lapangan'
-                });
+                resetRequestForm();
                 setShowRequestModal(true);
               }}
               className="group p-3 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
@@ -1497,7 +1610,7 @@ export default function ProjectInventoryPage() {
                         {/* Aksi Kolom (Operasional Lengkap: Pasang, Kanibal, Lapor Rusak, Request, Detail) */}
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            {!isInstalled && (
+                            {isAdminOrSuperadmin && !isInstalled && (
                               <button
                                 onClick={() => {
                                   setActiveItem(item);
@@ -1522,7 +1635,7 @@ export default function ProjectInventoryPage() {
                               </button>
                             )}
 
-                            {isInstalled && (
+                            {isAdminOrSuperadmin && isInstalled && (
                               <button
                                 onClick={() => {
                                   setActiveItem(item);
@@ -1569,7 +1682,7 @@ export default function ProjectInventoryPage() {
                               </button>
                             )}
 
-                            {isDamaged && (
+                            {isAdminOrSuperadmin && isDamaged && (
                               <button
                                 onClick={() => {
                                   setActiveItem(item);
@@ -1639,13 +1752,15 @@ export default function ProjectInventoryPage() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setShowAddWarehouseModal(true)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                Tambah Gudang Baru
-              </button>
+              {isAdminOrSuperadmin && (
+                <button
+                  onClick={() => setShowAddWarehouseModal(true)}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Gudang Baru
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1781,124 +1896,624 @@ export default function ProjectInventoryPage() {
   </div>
 
       {/* ===================================================================== */}
-      {/* MODAL: AJUKAN REQUEST MATERIAL / PERMOHONAN (KHUSUS ROLE USER) */}
+      {/* MODAL: FORMULIR PERMOHONAN MATERIAL RESMI (MATERIAL REQUEST - FULL DOC) */}
       {/* ===================================================================== */}
       {showRequestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl border border-slate-200 my-auto flex flex-col max-h-[94vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-200 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
-                  <Send className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center font-bold shadow-xs">
+                  <FileCheck2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Form Permohonan Material</h3>
-                  <p className="text-xs text-slate-500">Workspace: {activeProject.name?.replace(/^Project\s+/i, '')}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      DOKUMEN RESMI MR (007_VGT_MR)
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                      Workspace: {activeProject.name?.replace(/^Project\s+/i, '')}
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
+                    Formulir Permohonan &amp; Otorisasi Material
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Lengkapi seluruh parameter dokumen resmi agar lembar approval, rute, dan rincian material terisi penuh.
+                  </p>
                 </div>
               </div>
-              <button onClick={() => setShowRequestModal(false)} className="text-slate-400 hover:text-slate-600">
+
+              <button
+                type="button"
+                onClick={() => setShowRequestModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleRequestSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Komponen / Material yang Dibutuhkan *</label>
-                <input
-                  type="text"
-                  required
-                  value={requestForm.item_name}
-                  onChange={e => setRequestForm({ ...requestForm, item_name: e.target.value })}
-                  placeholder="Contoh: Sensor Load Cell 50T / Bearing SKF 22328"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+            {/* Datalist for autocomplete suggestion from inventory items */}
+            <datalist id="inventory-item-suggestions">
+              {items.map(it => (
+                <option key={it.id} value={it.name}>
+                  {it.item_code} | Rak: {it.bin_location || '-'} | Stok: {it.quantity || 0} {it.unit || 'PCS'}
+                </option>
+              ))}
+            </datalist>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Part Number / SKU (Jika Tahu)</label>
-                  <input
-                    type="text"
-                    value={requestForm.part_number}
-                    onChange={e => setRequestForm({ ...requestForm, part_number: e.target.value })}
-                    placeholder="WIM-LC-50T"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono"
-                  />
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleRequestSubmit} className="mt-4 space-y-5 overflow-y-auto pr-1 text-xs flex-1">
+              
+              {/* ── SEKSI 1: NOMOR DOKUMEN & REFERENSI PEKERJAAN ── */}
+              <div className="p-4 rounded-2xl border border-red-200/80 bg-red-50/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-600" />
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
+                      1. Identitas Dokumen &amp; Penomoran Resmi
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-red-600 font-mono font-semibold">Nomor Unik Otomatis &amp; Editable</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Unit Alokasi / Titik Pasang</label>
-                  <input
-                    type="text"
-                    value={requestForm.requested_unit}
-                    onChange={e => setRequestForm({ ...requestForm, requested_unit: e.target.value })}
-                    placeholder="CAT 777D #HT-08 / KM-14"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Jumlah yang Diminta</label>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* No. Dokumen MR */}
+                  <div className="lg:col-span-2 space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      No. Dokumen Permohonan (MR):
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        required
+                        value={requestForm.document_number}
+                        onChange={e => setRequestForm({ ...requestForm, document_number: e.target.value })}
+                        placeholder="Contoh: 007/VGT/MR/MNTOA/BIBOA/X/2026"
+                        className="flex-1 px-3 py-2 bg-white rounded-xl border border-slate-300 font-mono font-bold text-red-700 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRefreshMRNumber}
+                        className="px-2.5 py-2 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-slate-600 font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        title="Acak / Generate Nomor Baru"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">Acak</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tanggal Dokumen */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Tanggal Permohonan:
+                    </label>
                     <input
-                      type="number"
-                      min="1"
-                      value={requestForm.quantity}
-                      onChange={e => setRequestForm({ ...requestForm, quantity: e.target.value })}
-                      className="w-20 px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold"
+                      type="date"
+                      required
+                      value={requestForm.doc_date}
+                      onChange={e => setRequestForm({ ...requestForm, doc_date: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none"
                     />
+                  </div>
+
+                  {/* Tanggal Target Dibutuhkan */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Target Dibutuhkan (Deadline):
+                    </label>
                     <input
-                      type="text"
-                      value={requestForm.unit}
-                      onChange={e => setRequestForm({ ...requestForm, unit: e.target.value })}
-                      placeholder="PCS"
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm"
+                      type="date"
+                      value={requestForm.required_date}
+                      onChange={e => setRequestForm({ ...requestForm, required_date: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tingkat Urgensi</label>
-                  <select
-                    value={requestForm.urgency}
-                    onChange={e => setRequestForm({ ...requestForm, urgency: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700"
-                  >
-                    <option value="Normal Maintenance">Normal Maintenance</option>
-                    <option value="Urgent Breakdown">Mendesak / Unit Breakdown</option>
-                    <option value="Pergantian Part Aus">Pergantian Part Aus Terjadwal</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* No. Work Order (WO) */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      No. Work Order (WO) / SPK Lapangan:
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.work_order_number}
+                      onChange={e => setRequestForm({ ...requestForm, work_order_number: e.target.value })}
+                      placeholder="Contoh: WO-2026-X-044 / SPK-BIB-091"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Departemen / Divisi */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Departemen / Divisi Pemohon:
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.department}
+                      onChange={e => setRequestForm({ ...requestForm, department: e.target.value })}
+                      placeholder="Maintenance & Instrumentation Pit"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Alasan Permohonan / Catatan Teknis</label>
+              {/* ── SEKSI 2: RUTE DISTRIBUSI & ALOKASI UNIT (DARI MANA ➔ AKAN KEMANA) ── */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
+                    2. Rute Distribusi &amp; Alokasi Pemasangan (Dari Mana ➔ Akan Kemana)
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Lokasi Asal (Dari Mana) */}
+                  <div className="space-y-1.5">
+                    <label className="block font-semibold text-slate-700">
+                      Lokasi / Gudang Asal Pengambilan:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={requestForm.source_location}
+                      onChange={e => setRequestForm({ ...requestForm, source_location: e.target.value })}
+                      placeholder="Contoh: Gudang Project WIM / Warehouse Central Sebamban KM-24"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none font-medium"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['Gudang Project WIM', 'Warehouse Central KM-24', 'Workshop Hauling', 'Gudang Utama'].map(chip => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setRequestForm({ ...requestForm, source_location: chip })}
+                          className="px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-red-400 text-[10px] text-slate-600 cursor-pointer"
+                        >
+                          + {chip}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Lokasi Tujuan (Akan Kemana) */}
+                  <div className="space-y-1.5">
+                    <label className="block font-semibold text-slate-700">
+                      Lokasi Tujuan / Site Lapangan:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={requestForm.destination_location}
+                      onChange={e => setRequestForm({ ...requestForm, destination_location: e.target.value })}
+                      placeholder="Contoh: BIB Pit Sebamban KM-14 / WIM Station KM-30"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none font-medium"
+                    />
+                    <div className="flex flex-wrap gap-1">
+                      {['BIB Pit Sebamban KM-14', 'WIM Station KM-30', 'Pos Timbangan J1', 'Workshop Pit Sebamban'].map(chip => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setRequestForm({ ...requestForm, destination_location: chip })}
+                          className="px-2 py-0.5 rounded-md bg-white border border-slate-200 hover:border-red-400 text-[10px] text-slate-600 cursor-pointer"
+                        >
+                          + {chip}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Unit Alokasi / Titik Pasang */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Unit Alokasi / Fleet / Titik Pasang:
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.requested_unit}
+                      onChange={e => setRequestForm({ ...requestForm, requested_unit: e.target.value })}
+                      placeholder="Contoh: CAT 777D #HT-08 / Jembatan Timbang WIM"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* PIC Penerima di Lokasi */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      PIC Penerima / Pengawas Lapangan:
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.destination_receiver}
+                      onChange={e => setRequestForm({ ...requestForm, destination_receiver: e.target.value })}
+                      placeholder="Contoh: Admin Logistik Site / SPV Lapangan"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ── SEKSI 3: PERSONEL PEMOHON, TINGKAT URGENSI & KONDISI ── */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
+                    3. Data Pemohon (Dari Siapa) &amp; Prioritas
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Nama Pemohon */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Nama Pemohon / PIC:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={requestForm.requester_name}
+                      onChange={e => setRequestForm({ ...requestForm, requester_name: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-300 text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Jabatan Pemohon */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Jabatan / Peran Pemohon:
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.requester_role}
+                      onChange={e => setRequestForm({ ...requestForm, requester_role: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Tingkat Urgensi */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Tingkat Urgensi:
+                    </label>
+                    <select
+                      value={requestForm.urgency}
+                      onChange={e => setRequestForm({ ...requestForm, urgency: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    >
+                      <option value="Normal Maintenance">Normal Maintenance (Rutin)</option>
+                      <option value="Urgent Breakdown">Mendesak / Unit Breakdown</option>
+                      <option value="Pergantian Part Aus">Pergantian Part Aus Terjadwal</option>
+                      <option value="Emergency Standstill">Emergency Standstill (Kritis)</option>
+                    </select>
+                  </div>
+
+                  {/* Kondisi Material yang Diminta */}
+                  <div className="space-y-1">
+                    <label className="block font-semibold text-slate-700">
+                      Kondisi Material Diminta:
+                    </label>
+                    <select
+                      value={requestForm.material_condition}
+                      onChange={e => setRequestForm({ ...requestForm, material_condition: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
+                    >
+                      <option value="Baru & Segel Original">Baru &amp; Segel Original</option>
+                      <option value="Sparepart Cadangan Siap Pakai">Sparepart Cadangan Siap Pakai</option>
+                      <option value="Boleh Rekondisi Layak Pakai">Boleh Rekondisi Layak Pakai</option>
+                      <option value="Kanibalisasi Antar-Unit">Kanibalisasi Antar-Unit</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── SEKSI 4: TABEL RINCIAN MATERIAL MULTI-ITEM (INTERAKTIF) ── */}
+              <div className="p-4 rounded-2xl border border-blue-200/90 bg-blue-50/20 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-600" />
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
+                      4. Tabel Rincian Material yang Diminta ({requestForm.items.length} Item)
+                    </h4>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddRequestItemRow}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Tambah Baris Material</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100/80 text-slate-700 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3 w-8">#</th>
+                        <th className="py-2.5 px-3 min-w-[200px]">Nama Komponen / Material *</th>
+                        <th className="py-2.5 px-3 min-w-[130px]">Part Number / SKU</th>
+                        <th className="py-2.5 px-3 min-w-[110px]">Serial Number</th>
+                        <th className="py-2.5 px-3 w-28">Jumlah &amp; Satuan</th>
+                        <th className="py-2.5 px-3 min-w-[90px]">Rak / Bin</th>
+                        <th className="py-2.5 px-3 min-w-[150px]">Keterangan</th>
+                        <th className="py-2.5 px-3 w-10 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {requestForm.items.map((row, idx) => (
+                        <tr key={row.id || idx} className="hover:bg-slate-50/60">
+                          <td className="py-2 px-3 font-mono font-bold text-slate-400">{idx + 1}</td>
+                          
+                          {/* Nama Komponen with autocomplete datalist */}
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              required
+                              list="inventory-item-suggestions"
+                              value={row.item_name}
+                              onChange={e => {
+                                const val = e.target.value;
+                                const matched = items.find(it => it.name.toLowerCase() === val.toLowerCase());
+                                if (matched) {
+                                  handleUpdateRequestItemRow(idx, 'item_name', matched.name);
+                                  handleUpdateRequestItemRow(idx, 'part_number', matched.item_code || '');
+                                  handleUpdateRequestItemRow(idx, 'rack_location', matched.bin_location || '');
+                                  handleUpdateRequestItemRow(idx, 'unit', matched.unit || 'PCS');
+                                } else {
+                                  handleUpdateRequestItemRow(idx, 'item_name', val);
+                                }
+                              }}
+                              placeholder="Contoh: Sensor Load Cell 50T"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-red-500"
+                            />
+                          </td>
+
+                          {/* Part Number */}
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              value={row.part_number}
+                              onChange={e => handleUpdateRequestItemRow(idx, 'part_number', e.target.value)}
+                              placeholder="WIM-LC-50T"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono focus:outline-none focus:border-red-500"
+                            />
+                          </td>
+
+                          {/* Serial Number */}
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              value={row.serial_number}
+                              onChange={e => handleUpdateRequestItemRow(idx, 'serial_number', e.target.value)}
+                              placeholder="SN-91913187"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono focus:outline-none focus:border-red-500"
+                            />
+                          </td>
+
+                          {/* Qty & Unit */}
+                          <td className="py-2 px-3">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="1"
+                                value={row.quantity}
+                                onChange={e => handleUpdateRequestItemRow(idx, 'quantity', e.target.value)}
+                                className="w-14 px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-center focus:outline-none focus:border-red-500"
+                              />
+                              <input
+                                type="text"
+                                value={row.unit}
+                                onChange={e => handleUpdateRequestItemRow(idx, 'unit', e.target.value)}
+                                placeholder="PCS"
+                                className="w-14 px-1.5 py-1.5 rounded-lg border border-slate-200 text-xs text-center focus:outline-none focus:border-red-500"
+                              />
+                            </div>
+                          </td>
+
+                          {/* Rak / Bin */}
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              value={row.rack_location}
+                              onChange={e => handleUpdateRequestItemRow(idx, 'rack_location', e.target.value)}
+                              placeholder="R-A01"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-center focus:outline-none focus:border-red-500"
+                            />
+                          </td>
+
+                          {/* Keterangan */}
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              value={row.notes}
+                              onChange={e => handleUpdateRequestItemRow(idx, 'notes', e.target.value)}
+                              placeholder="Catatan penggantian / unit"
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-red-500"
+                            />
+                          </td>
+
+                          {/* Aksi Delete */}
+                          <td className="py-2 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveRequestItemRow(idx)}
+                              disabled={requestForm.items.length <= 1}
+                              className="p-1.5 text-slate-300 hover:text-red-600 disabled:opacity-20 transition-colors cursor-pointer"
+                              title="Hapus Baris"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* ── SEKSI 5: ALUR OTORISASI 3 SLOT (APPROVAL UNTUK SIAPA) ── */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-600" />
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
+                      5. Alur Otorisasi Dokumen 3 Slot (Approval untuk Siapa)
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-medium">Tampil pada Kolom Lembar Dokumen Resmi</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Slot 1: Pembuat / Dibuat Oleh */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 pb-1 border-b border-slate-100">
+                      <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Slot 1: Dibuat Oleh (Pemohon)</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Nama Lengkap:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_maker_name}
+                        onChange={e => setRequestForm({ ...requestForm, approval_maker_name: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Jabatan / Departemen:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_maker_role}
+                        onChange={e => setRequestForm({ ...requestForm, approval_maker_role: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slot 2: Pemeriksa / Diperiksa Oleh */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 pb-1 border-b border-slate-100">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Slot 2: Diperiksa Oleh (Checker)</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Nama Lengkap:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_checker_name}
+                        onChange={e => setRequestForm({ ...requestForm, approval_checker_name: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Jabatan / Departemen:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_checker_role}
+                        onChange={e => setRequestForm({ ...requestForm, approval_checker_role: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slot 3: Penyetuju / Diketahui Oleh */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 pb-1 border-b border-slate-100">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Slot 3: Diketahui Oleh (Approver)</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Nama Lengkap:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_approver_name}
+                        onChange={e => setRequestForm({ ...requestForm, approval_approver_name: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-500">Jabatan / Departemen:</label>
+                      <input
+                        type="text"
+                        value={requestForm.approval_approver_role}
+                        onChange={e => setRequestForm({ ...requestForm, approval_approver_role: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── SEKSI 6: CATATAN TEKNIS / ALASAN KEBUTUHAN ── */}
+              <div className="space-y-1.5">
+                <label className="block font-semibold text-slate-700">
+                  Alasan Permohonan, Kronologi Kerusakan &amp; Catatan Teknis Lapangan:
+                </label>
                 <textarea
                   rows="3"
                   value={requestForm.justification}
                   onChange={e => setRequestForm({ ...requestForm, justification: e.target.value })}
-                  placeholder="Jelaskan kebutuhan penggantian, kondisi fisik alat, atau nomor wo..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm"
+                  placeholder="Jelaskan secara lengkap alasan kebutuhan penggantian komponen, kronologi kerusakan, kondisi fisik alat, atau nomor laporan wo..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setShowRequestModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 cursor-pointer flex items-center gap-1.5"
-                >
-                  <Send className="w-4 h-4" />
-                  Kirim Permohonan ke Admin
-                </button>
+              {/* ── SEKSI 7: OPSI TERBITKAN KE WAITING LIST APPROVAL ── */}
+              <div className="p-3 bg-red-50/50 border border-red-200 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="publish-to-mos-check"
+                    checked={requestForm.publish_to_mos}
+                    onChange={e => setRequestForm({ ...requestForm, publish_to_mos: e.target.checked })}
+                    className="w-4 h-4 rounded text-red-600 focus:ring-red-500 cursor-pointer"
+                  />
+                  <label htmlFor="publish-to-mos-check" className="text-xs text-slate-700 font-medium cursor-pointer">
+                    <strong>Terbitkan langsung ke Lembar Dokumen Waiting List (Modul MOS / MR)</strong>
+                    <div className="text-[10px] text-slate-500">
+                      Dokumen resmi akan otomatis dibuat dan siap dibubuhi tanda tangan digital transparan pada lembar canvas.
+                    </div>
+                  </label>
+                </div>
               </div>
+
+              {/* Modal Footer Actions */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200 shrink-0">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="font-mono font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-lg border border-red-200">
+                    {requestForm.document_number}
+                  </span>
+                  <span>&bull; Total: <strong>{requestForm.items.length} Baris Material</strong></span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestModal(false)}
+                    className="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    <FileCheck2 className="w-4 h-4" />
+                    <span>Terbitkan &amp; Kirim Permohonan Resmi</span>
+                  </button>
+                </div>
+              </div>
+
             </form>
           </div>
         </div>

@@ -93,7 +93,7 @@ export const DOCUMENT_TEMPLATES = {
 };
 
 // Fallback in-memory/static documents matching the 3 official documents
-let FALLBACK_MOS = [
+export let FALLBACK_MOS = [
   {
     id: 'doc-001-mos',
     doc_number: '001/VGT/MOS/MNTOA/BIBOA/IV/2026',
@@ -243,10 +243,38 @@ let FALLBACK_MOS = [
   }
 ];
 
+// Helper to generate a unique official document number
+export const generateUniqueDocNumber = (type = 'MOS') => {
+  const monthRoman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][new Date().getMonth()];
+  const year = new Date().getFullYear();
+  const typeCode = type === 'MDT' ? 'MDT' : type === 'MRP' ? 'MRP' : type === 'MR' ? 'MR' : type === 'CUSTOM' ? 'DOC' : 'MOS';
+
+  // Find highest sequence from existing documents
+  let maxSeq = 6;
+  for (const doc of FALLBACK_MOS) {
+    const num = doc.doc_number || doc.mos_number || '';
+    const match = num.match(/^(\d+)\/VGT\//);
+    if (match) {
+      const val = parseInt(match[1], 10);
+      if (val > maxSeq) maxSeq = val;
+    }
+  }
+
+  const nextSeq = Math.max(maxSeq + 1, FALLBACK_MOS.length + 1);
+  return `${String(nextSeq).padStart(3, '0')}/VGT/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
+};
+
 // Helper to normalize MOS/Approval document
 const normalizeMosDoc = (d) => {
-  const sigs = d.signatures || {};
+  const sigs = (typeof d.signatures === 'object' && d.signatures !== null) ? d.signatures : {};
   const placed = sigs.signatures_placed || sigs.placed || d.signatures_placed || [];
+
+  const originLoc = d.origin_location || sigs.origin_location || 'Office VGT';
+  const destLoc = d.destination_location || sigs.destination_location || d.site_location || d.site_name || 'BIB Pit Sebamban KM-14';
+  const senderNm = d.sender_name || sigs.sender_name || d.requester_name || 'Rayhans Najib Al-Faruq';
+  const senderRl = d.sender_role || sigs.sender_role || d.department || 'Teknisi VGT';
+  const destRecv = d.destination_receiver || sigs.destination_receiver || d.pic_receiver_name || 'Team Mekanik Pit';
+
   return {
     id: d.id,
     doc_number: d.doc_number || d.mos_number || d.id,
@@ -255,25 +283,78 @@ const normalizeMosDoc = (d) => {
     title: d.title || `Dokumen Approval ${d.doc_number || d.id}`,
     subtitle: d.subtitle || sigs.subtitle || '',
     vendor_name: d.vendor_name || 'PT Trakindo Utama',
-    site_location: d.site_location || d.site_name || 'Office VGT',
+    
+    // Rute Pengiriman (Dari Siapa ➔ Akan Kemana)
+    site_location: destLoc,
+    origin_location: originLoc,
+    destination_location: destLoc,
+    sender_name: senderNm,
+    sender_role: senderRl,
+    destination_receiver: destRecv,
+    pic_receiver_name: d.pic_receiver_name || destRecv,
+
+    // Alur Approval: Approval untuk Siapa (Maker, Checker, Approver)
+    approval_maker_name: d.approval_maker_name || sigs.approval_maker_name || senderNm,
+    approval_maker_role: d.approval_maker_role || sigs.approval_maker_role || senderRl,
+    approval_maker_dept: d.approval_maker_dept || sigs.approval_maker_dept || 'Teknisi Operasional',
+    approval_checker_name: d.approval_checker_name || sigs.approval_checker_name || 'Zainal Fahriandy',
+    approval_checker_role: d.approval_checker_role || sigs.approval_checker_role || 'Supervisor VGT',
+    approval_checker_dept: d.approval_checker_dept || sigs.approval_checker_dept || 'Gudang & Logistik',
+    approval_approver_name: d.approval_approver_name || sigs.approval_approver_name || 'Harris',
+    approval_approver_role: d.approval_approver_role || sigs.approval_approver_role || 'Digitech',
+    approval_approver_dept: d.approval_approver_dept || sigs.approval_approver_dept || 'Head of Operation',
+
     site_id: d.site_id,
-    pic_receiver_name: d.pic_receiver_name || d.requester_name || 'Rayhans Najib Al-Faruq',
     received_date: d.received_date || d.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    required_date: d.required_date || sigs.required_date || '-',
     po_do_number: d.po_do_number || '-',
+    do_sj_number: d.do_sj_number || sigs.do_sj_number || '-',
+    wo_spk_number: d.wo_spk_number || sigs.wo_spk_number || '-',
+    department: d.department || sigs.department || senderRl,
+    urgency: d.urgency || sigs.urgency || 'Normal',
+    unit_targeted: d.unit_targeted || sigs.unit_targeted || '-',
+    transport_mode: d.transport_mode || sigs.transport_mode || '-',
+    driver_name: d.driver_name || sigs.driver_name || '-',
+    sender_phone: d.sender_phone || sigs.sender_phone || '-',
+    receiver_phone: d.receiver_phone || sigs.receiver_phone || '-',
     package_condition: d.package_condition || 'Baik',
     photo_attachment_url: d.photo_attachment_url || d.photo_url || null,
     orientation: d.orientation || sigs.orientation || 'landscape',
     pages: Array.isArray(d.pages) && d.pages.length > 0 ? d.pages : (Array.isArray(sigs.pages) ? sigs.pages : []),
     status: d.status || 'draft',
     purpose: d.purpose || 'Dokumen persetujuan dan otorisasi operasional.',
+    notes_justification: d.notes_justification || sigs.notes_justification || '',
     rejection_notes: d.rejection_notes || null,
-    items: Array.isArray(d.items) ? d.items : [],
+    items: Array.isArray(d.items) ? d.items.map((it, idx) => ({
+      id: it.id || `item-${idx + 1}`,
+      name: it.name || it.item_name || 'Material Item',
+      item_name: it.item_name || it.name || 'Material Item',
+      spec: it.spec || it.part_number || '-',
+      part_number: it.part_number || it.spec || '-',
+      sn: it.sn || it.serial_number || '-',
+      serial_number: it.serial_number || it.sn || '-',
+      category: it.category || 'Sparepart',
+      unit: it.unit || it.satuan || 'PCS',
+      qty_received: Number(it.qty_received ?? it.qty ?? 1),
+      qty_do: Number(it.qty_do ?? 0),
+      condition: it.condition || it.item_condition || 'Baru',
+      warranty: it.warranty || '-',
+      bin_location: it.bin_location || it.rack_location || '-',
+      notes: it.notes || ''
+    })) : [],
     signatures_placed: Array.isArray(placed) ? placed : [],
     signatures: sigs,
     created_by_id: d.created_by,
     created_at: d.created_at
   };
 };
+
+// GET /api/mos/next-number — Generate unique, different document number
+router.get('/next-number', (req, res) => {
+  const { type = 'MOS' } = req.query;
+  const num = generateUniqueDocNumber(type);
+  return sendSuccess(res, { doc_number: num }, 'Nomor dokumen otomatis berhasil di-generate.');
+});
 
 // GET /api/mos/templates — Get available official templates
 router.get('/templates', (req, res) => {
@@ -382,12 +463,38 @@ router.post('/', requireAuth, async (req, res, next) => {
       doc_number,
       title,
       subtitle,
+      purpose,
       site_location,
       site_id,
+      origin_location = 'Office VGT',
+      destination_location = 'BIB Pit Sebamban KM-14',
+      sender_name,
+      sender_role = 'Teknisi VGT',
+      sender_phone = '-',
+      destination_receiver,
       pic_receiver_name,
+      receiver_phone = '-',
+      approval_maker_name,
+      approval_maker_role = 'Teknisi VGT',
+      approval_maker_dept = 'Teknisi Operasional',
+      approval_checker_name = 'Zainal Fahriandy',
+      approval_checker_role = 'Supervisor VGT',
+      approval_checker_dept = 'Gudang & Logistik',
+      approval_approver_name = 'Harris',
+      approval_approver_role = 'Digitech',
+      approval_approver_dept = 'Head of Operation',
       received_date,
+      required_date = '-',
       po_do_number,
+      do_sj_number = '-',
+      wo_spk_number = '-',
+      department,
+      urgency = 'Normal',
+      unit_targeted = '-',
+      transport_mode = '-',
+      driver_name = '-',
       package_condition,
+      notes_justification = '',
       photo_attachment_url,
       orientation = 'landscape',
       pages = [],
@@ -395,12 +502,13 @@ router.post('/', requireAuth, async (req, res, next) => {
       signatures_placed = []
     } = req.body;
 
-    const monthRoman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][new Date().getMonth()];
-    const year = new Date().getFullYear();
-    const typeCode = template_type === 'MDT' ? 'MDT' : template_type === 'MRP' ? 'MRP' : template_type === 'CUSTOM' ? 'DOC' : 'MOS';
-    const autoNumber = `${String(FALLBACK_MOS.length + 1).padStart(3, '0')}/VGT/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
+    const autoNumber = generateUniqueDocNumber(template_type);
     const docNum = doc_number || autoNumber;
     const docId = `doc-${Date.now()}`;
+
+    const effectiveSender = sender_name || req.user.full_name || 'Rayhans Najib Al-Faruq';
+    const effectiveReceiver = destination_receiver || pic_receiver_name || 'Team Mekanik Pit';
+    const effectiveMakerName = approval_maker_name || effectiveSender;
 
     const newDoc = {
       id: docId,
@@ -409,16 +517,45 @@ router.post('/', requireAuth, async (req, res, next) => {
       template_type,
       title: title || (DOCUMENT_TEMPLATES[template_type]?.title || 'DOKUMEN APPROVAL'),
       subtitle: subtitle || (DOCUMENT_TEMPLATES[template_type]?.subtitle || ''),
-      purpose: req.body.purpose || 'Verifikasi dan otorisasi dokumen kerja site.',
-      site_location: site_location || 'Office VGT',
+      purpose: purpose || 'Verifikasi dan otorisasi dokumen kerja site.',
+      
+      // Rute Alur Pengiriman
+      site_location: destination_location || site_location || 'BIB Pit Sebamban KM-14',
+      origin_location: origin_location || 'Office VGT',
+      destination_location: destination_location || site_location || 'BIB Pit Sebamban KM-14',
+      sender_name: effectiveSender,
+      sender_role: sender_role || req.user.department || 'Teknisi VGT',
+      sender_phone: sender_phone || '-',
+      destination_receiver: effectiveReceiver,
+      pic_receiver_name: effectiveReceiver,
+      receiver_phone: receiver_phone || '-',
+
+      // Alur Otorisasi / Approval
+      approval_maker_name: effectiveMakerName,
+      approval_maker_role: approval_maker_role || 'Teknisi VGT',
+      approval_maker_dept: approval_maker_dept || 'Teknisi Operasional',
+      approval_checker_name: approval_checker_name || 'Zainal Fahriandy',
+      approval_checker_role: approval_checker_role || 'Supervisor VGT',
+      approval_checker_dept: approval_checker_dept || 'Gudang & Logistik',
+      approval_approver_name: approval_approver_name || 'Harris',
+      approval_approver_role: approval_approver_role || 'Digitech',
+      approval_approver_dept: approval_approver_dept || 'Head of Operation',
+
       site_id: site_id || 'site-vgt-office',
-      pic_receiver_name: pic_receiver_name || req.user.full_name,
-      requester_name: pic_receiver_name || req.user.full_name,
+      requester_name: effectiveSender,
       requester_email: req.user.email,
-      department: req.user.department || 'Operasional Site',
+      department: department || req.user.department || sender_role || 'Operasional Site',
       received_date: received_date || new Date().toISOString().split('T')[0],
+      required_date: required_date || '-',
       po_do_number: po_do_number || '-',
+      do_sj_number: do_sj_number || '-',
+      wo_spk_number: wo_spk_number || '-',
+      urgency: urgency || 'Normal',
+      unit_targeted: unit_targeted || '-',
+      transport_mode: transport_mode || '-',
+      driver_name: driver_name || '-',
       package_condition: package_condition || 'Baik',
+      notes_justification: notes_justification || '',
       photo_attachment_url: photo_attachment_url || null,
       orientation,
       pages,
@@ -430,10 +567,13 @@ router.post('/', requireAuth, async (req, res, next) => {
         part_number: it.part_number || it.spec || '-',
         sn: it.sn || it.serial_number || '-',
         serial_number: it.serial_number || it.sn || '-',
+        category: it.category || 'Sparepart',
+        unit: it.unit || it.satuan || 'PCS',
         qty_received: Number(it.qty_received ?? it.qty ?? 1),
         qty_do: Number(it.qty_do ?? 0),
         condition: it.condition || it.item_condition || 'Baru',
         warranty: it.warranty || '-',
+        bin_location: it.bin_location || it.rack_location || '-',
         notes: it.notes || ''
       })),
       signatures_placed: signatures_placed || [],
@@ -469,6 +609,30 @@ router.post('/', requireAuth, async (req, res, next) => {
           template_type: newDoc.template_type,
           subtitle: newDoc.subtitle,
           orientation: newDoc.orientation,
+          origin_location: newDoc.origin_location,
+          destination_location: newDoc.destination_location,
+          sender_name: newDoc.sender_name,
+          sender_role: newDoc.sender_role,
+          sender_phone: newDoc.sender_phone,
+          destination_receiver: newDoc.destination_receiver,
+          receiver_phone: newDoc.receiver_phone,
+          approval_maker_name: newDoc.approval_maker_name,
+          approval_maker_role: newDoc.approval_maker_role,
+          approval_maker_dept: newDoc.approval_maker_dept,
+          approval_checker_name: newDoc.approval_checker_name,
+          approval_checker_role: newDoc.approval_checker_role,
+          approval_checker_dept: newDoc.approval_checker_dept,
+          approval_approver_name: newDoc.approval_approver_name,
+          approval_approver_role: newDoc.approval_approver_role,
+          approval_approver_dept: newDoc.approval_approver_dept,
+          required_date: newDoc.required_date,
+          do_sj_number: newDoc.do_sj_number,
+          wo_spk_number: newDoc.wo_spk_number,
+          urgency: newDoc.urgency,
+          unit_targeted: newDoc.unit_targeted,
+          transport_mode: newDoc.transport_mode,
+          driver_name: newDoc.driver_name,
+          notes_justification: newDoc.notes_justification,
           pages: newDoc.pages,
           signatures_placed: newDoc.signatures_placed
         },
@@ -485,7 +649,184 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     sendMosStepTelegramAlert(docNum, `Dokumen baru masuk Waiting List (${template_type})`, req.user.full_name, 'Approver').catch(() => {});
 
-    return sendCreated(res, newDoc, 'Dokumen berhasil diunggah dan masuk ke Waiting List.');
+    return sendCreated(res, newDoc, 'Dokumen berhasil dibuat dan masuk ke Waiting List.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/mos/:id — Update existing document details (doc_number, routes, approvers, items, etc.)
+router.put('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const {
+      doc_number,
+      title,
+      subtitle,
+      purpose,
+      site_location,
+      origin_location,
+      destination_location,
+      sender_name,
+      sender_role,
+      sender_phone,
+      destination_receiver,
+      pic_receiver_name,
+      receiver_phone,
+      approval_maker_name,
+      approval_maker_role,
+      approval_maker_dept,
+      approval_checker_name,
+      approval_checker_role,
+      approval_checker_dept,
+      approval_approver_name,
+      approval_approver_role,
+      approval_approver_dept,
+      received_date,
+      required_date,
+      po_do_number,
+      do_sj_number,
+      wo_spk_number,
+      department,
+      urgency,
+      unit_targeted,
+      transport_mode,
+      driver_name,
+      package_condition,
+      notes_justification,
+      items
+    } = req.body;
+
+    let doc = FALLBACK_MOS.find(d => d.id === req.params.id);
+    if (!doc) {
+      const { data } = await supabase.from('mos_documents').select('*').eq('id', req.params.id).maybeSingle();
+      if (data) {
+        doc = normalizeMosDoc(data);
+      }
+    }
+
+    if (!doc) {
+      throw new AppError('Dokumen tidak ditemukan.', 404, 'RESOURCE_NOT_FOUND');
+    }
+
+    // Update fields
+    if (doc_number) {
+      doc.doc_number = doc_number;
+      doc.mos_number = doc_number;
+    }
+    if (title) doc.title = title;
+    if (subtitle) doc.subtitle = subtitle;
+    if (purpose) doc.purpose = purpose;
+    if (origin_location) doc.origin_location = origin_location;
+    if (destination_location) {
+      doc.destination_location = destination_location;
+      doc.site_location = destination_location;
+    } else if (site_location) {
+      doc.site_location = site_location;
+      doc.destination_location = site_location;
+    }
+    if (sender_name) doc.sender_name = sender_name;
+    if (sender_role) doc.sender_role = sender_role;
+    if (sender_phone !== undefined) doc.sender_phone = sender_phone;
+    if (destination_receiver) {
+      doc.destination_receiver = destination_receiver;
+      doc.pic_receiver_name = destination_receiver;
+    }
+    if (pic_receiver_name) doc.pic_receiver_name = pic_receiver_name;
+    if (receiver_phone !== undefined) doc.receiver_phone = receiver_phone;
+    if (approval_maker_name) doc.approval_maker_name = approval_maker_name;
+    if (approval_maker_role) doc.approval_maker_role = approval_maker_role;
+    if (approval_maker_dept) doc.approval_maker_dept = approval_maker_dept;
+    if (approval_checker_name) doc.approval_checker_name = approval_checker_name;
+    if (approval_checker_role) doc.approval_checker_role = approval_checker_role;
+    if (approval_checker_dept) doc.approval_checker_dept = approval_checker_dept;
+    if (approval_approver_name) doc.approval_approver_name = approval_approver_name;
+    if (approval_approver_role) doc.approval_approver_role = approval_approver_role;
+    if (approval_approver_dept) doc.approval_approver_dept = approval_approver_dept;
+    if (received_date) doc.received_date = received_date;
+    if (required_date !== undefined) doc.required_date = required_date;
+    if (po_do_number) doc.po_do_number = po_do_number;
+    if (do_sj_number !== undefined) doc.do_sj_number = do_sj_number;
+    if (wo_spk_number !== undefined) doc.wo_spk_number = wo_spk_number;
+    if (department !== undefined) doc.department = department;
+    if (urgency !== undefined) doc.urgency = urgency;
+    if (unit_targeted !== undefined) doc.unit_targeted = unit_targeted;
+    if (transport_mode !== undefined) doc.transport_mode = transport_mode;
+    if (driver_name !== undefined) doc.driver_name = driver_name;
+    if (package_condition) doc.package_condition = package_condition;
+    if (notes_justification !== undefined) doc.notes_justification = notes_justification;
+    if (Array.isArray(items)) {
+      doc.items = items.map((it, idx) => ({
+        id: it.id || `item-${idx + 1}`,
+        name: it.name || it.item_name || 'Material Item',
+        item_name: it.item_name || it.name || 'Material Item',
+        spec: it.spec || it.part_number || '-',
+        part_number: it.part_number || it.spec || '-',
+        sn: it.sn || it.serial_number || '-',
+        serial_number: it.serial_number || it.sn || '-',
+        category: it.category || 'Sparepart',
+        unit: it.unit || it.satuan || 'PCS',
+        qty_received: Number(it.qty_received ?? it.qty ?? 1),
+        qty_do: Number(it.qty_do ?? 0),
+        condition: it.condition || it.item_condition || 'Baru',
+        warranty: it.warranty || '-',
+        bin_location: it.bin_location || it.rack_location || '-',
+        notes: it.notes || ''
+      }));
+    }
+
+    // Update in Supabase
+    try {
+      const existingSigs = typeof doc.signatures === 'object' && doc.signatures !== null ? doc.signatures : {};
+      const updatedSigs = {
+        ...existingSigs,
+        origin_location: doc.origin_location,
+        destination_location: doc.destination_location,
+        sender_name: doc.sender_name,
+        sender_role: doc.sender_role,
+        sender_phone: doc.sender_phone,
+        destination_receiver: doc.destination_receiver,
+        receiver_phone: doc.receiver_phone,
+        approval_maker_name: doc.approval_maker_name,
+        approval_maker_role: doc.approval_maker_role,
+        approval_maker_dept: doc.approval_maker_dept,
+        approval_checker_name: doc.approval_checker_name,
+        approval_checker_role: doc.approval_checker_role,
+        approval_checker_dept: doc.approval_checker_dept,
+        approval_approver_name: doc.approval_approver_name,
+        approval_approver_role: doc.approval_approver_role,
+        approval_approver_dept: doc.approval_approver_dept,
+        required_date: doc.required_date,
+        do_sj_number: doc.do_sj_number,
+        wo_spk_number: doc.wo_spk_number,
+        urgency: doc.urgency,
+        unit_targeted: doc.unit_targeted,
+        transport_mode: doc.transport_mode,
+        driver_name: doc.driver_name,
+        notes_justification: doc.notes_justification
+      };
+
+      await supabase
+        .from('mos_documents')
+        .update({
+          doc_number: doc.doc_number,
+          mos_number: doc.doc_number,
+          title: doc.title,
+          purpose: doc.purpose,
+          site_location: doc.site_location || doc.destination_location,
+          pic_receiver_name: doc.pic_receiver_name,
+          received_date: doc.received_date,
+          po_do_number: doc.po_do_number,
+          package_condition: doc.package_condition,
+          items: doc.items,
+          signatures: updatedSigs,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', req.params.id);
+    } catch (e) {
+      console.warn('[MOS] Supabase update warning:', e.message);
+    }
+
+    return sendSuccess(res, doc, 'Data dan rute dokumen berhasil diperbarui.');
   } catch (err) {
     next(err);
   }

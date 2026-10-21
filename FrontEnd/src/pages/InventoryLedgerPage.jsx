@@ -26,10 +26,12 @@ import {
 import * as XLSX from 'xlsx';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { useAuth } from '../context/AuthContext';
 
 export default function InventoryLedgerPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const { isAdmin } = useAuth();
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
@@ -276,19 +278,21 @@ export default function InventoryLedgerPage() {
               Batal Pilih
             </button>
 
-            <button
-              onClick={() =>
-                setDeleteConfirm({
-                  type: 'bulk',
-                  count: selectedIds.length,
-                  ids: [...selectedIds]
-                })
-              }
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Hapus Terpilih ({selectedIds.length})
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() =>
+                  setDeleteConfirm({
+                    type: 'bulk',
+                    count: selectedIds.length,
+                    ids: [...selectedIds]
+                  })
+                }
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Hapus Terpilih ({selectedIds.length})
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -432,28 +436,32 @@ export default function InventoryLedgerPage() {
                               <span>Lihat Jejak Audit</span>
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(tr)}
-                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
-                            >
-                              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Edit Catatan & Ref</span>
-                            </button>
+                            {isAdmin && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(tr)}
+                                  className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                  <span>Edit Catatan & Ref</span>
+                                </button>
 
-                            <div className="border-t border-slate-100 my-1"></div>
+                                <div className="border-t border-slate-100 my-1"></div>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDeleteConfirm({ type: 'single', item: tr });
-                                setActiveMenuId(null);
-                              }}
-                              className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                              <span>Hapus Baris Ini</span>
-                            </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeleteConfirm({ type: 'single', item: tr });
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                  <span>Hapus Baris Ini</span>
+                                </button>
+                              </>
+                            )}
                           </div>
                         )}
                       </td>

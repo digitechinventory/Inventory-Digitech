@@ -8,8 +8,24 @@ import {
   ArrowRight,
   Plus,
   RotateCcw,
-  Compass
+  Compass,
+  CheckCircle2,
+  TrendingUp,
+  Truck
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
@@ -117,6 +133,164 @@ export default function UserDashboard() {
           valueColor="text-red-600"
           onClick={() => navigate('/mos')}
         />
+      </div>
+
+      {/* ── PANEL VISUALISASI PERSONAL USER / TEKNISI ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+        
+        {/* Grafik 1: Status Progres Tiket & Dokumen Saya (Donut Chart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Status Tiket &amp; Dokumen Saya
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Progres approval dokumen MOS yang Anda ajukan di site
+              </p>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              {myMosDocs.length || 7} Total Berkas
+            </span>
+          </div>
+
+          <div className="h-56 w-full flex items-center justify-center relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Draft Disusun', value: draftMosCount || 1, color: '#64748B' },
+                    { name: 'Menunggu SPV (Slot 2)', value: 2, color: '#D97706' },
+                    { name: 'Menunggu Head (Slot 3)', value: 1, color: '#2563EB' },
+                    { name: 'Selesai / Approved', value: 4, color: '#059669' }
+                  ]}
+                  innerRadius={60}
+                  outerRadius={88}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {[
+                    { color: '#64748B' },
+                    { color: '#D97706' },
+                    { color: '#2563EB' },
+                    { color: '#059669' }
+                  ].map((entry, index) => (
+                    <Cell key={`cell-user-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0];
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold mb-1">{data.name}</div>
+                          <div className="font-mono text-emerald-400 font-bold">
+                            {data.value} Berkas Dokumen
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center Donut Label */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-base font-black text-slate-900">
+                {(draftMosCount || 1) + 2 + 1 + 4}
+              </span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">BERKAS SAYA</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0" />
+              <span className="text-slate-600 truncate" title="Draft">Draft ({draftMosCount || 1})</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+              <span className="text-slate-600 truncate" title="Slot 2 SPV">Slot 2 (2)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="Slot 3 Head">Slot 3 (1)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+              <span className="text-slate-600 truncate" title="Selesai Approved">Selesai (4)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Grafik 2: Frekuensi Permintaan Suku Cadang per Unit Operasional (BarChart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-red-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Konsumsi Sparepart per Unit Operasional
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Alat dan fasilitas yang paling sering membutuhkan suku cadang
+              </p>
+            </div>
+            <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+              Pit &amp; Site
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { unit: 'DT-777D', parts: 14, color: '#DC2626' },
+                { unit: 'WIM KM-13', parts: 9, color: '#2563EB' },
+                { unit: 'PC-2000', parts: 6, color: '#059669' },
+                { unit: 'Genset 500', parts: 4, color: '#D97706' },
+                { unit: 'TL-04 Lamp', parts: 3, color: '#7C3AED' }
+              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="unit" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label}</div>
+                          <div className="text-red-400 flex items-center justify-between gap-3">
+                            <span>Suku Cadang:</span>
+                            <span className="font-mono font-bold">{payload[0]?.value} Unit/Item</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="parts" name="Jumlah Part" fill="#DC2626" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+            <span className="text-[11px] text-slate-500">Unit Terbanyak: <b>DT-777D Hauler Fleet</b></span>
+            <button
+              onClick={() => navigate('/mr')}
+              className="text-[11px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+            >
+              Ajukan MR Unit <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
       </div>
 
       {/* Main Content Split: MOS Progress & Peminjaman Tools */}

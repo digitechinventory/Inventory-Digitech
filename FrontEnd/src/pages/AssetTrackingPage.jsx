@@ -324,13 +324,15 @@ export default function AssetTrackingPage() {
             <span>{isWithin ? `DALAM RADIUS VALID (${Math.round(distance)}m)` : `DILUAR RADIUS GEOFENCE (${Math.round(distance)}m)`}</span>
           </div>
 
-          <button
-            onClick={() => setShowAddSiteModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Lokasi / Gudang</span>
-          </button>
+          {isSuperadmin && (
+            <button
+              onClick={() => setShowAddSiteModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Tambah Lokasi / Gudang</span>
+            </button>
+          )}
         </div>
       </div>
 

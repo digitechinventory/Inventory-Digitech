@@ -6,6 +6,7 @@ import { supabase } from '../services/supabase.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
+import { FALLBACK_MOS, generateUniqueDocNumber } from './mos.js';
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -253,7 +254,7 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
 });
 
 // POST /api/project-inventory/projects
-router.post('/projects', optionalAuth, async (req, res, next) => {
+router.post('/projects', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { code, name, description, site_location, color_theme } = req.body;
     if (!name || !code) {
@@ -295,7 +296,7 @@ router.post('/projects', optionalAuth, async (req, res, next) => {
 });
 
 // PUT /api/project-inventory/projects/:id
-router.put('/projects/:id', optionalAuth, async (req, res, next) => {
+router.put('/projects/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { code, name, description, site_location, color_theme, status } = req.body;
@@ -367,7 +368,7 @@ router.get('/warehouses', optionalAuth, async (req, res, next) => {
 });
 
 // POST /api/project-inventory/warehouses — Opsi Tambah Gudang Project
-router.post('/warehouses', optionalAuth, async (req, res, next) => {
+router.post('/warehouses', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { project_id, name, code, location, pic_name, pic_contact, capacity_shelves, description } = req.body;
     if (!project_id || !name || !code) {
@@ -411,7 +412,7 @@ router.post('/warehouses', optionalAuth, async (req, res, next) => {
 });
 
 // DELETE /api/project-inventory/warehouses/:id
-router.delete('/warehouses/:id', optionalAuth, async (req, res, next) => {
+router.delete('/warehouses/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     try {
@@ -623,7 +624,7 @@ router.get('/items', optionalAuth, async (req, res, next) => {
 });
 
 // POST /api/project-inventory/items — Masuknya Barang (Stock In / Receiving)
-router.post('/items', optionalAuth, async (req, res, next) => {
+router.post('/items', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const {
       project_id,
@@ -743,7 +744,7 @@ router.post('/items', optionalAuth, async (req, res, next) => {
 });
 
 // PUT /api/project-inventory/items/:id — Update general info
-router.put('/items/:id', optionalAuth, async (req, res, next) => {
+router.put('/items/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = {
@@ -783,7 +784,7 @@ router.put('/items/:id', optionalAuth, async (req, res, next) => {
 
 // POST /api/project-inventory/items/:id/install
 // Barang Keluar Dipasang Dimana? (Installation to heavy equipment / plant / location)
-router.post('/items/:id/install', optionalAuth, async (req, res, next) => {
+router.post('/items/:id/install', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -865,7 +866,7 @@ router.post('/items/:id/install', optionalAuth, async (req, res, next) => {
 
 // POST /api/project-inventory/items/:id/transfer
 // Barang Dipindah dari Unit Lain (Cannibalization / Relocation)
-router.post('/items/:id/transfer', optionalAuth, async (req, res, next) => {
+router.post('/items/:id/transfer', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -938,7 +939,7 @@ router.post('/items/:id/transfer', optionalAuth, async (req, res, next) => {
 
 // POST /api/project-inventory/items/:id/damage-report
 // Barang Rusak dan Waktunya Pergantian
-router.post('/items/:id/damage-report', optionalAuth, async (req, res, next) => {
+router.post('/items/:id/damage-report', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -1012,7 +1013,7 @@ router.post('/items/:id/damage-report', optionalAuth, async (req, res, next) => 
 
 // POST /api/project-inventory/items/:id/replace
 // Eksekusi Pergantian Komponen Rusak
-router.post('/items/:id/replace', optionalAuth, async (req, res, next) => {
+router.post('/items/:id/replace', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -1076,8 +1077,8 @@ router.post('/items/:id/replace', optionalAuth, async (req, res, next) => {
 // 5. AUDIT TIMELINE & MUTATION LOGS
 // ==========================================
 
-// POST /api/project-inventory/request — Permohonan Komponen / Material dari User (Read-Only Mode)
-router.post('/request', optionalAuth, async (req, res, next) => {
+// POST /api/project-inventory/request — Permohonan Komponen / Material Lengkap (Official Material Request)
+router.post('/request', requireAuth, async (req, res, next) => {
   try {
     const {
       project_id,
@@ -1089,23 +1090,58 @@ router.post('/request', optionalAuth, async (req, res, next) => {
       unit,
       urgency,
       justification,
-      requester_name
+      requester_name,
+      requester_role,
+      department,
+      destination_receiver,
+      document_number,
+      doc_date,
+      required_date,
+      work_order_number,
+      source_location,
+      destination_location,
+      material_condition,
+      approval_maker_name,
+      approval_maker_role,
+      approval_checker_name,
+      approval_checker_role,
+      approval_approver_name,
+      approval_approver_role,
+      items
     } = req.body;
 
-    if (!project_id || !item_name) {
-      throw new AppError('Project dan nama material yang diminta wajib disertakan.', 400, 'VALIDATION_FAILED');
+    if (!project_id) {
+      throw new AppError('Project ID wajib disertakan.', 400, 'VALIDATION_FAILED');
     }
+
+    // Parse multi-item material list or fallback to single item fields
+    const parsedItems = Array.isArray(items) && items.length > 0 ? items : [
+      {
+        id: 'item-1',
+        name: item_name || 'Material Permohonan',
+        spec: part_number || '-',
+        sn: req.body.serial_number || '-',
+        qty_received: Number(quantity || 1),
+        qty_do: Number(quantity || 1),
+        unit: unit || 'PCS',
+        condition: material_condition || 'Baru',
+        notes: justification || '-'
+      }
+    ];
+
+    const finalDocNumber = document_number || generateUniqueDocNumber('MR');
+    const itemsSummary = parsedItems.map(it => `${it.qty_received || it.quantity || 1} ${it.unit || 'PCS'} ${it.name || it.item_name} (${it.spec || it.part_number || '-'})`).join(', ');
 
     const logEntry = {
       id: `req-${Date.now()}`,
       project_id,
       item_id: item_id || null,
       action_type: 'REQUEST_USER',
-      source_location: 'Gudang Project',
-      destination_location: requested_unit || 'Unit Lapangan',
+      source_location: source_location || 'Gudang Project',
+      destination_location: destination_location || requested_unit || 'Unit Lapangan',
       technician_name: requester_name || req.user?.full_name || 'Teknisi Requester',
-      document_number: `MR-PRJ-${Date.now().toString().slice(-4)}`,
-      notes: `[Permohonan Material ${urgency || 'Normal'}] ${quantity || 1} ${unit || 'PCS'} ${item_name} (${part_number || 'Tanpa Part Number'}). Alokasi Unit: ${requested_unit || 'Gudang/Site'}. Alasan: ${justification || 'Kebutuhan pemeliharaan rutin'}`,
+      document_number: finalDocNumber,
+      notes: `[Permohonan Material ${urgency || 'Normal'}] ${itemsSummary}. Alokasi Unit: ${requested_unit || destination_location || 'Gudang/Site'}. SPK/WO: ${work_order_number || '-'}. Alasan: ${justification || 'Kebutuhan pemeliharaan'}`,
       created_at: new Date().toISOString()
     };
 
@@ -1117,7 +1153,81 @@ router.post('/request', optionalAuth, async (req, res, next) => {
 
     FALLBACK_PROJECT_LOGS.unshift(logEntry);
 
-    return sendCreated(res, logEntry, 'Permohonan material project berhasil diajukan ke Admin Logistik.');
+    // Create an official approval document in MOS waiting list (Template: MR)
+    const officialDoc = {
+      id: `doc-mr-${Date.now()}`,
+      doc_number: finalDocNumber,
+      template_type: 'MR',
+      title: 'MATERIAL REQUEST',
+      subtitle: `SURAT PERMOHONAN MATERIAL - ${department || 'MAINTENANCE & INSTRUMENTATION'}`,
+      site_location: destination_location || requested_unit || 'Site Tambang BIB',
+      site_id: `site-${project_id}`,
+      origin_location: source_location || 'Gudang Project',
+      destination_location: destination_location || requested_unit || 'Site Tambang BIB',
+      sender_name: requester_name || req.user?.full_name || 'Teknisi Lapangan',
+      sender_role: requester_role || 'Teknisi Lapangan',
+      destination_receiver: destination_receiver || 'Admin Logistik',
+      received_date: doc_date || new Date().toISOString().split('T')[0],
+      required_date: required_date || '',
+      po_do_number: work_order_number || '-',
+      package_condition: material_condition || 'Baru & Segel',
+      purpose: justification || `Alokasi untuk ${requested_unit || 'Unit Operasional'}`,
+      intended_for: requested_unit || 'Unit Operasional',
+      orientation: 'landscape',
+      status: 'waiting_user',
+      created_at: new Date().toISOString(),
+      items: parsedItems.map((item, idx) => ({
+        id: `mri-${idx + 1}`,
+        name: item.name || item.item_name || 'Komponen Suku Cadang',
+        spec: item.spec || item.part_number || '-',
+        sn: item.sn || item.serial_number || '-',
+        qty_received: Number(item.qty_received || item.quantity || 1),
+        qty_do: Number(item.qty_do || item.quantity || 1),
+        unit: item.unit || 'PCS',
+        condition: item.condition || material_condition || 'Baru',
+        notes: item.notes || '-'
+      })),
+      approval_maker_name: approval_maker_name || requester_name || req.user?.full_name || 'Teknisi Lapangan',
+      approval_maker_role: approval_maker_role || requester_role || 'Teknisi Lapangan',
+      approval_checker_name: approval_checker_name || 'Supervisor Logistik VGT',
+      approval_checker_role: approval_checker_role || 'Supervisor Logistik',
+      approval_approver_name: approval_approver_name || 'Head of Digitech',
+      approval_approver_role: approval_approver_role || 'Management / Superadmin',
+      signatures_placed: []
+    };
+
+    FALLBACK_MOS.unshift(officialDoc);
+
+    try {
+      await supabase.from('approval_documents').insert({
+        id: officialDoc.id,
+        doc_number: officialDoc.doc_number,
+        title: officialDoc.title,
+        template_type: officialDoc.template_type,
+        site_location: officialDoc.site_location,
+        origin_location: officialDoc.origin_location,
+        destination_location: officialDoc.destination_location,
+        pic_receiver_name: officialDoc.destination_receiver,
+        sender_name: officialDoc.sender_name,
+        sender_role: officialDoc.sender_role,
+        received_date: officialDoc.received_date,
+        po_do_number: officialDoc.po_do_number,
+        package_condition: officialDoc.package_condition,
+        purpose: officialDoc.purpose,
+        orientation: officialDoc.orientation,
+        status: officialDoc.status,
+        signatures: {
+          slot1: { name: officialDoc.approval_maker_name, role: officialDoc.approval_maker_role },
+          slot2: { name: officialDoc.approval_checker_name, role: officialDoc.approval_checker_role },
+          slot3: { name: officialDoc.approval_approver_name, role: officialDoc.approval_approver_role }
+        },
+        items: officialDoc.items
+      });
+    } catch (e) {
+      console.warn('[Project Inventory] Insert approval document Supabase error:', e.message);
+    }
+
+    return sendCreated(res, { logEntry, officialDoc }, 'Permohonan material resmi berhasil diajukan dan diterbitkan ke antrean approval.');
   } catch (err) {
     next(err);
   }
@@ -1152,7 +1262,7 @@ router.get('/logs', optionalAuth, async (req, res, next) => {
 });
 
 // DELETE /api/project-inventory/items/:id
-router.delete('/items/:id', optionalAuth, async (req, res, next) => {
+router.delete('/items/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     try {

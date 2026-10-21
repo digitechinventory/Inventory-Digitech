@@ -9,8 +9,26 @@ import {
   Layers,
   RotateCcw,
   PenLine,
-  MapPin
+  MapPin,
+  TrendingUp,
+  Boxes,
+  ShieldCheck,
+  ArrowDownRight,
+  ArrowUpRight
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
@@ -143,6 +161,164 @@ export default function AdminDashboard() {
           valueColor="text-purple-600"
           onClick={() => navigate('/tools')}
         />
+      </div>
+
+      {/* ── PANEL VISUALISASI OPERASIONAL ADMIN ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+        
+        {/* Grafik 1: Arus Mutasi Masuk (MOS) vs Keluar (MR) (Dual BarChart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Arus Mutasi Barang: Masuk (MOS) vs Keluar (MR)
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Volume perpindahan suku cadang mingguan di seluruh gudang operasional
+              </p>
+            </div>
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+              Bulan Berjalan
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { period: 'Mgg 1 Okt', masuk: 18, keluar: 14 },
+                { period: 'Mgg 2 Okt', masuk: 25, keluar: 19 },
+                { period: 'Mgg 3 Okt', masuk: 32, keluar: 24 },
+                { period: 'Mgg 4 Okt', masuk: 28, keluar: 26 }
+              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="period" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label} 2026</div>
+                          <div className="text-blue-400 flex items-center justify-between gap-3">
+                            <span>Masuk (Inbound MOS):</span>
+                            <span className="font-mono font-bold">+{payload[0]?.value} Unit</span>
+                          </div>
+                          <div className="text-red-400 flex items-center justify-between gap-3">
+                            <span>Keluar (Outbound MR):</span>
+                            <span className="font-mono font-bold">-{payload[1]?.value} Unit</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="masuk" name="Barang Masuk (MOS)" fill="#2563EB" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="keluar" name="Barang Keluar (MR)" fill="#DC2626" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 pt-3 border-t border-slate-100 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-md bg-blue-600" />
+              <span className="text-slate-600 font-semibold text-[11px]">Barang Masuk (MOS / Penerimaan)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-md bg-red-600" />
+              <span className="text-slate-600 font-semibold text-[11px]">Barang Keluar (MR / Picking)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Grafik 2: Status Kesehatan Buffer Stok (Donut Chart) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Status Kesehatan Buffer Stok Gudang
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Monitoring 649 katalog suku cadang terhadap ambang batas minimum
+              </p>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              89.4% Aman
+            </span>
+          </div>
+
+          <div className="h-56 w-full flex items-center justify-center relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Stok Aman / Optimal', value: 580, color: '#059669' },
+                    { name: 'Mendekati Buffer Min', value: 45, color: '#D97706' },
+                    { name: 'Kritis Reorder', value: 24, color: '#DC2626' }
+                  ]}
+                  innerRadius={60}
+                  outerRadius={88}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {[
+                    { color: '#059669' },
+                    { color: '#D97706' },
+                    { color: '#DC2626' }
+                  ].map((entry, index) => (
+                    <Cell key={`cell-admin-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0];
+                      return (
+                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
+                          <div className="font-bold mb-1">{data.name}</div>
+                          <div className="font-mono text-emerald-400 font-bold">
+                            {data.value} Katalog Suku Cadang
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {((data.value / 649) * 100).toFixed(1)}% dari total katalog
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center Donut Label */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-base font-black text-slate-900">649</span>
+              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">KATALOG</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-[11px] text-center">
+            <div className="bg-emerald-50/60 p-1.5 rounded-lg border border-emerald-100">
+              <div className="font-bold text-emerald-800">580 Part</div>
+              <div className="text-[10px] text-emerald-600">Aman &amp; Cukup</div>
+            </div>
+            <div className="bg-amber-50/60 p-1.5 rounded-lg border border-amber-100">
+              <div className="font-bold text-amber-800">45 Part</div>
+              <div className="text-[10px] text-amber-600">Buffer Alert</div>
+            </div>
+            <div className="bg-red-50/60 p-1.5 rounded-lg border border-red-100">
+              <div className="font-bold text-red-800">24 Part</div>
+              <div className="text-[10px] text-red-600">Kritis Reorder</div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Monitoring Rak Inventaris */}

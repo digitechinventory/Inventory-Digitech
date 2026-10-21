@@ -193,7 +193,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
   };
 
   return (
-    <header className={`w-full bg-white/90 backdrop-blur-xl py-3.5 px-4 sm:px-6 lg:px-8 items-center justify-between gap-4 sticky top-0 z-50 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
+    <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-3.5 px-4 sm:px-6 lg:px-8 items-center justify-between gap-4 sticky top-0 z-50 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
       {/* Left: Mobile hamburger + Universal Search Bar */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
