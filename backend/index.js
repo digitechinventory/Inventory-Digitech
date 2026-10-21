@@ -39,8 +39,8 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-// Dengarkan di 0.0.0.0 agar bisa diakses via CasaOS / jaringan lokal
-const HOST = process.env.HOST || '0.0.0.0';
+// Listen on 127.0.0.1 (localhost only) agar tidak mengekspos web server ke Tailscale / LAN
+const HOST = process.env.HOST || '127.0.0.1';
 
 // ─── Security Layer 1: Helmet ──────────────────────────────────────────────
 app.use(helmet({
@@ -124,34 +124,13 @@ app.get('/api/health', (req, res) => {
   }, 'API Server Digitech IMS berjalan normal.');
 });
 
-// ─── Frontend Static Files & SPA Routing ───────────────────────────────────
-const possibleDistPaths = [
-  path.join(__dirname, 'dist'),
-  path.join(__dirname, 'public'),
-  path.join(__dirname, '../FrontEnd/dist'),
-  path.join(__dirname, '../frontend/dist')
-];
-
-let distDir = null;
-for (const p of possibleDistPaths) {
-  if (fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))) {
-    distDir = p;
-    break;
-  }
-}
-
-if (distDir && !process.env.VERCEL) {
-  console.log(`[Static] Serving frontend SPA from: ${distDir}`);
-  app.use(express.static(distDir));
-  app.get('(.*)', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(distDir, 'index.html'));
-  });
-}
+// ─── Frontend Static Files Disabled (Pure REST API Server) ───────────────────
+// Server port 3001 hanya melayani endpoint REST API (/api/*).
+// Frontend web diakses secara terpisah via port development (5175) atau domain terdaftar.
 
 // ─── 404 Handler ───────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-  const err = new Error(`Route ${req.method} ${req.originalUrl} tidak ditemukan pada server`);
+  const err = new Error(`Route ${req.method} ${req.originalUrl} tidak ditemukan pada server API`);
   err.statusCode = 404;
   err.code = 'RESOURCE_NOT_FOUND';
   next(err);
@@ -163,11 +142,11 @@ app.use(errorHandler);
 // ─── Server Start ──────────────────────────────────────────────────────────
 const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
 if (process.env.NODE_ENV !== 'test' && !isVercel) {
-  const HOST = process.env.HOST || '0.0.0.0';
+  const HOST = process.env.HOST || '127.0.0.1';
   app.listen(PORT, HOST, () => {
     console.log(`
 
-      Digitech IMS API Server v1.0 (SECURE)          
+      Digitech IMS API Server v1.0 (SECURE - PURE REST API)          
 
   URL     : http://${HOST}:${PORT}
   Supabase: ${process.env.SUPABASE_URL ? 'Connected' : 'Not configured'}
