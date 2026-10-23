@@ -27,13 +27,21 @@ import {
   Clock,
   Calendar,
   Tag,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Info,
+  FileText,
+  X,
+  ArrowRight,
+  ShieldAlert,
+  Wrench,
+  QrCode
 } from 'lucide-react';
 import {
   getFamousSummary,
   getFamousFleetMatrix,
   getFamousItems
 } from '../../api/projectInventoryApi';
+import FullDocumentPreviewModal from '../common/FullDocumentPreviewModal';
 
 const SENSOR_ICONS = {
   gps: Compass,
@@ -60,7 +68,7 @@ const SENSOR_LABELS = {
 
 const MITRA_LIST = ['ALL', 'AEK', 'RBT', 'BMT', 'GECL', 'KMB', 'BBS', 'BKAE', 'MAV', 'MMS', 'RAM', 'STOCK'];
 
-export default function FamousInteractiveDashboard() {
+export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos }) {
   // Main Navigation View: 'matrix' (Fleet 825 Truk) | 'hardware' (9,416 Perangkat) | 'rma' (Rusak & Retur)
   const [activeView, setActiveView] = useState('matrix');
 
@@ -85,8 +93,65 @@ export default function FamousInteractiveDashboard() {
   const [selectedMitra, setSelectedMitra] = useState('ALL');
   const [loadingItems, setLoadingItems] = useState(false);
 
-  // Selected Unit detail modal
+  // Selected Unit detail modal (8 sensor truk)
   const [selectedUnitDetail, setSelectedUnitDetail] = useState(null);
+
+  // Selected Asset detail modal (perangkat hardware individual)
+  const [selectedAssetDetail, setSelectedAssetDetail] = useState(null);
+
+  // Official Proof Document Preview Modal
+  const [previewDocModal, setPreviewDocModal] = useState(null);
+
+  // Helper untuk membuka berkas dokumen pembuktian resmi BASTM / Berita Acara
+  const handleOpenProofDoc = (item) => {
+    if (!item) return;
+    const isPindahan = item.status === 'Pindahan' || item.is_pindahan || (item.transferred_from && item.transferred_from !== '-');
+    const isRusak = item.status && item.status.toLowerCase().includes('rusak');
+    const isReturn = item.status && item.status.toLowerCase().includes('return');
+
+    const stageCode = isPindahan ? 'Operational' : (isRusak ? 'Decommissioning' : 'MOS');
+    const stageName = isPindahan ? 'Operasional & Mutasi / Pindahan' : (isRusak ? 'Afkir & Decommissioning' : 'Material On Site (MOS)');
+    const stageNum = isPindahan ? 7 : (isRusak ? 8 : 5);
+    const docNum = (item.bastm_number && item.bastm_number !== '-') ? item.bastm_number : '007/MVM-BIB/VII/2024';
+
+    const docData = {
+      id: `bastm-${item.id}`,
+      project_code: 'FAMOUS',
+      project_name: 'FAMOUS (Fleet Asset Management & Operations Unified System)',
+      stage_code: stageCode,
+      stage_name: stageName,
+      stage_number: stageNum,
+      doc_number: docNum,
+      title: isPindahan
+        ? `Berita Acara Pindahan Komponen Perangkat ${item.category_name} (SN: ${item.serial_number})`
+        : isRusak
+        ? `Berita Acara Lapor Kerusakan & Afkir Sensor ${item.category_name} (SN: ${item.serial_number})`
+        : `BASTM Penerimaan Material On Site ${item.category_name} (SN: ${item.serial_number})`,
+      created_date: item.tanggal_onsite && item.tanggal_onsite !== '-' ? item.tanggal_onsite : '2024-07-19',
+      due_date: item.tanggal_instal && item.tanggal_instal !== '-' ? item.tanggal_instal : '2024-08-01',
+      creator_name: 'Zainal Fahriandy',
+      creator_role: 'Supervisor Workshop & Telematika',
+      status: 'Completed',
+      priority: 'Critical',
+      summary: `Dokumen Berita Acara Serah Terima Material (BASTM) resmi dan verifikasi fisik IMEI ${item.imei || item.serial_number} untuk perangkat ${item.name}. Riwayat: ${item.transferred_from && item.transferred_from !== '-' ? `Dipindahkan dari armada ${item.transferred_from}` : `Alokasi unit armada ${item.unit_code !== '-' ? item.unit_code : 'Stock Workshop'}`}.`,
+      signatures_count: 3,
+      required_signatures: 3,
+      file_attachment: `BASTM_${docNum.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+      items: [
+        {
+          no: 1,
+          name: item.name,
+          sn: item.serial_number,
+          qty: 1,
+          unit: 'Unit',
+          cond: isRusak ? 'Rusak / Perlu Perbaikan' : (isReturn ? 'Return ke Vendor' : (isPindahan ? 'Eks-Pindahan Unit' : 'Baik / Terpasang Normal')),
+          notes: item.notes && item.notes !== '-' ? item.notes : (isPindahan ? `Ex-Unit ${item.transferred_from}` : 'Terverifikasi IMEI fisik')
+        }
+      ]
+    };
+
+    setPreviewDocModal(docData);
+  };
 
   // 1. Fetch Summary
   const fetchSummary = async () => {
@@ -349,6 +414,48 @@ export default function FamousInteractiveDashboard() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* ── Banner Pusat Dokumen Resmi & Pengajuan (Alur 8-Tahap) ── */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-red-600/30 border border-red-500/40 text-red-300 flex items-center justify-center shrink-0">
+            <FileCheck2 className="w-6 h-6 text-red-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-white tracking-wide">Pusat Berkas &amp; Dokumen Resmi Proyek</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">Alur 8-Tahap</span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5 max-w-xl leading-relaxed">
+              Arsip digital legal untuk <strong>Pengajuan (PR)</strong>, <strong>Kontrak PO</strong>, <strong>Surat Jalan</strong>, <strong>MOS / BASTM</strong>, <strong>Berita Acara Pindahan</strong>, dan <strong>Afkir</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
+          {onOpenDocuments && (
+            <button
+              type="button"
+              onClick={onOpenDocuments}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Buka Dokumen 8-Tahap (PR / PO / MOS)</span>
+            </button>
+          )}
+          {onOpenMos && (
+            <button
+              type="button"
+              onClick={onOpenMos}
+              className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              title="Buka Lembar MOS Resmi dengan 3-Slot Tanda Tangan"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="hidden sm:inline">Portal MOS</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -673,19 +780,20 @@ export default function FamousInteractiveDashboard() {
                   <th className="px-4 py-3">Timestamp Pasang &amp; Lepas</th>
                   <th className="px-4 py-3">Mitra &amp; BASTM</th>
                   <th className="px-4 py-3">Catatan Riwayat</th>
+                  <th className="px-4 py-3 text-center">Aksi &amp; Bukti</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loadingItems ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
+                    <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
                       <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-red-600" />
                       Memuat daftar inventaris perangkat keras...
                     </td>
                   </tr>
                 ) : hardwareItems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
+                    <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
                       Tidak ditemukan perangkat keras dengan filter pencarian tersebut.
                     </td>
                   </tr>
@@ -732,9 +840,13 @@ export default function FamousInteractiveDashboard() {
                     }
 
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr
+                        key={item.id}
+                        onClick={() => setSelectedAssetDetail(item)}
+                        className="hover:bg-red-50/40 transition-colors cursor-pointer group"
+                      >
                         <td className="px-4 py-3">
-                          <div className="font-mono font-bold text-slate-900 text-xs">{item.serial_number}</div>
+                          <div className="font-mono font-bold text-slate-900 text-xs group-hover:text-red-700 transition-colors">{item.serial_number}</div>
                           {item.asset_number && item.asset_number !== '-' && (
                             <div className="text-[10px] font-mono font-bold text-blue-600">Asset: {item.asset_number}</div>
                           )}
@@ -765,9 +877,9 @@ export default function FamousInteractiveDashboard() {
 
                         <td className="px-4 py-3">
                           {isPindahan && item.transferred_from && item.transferred_from !== '-' ? (
-                            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 font-mono font-bold text-[10px] border border-purple-200">
+                            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 font-mono font-bold text-[10px] border border-purple-200 shadow-2xs">
                               <ArrowRightLeft className="w-3 h-3 text-purple-600 shrink-0" />
-                              <span className="truncate max-w-[130px]">{item.transferred_from}</span>
+                              <span className="truncate max-w-[130px] font-bold">{item.transferred_from}</span>
                             </div>
                           ) : (
                             <span className="text-slate-400 font-mono text-[10px]">-</span>
@@ -784,13 +896,44 @@ export default function FamousInteractiveDashboard() {
 
                         <td className="px-4 py-3">
                           <div className="font-mono font-bold text-slate-700">{item.mitra}</div>
-                          <div className="font-mono text-[10px] text-slate-400 truncate max-w-[120px]">
-                            {item.bastm_number || '-'}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenProofDoc(item);
+                            }}
+                            className="font-mono text-[10px] text-red-600 hover:text-red-800 hover:underline truncate max-w-[120px] block text-left font-semibold cursor-pointer"
+                            title="Klik untuk pratinjau Berkas BASTM"
+                          >
+                            {item.bastm_number || 'BASTM-MVM'}
+                          </button>
                         </td>
 
                         <td className="px-4 py-3 text-slate-500 text-[11px] max-w-xs truncate">
                           {item.notes && item.notes !== '-' ? item.notes : (item.previous_notes || '-')}
+                        </td>
+
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAssetDetail(item)}
+                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] rounded-lg transition flex items-center gap-1 cursor-pointer"
+                              title="Buka rincian lengkap & riwayat tracking"
+                            >
+                              <Info className="w-3 h-3 text-slate-600" />
+                              Detail
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenProofDoc(item)}
+                              className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[10px] rounded-lg border border-red-200 transition flex items-center gap-1 cursor-pointer"
+                              title="Lihat dokumen bukti sah BASTM"
+                            >
+                              <FileText className="w-3 h-3 text-red-600" />
+                              BASTM
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -889,6 +1032,343 @@ export default function FamousInteractiveDashboard() {
           </div>
         </div>
       )}
+
+      {/* ── Modal Detail Komponen Hardware & Tracking Mutasi ── */}
+      {selectedAssetDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3.5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shadow-xs ${
+                  selectedAssetDetail.status === 'Pindahan' || selectedAssetDetail.transferred_from
+                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                    : selectedAssetDetail.status?.toLowerCase().includes('rusak')
+                    ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                    : selectedAssetDetail.status?.toLowerCase().includes('return')
+                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                }`}>
+                  <Cpu className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg bg-red-100 text-red-800 border border-red-200">
+                      {selectedAssetDetail.category?.toUpperCase()}
+                    </span>
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      selectedAssetDetail.status === 'Pindahan'
+                        ? 'bg-purple-50 text-purple-700 border-purple-300'
+                        : selectedAssetDetail.status?.toLowerCase().includes('rusak')
+                        ? 'bg-rose-50 text-rose-700 border-rose-300'
+                        : selectedAssetDetail.status?.toLowerCase().includes('return')
+                        ? 'bg-amber-50 text-amber-700 border-amber-300'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                    }`}>
+                      {selectedAssetDetail.status}
+                    </span>
+                    {selectedAssetDetail.asset_number && selectedAssetDetail.asset_number !== '-' && (
+                      <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                        Asset #{selectedAssetDetail.asset_number}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">{selectedAssetDetail.name || selectedAssetDetail.category_name}</h3>
+                  <p className="text-xs font-mono text-slate-500">
+                    Serial Number: <span className="font-bold text-slate-800">{selectedAssetDetail.serial_number}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedAssetDetail(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 1. Alasan Dismantle / Status Kondisi Khusus */}
+            <div className={`p-4 rounded-2xl border ${
+              selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-')
+                ? 'bg-purple-50/70 border-purple-200 text-purple-950'
+                : selectedAssetDetail.status?.toLowerCase().includes('rusak')
+                ? 'bg-rose-50/70 border-rose-200 text-rose-950'
+                : selectedAssetDetail.status?.toLowerCase().includes('return')
+                ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+            }`}>
+              <div className="flex items-center gap-2 mb-1.5 font-bold text-xs uppercase font-mono tracking-wider">
+                {selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-') ? (
+                  <>
+                    <ArrowRightLeft className="w-4 h-4 text-purple-600" />
+                    <span>Alasan Dismantle: Mutasi &amp; Pindahan Antar-Unit Armada</span>
+                  </>
+                ) : selectedAssetDetail.status?.toLowerCase().includes('rusak') ? (
+                  <>
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <span>Alasan Dismantle: Kerusakan Komponen Sensor (RMA Workshop)</span>
+                  </>
+                ) : selectedAssetDetail.status?.toLowerCase().includes('return') ? (
+                  <>
+                    <RotateCcw className="w-4 h-4 text-amber-600" />
+                    <span>Alasan Dismantle: Retur Garansi ke Vendor Penyedia</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Status Operasional: Terpasang Normal</span>
+                  </>
+                )}
+              </div>
+
+              <div className="text-xs leading-relaxed font-medium">
+                {selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-') ? (
+                  <div>
+                    Perangkat telematika ini sebelumnya dibongkar (dismantle) dari armada truk{' '}
+                    <span className="font-bold underline decoration-purple-400 font-mono text-[13px] bg-purple-100 px-1.5 py-0.5 rounded">
+                      {selectedAssetDetail.transferred_from}
+                    </span>{' '}
+                    karena kebutuhan rotasi armada atau peremajaan unit kontraktor mitra{' '}
+                    <span className="font-bold">{selectedAssetDetail.mitra}</span>.
+                    {selectedAssetDetail.notes && selectedAssetDetail.notes !== '-' && (
+                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-purple-200 font-mono text-[11px] text-purple-900">
+                        <span className="font-bold">Keterangan Catatan Data:</span> "{selectedAssetDetail.notes}"
+                      </div>
+                    )}
+                  </div>
+                ) : selectedAssetDetail.status?.toLowerCase().includes('rusak') ? (
+                  <div>
+                    Perangkat dilepas dari unit operasional karena mengalami gangguan teknis / kerusakan hardware saat bertugas di area hauling tambang.
+                    {selectedAssetDetail.notes && selectedAssetDetail.notes !== '-' ? (
+                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-rose-200 font-mono text-[11px] text-rose-900">
+                        <span className="font-bold">Diagnosa Teknis / Keterangan:</span> "{selectedAssetDetail.notes}"
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-[11px] text-rose-800">
+                        Unit sensor ditarik ke Workshop Telematika untuk investigasi sirkuit dan penerbitan Berita Acara Kerusakan / Afkir.
+                      </div>
+                    )}
+                  </div>
+                ) : selectedAssetDetail.status?.toLowerCase().includes('return') ? (
+                  <div>
+                    Perangkat dilepas dan dikembalikan ke pihak vendor (supplier garansi) untuk proses penggantian suku cadang baru sesuai SLA kontrak.
+                    {selectedAssetDetail.notes && (
+                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-amber-200 font-mono text-[11px] text-amber-900">
+                        <span className="font-bold">Catatan Retur:</span> "{selectedAssetDetail.notes}"
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    Perangkat beroperasi secara optimal pada armada truk{' '}
+                    <span className="font-bold font-mono text-emerald-800">
+                      {selectedAssetDetail.unit_code !== '-' ? selectedAssetDetail.unit_code : selectedAssetDetail.unit_number}
+                    </span>{' '}
+                    tanpa ada riwayat komplain kerusakan.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Visual Tracking Riwayat (Lifecycle & History Timeline) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-red-600" />
+                  Tracking Riwayat &amp; Histori Mutasi Lokasi:
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">Status Audit Trail</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative">
+                {/* Step 1: Onsite */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase">1. Penerimaan Onsite</div>
+                  <div className="text-xs font-black text-slate-800 font-mono">
+                    {selectedAssetDetail.tanggal_onsite && selectedAssetDetail.tanggal_onsite !== '-'
+                      ? selectedAssetDetail.tanggal_onsite
+                      : '2024-07-19'}
+                  </div>
+                  <div className="text-[10px] text-slate-500">Workshop Logistik BIB</div>
+                  <div className="text-[9px] text-emerald-600 font-mono font-bold">✓ Fisik Verifikasi</div>
+                </div>
+
+                {/* Step 2: Unit Terpasang Sebelumnya */}
+                <div className={`p-3 border rounded-2xl space-y-1 ${
+                  selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
+                    ? 'bg-purple-50/70 border-purple-200'
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="text-[9px] font-mono font-bold text-purple-700 uppercase">2. Terpasang Dimana Sebelumnya</div>
+                  <div className="text-xs font-black text-purple-900 font-mono">
+                    {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
+                      ? selectedAssetDetail.transferred_from
+                      : 'Unit Perdana'}
+                  </div>
+                  <div className="text-[10px] text-purple-700">
+                    {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
+                      ? 'Eks Unit Armada Hauling'
+                      : 'Alokasi Pertama kali'}
+                  </div>
+                  <div className="text-[9px] text-purple-600 font-mono font-bold">
+                    {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-' ? 'Ex-Installed' : 'Fresh Asset'}
+                  </div>
+                </div>
+
+                {/* Step 3: Dismantle / Lepas */}
+                <div className={`p-3 border rounded-2xl space-y-1 ${
+                  selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
+                    ? 'bg-amber-50/70 border-amber-200'
+                    : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="text-[9px] font-mono font-bold text-amber-700 uppercase">3. Waktu Dismantle</div>
+                  <div className="text-xs font-black text-amber-900 font-mono">
+                    {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
+                      ? selectedAssetDetail.tanggal_dismantle
+                      : 'Belum Dilepas'}
+                  </div>
+                  <div className="text-[10px] text-amber-800">
+                    {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
+                      ? 'Dilepas oleh Teknisi'
+                      : 'Aktif Terpasang'}
+                  </div>
+                  <div className="text-[9px] text-amber-700 font-mono font-bold">
+                    {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-' ? 'Dismantled' : 'Mounted'}
+                  </div>
+                </div>
+
+                {/* Step 4: Lokasi Sekarang */}
+                <div className={`p-3 border rounded-2xl space-y-1 ${
+                  selectedAssetDetail.status === 'Terinstall'
+                    ? 'bg-emerald-50/70 border-emerald-200'
+                    : selectedAssetDetail.status?.toLowerCase().includes('rusak')
+                    ? 'bg-rose-50/70 border-rose-200'
+                    : 'bg-blue-50/70 border-blue-200'
+                }`}>
+                  <div className="text-[9px] font-mono font-bold text-slate-500 uppercase">4. Posisi Sekarang</div>
+                  <div className="text-xs font-black font-mono text-slate-900 truncate">
+                    {selectedAssetDetail.unit_code && selectedAssetDetail.unit_code !== '-'
+                      ? `Unit ${selectedAssetDetail.unit_code}`
+                      : selectedAssetDetail.unit_number && selectedAssetDetail.unit_number !== '-'
+                      ? `Unit ${selectedAssetDetail.unit_number}`
+                      : 'Stock Workshop BIB'}
+                  </div>
+                  <div className="text-[10px] text-slate-600">
+                    Mitra: <span className="font-bold">{selectedAssetDetail.mitra}</span>
+                  </div>
+                  <div className="text-[9px] font-mono font-bold text-emerald-700">
+                    Pasang: {selectedAssetDetail.tanggal_instal || '-'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Detail Identitas Spesifikasi Teknis Hardware */}
+            <div className="space-y-2">
+              <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider">
+                Spesifikasi &amp; Identitas Fisik Perangkat:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs font-mono">
+                <div>
+                  <span className="text-[10px] text-slate-400 block">KATEGORI SENSOR</span>
+                  <span className="font-bold text-slate-900">{selectedAssetDetail.category_name}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">SERIAL NUMBER (SN)</span>
+                  <span className="font-bold text-slate-900">{selectedAssetDetail.serial_number}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">ASSET TAG / NO. BARANG</span>
+                  <span className="font-bold text-blue-600">{selectedAssetDetail.asset_number || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">IMEI UTAMA</span>
+                  <span className="font-bold text-slate-800">{selectedAssetDetail.imei || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">IMEI 1 / IMEI 2</span>
+                  <span className="font-bold text-slate-800">
+                    {selectedAssetDetail.imei_1 && selectedAssetDetail.imei_1 !== '-' ? `${selectedAssetDetail.imei_1} / ${selectedAssetDetail.imei_2}` : '-'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block">MITRA KONTRAKTOR</span>
+                  <span className="font-bold text-slate-900">{selectedAssetDetail.mitra}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Dokumen Bukti Sah & Akses Pengajuan */}
+            <div className="bg-red-50/50 border border-red-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                    <FileCheck2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 font-mono">DOKUMEN PEMBUKTIAN RESMI (BASTM / BAP)</h4>
+                    <p className="text-[11px] text-slate-600 font-medium">
+                      No. Berkas: <span className="font-bold font-mono text-red-700">{selectedAssetDetail.bastm_number || '007/MVM-BIB/VII/2024'}</span>
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                  Terverifikasi 3 Pihak
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Dokumen ini merupakan bukti legalitas serah terima material fisik dan berita acara instalasi/pindahan di lapangan, lengkap dengan stempel digital serta tanda tangan Pengawas, Vendor, dan User BIB.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleOpenProofDoc(selectedAssetDetail)}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <FileText className="w-4 h-4" />
+                  Pratinjau Dokumen Bukti (BASTM / BAP)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAssetDetail(null);
+                    onOpenDocuments?.();
+                  }}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4 text-slate-500" />
+                  Buka Dokumen 8-Tahap Proyek (PR/PO/MOS/Afkir)
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-mono">
+                ID Item: {selectedAssetDetail.id} | Project: FAMOUS
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedAssetDetail(null)}
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Official Legal Proof Document Preview Modal ── */}
+      <FullDocumentPreviewModal
+        isOpen={Boolean(previewDocModal)}
+        onClose={() => setPreviewDocModal(null)}
+        document={previewDocModal}
+      />
     </div>
   );
 }
+

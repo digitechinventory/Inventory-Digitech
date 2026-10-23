@@ -1235,11 +1235,23 @@ export default function ProjectInventoryPage() {
 
         {activeProject.code === 'FAMOUS' && famousViewMode === 'command_center' ? (
           <div className="p-4 sm:p-6 bg-slate-50/30">
-            <FamousInteractiveDashboard />
+            <FamousInteractiveDashboard
+              onOpenDocuments={() => {
+                setFamousViewMode('standard');
+                setActiveTab('documents');
+              }}
+              onOpenMos={() => navigate('/mos')}
+            />
           </div>
         ) : activeProject.code === 'WIM' && wimViewMode === 'command_center' ? (
           <div className="p-4 sm:p-6 bg-slate-50/30">
-            <WimInteractiveDashboard onOpenMos={() => navigate('/mos')} />
+            <WimInteractiveDashboard
+              onOpenDocuments={() => {
+                setWimViewMode('standard');
+                setActiveTab('documents');
+              }}
+              onOpenMos={() => navigate('/mos')}
+            />
           </div>
         ) : (
           <>
