@@ -31,13 +31,17 @@ import {
   Maximize2,
   Minimize2,
   QrCode,
-  BadgeCheck
+  BadgeCheck,
+  Upload,
+  FileUp,
+  Trash2
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
+import DocumentUploadModal from '../components/common/DocumentUploadModal.jsx';
 import { INITIAL_SITES, INVENTORY_LEDGER } from '../mockData.js';
 
 export default function ReportsPage() {
@@ -122,49 +126,50 @@ export default function ReportsPage() {
     { name: 'Electrical & Automation', pct: 8, count: '53 Item', color: 'bg-purple-600', text: 'text-purple-700' }
   ];
 
-  // Formal Official Documents Available for Preview & Printing
-  const officialDocuments = [
-    {
-      id: 'BA-2026-10-001',
-      title: 'Berita Acara Rekonsiliasi Opname Fisik & Audit Stok',
-      type: 'Berita Acara Resmi',
-      period: 'Periode Oktober 2026',
-      site: 'BIB Pit Sebamban KM 24 (Base Workshop)',
-      signer: 'Superadmin & Supervisor Gudang',
-      status: 'Terverifikasi (Digital Signature Valid)',
-      summary: 'Hasil audit fisik 649 SKU suku cadang tambang dengan match rate 98.6%. Ditemukan 2 deviasi buffer tercatat dan disesuaikan.'
-    },
-    {
-      id: 'LMB-2026-10-002',
-      title: 'Laporan Rekapitulasi Mutasi Masuk (MOS) & Pengeluaran (MR)',
-      type: 'Laporan Logistik Bulanan',
-      period: 'Periode 1 - 17 Oktober 2026',
-      site: 'Semua Site Terintegrasi BIB',
-      signer: 'Staff Logistik & Pengawas Material',
-      status: 'Aktif & Final',
-      summary: 'Rekap 82 transaksi penerimaan material on site (MOS) dan 56 pengeluaran material (MR) untuk perawatan unit hauling tambang.'
-    },
-    {
-      id: 'LBP-2026-10-003',
-      title: 'Laporan Evaluasi Stok Minimum & Rekomendasi Reorder PR',
-      type: 'Rekomendasi Pengadaan',
-      period: 'Pekan ke-3 Oktober 2026',
-      site: 'BIB Central Heavy Equipment Warehouse',
-      signer: 'Kepala Gudang & Inventory Controller',
-      status: 'Menunggu Persetujuan PR',
-      summary: 'Daftar 3 item berstatus kritis di bawah safety stock (Engine Oil Filter 777D, Shell Tellus Drum, Seal Kit) siap diproses PO vendor.'
-    },
-    {
-      id: 'LPA-2026-10-004',
-      title: 'Laporan Alokasi Suku Cadang per Fleet Tambang (Mining Fleet Usage)',
-      type: 'Analisa Biaya Unit',
-      period: 'Kuartal 3 - 4 Tahun 2026',
-      site: 'Pit Sebamban Base Workshop',
-      signer: 'Maintenance Head & Planner Tambang',
-      status: 'Arsip Resmi',
-      summary: 'Analisis konsumsi komponen per fleet 825 unit tambang (Hauler Caterpillar 777D, Komatsu HD785, Excavator PC2000, Volvo FMX).'
+  // Dokumen & Template Resmi Berita Acara yang Diunggah Pengguna
+  const [officialDocuments, setOfficialDocuments] = useState(() => {
+    try {
+      const stored = localStorage.getItem('digitech_reports_documents');
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed)
+        ? parsed.filter(d => d && !['BA-2026-10-001', 'LMB-2026-10-002', 'LBP-2026-10-003', 'LPA-2026-10-004'].includes(d.id))
+        : [];
+    } catch {
+      return [];
     }
-  ];
+  });
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadDefaultTab, setUploadDefaultTab] = useState('local');
+
+  // Handle uploaded template/document callback
+  const handleDocumentUploaded = (newDoc) => {
+    const formatted = {
+      id: newDoc.doc_number || newDoc.id || `BA-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`,
+      title: newDoc.title || newDoc.doc_title || 'Berita Acara / Laporan Resmi',
+      type: newDoc.doc_type || (newDoc.template_type ? `Template ${newDoc.template_type}` : 'Berita Acara Resmi'),
+      period: newDoc.doc_date ? new Date(newDoc.doc_date).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : 'Periode Berjalan',
+      site: newDoc.destination_location || newDoc.site_location || 'Site Operasional BIB',
+      signer: newDoc.signer || user?.full_name || 'Admin Logistik',
+      status: 'Terverifikasi (Digital Signature Valid)',
+      summary: newDoc.notes || newDoc.summary || 'Berkas dokumen/template resmi yang diunggah untuk operasional DIGITECH.',
+      file_url: newDoc.file_url || newDoc.attachment_url || null,
+      file_attachment: newDoc.file_attachment || (newDoc.file ? newDoc.file.name : null),
+      raw: newDoc
+    };
+
+    setOfficialDocuments(prev => {
+      const updated = [formatted, ...prev.filter(d => d.id !== formatted.id)];
+      try {
+        localStorage.setItem('digitech_reports_documents', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    addToast('Dokumen / Template Berita Acara berhasil diunggah!', 'success');
+    setIsUploadModalOpen(false);
+  };
 
   // Export to Excel handler
   const handleExportExcel = () => {
@@ -194,8 +199,14 @@ export default function ReportsPage() {
     }
   };
 
-  // Trigger print
+  // Trigger print / preview
   const handlePrintDocument = (doc) => {
+    if (!doc) {
+      addToast('Format mengikuti template resmi. Silakan unggah dokumen atau template terlebih dahulu.', 'warning');
+      setUploadDefaultTab('local');
+      setIsUploadModalOpen(true);
+      return;
+    }
     setPreviewDoc(doc);
   };
 
@@ -226,6 +237,17 @@ export default function ReportsPage() {
 
         <div className="flex flex-wrap items-center gap-2.5 ml-auto shrink-0">
           <button
+            onClick={() => {
+              setUploadDefaultTab('local');
+              setIsUploadModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Unggah Dokumen / Template</span>
+          </button>
+
+          <button
             onClick={handleExportExcel}
             className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
           >
@@ -235,7 +257,7 @@ export default function ReportsPage() {
 
           <button
             onClick={() => handlePrintDocument(officialDocuments[0])}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs font-bold transition shadow-xs shadow-red-900/20 cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
           >
             <Printer className="w-4 h-4" />
             <span>Cetak Berita Acara</span>
@@ -486,61 +508,111 @@ export default function ReportsPage() {
 
           {/* Quick List of Official Documents */}
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <FileCheck2 className="w-4 h-4 text-red-600" />
+                  <FileCheck2 className="w-4 h-4 text-slate-700" />
                   Dokumen Berita Acara &amp; Laporan Siap Cetak
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Dokumen laporan resmi yang telah ditandatangani secara digital dan siap untuk keperluan audit operasional
+                  Format dokumen mengikuti template resmi perusahaan. Unggah dokumen atau template untuk mengaktifkan pratinjau.
                 </p>
               </div>
-              <button
-                onClick={() => setActiveReportTab('documents')}
-                className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
-              >
-                Lihat Semua ({officialDocuments.length}) <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {officialDocuments.slice(0, 2).map((doc) => (
-                <div
-                  key={doc.id}
-                  className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-white hover:border-red-300 transition-all flex flex-col justify-between"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setUploadDefaultTab('local');
+                    setIsUploadModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="font-mono text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
-                        {doc.id}
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        {doc.status}
-                      </span>
-                    </div>
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug mb-1">
-                      {doc.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 line-clamp-2 mb-3">
-                      {doc.summary}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-slate-500">{doc.period}</span>
-                    <button
-                      onClick={() => handlePrintDocument(doc)}
-                      className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-600" />
-                      Pratinjau &amp; Cetak
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  <Upload className="w-3.5 h-3.5 text-slate-600" />
+                  Unggah Dokumen / Template
+                </button>
+                {officialDocuments.length > 0 && (
+                  <button
+                    onClick={() => setActiveReportTab('documents')}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                  >
+                    Lihat Semua ({officialDocuments.length}) <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
+
+            {officialDocuments.length === 0 ? (
+              <div className="p-6 rounded-xl border border-dashed border-slate-300 bg-slate-50/70 text-center flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mb-3">
+                  <FileUp className="w-6 h-6 text-slate-400" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800 mb-1">
+                  Format Dokumen Mengikuti Template Resmi
+                </h4>
+                <p className="text-xs text-slate-500 max-w-lg mx-auto mb-4 leading-relaxed">
+                  Belum ada dokumen atau template yang diunggah. Pratinjau dokumen tidak ditampilkan sebelum dokumen atau template resmi diunggah ke sistem.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2.5">
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('local');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Unggah Berkas Dokumen (PDF/Scan)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('template');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                    <span>Gunakan Template Resmi (MOS/MDT/MRP)</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {officialDocuments.slice(0, 2).map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between shadow-2xs"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
+                          {doc.id}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          {doc.status}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug mb-1">
+                        {doc.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 line-clamp-2 mb-3">
+                        {doc.summary}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-500">{doc.period}</span>
+                      <button
+                        onClick={() => handlePrintDocument(doc)}
+                        className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-slate-600" />
+                        Pratinjau &amp; Cetak
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -555,76 +627,133 @@ export default function ReportsPage() {
                   Daftar Berita Acara &amp; Dokumen Resmi Logistik
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Dokumen standar legal tambang dengan stempel validasi dan tanda tangan 3-slot otorisasi
+                  Format dokumen mengikuti template resmi perusahaan. Unggah dokumen atau template resmi untuk mengaktifkan pratinjau.
                 </p>
               </div>
-              <div className="text-xs text-slate-500 font-mono">
-                Total {officialDocuments.length} Dokumen Tersedia
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500 font-mono">
+                  Total {officialDocuments.length} Dokumen Tersedia
+                </span>
+                <button
+                  onClick={() => {
+                    setUploadDefaultTab('local');
+                    setIsUploadModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Unggah Dokumen / Template</span>
+                </button>
               </div>
             </div>
 
-            <div className="divide-y divide-slate-100">
-              {officialDocuments.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="p-4 sm:p-5 hover:bg-slate-50/70 transition flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  <div className="flex-1 min-w-0 pr-0 md:pr-4">
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <span className="font-mono text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
-                        {doc.id}
-                      </span>
-                      <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                        {doc.type}
-                      </span>
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        {doc.status}
-                      </span>
-                    </div>
-
-                    <h4 className="text-sm font-bold text-slate-900 leading-snug">
-                      {doc.title}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {doc.summary}
-                    </p>
-
-                    <div className="mt-2.5 flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                        {doc.site}
-                      </span>
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {doc.period}
-                      </span>
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        Otorisasi: {doc.signer}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handlePrintDocument(doc)}
-                      className="px-3.5 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shadow-red-900/20 active:scale-95"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Buka &amp; Cetak</span>
-                    </button>
-                    <button
-                      onClick={handleExportExcel}
-                      className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition cursor-pointer"
-                      title="Unduh Data Mentah Excel"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
+            {officialDocuments.length === 0 ? (
+              <div className="p-10 text-center flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mb-3">
+                  <FileUp className="w-8 h-8 text-slate-400" />
                 </div>
-              ))}
-            </div>
+                <h4 className="text-base font-bold text-slate-800 mb-1">
+                  Belum Ada Dokumen atau Template Berita Acara
+                </h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
+                  Format Berita Acara akan mengikuti template resmi perusahaan nantinya. Pratinjau dan fungsi cetak akan aktif setelah dokumen atau berkas template diunggah ke sistem.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('local');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Upload Dokumen (PDF / Scan)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('template');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-slate-600" />
+                    <span>Gunakan Template Resmi (MOS/MDT/MRP)</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {officialDocuments.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="p-4 sm:p-5 hover:bg-slate-50/70 transition flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="flex-1 min-w-0 pr-0 md:pr-4">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
+                          {doc.id}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                          {doc.type}
+                        </span>
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          {doc.status}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                        {doc.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {doc.summary}
+                      </p>
+
+                      <div className="mt-2.5 flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                          {doc.site}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          {doc.period}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          Otorisasi: {doc.signer}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handlePrintDocument(doc)}
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Buka &amp; Cetak</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOfficialDocuments(prev => {
+                            const updated = prev.filter(d => d.id !== doc.id);
+                            try {
+                              localStorage.setItem('digitech_reports_documents', JSON.stringify(updated));
+                            } catch {}
+                            return updated;
+                          });
+                          addToast(`Dokumen ${doc.id} berhasil dihapus`, 'info');
+                        }}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                        title="Hapus Dokumen"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -904,13 +1033,15 @@ export default function ReportsPage() {
                 </div>
               </div>
 
-              {/* 5. Tabel Hasil Uji Petik Fisik & Rekonsiliasi Material */}
+              {/* 5. Tabel Item Material Sesuai Template / Berita Acara */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-black text-slate-900 uppercase font-mono tracking-wider">
-                    Daftar Uji Petik Fisik &amp; Rekonsiliasi Material (Sample Audit):
+                    Daftar Rincian Material &amp; Suku Cadang Resmi:
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">Akurasi: 98.6%</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Total: {previewDoc.raw?.items?.length || 0} Item
+                  </span>
                 </div>
 
                 <div className="border border-slate-300 rounded-xl overflow-hidden text-xs">
@@ -919,82 +1050,50 @@ export default function ReportsPage() {
                       <tr>
                         <th className="p-3 w-10 text-center">No</th>
                         <th className="p-3">Nama Material / Komponen</th>
-                        <th className="p-3">Part Number / SN</th>
+                        <th className="p-3">Spesifikasi / Part No / SN</th>
                         <th className="p-3 text-center">Lokasi Rak</th>
-                        <th className="p-3 text-center">Fisik</th>
-                        <th className="p-3 text-center">Sistem</th>
-                        <th className="p-3 text-center">Selisih</th>
-                        <th className="p-3 text-center">Status</th>
+                        <th className="p-3 text-center">Qty</th>
+                        <th className="p-3 text-center">Satuan</th>
+                        <th className="p-3 text-center">Kondisi</th>
+                        <th className="p-3">Keterangan</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 font-mono text-[11px]">
-                      <tr>
-                        <td className="p-3 text-center font-bold text-slate-500">01</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">Cat 777D Engine Oil Filter</td>
-                        <td className="p-3 text-slate-600">BIB-CAT-777D-FLTR</td>
-                        <td className="p-3 text-center text-slate-600">R-A01</td>
-                        <td className="p-3 text-center font-black text-slate-900">24 PCS</td>
-                        <td className="p-3 text-center text-slate-700">24 PCS</td>
-                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-center font-bold text-slate-500">02</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">Komatsu PC2000 Seal Kit</td>
-                        <td className="p-3 text-slate-600">BIB-KOM-PC2000-HYD</td>
-                        <td className="p-3 text-center text-slate-600">R-A02</td>
-                        <td className="p-3 text-center font-black text-slate-900">18 SET</td>
-                        <td className="p-3 text-center text-slate-700">18 SET</td>
-                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-center font-bold text-slate-500">03</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">Shell Tellus S2 V 68 Drum</td>
-                        <td className="p-3 text-slate-600">BIB-LUB-SHL-T68</td>
-                        <td className="p-3 text-center text-slate-600">R-C01</td>
-                        <td className="p-3 text-center font-black text-slate-900">6 DRUM</td>
-                        <td className="p-3 text-center text-slate-700">6 DRUM</td>
-                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-center font-bold text-slate-500">04</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">Intercomp Load Cell 50T Platform</td>
-                        <td className="p-3 text-slate-600">SN-92309683</td>
-                        <td className="p-3 text-center text-slate-600">WIM-L1</td>
-                        <td className="p-3 text-center font-black text-slate-900">4 UNIT</td>
-                        <td className="p-3 text-center text-slate-700">4 UNIT</td>
-                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 text-center font-bold text-slate-500">05</td>
-                        <td className="p-3 font-sans font-bold text-slate-900">MDVR AI 4-Channel Telematics</td>
-                        <td className="p-3 text-slate-600">SN-MDVR-88129</td>
-                        <td className="p-3 text-center text-slate-600">R-D02</td>
-                        <td className="p-3 text-center font-black text-slate-900">12 UNIT</td>
-                        <td className="p-3 text-center text-slate-700">12 UNIT</td>
-                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
-                        <td className="p-3 text-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
-                        </td>
-                      </tr>
+                      {previewDoc.raw?.items && previewDoc.raw.items.length > 0 ? (
+                        previewDoc.raw.items.map((item, idx) => (
+                          <tr key={item.id || idx}>
+                            <td className="p-3 text-center font-bold text-slate-500">{String(idx + 1).padStart(2, '0')}</td>
+                            <td className="p-3 font-sans font-bold text-slate-900">{item.name || '-'}</td>
+                            <td className="p-3 text-slate-600">{item.spec || item.sn || item.part_number || '-'}</td>
+                            <td className="p-3 text-center text-slate-600">{item.bin_location || '-'}</td>
+                            <td className="p-3 text-center font-black text-slate-900">{item.qty_received || item.qty || 1}</td>
+                            <td className="p-3 text-center text-slate-700">{item.unit || 'PCS'}</td>
+                            <td className="p-3 text-center">
+                              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
+                                {item.condition || 'Baik'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-slate-600">{item.notes || '-'}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={8} className="p-4 text-center text-slate-500 font-sans">
+                            Dokumen / berkas resmi terlampir. Format dan rincian mengikuti berkas template resmi yang diunggah.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
-                    <tfoot className="bg-slate-50 border-t border-slate-300 font-mono text-[10px] text-slate-700">
-                      <tr>
-                        <td colSpan={4} className="p-3 font-bold">TOTAL ITEM AUDIT SAMPEL RESMI: 5 KELOMPOK UTAMA</td>
-                        <td colSpan={4} className="p-3 text-right font-bold text-emerald-700">TINGKAT KESESUAIAN AUDIT: 100.0% PADA SAMPEL TERPILIH</td>
-                      </tr>
-                    </tfoot>
+                    {previewDoc.raw?.items && previewDoc.raw.items.length > 0 && (
+                      <tfoot className="bg-slate-50 border-t border-slate-300 font-mono text-[10px] text-slate-700">
+                        <tr>
+                          <td colSpan={4} className="p-3 font-bold">TOTAL ITEM DOKUMEN BERITA ACARA</td>
+                          <td colSpan={4} className="p-3 text-right font-bold text-emerald-700">
+                            {previewDoc.raw.items.length} ITEM TERVERIFIKASI
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               </div>
@@ -1050,9 +1149,9 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
-                      Surya Hendrawan, S.T.
+                      {previewDoc.raw?.approval_checker_name || 'Surya Hendrawan, S.T.'}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Supervisor Logistik &amp; Workshop</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{previewDoc.raw?.approval_checker_role || 'Supervisor Logistik & Workshop'}</p>
                   </div>
                 </div>
 
@@ -1067,9 +1166,9 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
-                      Ir. Bambang Prakoso
+                      {previewDoc.raw?.approval_approver_name || 'Ir. Bambang Prakoso'}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Head of Mining Site Operations</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{previewDoc.raw?.approval_approver_role || 'Head of Mining Site Operations'}</p>
                   </div>
                 </div>
               </div>
@@ -1087,6 +1186,15 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* ── DOCUMENT & TEMPLATE UPLOAD MODAL ── */}
+      <DocumentUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={handleDocumentUploaded}
+        currentUser={user}
+        defaultTab={uploadDefaultTab}
+      />
     </div>
   );
 }
