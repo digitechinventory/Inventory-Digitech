@@ -148,10 +148,10 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
 
           {/* Real Thermal Label Preview (50x30 mm scaled) */}
           <div className="flex flex-col items-center">
-            <div className="w-[300px] bg-white rounded-xl shadow-xl border-2 border-slate-900 p-3 flex flex-col justify-between font-mono aspect-[5/3] text-black select-none">
-              <div className="flex items-center justify-between border-b border-black pb-1">
+            <div className="w-[300px] bg-white rounded-xl shadow-xl border-2 border-slate-800 p-3 flex flex-col justify-between font-mono aspect-[5/3] text-slate-900 select-none">
+              <div className="flex items-center justify-between border-b border-slate-700 pb-1">
                 <span className="text-[9.5px] font-black uppercase tracking-wider">DIGITECH</span>
-                <span className="text-[7.5px] font-bold border border-black px-1 rounded uppercase">{category}</span>
+                <span className="text-[7.5px] font-bold border border-slate-700 px-1 rounded uppercase">{category}</span>
               </div>
 
               <div className="text-[10px] font-black uppercase truncate mt-0.5">
@@ -175,7 +175,7 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
                 </div>
               </div>
 
-              <div className="border-t border-black pt-0.5 flex items-center justify-between text-[7px] font-bold">
+              <div className="border-t border-slate-700 pt-0.5 flex items-center justify-between text-[7px] font-bold">
                 <span>*DIMS-ASSET-TRACKING*</span>
                 <span>ORIGINAL</span>
               </div>

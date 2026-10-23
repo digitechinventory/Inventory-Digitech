@@ -259,8 +259,8 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
                 title="Nyalakan Lampu Kilat / Flash"
                 className={`p-2 rounded-xl backdrop-blur-md transition cursor-pointer ${
                   torchOn
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]'
-                    : 'bg-black/50 text-white/80 hover:bg-black/70'
+                    ? 'bg-amber-500 text-slate-900 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+                    : 'bg-slate-700/50 text-white/80 hover:bg-slate-700/70'
                 }`}
               >
                 {torchOn ? <Flashlight className="w-4 h-4" /> : <FlashlightOff className="w-4 h-4" />}
@@ -268,7 +268,7 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
             </div>
 
             {/* Viewfinder Status Pill Bottom */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-mono font-bold text-white/90 border border-white/10 z-10 flex items-center gap-1.5 shadow-sm">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-slate-800/80 backdrop-blur-md text-[10px] font-mono font-bold text-white/90 border border-white/10 z-10 flex items-center gap-1.5 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>SISTEM OPTIK AKTIF</span>
             </div>
@@ -368,7 +368,7 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
                     </span>
                   </div>
                 </div>
-                <span className="text-xs font-black px-2.5 py-1 rounded-full bg-slate-900 text-white">
+                <span className="text-xs font-black px-2.5 py-1 rounded-full bg-red-600 text-white">
                   {scannedResult.stock} Unit
                 </span>
               </div>

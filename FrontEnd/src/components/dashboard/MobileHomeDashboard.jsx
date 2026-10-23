@@ -939,7 +939,7 @@ export default function MobileHomeDashboard() {
 
       {/* ── DETAIL MODAL DRAWER (Saat item di klik) ── */}
       {selectedItemDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-end justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-700/35 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white rounded-t-[32px] p-6 shadow-2xl border-t border-slate-100 animate-in slide-in-from-bottom duration-300">
             <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
             

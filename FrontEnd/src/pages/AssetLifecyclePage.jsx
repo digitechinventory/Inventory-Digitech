@@ -171,16 +171,16 @@ export default function AssetLifecyclePage() {
           </div>
         </div>
 
-        <div className="p-5 bg-gradient-to-br from-slate-950 to-slate-900 text-white rounded-2xl flex flex-col justify-between space-y-4">
+        <div className="p-5 bg-gradient-to-br from-red-600 via-red-700 to-rose-700 text-white rounded-2xl flex flex-col justify-between space-y-4 shadow-sm border border-red-500/30">
           <div>
-            <div className="text-[10px] font-mono text-red-400 font-bold uppercase tracking-wider">Aturan Bisnis Kritis</div>
+            <div className="text-[10px] font-mono text-red-200 font-bold uppercase tracking-wider">Aturan Bisnis Kritis</div>
             <h4 className="text-sm font-bold text-white mt-1">Prasyarat Dokumen Berjenjang</h4>
-            <p className="text-[11px] text-slate-300 leading-relaxed mt-2">
+            <p className="text-[11px] text-red-100 leading-relaxed mt-2">
               Aset tidak dapat melangkah ke tahap selanjutnya tanpa kelengkapan berkas digital pada tahap sebelumnya. Tahap MOS (Tahap 5) memegang peranan krusial sebagai pintu masuk fisik barang site.
             </p>
           </div>
 
-          <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          <div className="pt-2 border-t border-red-500/30 text-[10px] font-mono text-red-200">
             Status Validasi: Disetujui untuk Operasional Tambang BIB
           </div>
         </div>

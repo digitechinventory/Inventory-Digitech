@@ -441,7 +441,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
           onClick={() => setCategoryFilter('ALL')}
           className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
             categoryFilter === 'ALL'
-              ? 'bg-slate-900 text-white font-bold shadow-2xs'
+              ? 'bg-red-600 text-white font-bold shadow-xs'
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
           }`}
         >

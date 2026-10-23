@@ -331,7 +331,7 @@ export default function AuthPage() {
   return (
     <div
       onMouseMove={handlePageMouseMove}
-      className="h-screen h-[100dvh] w-full relative overflow-hidden flex flex-col justify-between lg:justify-center items-center lg:items-end lg:pr-20 xl:pr-32 2xl:pr-44 bg-slate-950 select-none font-sans pt-2 pb-2.5 sm:py-6 lg:py-0"
+      className="h-screen h-[100dvh] w-full relative overflow-hidden flex flex-col justify-between lg:justify-center items-center lg:items-end lg:pr-20 xl:pr-32 2xl:pr-44 bg-slate-900 select-none font-sans pt-2 pb-2.5 sm:py-6 lg:py-0"
     >
       {/* 3D Spline Scene Background with DIGITECH 3D text */}
       <div className="fixed lg:absolute inset-0 z-0 overflow-hidden pointer-events-auto">
@@ -344,7 +344,7 @@ export default function AuthPage() {
           loading="eager"
         />
         {/* Soft Ambient Vignette for seamless cinematic blending */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/35" />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-slate-900/75 via-transparent to-slate-900/35" />
       </div>
 
       {/* Corporate Left Title Header with Futuristic Cyber Styling */}
@@ -778,7 +778,7 @@ export default function AuthPage() {
                       disabled={loading || isLockedOut}
                       className={`relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center justify-center gap-2 overflow-hidden border ${
                         isLockedOut
-                          ? 'bg-slate-900/95 text-red-200 border-red-500/50 cursor-not-allowed shadow-none'
+                          ? 'bg-slate-800/95 text-red-200 border-red-500/50 cursor-not-allowed shadow-none'
                           : 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black shadow-lg shadow-red-900/30 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait border-red-500/50'
                       }`}
                     >

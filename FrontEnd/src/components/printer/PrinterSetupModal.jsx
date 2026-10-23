@@ -648,11 +648,11 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
                   Preview Stiker Fisik ({config.label.widthMm} × {config.label.heightMm} mm)
                 </span>
 
-                <div className="w-[320px] bg-white rounded-xl shadow-2xl border-2 border-slate-900 p-3 flex flex-col justify-between font-mono relative overflow-hidden select-none aspect-[5/3] text-black">
+                <div className="w-[320px] bg-white rounded-xl shadow-2xl border-2 border-slate-800 p-3 flex flex-col justify-between font-mono relative overflow-hidden select-none aspect-[5/3] text-slate-900">
                   {/* Top Bar Brand */}
-                  <div className="flex items-center justify-between border-b border-black pb-1">
+                  <div className="flex items-center justify-between border-b border-slate-700 pb-1">
                     <span className="text-[10px] font-black tracking-wider uppercase">DIGITECH</span>
-                    <span className="text-[8px] font-bold border border-black px-1 rounded">CALIBRATION</span>
+                    <span className="text-[8px] font-bold border border-slate-700 px-1 rounded">CALIBRATION</span>
                   </div>
 
                   {/* Title */}
@@ -679,8 +679,8 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
                   </div>
 
                   {/* Footer Barcode Line */}
-                  <div className="border-t border-black pt-0.5 flex items-center justify-between text-[7px] font-bold">
-                    <span>*DIGITECH-IMS-TRACKING*</span>
+                  <div className="border-t border-slate-700 pt-0.5 flex items-center justify-between text-[7px] font-bold">
+                    <span>*DIGITECH-TRACKING*</span>
                     <span>OK</span>
                   </div>
                 </div>

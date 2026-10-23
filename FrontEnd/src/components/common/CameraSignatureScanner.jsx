@@ -184,7 +184,7 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
+    <div className="fixed inset-0 z-50 bg-slate-700/35 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
       <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
         
         {/* Header */}
@@ -235,11 +235,11 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
               />
 
               {/* Reticle / Viewfinder Frame */}
-              <div className="absolute inset-8 sm:inset-12 border-2 border-red-500/80 rounded-2xl pointer-events-none flex flex-col justify-between p-3 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+              <div className="absolute inset-8 sm:inset-12 border-2 border-red-500/80 rounded-2xl pointer-events-none flex flex-col justify-between p-3 shadow-[0_0_0_9999px_rgba(51,65,85,0.45)]">
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold text-white bg-red-600/90 px-2 py-0.5 rounded-md self-center">
                   <span>Arahkan Tanda Tangan Kertas ke Dalam Kotak</span>
                 </div>
-                <div className="text-[10px] text-center text-slate-300 font-mono bg-black/60 px-2 py-1 rounded-md self-center backdrop-blur-xs">
+                <div className="text-[10px] text-center text-slate-200 font-mono bg-slate-800/80 px-2 py-1 rounded-md self-center backdrop-blur-xs">
                   Gunakan pencahayaan merata untuk hasil terbaik
                 </div>
               </div>
