@@ -16,31 +16,26 @@ import {
   Layers,
   Clock
 } from 'lucide-react';
-import { getProjects, getFamousSummary, getWimSummary, getProjectDocuments } from '../../api/projectInventoryApi';
+import { getProjects, getFamousSummary, getWimSummary } from '../../api/projectInventoryApi';
 
 export default function ProjectWorkspacesBanner({ userRole = 'User' }) {
   const navigate = useNavigate();
 
   const [famousSummary, setFamousSummary] = useState(null);
   const [wimSummary, setWimSummary] = useState(null);
-  const [projectDocs, setProjectDocs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardProjectsData = async () => {
       try {
         setLoading(true);
-        const [fSum, wSum, docsWim, docsFam] = await Promise.all([
+        const [fSum, wSum] = await Promise.all([
           getFamousSummary().catch(() => null),
-          getWimSummary().catch(() => null),
-          getProjectDocuments({ project_id: 'proj-wim' }).catch(() => ({ documents: [] })),
-          getProjectDocuments({ project_id: 'proj-famous' }).catch(() => ({ documents: [] }))
+          getWimSummary().catch(() => null)
         ]);
 
         setFamousSummary(fSum);
         setWimSummary(wSum);
-        const combinedDocs = [...(docsWim?.documents || []), ...(docsFam?.documents || [])];
-        setProjectDocs(combinedDocs);
       } catch (err) {
         console.error('Error fetching dashboard project banner data:', err);
       } finally {
@@ -50,17 +45,6 @@ export default function ProjectWorkspacesBanner({ userRole = 'User' }) {
 
     fetchDashboardProjectsData();
   }, []);
-
-  const STAGES = [
-    { code: 'RFI', num: 1, name: 'Request Info' },
-    { code: 'PR', num: 2, name: 'Purchase Req' },
-    { code: 'PO', num: 3, name: 'Purchase Order' },
-    { code: 'Delivery', num: 4, name: 'Ekspedisi / DO' },
-    { code: 'MOS', num: 5, name: 'MOS Otorisasi', highlight: true },
-    { code: 'QC', num: 6, name: 'QC & Calib' },
-    { code: 'Operational', num: 7, name: 'BAST Pindahan' },
-    { code: 'Decommissioning', num: 8, name: 'Afkir & Scrap' }
-  ];
 
   return (
     <div className="space-y-4">
@@ -262,52 +246,6 @@ export default function ProjectWorkspacesBanner({ userRole = 'User' }) {
               </span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ── Executive 8-Stage Document Lifecycle Quick Status ── */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <FileCheck2 className="w-4 h-4 text-emerald-600" />
-              Status Alur Dokumen 8 Tahap Siklus Proyek (WIM &amp; FAMOUS)
-            </h3>
-            <p className="text-xs text-slate-500">
-              Siklus pengadaan resmi &quot;No Document, No Movement&quot; dari RFI sampai Decommissioning
-            </p>
-          </div>
-
-          <button
-            onClick={() => navigate('/project-inventory?tab=documents')}
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-200 cursor-pointer"
-          >
-            Lihat Arsip Dokumen 8 Tahap <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {STAGES.map((st) => {
-            const count = projectDocs.filter(d => d.stage_code === st.code).length;
-            return (
-              <div
-                key={st.code}
-                onClick={() => navigate(`/project-inventory?tab=documents&stage=${st.code}`)}
-                className={`p-2.5 rounded-2xl border text-center transition cursor-pointer ${
-                  st.highlight
-                    ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100'
-                    : 'bg-slate-50/80 border-slate-200 hover:bg-white hover:border-slate-300'
-                }`}
-              >
-                <div className="text-[9px] font-mono font-bold text-slate-400 uppercase">Tahap #{st.num}</div>
-                <div className="font-mono font-bold text-xs text-slate-700 mt-0.5">{st.code}</div>
-                <div className="text-[10px] text-slate-500 truncate mt-0.5">{st.name}</div>
-                <div className="mt-1 font-bold text-red-600 text-xs">
-                  {count > 0 ? `${count} Dokumen` : 'Tersedia'}
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>
