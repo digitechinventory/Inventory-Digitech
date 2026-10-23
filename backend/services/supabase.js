@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
-import WebSocket from 'ws';
-
+// Node.js 18+ and Vercel runtime have native globalThis.WebSocket built-in
 if (typeof globalThis.WebSocket === 'undefined') {
-  globalThis.WebSocket = WebSocket;
+  try {
+    const { default: WebSocket } = await import('ws');
+    globalThis.WebSocket = WebSocket;
+  } catch {}
 }
 
 const DEFAULT_SUPABASE_URL = 'https://botwoojfvjzwjzivfzet.supabase.co';

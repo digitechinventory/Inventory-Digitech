@@ -96,33 +96,61 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // ─── Security Layer 4: XSS & SQL Injection Guard ───────────────────────────
 app.use('/api', xssInjectionGuard);
 
-// ─── Routes ────────────────────────────────────────────────────────────────
+// ─── Routes (Dual-mounted for /api/* and /* for Vercel serverless compatibility) ─
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/inventory', inventoryRoutes);
+app.use('/inventory', inventoryRoutes);
+
 app.use('/api/mos', strictRateLimit, mosRoutes);
+app.use('/mos', strictRateLimit, mosRoutes);
+
 app.use('/api/users', strictRateLimit, usersRoutes);
+app.use('/users', strictRateLimit, usersRoutes);
+
 app.use('/api/sites', sitesRoutes);
+app.use('/sites', sitesRoutes);
+
 app.use('/api/geo', geoRoutes);
+app.use('/geo', geoRoutes);
+
 app.use('/api/tools', toolsRoutes);
+app.use('/tools', toolsRoutes);
+
 app.use('/api/opname', opnameRoutes);
+app.use('/opname', opnameRoutes);
+
 app.use('/api/agendas', agendasRoutes);
+app.use('/agendas', agendasRoutes);
+
 app.use('/api/notifications', notificationsRoutes);
+app.use('/notifications', notificationsRoutes);
+
 // ─── Static Files for Uploaded Documents (PDF & Images) ─────────────────────
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const uploadsDir = isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  const documentsUploadDir = path.join(uploadsDir, 'documents');
+  if (!fs.existsSync(documentsUploadDir)) {
+    fs.mkdirSync(documentsUploadDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+} catch (e) {
+  console.warn('[Storage] Upload directory init skipped (read-only environment):', e.message);
 }
-const documentsUploadDir = path.join(uploadsDir, 'documents');
-if (!fs.existsSync(documentsUploadDir)) {
-  fs.mkdirSync(documentsUploadDir, { recursive: true });
-}
-app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api/project-inventory', projectInventoryRoutes);
+app.use('/project-inventory', projectInventoryRoutes);
+
 app.use('/api/printer', printerRoutes);
+app.use('/printer', printerRoutes);
 
 // ─── Health Check ──────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
+const healthHandler = (req, res) => {
   return sendSuccess(res, {
     status: 'ok',
     service: 'Digitech IMS API',
@@ -133,7 +161,10 @@ app.get('/api/health', (req, res) => {
     mailer: !!process.env.SMTP_USER,
     security: { rateLimit: true, bruteForce: true, xssGuard: true, helmetHeaders: true }
   }, 'API Server Digitech IMS berjalan normal.');
-});
+};
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // ─── Frontend Static Files Disabled (Pure REST API Server) ───────────────────
 // Server port 3001 hanya melayani endpoint REST API (/api/*).
