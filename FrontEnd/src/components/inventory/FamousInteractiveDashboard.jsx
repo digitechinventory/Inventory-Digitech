@@ -417,47 +417,6 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
         </div>
       </div>
 
-      {/* ── Banner Pusat Dokumen Resmi & Pengajuan (Alur 8-Tahap) ── */}
-      <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white rounded-3xl p-4 sm:p-5 shadow-sm border border-red-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 text-white flex items-center justify-center shrink-0">
-            <FileCheck2 className="w-6 h-6 text-red-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-black text-white tracking-wide">Pusat Berkas &amp; Dokumen Resmi Proyek</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">Alur 8-Tahap</span>
-            </div>
-            <p className="text-xs text-slate-300 mt-0.5 max-w-xl leading-relaxed">
-              Arsip digital legal untuk <strong>Pengajuan (PR)</strong>, <strong>Kontrak PO</strong>, <strong>Surat Jalan</strong>, <strong>MOS / BASTM</strong>, <strong>Berita Acara Pindahan</strong>, dan <strong>Afkir</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
-          {onOpenDocuments && (
-            <button
-              type="button"
-              onClick={onOpenDocuments}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Buka Dokumen 8-Tahap (PR / PO / MOS)</span>
-            </button>
-          )}
-          {onOpenMos && (
-            <button
-              type="button"
-              onClick={onOpenMos}
-              className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              title="Buka Lembar MOS Resmi dengan 3-Slot Tanda Tangan"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">Portal MOS</span>
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* ── View Switcher Navigation Tabs ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -511,8 +470,31 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           </button>
         </div>
 
-        <div className="text-xs text-slate-500 font-mono">
-          Project Workspace: <span className="font-bold text-red-600">FAMOUS (Fleet Telematics)</span>
+        <div className="flex items-center gap-2">
+          {onOpenDocuments && (
+            <button
+              type="button"
+              onClick={onOpenDocuments}
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-slate-500" />
+              <span>Dokumen 8-Tahap</span>
+            </button>
+          )}
+          {onOpenMos && (
+            <button
+              type="button"
+              onClick={onOpenMos}
+              className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              title="Buka Lembar MOS Resmi"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+              <span>Portal MOS</span>
+            </button>
+          )}
+          <div className="text-xs text-slate-500 font-mono hidden xl:block ml-2">
+            Workspace: <span className="font-bold text-slate-800">FAMOUS</span>
+          </div>
         </div>
       </div>
 
