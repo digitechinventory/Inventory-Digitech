@@ -5,7 +5,6 @@ import {
   Users,
   ClipboardList,
   TrendingUp,
-  Workflow,
   History,
   ArrowRight,
   CheckCircle2,
@@ -103,17 +102,6 @@ export default function SuperadminDashboard() {
   const pendingUsersCount = pendingUsers.length;
   const varianceApprovalCount = stats.opnamePendingCount || 1;
 
-  // Real 8-Stage Lifecycle Status Summary
-  const LIFECYCLE_STAGES = [
-    { num: 1, code: 'RFI', name: 'Request Info', count: 3, status: 'Active' },
-    { num: 2, code: 'PR', name: 'Purchase Req', count: 2, status: 'Active' },
-    { num: 3, code: 'PO', name: 'Purchase Order', count: 4, status: 'Active' },
-    { num: 4, code: 'Delivery', name: 'In-Transit', count: 2, status: 'Logistics' },
-    { num: 5, code: 'MOS', name: 'Material On Site', count: allMosDocs.length || 1, status: 'Verification' },
-    { num: 6, code: 'QC', name: 'Commissioning', count: 5, status: 'Passed' },
-    { num: 7, code: 'Ops', name: 'Operational & MR', count: 18, status: 'In-Use' },
-    { num: 8, code: 'Decommissioning', name: 'Decommissioned', count: 1, status: 'Archived' }
-  ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -355,41 +343,6 @@ export default function SuperadminDashboard() {
 
       </div>
 
-      {/* Panel Ringkasan Alur 8 Tahap Siklus Aset (PRD Section 4.3.2) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Workflow className="w-4 h-4 text-red-600" />
-              Pemantauan 8-Tahap Siklus Hidup Aset
-            </h3>
-            <p className="text-[11px] text-slate-500">Alur pelacakan end-to-end prinsip &quot;No Document, No Movement&quot;</p>
-          </div>
-          <button
-            onClick={() => navigate('/lifecycle')}
-            className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
-          >
-            Buka Detail Alur <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {LIFECYCLE_STAGES.map((st) => (
-            <div
-              key={st.code}
-              className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all text-center"
-            >
-              <div className="text-[10px] font-mono text-slate-400 uppercase">Tahap {st.num}</div>
-              <div className="text-xs font-black text-slate-900 mt-0.5">{st.code}</div>
-              <div className="text-[10px] text-slate-500 truncate">{st.name}</div>
-              <div className="mt-2 text-sm font-black text-slate-800">{st.count}</div>
-              <span className="inline-block mt-1 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
-                {st.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Antrean Otorisasi Final (Slot 3) (PRD 4.3.1) */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
