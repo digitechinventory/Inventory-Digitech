@@ -29,7 +29,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
-
+import ProjectWorkspacesBanner from '../../components/dashboard/ProjectWorkspacesBanner';
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -66,6 +66,13 @@ export default function UserDashboard() {
   const activeLoansCount = myLoans.filter(l => l && l.status === 'borrowed').length || 1;
   const needSignCount = myMosDocs.filter(d => d && d.status === 'draft' && !d.signatures?.slot1?.signed).length;
 
+  // Consistent Document Status Counts for Donut Chart
+  const docDraft = myMosDocs.filter(d => d && d.status === 'draft').length || 1;
+  const docSlot2 = myMosDocs.filter(d => d && d.status === 'waiting_admin').length || 2;
+  const docSlot3 = myMosDocs.filter(d => d && d.status === 'waiting_superadmin').length || 1;
+  const docDone = myMosDocs.filter(d => d && (d.status === 'completed' || d.status === 'approved')).length || 4;
+  const totalUserDocs = docDraft + docSlot2 + docSlot3 + docDone;
+
   const STATUS_BADGES = {
     draft: { label: 'Draft', cls: 'bg-slate-100 text-slate-700 border-slate-200' },
     waiting_admin: { label: 'Menunggu Admin', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -84,11 +91,11 @@ export default function UserDashboard() {
           unit="BERKAS"
           subtitle="Form Sedang Disusun"
           subtitleIcon={FileText}
-          subtitleColor="text-slate-600"
+          subtitleColor="text-amber-700"
           icon={FileText}
-          iconColor="text-slate-700"
-          accentColor="border-slate-700"
-          valueColor="text-slate-900"
+          iconColor="text-amber-600"
+          accentColor="border-amber-500"
+          valueColor="text-amber-600"
           onClick={() => navigate('/mos')}
         />
 
@@ -135,6 +142,9 @@ export default function UserDashboard() {
         />
       </div>
 
+      {/* ── PROJECT WORKSPACES & 8-STAGE DOCUMENT BANNER (WIM, FAMOUS, CCM) ── */}
+      <ProjectWorkspacesBanner userRole="User" />
+
       {/* ── PANEL VISUALISASI PERSONAL USER / TEKNISI ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
@@ -143,8 +153,8 @@ export default function UserDashboard() {
           <div className="flex items-center justify-between mb-2">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                <h3 className="text-sm font-bold text-slate-900">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                <h3 className="text-sm font-bold text-slate-800">
                   Status Tiket &amp; Dokumen Saya
                 </h3>
               </div>
@@ -153,7 +163,7 @@ export default function UserDashboard() {
               </p>
             </div>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-              {myMosDocs.length || 7} Total Berkas
+              {totalUserDocs} Total Berkas
             </span>
           </div>
 
@@ -162,10 +172,10 @@ export default function UserDashboard() {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Draft Disusun', value: draftMosCount || 1, color: '#64748B' },
-                    { name: 'Menunggu SPV (Slot 2)', value: 2, color: '#D97706' },
-                    { name: 'Menunggu Head (Slot 3)', value: 1, color: '#2563EB' },
-                    { name: 'Selesai / Approved', value: 4, color: '#059669' }
+                    { name: 'Draft Disusun', value: docDraft, color: '#F59E0B' },
+                    { name: 'Menunggu SPV (Slot 2)', value: docSlot2, color: '#3B82F6' },
+                    { name: 'Menunggu Head (Slot 3)', value: docSlot3, color: '#8B5CF6' },
+                    { name: 'Selesai / Approved', value: docDone, color: '#10B981' }
                   ]}
                   innerRadius={60}
                   outerRadius={88}
@@ -173,10 +183,10 @@ export default function UserDashboard() {
                   dataKey="value"
                 >
                   {[
-                    { color: '#64748B' },
-                    { color: '#D97706' },
-                    { color: '#2563EB' },
-                    { color: '#059669' }
+                    { color: '#F59E0B' },
+                    { color: '#3B82F6' },
+                    { color: '#8B5CF6' },
+                    { color: '#10B981' }
                   ].map((entry, index) => (
                     <Cell key={`cell-user-${index}`} fill={entry.color} />
                   ))}
@@ -186,9 +196,9 @@ export default function UserDashboard() {
                     if (active && payload && payload.length) {
                       const data = payload[0];
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold mb-1">{data.name}</div>
-                          <div className="font-mono text-emerald-400 font-bold">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold mb-1 text-slate-800">{data.name}</div>
+                          <div className="font-mono text-emerald-600 font-bold">
                             {data.value} Berkas Dokumen
                           </div>
                         </div>
@@ -201,8 +211,8 @@ export default function UserDashboard() {
             </ResponsiveContainer>
             {/* Center Donut Label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-base font-black text-slate-900">
-                {(draftMosCount || 1) + 2 + 1 + 4}
+              <span className="text-xl font-extrabold text-red-600">
+                {totalUserDocs}
               </span>
               <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">BERKAS SAYA</span>
             </div>
@@ -210,20 +220,20 @@ export default function UserDashboard() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-[11px]">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0" />
-              <span className="text-slate-600 truncate" title="Draft">Draft ({draftMosCount || 1})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-              <span className="text-slate-600 truncate" title="Slot 2 SPV">Slot 2 (2)</span>
+              <span className="text-slate-600 truncate" title="Draft">Draft ({docDraft})</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
-              <span className="text-slate-600 truncate" title="Slot 3 Head">Slot 3 (1)</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+              <span className="text-slate-600 truncate" title="Slot 2 SPV">Slot 2 ({docSlot2})</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
-              <span className="text-slate-600 truncate" title="Selesai Approved">Selesai (4)</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />
+              <span className="text-slate-600 truncate" title="Slot 3 Head">Slot 3 ({docSlot3})</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-slate-600 truncate" title="Selesai">Selesai ({docDone})</span>
             </div>
           </div>
         </div>
@@ -234,7 +244,7 @@ export default function UserDashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-red-600" />
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-800">
                   Konsumsi Sparepart per Unit Operasional
                 </h3>
               </div>
@@ -263,9 +273,9 @@ export default function UserDashboard() {
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label}</div>
-                          <div className="text-red-400 flex items-center justify-between gap-3">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold border-b border-slate-100 pb-1 mb-1.5 text-slate-900">{label}</div>
+                          <div className="text-red-600 flex items-center justify-between gap-3">
                             <span>Suku Cadang:</span>
                             <span className="font-mono font-bold">{payload[0]?.value} Unit/Item</span>
                           </div>
@@ -299,7 +309,7 @@ export default function UserDashboard() {
         <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Tiket Material On Site (MOS) Saya</h3>
+              <h3 className="text-sm font-bold text-slate-800">Tiket Material On Site (MOS) Saya</h3>
               <p className="text-[11px] text-slate-500">Status 3 slot tanda tangan digital untuk penerimaan barang site</p>
             </div>
             <button
@@ -322,7 +332,7 @@ export default function UserDashboard() {
                   <div key={doc.id} className="p-4 hover:bg-slate-50/80 transition-colors flex items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs text-slate-900">{doc.doc_number || doc.id}</span>
+                        <span className="font-mono font-bold text-xs text-slate-800">{doc.doc_number || doc.id}</span>
                         <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${badge.cls}`}>
                           {badge.label}
                         </span>
@@ -353,17 +363,39 @@ export default function UserDashboard() {
         <div className="space-y-6">
           {/* Quick Actions Panel */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Aksi Cepat Teknisi</h3>
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Aksi Cepat Teknisi</h3>
             <div className="space-y-2">
               <button
-                onClick={() => navigate('/mos')}
+                onClick={() => navigate('/project-inventory?project=proj-wim')}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-200 transition-colors text-left group cursor-pointer"
+              >
+                <div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-700">Project Site WIM (Jembatan Timbang)</div>
+                  <div className="text-[10px] text-slate-500">189 komponen sensor &amp; load cell KM-14</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              <button
+                onClick={() => navigate('/project-inventory?project=proj-famous')}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition-colors text-left group cursor-pointer"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Buat MOS Baru</div>
-                  <div className="text-[10px] text-slate-500">Penerimaan material tiba di site</div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Project Site FAMOUS Fleet</div>
+                  <div className="text-[10px] text-slate-500">9.416 perangkat telematika &amp; GPS unit</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              <button
+                onClick={() => navigate('/project-inventory?tab=documents')}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition-colors text-left group cursor-pointer"
+              >
+                <div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700">Dokumen 8 Tahap Site (MOS/QC)</div>
+                  <div className="text-[10px] text-slate-500">Arsip RFI, PR, PO, DO, MOS, QC, BAST, Afkir</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
               </button>
 
               <button
@@ -372,20 +404,20 @@ export default function UserDashboard() {
               >
                 <div>
                   <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Cari Stok &amp; Rak Bin</div>
-                  <div className="text-[10px] text-slate-500">Cek ketersediaan suku cadang</div>
+                  <div className="text-[10px] text-slate-500">Cek ketersediaan suku cadang gudang</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
               </button>
 
               <button
                 onClick={() => navigate('/tools')}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition-colors text-left group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200/80 hover:border-purple-200 transition-colors text-left group cursor-pointer"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Tracking Tools &amp; Pengembalian</div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-purple-700">Tracking Tools &amp; Pengembalian</div>
                   <div className="text-[10px] text-slate-500">Lihat lokasi tracker perkakas GPS</div>
                 </div>
-                <Compass className="w-4 h-4 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
+                <Compass className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all" />
               </button>
             </div>
           </div>
@@ -393,7 +425,7 @@ export default function UserDashboard() {
           {/* Tools Saya Card */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Perkakas Saya di Lapangan</h3>
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Perkakas Saya di Lapangan</h3>
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                 {activeLoansCount} Aktif
               </span>

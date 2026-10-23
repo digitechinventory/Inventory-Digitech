@@ -33,7 +33,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
-
+import ProjectWorkspacesBanner from '../../components/dashboard/ProjectWorkspacesBanner';
 
 export default function SuperadminDashboard() {
   const navigate = useNavigate();
@@ -44,8 +44,8 @@ export default function SuperadminDashboard() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [recentLedger, setRecentLedger] = useState([]);
   const [stats, setStats] = useState({
-    totalEnterpriseUnits: 10065,
-    totalStockUnits: 10065,
+    totalEnterpriseUnits: 10253,
+    totalStockUnits: 10253,
     catalogStockUnits: 649,
     famousTotalItems: 9416,
     famousFleetUnits: 825,
@@ -94,7 +94,7 @@ export default function SuperadminDashboard() {
   }, []);
 
   // Compute pending counts directly
-  const totalStockUnits = stats.catalogStockUnits || stats.totalStockUnits || 649;
+  const totalEnterpriseUnits = stats.totalEnterpriseUnits || 10253;
   const slot3Queue = allMosDocs.filter(d => 
     (d.signatures?.slot2?.signed && !d.signatures?.slot3?.signed) || 
     d.status === 'waiting_superadmin'
@@ -121,10 +121,10 @@ export default function SuperadminDashboard() {
       {/* 4 Executive Metric Parallelogram Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 py-1">
         <ParallelogramCard
-          title="TOTAL ASET AKTIF"
-          value={totalStockUnits.toLocaleString('id-ID')}
+          title="TOTAL ASET ENTERPRISE"
+          value={totalEnterpriseUnits.toLocaleString('id-ID')}
           unit="UNIT"
-          subtitle="• Suku Cadang Terdaftar di 4 Gudang"
+          subtitle="• 9.416 FAMOUS + 189 WIM + 649 Katalog"
           subtitleColor="text-slate-600"
           icon={TrendingUp}
           iconColor="text-red-600"
@@ -176,6 +176,9 @@ export default function SuperadminDashboard() {
         />
       </div>
 
+      {/* ── PROJECT WORKSPACES & 8-STAGE DOCUMENT BANNER (WIM, FAMOUS, CCM) ── */}
+      <ProjectWorkspacesBanner userRole="Superadmin" />
+
       {/* ── PANEL VISUALISASI EKSEKUTIF SUPERADMIN ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
@@ -225,13 +228,13 @@ export default function SuperadminDashboard() {
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label} 2026</div>
-                          <div className="text-blue-400 flex items-center justify-between gap-3">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold border-b border-slate-100 pb-1 mb-1.5 text-slate-900">{label} 2026</div>
+                          <div className="text-blue-600 flex items-center justify-between gap-3">
                             <span>Diajukan:</span>
                             <span className="font-mono font-bold">{payload[0]?.value} Dokumen</span>
                           </div>
-                          <div className="text-red-400 flex items-center justify-between gap-3">
+                          <div className="text-red-600 flex items-center justify-between gap-3">
                             <span>Disetujui:</span>
                             <span className="font-mono font-bold">{payload[1]?.value} Dokumen</span>
                           </div>
@@ -307,12 +310,12 @@ export default function SuperadminDashboard() {
                     if (active && payload && payload.length) {
                       const data = payload[0];
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold mb-1">{data.name}</div>
-                          <div className="font-mono text-emerald-400 font-bold">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold mb-1 text-slate-900">{data.name}</div>
+                          <div className="font-mono text-emerald-600 font-bold">
                             {data.value?.toLocaleString('id-ID')} Unit
                           </div>
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-500">
                             {((data.value / 10065) * 100).toFixed(1)}% dari total aset
                           </div>
                         </div>

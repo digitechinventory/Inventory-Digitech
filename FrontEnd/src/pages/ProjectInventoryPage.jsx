@@ -44,6 +44,7 @@ import {
   UserCheck,
   ArrowRight
 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   getProjects,
@@ -61,9 +62,13 @@ import {
   reportDamageProjectItem,
   replaceProjectItem,
   requestProjectItem,
-  getProjectLogs
+  getProjectLogs,
+  getProjectDocuments,
+  createProjectDocument
 } from '../api/projectInventoryApi';
 import FamousInteractiveDashboard from '../components/inventory/FamousInteractiveDashboard';
+import WimInteractiveDashboard from '../components/inventory/WimInteractiveDashboard';
+import FullDocumentPreviewModal from '../components/common/FullDocumentPreviewModal';
 
 /**
  * Authentic Mega Mendung Batik SVG Corner Ornament (Nuansa Merah Putih Khas Digitech)
@@ -77,7 +82,7 @@ function MegaMendungCorner({ position = 'top-left', size = 56, className = '' })
       width={size}
       height={size}
       className={`absolute pointer-events-none z-0 ${
-        isBottomRight ? 'bottom-0 right-0 rotate-180 opacity-70 group-hover:opacity-90' : 'top-0 left-0 opacity-85 group-hover:opacity-100'
+        isBottomRight ? 'bottom-0 right-0 rotate-180 opacity-25 group-hover:opacity-40' : 'top-0 left-0 opacity-25 group-hover:opacity-40'
       } transition-opacity duration-300 ${className}`}
       aria-hidden="true"
     >
@@ -119,21 +124,58 @@ const SLANT = '10px';
 const CLIP_PARALLELOGRAM = `polygon(0 ${SLANT}, 100% 0, 100% calc(100% - ${SLANT}), 0 100%)`;
 
 export default function ProjectInventoryPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { role, user } = useAuth();
   const isAdminOrSuperadmin = role === 'Admin' || role === 'Superadmin';
   const isUserReadOnly = !isAdminOrSuperadmin;
 
   // Data States
   const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState('proj-famous');
+  const [selectedProjectId, setSelectedProjectId] = useState(searchParams.get('project') || 'proj-famous');
   const [warehouses, setWarehouses] = useState([]);
   const [items, setItems] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 8-Stage Documents State (Per-Project Documents & MOS)
+  const [projectDocs, setProjectDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [selectedStageFilter, setSelectedStageFilter] = useState(searchParams.get('stage') || 'ALL');
+  const [selectedDocDetail, setSelectedDocDetail] = useState(null);
+  const [showAddDocModal, setShowAddDocModal] = useState(false);
+  const [docForm, setDocForm] = useState({
+    stage_code: 'MOS',
+    stage_name: 'Material On Site (MOS)',
+    stage_number: 5,
+    doc_number: '',
+    title: '',
+    summary: '',
+    priority: 'Medium',
+    file_attachment: ''
+  });
+
   // Active Tab
-  const [activeTab, setActiveTab] = useState('all'); // all | installed | warranty | transfers | damaged | warehouses | logs
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all'); // all | installed | warranty | transfers | damaged | documents | warehouses | logs
   const [famousViewMode, setFamousViewMode] = useState('command_center'); // 'command_center' | 'standard'
+  const [wimViewMode, setWimViewMode] = useState('command_center'); // 'command_center' | 'standard'
+
+  // Synchronize state when URL Search Params change
+  useEffect(() => {
+    const projParam = searchParams.get('project');
+    const tabParam = searchParams.get('tab');
+    const stageParam = searchParams.get('stage');
+
+    if (projParam) {
+      setSelectedProjectId(projParam);
+    }
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    if (stageParam) {
+      setSelectedStageFilter(stageParam);
+    }
+  }, [searchParams]);
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -207,7 +249,7 @@ export default function ProjectInventoryPage() {
     target_location_detail: '',
     transfer_date: new Date().toISOString().split('T')[0],
     technician_name: user?.full_name || 'Teknisi Fleet',
-    transfer_reason: 'Kanibalisasi darurat antar-unit akibat breakdown',
+    transfer_reason: 'Pindahan resmi antar-unit (relokasi komponen)',
     document_number: ''
   });
 
@@ -344,22 +386,57 @@ export default function ProjectInventoryPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projList, whList, itList, lgList] = await Promise.all([
+      const [projList, whList, itList, lgList, docList] = await Promise.all([
         getProjects(),
         getProjectWarehouses(selectedProjectId),
         getProjectItems({ project_id: selectedProjectId }),
-        getProjectLogs({ project_id: selectedProjectId })
+        getProjectLogs({ project_id: selectedProjectId }),
+        getProjectDocuments({ project_id: selectedProjectId }).then(r => r?.documents || []).catch(() => [])
       ]);
 
       setProjects(projList);
       setWarehouses(whList);
       setItems(itList);
       setLogs(lgList);
+      setProjectDocs(docList);
     } catch (err) {
       console.error('Error fetching inventory:', err);
       showToast('Gagal memuat data inventaris project', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateDocSubmit = async (e) => {
+    e.preventDefault();
+    if (!docForm.doc_number || !docForm.title) {
+      showToast('Nomor dokumen dan judul dokumen wajib diisi', 'error');
+      return;
+    }
+    try {
+      await createProjectDocument({
+        ...docForm,
+        project_id: selectedProjectId,
+        project_code: activeProject.code,
+        creator_name: user?.full_name || 'Admin Site',
+        creator_role: role || 'Admin'
+      });
+      showToast(`Dokumen tahap ${docForm.stage_code} berhasil diterbitkan!`);
+      setShowAddDocModal(false);
+      setDocForm({
+        stage_code: 'MOS',
+        stage_name: 'Material On Site (MOS)',
+        stage_number: 5,
+        doc_number: '',
+        title: '',
+        summary: '',
+        priority: 'Medium',
+        file_attachment: ''
+      });
+      const docsRes = await getProjectDocuments({ project_id: selectedProjectId });
+      setProjectDocs(docsRes.documents || []);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Gagal membuat dokumen project', 'error');
     }
   };
 
@@ -743,11 +820,11 @@ export default function ProjectInventoryPage() {
       {/* Toast Alert */}
       {toast && (
         <div className={`fixed top-5 right-5 z-[9999] px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border transition-all ${
-          toast.type === 'error' ? 'bg-red-900/95 text-white border-red-700 backdrop-blur-md' : 'bg-slate-900/95 text-white border-red-500/50 backdrop-blur-md'
+          toast.type === 'error' ? 'bg-red-600 text-white border-red-700 shadow-xl' : 'bg-emerald-600 text-white border-emerald-700 shadow-xl'
         }`}>
-          {toast.type === 'error' ? <AlertTriangle className="w-5 h-5 text-red-400" /> : <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+          {toast.type === 'error' ? <AlertTriangle className="w-5 h-5 text-white" /> : <CheckCircle2 className="w-5 h-5 text-white" />}
           <span className="text-sm font-medium">{toast.message}</span>
-          <button onClick={() => setToast(null)} className="ml-2 text-slate-400 hover:text-white">
+          <button onClick={() => setToast(null)} className="ml-2 text-white/80 hover:text-white">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1099,7 +1176,35 @@ export default function ProjectInventoryPage() {
                   onClick={() => setFamousViewMode('standard')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     famousViewMode === 'standard'
-                      ? 'bg-slate-900 text-white shadow-xs'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  Menu &amp; Form Standar
+                </button>
+              </div>
+            )}
+
+            {/* WIM View Mode Switcher */}
+            {activeProject.code === 'WIM' && (
+              <div className="flex items-center gap-1 ml-2 bg-white p-0.5 rounded-xl border border-slate-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setWimViewMode('command_center')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    wimViewMode === 'command_center'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  Dashboard WIM Real (189 Komponen &amp; 8 Tahap)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWimViewMode('standard')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    wimViewMode === 'standard'
+                      ? 'bg-red-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -1132,6 +1237,10 @@ export default function ProjectInventoryPage() {
           <div className="p-4 sm:p-6 bg-slate-50/30">
             <FamousInteractiveDashboard />
           </div>
+        ) : activeProject.code === 'WIM' && wimViewMode === 'command_center' ? (
+          <div className="p-4 sm:p-6 bg-slate-50/30">
+            <WimInteractiveDashboard onOpenMos={() => navigate('/mos')} />
+          </div>
         ) : (
           <>
             {/* Prominent Operational Menu Bar (Menu-Menu Operasional Lengkap) */}
@@ -1143,7 +1252,7 @@ export default function ProjectInventoryPage() {
                 Menu Operasional Asset ({activeProject.code})
               </h4>
               <span className="text-[11px] text-slate-400 font-medium hidden md:inline">
-                &bull; Akses langsung alur mutasi barang: masuk, pasang, kanibal, rusak &amp; request
+                &bull; Akses langsung alur mutasi barang: masuk, pasang, pindahan, rusak, dokumen &amp; request
               </span>
             </div>
           </div>
@@ -1192,7 +1301,7 @@ export default function ProjectInventoryPage() {
               </button>
             )}
 
-            {/* 3. Pindah / Kanibal Unit (Admin/Superadmin Only) */}
+            {/* 3. Pindahan Unit (Admin/Superadmin Only) */}
             {isAdminOrSuperadmin && (
               <button
                 onClick={() => {
@@ -1204,7 +1313,7 @@ export default function ProjectInventoryPage() {
                     target_location_detail: '',
                     transfer_date: new Date().toISOString().split('T')[0],
                     technician_name: user?.full_name || 'Teknisi Fleet',
-                    transfer_reason: 'Kanibalisasi darurat antar-unit akibat breakdown',
+                    transfer_reason: 'Pindahan resmi antar-unit (relokasi komponen)',
                     document_number: ''
                   });
                   setShowTransferModal(true);
@@ -1214,8 +1323,8 @@ export default function ProjectInventoryPage() {
                 <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
                   <ArrowRightLeft className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-bold text-slate-900 group-hover:text-purple-700">Pindah / Kanibal</span>
-                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Mutasi antar unit operasional</span>
+                <span className="text-xs font-bold text-slate-900 group-hover:text-purple-700">Pindahan Unit</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Relokasi resmi antar unit</span>
               </button>
             )}
 
@@ -1285,8 +1394,9 @@ export default function ProjectInventoryPage() {
               { id: 'all', label: 'Semua Asset', count: items.length },
               { id: 'installed', label: 'Terpasang di Unit', count: stats.installed },
               { id: 'warranty', label: 'Status Garansi', count: stats.activeWarranty + stats.expiringWarranty },
-              { id: 'transfers', label: 'Kanibal & Pindah', count: stats.transferred },
+              { id: 'transfers', label: 'Pindahan Unit', count: stats.transferred },
               { id: 'damaged', label: 'Rusak & Target Ganti', count: stats.damaged, badgeColor: stats.damaged > 0 ? 'bg-red-600 text-white' : '' },
+              { id: 'documents', label: 'Dokumen 8 Tahap & MOS', count: projectDocs.length, badgeColor: 'bg-emerald-600 text-white' },
               { id: 'warehouses', label: 'Gudang Project', count: warehouses.length },
               { id: 'logs', label: 'Audit & Mutasi', count: logs.length }
             ].map(tab => (
@@ -1335,7 +1445,7 @@ export default function ProjectInventoryPage() {
         </div>
 
         {/* Filter Bar (for Asset Tabs) */}
-        {activeTab !== 'warehouses' && activeTab !== 'logs' && (
+        {activeTab !== 'warehouses' && activeTab !== 'logs' && activeTab !== 'documents' && (
           <div className="p-4 bg-slate-50/70 border-b border-slate-200 flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="relative w-full md:w-80">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -1738,6 +1848,238 @@ export default function ProjectInventoryPage() {
                 </tbody>
               </table>
             )}
+          </div>
+        )}
+
+        {/* DOKUMEN 8 TAHAP & MOS VIEW */}
+        {activeTab === 'documents' && (
+          <div className="p-6 space-y-6">
+            {/* Header Dokumen 8 Tahap */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold">
+                    8 STAGE LIFECYCLE
+                  </span>
+                  <span className="text-xs text-slate-500 font-mono">Workspace: <strong>{activeProject.code}</strong></span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
+                  <FileCheck2 className="w-5 h-5 text-emerald-600" />
+                  Siklus Hidup &amp; Arsip Dokumen 8 Tahap ({activeProject.name?.replace(/^Project\s+/i, '')})
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Setiap tahapan pengadaan, penerimaan site (MOS), uji commissioning, hingga purna tugas terintegrasi dengan tanda tangan digital.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => navigate('/mos')}
+                  className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition"
+                >
+                  <FileText className="w-3.5 h-3.5 text-white" />
+                  Form MOS Otorisasi Sah
+                </button>
+                {isAdminOrSuperadmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDocModal(true)}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Terbitkan Dokumen Tahap
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Visual 8-Stage Lifecycle Progress Tracker */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+              {[
+                { code: 'RFI', num: 1, name: 'RFI (Info)', color: 'blue' },
+                { code: 'PR', num: 2, name: 'PR (Requisition)', color: 'indigo' },
+                { code: 'PO', num: 3, name: 'PO (Purchase)', color: 'violet' },
+                { code: 'Delivery', num: 4, name: 'DO (Ekspedisi)', color: 'amber' },
+                { code: 'MOS', num: 5, name: 'MOS (Site Intake)', color: 'emerald', highlight: true },
+                { code: 'QC', num: 6, name: 'QC (Commissioning)', color: 'cyan' },
+                { code: 'Operational', num: 7, name: 'BAST & Pindahan', color: 'teal' },
+                { code: 'Decommissioning', num: 8, name: 'Afkir & Scrap', color: 'slate' }
+              ].map(st => {
+                const count = projectDocs.filter(d => d.stage_code === st.code).length;
+                const isSelected = selectedStageFilter === st.code;
+
+                return (
+                  <div
+                    key={st.code}
+                    onClick={() => setSelectedStageFilter(isSelected ? 'ALL' : st.code)}
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer text-left select-none relative overflow-hidden ${
+                      isSelected
+                        ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm'
+                        : st.highlight
+                        ? 'bg-emerald-50/50 border-emerald-300 hover:bg-emerald-50 hover:border-emerald-400'
+                        : 'bg-slate-50 border-slate-200 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono font-bold text-slate-500">#{st.num}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                        count > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'
+                      }`}>
+                        {count} doc
+                      </span>
+                    </div>
+                    <div className="font-mono font-black text-xs text-slate-900">{st.code}</div>
+                    <div className="text-[10px] text-slate-500 truncate mt-0.5">{st.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Filter Pill Badges */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <span className="text-xs text-slate-500 font-semibold shrink-0">Filter Tahap:</span>
+              <button
+                onClick={() => setSelectedStageFilter('ALL')}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
+                  selectedStageFilter === 'ALL'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Semua Tahap ({projectDocs.length})
+              </button>
+              {['RFI', 'PR', 'PO', 'Delivery', 'MOS', 'QC', 'Operational', 'Decommissioning'].map(s => {
+                const count = projectDocs.filter(d => d.stage_code === s).length;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setSelectedStageFilter(s)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
+                      selectedStageFilter === s
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {s} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Documents Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-xs">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                    <th className="px-4 py-3">Tahapan (1-8)</th>
+                    <th className="px-4 py-3">Nomor Dokumen</th>
+                    <th className="px-4 py-3">Judul &amp; Ringkasan Pekerjaan</th>
+                    <th className="px-4 py-3">Pembuat / Jabatan</th>
+                    <th className="px-4 py-3">Tanggal &amp; Target</th>
+                    <th className="px-4 py-3 text-center">Tanda Tangan Otorisasi</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {projectDocs.filter(d => selectedStageFilter === 'ALL' || d.stage_code === selectedStageFilter).length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                        Belum ada dokumen yang terdaftar pada tahapan {selectedStageFilter} untuk workspace ini.
+                      </td>
+                    </tr>
+                  ) : (
+                    projectDocs
+                      .filter(d => selectedStageFilter === 'ALL' || d.stage_code === selectedStageFilter)
+                      .map((doc) => {
+                        const isMos = doc.stage_code === 'MOS';
+                        const isSigned = doc.signatures_count >= (doc.required_signatures || 1);
+
+                        return (
+                          <tr key={doc.id || doc.doc_number} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono font-bold text-[10px] border ${
+                                isMos
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  : 'bg-slate-100 text-slate-700 border-slate-200'
+                              }`}>
+                                <FileCheck2 className="w-3 h-3 text-emerald-600" />
+                                {doc.stage_code} (#{doc.stage_number || 5})
+                              </span>
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <div className="font-mono font-bold text-slate-900 text-xs">{doc.doc_number}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">Workspace: {doc.project_code || activeProject.code}</div>
+                            </td>
+
+                            <td className="px-4 py-3 max-w-sm">
+                              <div className="font-bold text-slate-900 text-xs leading-snug">{doc.title}</div>
+                              <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{doc.summary || '-'}</div>
+                              {doc.file_attachment && (
+                                <div className="mt-1 flex items-center gap-1 text-[10px] font-mono text-blue-600">
+                                  <FileText className="w-3 h-3" /> {doc.file_attachment}
+                                </div>
+                              )}
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <div className="font-bold text-slate-800">{doc.creator_name || '-'}</div>
+                              <div className="text-[10px] text-slate-400">{doc.creator_role || 'Staff Site'}</div>
+                            </td>
+
+                            <td className="px-4 py-3 font-mono text-[10px] text-slate-600">
+                              <div>Dibuat: <span className="font-bold text-slate-800">{doc.created_date || '-'}</span></div>
+                              {doc.due_date && <div>Tenggat: <span className="text-slate-500">{doc.due_date}</span></div>}
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              {isSigned ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  {doc.signatures_count}/{doc.required_signatures || 2} Terotorisasi
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200">
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  {doc.signatures_count || 0}/{doc.required_signatures || 2} Pending
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200">
+                                {doc.status || 'Active'}
+                              </span>
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setSelectedDocDetail(doc)}
+                                  className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] transition cursor-pointer shadow-2xs"
+                                >
+                                  Detail &amp; Sah
+                                </button>
+                                {isMos && (
+                                  <button
+                                    onClick={() => navigate('/mos')}
+                                    className="p-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition cursor-pointer"
+                                    title="Buka Lembar MOS Resmi"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -2616,7 +2958,7 @@ export default function ProjectInventoryPage() {
 
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 cursor-pointer ml-auto"
+                  className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer ml-auto transition"
                 >
                   Tutup Kartu
                 </button>
@@ -3529,6 +3871,168 @@ export default function ProjectInventoryPage() {
                   className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 cursor-pointer"
                 >
                   Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* MODAL: PRATINJAU DOKUMEN PENUH (PDF / GAMBAR & LEMBAR RESMI KOP) */}
+      {/* ===================================================================== */}
+      <FullDocumentPreviewModal
+        isOpen={Boolean(selectedDocDetail)}
+        onClose={() => setSelectedDocDetail(null)}
+        document={selectedDocDetail}
+        onDocumentUpdated={(updated) => {
+          setProjectDocs(prev => prev.map(d => d.id === updated.id ? updated : d));
+          setSelectedDocDetail(updated);
+        }}
+        currentUser={user}
+      />
+
+      {/* ===================================================================== */}
+      {/* MODAL: TERBITKAN DOKUMEN 8 TAHAP BARU */}
+      {/* ===================================================================== */}
+      {showAddDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 my-auto flex flex-col">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold">
+                  <Plus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Terbitkan Dokumen Tahap ({activeProject.code})
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Daftarkan dokumen baru pada salah satu dari 8 siklus hidup proyek.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddDocModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDocSubmit} className="mt-4 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Pilih Tahapan Proyek *</label>
+                  <select
+                    value={docForm.stage_code}
+                    onChange={(e) => {
+                      const stagesMap = {
+                        'RFI': { name: 'Request For Information', num: 1 },
+                        'PR': { name: 'Purchase Requisition', num: 2 },
+                        'PO': { name: 'Purchase Order', num: 3 },
+                        'Delivery': { name: 'Ekspedisi & Surat Jalan', num: 4 },
+                        'MOS': { name: 'Material On Site (MOS)', num: 5 },
+                        'QC': { name: 'Commissioning & QC', num: 6 },
+                        'Operational': { name: 'Operasional & Pindahan', num: 7 },
+                        'Decommissioning': { name: 'Afkir & Decommissioning', num: 8 }
+                      };
+                      const selected = stagesMap[e.target.value] || { name: e.target.value, num: 5 };
+                      setDocForm({
+                        ...docForm,
+                        stage_code: e.target.value,
+                        stage_name: selected.name,
+                        stage_number: selected.num
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-bold text-slate-800"
+                  >
+                    <option value="RFI">1. RFI (Request For Information)</option>
+                    <option value="PR">2. PR (Purchase Requisition)</option>
+                    <option value="PO">3. PO (Purchase Order)</option>
+                    <option value="Delivery">4. Ekspedisi &amp; Surat Jalan (DO)</option>
+                    <option value="MOS">5. Material On Site (MOS Otorisasi)</option>
+                    <option value="QC">6. Commissioning &amp; QC</option>
+                    <option value="Operational">7. Operasional &amp; Pindahan Unit</option>
+                    <option value="Decommissioning">8. Afkir &amp; Decommissioning</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Tingkat Prioritas</label>
+                  <select
+                    value={docForm.priority}
+                    onChange={(e) => setDocForm({ ...docForm, priority: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl font-bold text-slate-800"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Nomor Dokumen Resmi *</label>
+                <input
+                  type="text"
+                  required
+                  value={docForm.doc_number}
+                  onChange={(e) => setDocForm({ ...docForm, doc_number: e.target.value })}
+                  placeholder={`Contoh: ${activeProject.code}/DOC/${new Date().getFullYear()}/001`}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-slate-800 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Judul Dokumen *</label>
+                <input
+                  type="text"
+                  required
+                  value={docForm.title}
+                  onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
+                  placeholder="Contoh: Berita Acara Penerimaan & Pengecekan Fisik Komponen"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Ringkasan / Catatan Ruang Lingkup</label>
+                <textarea
+                  rows={3}
+                  value={docForm.summary}
+                  onChange={(e) => setDocForm({ ...docForm, summary: e.target.value })}
+                  placeholder="Penjelasan teknis atau dasar penerbitan dokumen..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Nama Berkas Lampiran (Opsional)</label>
+                <input
+                  type="text"
+                  value={docForm.file_attachment}
+                  onChange={(e) => setDocForm({ ...docForm, file_attachment: e.target.value })}
+                  placeholder="Contoh: BASTM_Penerimaan_Fisik_Signed.pdf"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl font-mono text-slate-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDocModal(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl font-semibold hover:bg-slate-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md cursor-pointer"
+                >
+                  Terbitkan Dokumen
                 </button>
               </div>
             </form>

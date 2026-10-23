@@ -405,7 +405,7 @@ export default function ToolLoansPage() {
                         {item.status !== 'returned' ? (
                           <button
                             onClick={() => setShowReturnModal(item)}
-                            className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition cursor-pointer"
+                            className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
                           >
                             Kembalikan
                           </button>
@@ -424,7 +424,7 @@ export default function ToolLoansPage() {
                           }}
                           className={`p-1.5 rounded-xl border transition cursor-pointer ${
                             activeMenuId === item.id
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              ? 'bg-red-600 text-white border-red-600 shadow-sm'
                               : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                           }`}
                           title="Opsi Peminjaman"

@@ -457,9 +457,9 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
                         addToast('Browser Anda belum mengizinkan Web Bluetooth API. Gunakan Google Chrome Mobile pada Android.', 'warning');
                       }
                     }}
-                    className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-2 cursor-pointer shadow-xs"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer shadow-xs"
                   >
-                    <Bluetooth className="w-4 h-4 text-blue-400" />
+                    <Bluetooth className="w-4 h-4 text-white" />
                     Pindai & Hubungkan Perangkat Bluetooth
                   </button>
                 </div>

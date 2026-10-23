@@ -148,29 +148,28 @@ export default function IronNestSidebar({
           id: 'grp-executive',
           title: 'Otoritas & Eksekutif',
           items: [
-            { id: 'overview', label: 'Overview Eksekutif', icon: LayoutGrid, path: '/overview', badge: 'VIP' },
-            { id: 'users', label: 'Manajemen User & Akses', icon: Users, path: '/users', badge: 'Khusus' },
-            { id: 'orders', label: 'MOS Otorisasi Sah', icon: PackageCheck, path: '/mos', badge: 'Slot 3' },
-            { id: 'opname', label: 'Otorisasi Varian Opname', icon: Truck, path: '/opname', badge: 'Approval' },
+            { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview', badge: 'VIP' },
+            { id: 'users', label: 'Kelola User', icon: Users, path: '/users', badge: 'Khusus' },
+            { id: 'opname', label: 'Approval Opname', icon: Truck, path: '/opname', badge: 'Approval' },
           ]
         },
         {
           id: 'grp-warehouse',
           title: 'Aset & Inventaris Site',
           items: [
-            { id: 'projectInventory', label: 'Project Inventory Site', icon: FolderGit2, path: '/project-inventory' },
-            { id: 'warehouses', label: 'Manajemen Rak Gudang', icon: Store, path: '/warehouses' },
-            { id: 'inventory', label: 'Master Katalog & QR', icon: Boxes, path: '/inventory' },
-            { id: 'tracking', label: 'Asset & Tool Tracking', icon: Compass, path: '/tracking' },
+            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
+            { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
+            { id: 'tracking', label: 'Tracking Tools', icon: Compass, path: '/tracking' },
           ]
         },
         {
           id: 'grp-audit',
           title: 'Audit & Rekonsiliasi',
           items: [
-            { id: 'reports', label: 'Laporan Resmi & BAM', icon: FileSpreadsheet, path: '/reports' },
-            { id: 'finance', label: 'Audit Trail Mutasi', icon: History, path: '/ledger' },
-            { id: 'agenda', label: 'Agenda Site & Aktivitas', icon: Calendar, path: '/agenda', badge: 'Live' },
+            { id: 'reports', label: 'Laporan & BAM', icon: FileSpreadsheet, path: '/reports' },
+            { id: 'finance', label: 'Audit Mutasi', icon: History, path: '/ledger' },
+            { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
           ]
         }
       ];
@@ -182,9 +181,10 @@ export default function IronNestSidebar({
           id: 'grp-main',
           title: 'Operasional Gudang',
           items: [
-            { id: 'adminDashboard', label: 'Panel Logistik Lapangan', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
-            { id: 'warehouses', label: 'Tata Letak Rak Gudang', icon: Store, path: '/warehouses' },
-            { id: 'inventory', label: 'Katalog Stok Material', icon: Boxes, path: '/inventory' },
+            { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
+            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
+            { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
           ]
         },
@@ -192,17 +192,15 @@ export default function IronNestSidebar({
           id: 'grp-warehouse',
           title: 'Pencatatan & Verifikasi',
           items: [
-            { id: 'orders', label: 'Pemeriksaan Fisik MOS', icon: PackageCheck, path: '/mos', badge: 'Slot 2' },
-            { id: 'opname', label: 'Input Fisik Opname', icon: Truck, path: '/opname', badge: 'Hitung' },
-            { id: 'projectInventory', label: 'Project Inventory', icon: FolderGit2, path: '/project-inventory' },
+            { id: 'opname', label: 'Input Opname', icon: Truck, path: '/opname', badge: 'Hitung' },
           ]
         },
         {
           id: 'grp-ops',
           title: 'Aktivitas & Pelaporan',
           items: [
-            { id: 'agenda', label: 'Agenda & Shift Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
-            { id: 'reports', label: 'Laporan Logistik Fisik', icon: FileSpreadsheet, path: '/reports' },
+            { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
+            { id: 'reports', label: 'Laporan Logistik', icon: FileSpreadsheet, path: '/reports' },
           ]
         },
       ];
@@ -214,7 +212,7 @@ export default function IronNestSidebar({
         title: 'Portal Teknisi',
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
-          { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
+          { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
         ]
       },
       {
@@ -222,7 +220,6 @@ export default function IronNestSidebar({
         title: 'Material & Tools',
         items: [
           { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
-          { id: 'orders', label: 'Penerimaan MOS', icon: PackageCheck, path: '/mos' },
           { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
         ]
       },
@@ -250,7 +247,7 @@ export default function IronNestSidebar({
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   };
 
-  const sidebarWidth = isCollapsed ? 'lg:w-[76px] w-64' : 'w-64';
+  const sidebarWidth = isCollapsed ? 'lg:w-[76px] w-[272px]' : 'w-[272px]';
 
   return (
     <>

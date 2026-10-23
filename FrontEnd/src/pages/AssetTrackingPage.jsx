@@ -354,7 +354,7 @@ export default function AssetTrackingPage() {
             onClick={() => setMapLayer('satellite')}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
               mapLayer === 'satellite'
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-red-600 text-white shadow-xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
@@ -365,7 +365,7 @@ export default function AssetTrackingPage() {
             onClick={() => setMapLayer('hybrid')}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
               mapLayer === 'hybrid'
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-red-600 text-white shadow-xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
@@ -376,7 +376,7 @@ export default function AssetTrackingPage() {
             onClick={() => setMapLayer('streets')}
             className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
               mapLayer === 'streets'
-                ? 'bg-slate-900 text-white shadow-xs'
+                ? 'bg-red-600 text-white shadow-xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >

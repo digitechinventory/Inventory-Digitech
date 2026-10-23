@@ -1,28 +1,29 @@
 {
-  "total_items": 9416,
+  "total_items": 9415,
+  "total_pindahan": 3976,
   "by_category": {
-    "GPS": 1155,
-    "DSM": 1275,
-    "ADAS": 1175,
-    "MDVR": 1175,
-    "SSD": 1175,
-    "OBU": 1145,
-    "PTT": 1191,
-    "DOME": 1020,
-    "CANBUS": 105
+    "gps": 1155,
+    "dsm": 1275,
+    "adas": 1175,
+    "mdvr": 1175,
+    "ssd": 1179,
+    "obu": 1145,
+    "ptt": 1191,
+    "dome": 1020,
+    "canbus": 100
   },
   "by_status": {
-    "Onsite": 2021,
-    "Terinstall": 6531,
-    "Rusak": 646,
-    "Stock Belum Tercatat Dalam BASTM": 12,
-    "Return": 193,
-    "Terinstall Belum Tercatat Dalam BASTM": 13
+    "Pindahan": 3937,
+    "Onsite": 1023,
+    "Terinstall": 4313,
+    "Stock Belum Tercatat Dalam BASTM": 1,
+    "Rusak": 120,
+    "Return": 21
   },
   "by_mitra": {
-    "STOCK": 2037,
+    "STOCK": 2032,
     "KMB": 703,
-    "BMT": 720,
+    "BMT": 724,
     "RUSAK": 646,
     "GECL": 720,
     "AEK": 1223,
@@ -36,36 +37,11 @@
     "RETURN": 194,
     "BUS": 1
   },
-  "by_bastm": {
-    "007/MVM-BIB/VII/2024": 185,
-    "018/MVM-BIB/X/2024": 433,
-    "009/MVM-BIB/VII/2024": 259,
-    "010/MVM-BIB/VIII/2024": 464,
-    "-": 10,
-    "017/MVM-BIB/X/2024": 579,
-    "020/MVM-BIB/XI/2024": 906,
-    "007/MVM-BIB/II/2025": 20,
-    "023/MVM-BIB/XII/2024": 2608,
-    "024/MVM-BIB/XII/2024": 524,
-    "008/MVM-BIB/VII/2024": 105,
-    "011/MVM-BIB/VIII/2024": 121,
-    "013/MVM-BIB/VIII/2024": 502,
-    "014/MVM-BIB/XI/2024": 287,
-    "021/MVM-BIB/XI/2024": 439,
-    "025/MVM-BIB/I/2025": 744,
-    "024/MVM-BIB/XII/2025": 180,
-    "08/MVM-BIB/VIII/2026": 100,
-    "023/MVM-BIB/XI/2024": 354,
-    "024/MVM-BIB/XI/2024": 131,
-    "022/MVM-BIB/XI/2024": 412,
-    "010/MVM-BIB/VII/2024": 1,
-    "019/MVM-BIB/XI/2024": 35,
-    "026/MVM-BIB/II/2025": 1
-  },
   "fleet_summary": {
-    "total_units": 825,
-    "optimal_units": 795,
-    "partial_units": 30,
-    "critical_units": 0
-  }
+    "total_units": 829,
+    "optimal_units": 420,
+    "partial_units": 166,
+    "critical_units": 243
+  },
+  "updated_at": "2026-10-22T12:44:41.626464"
 }

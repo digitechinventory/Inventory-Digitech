@@ -32,9 +32,9 @@ class ErrorBoundary extends Component {
               Komponen tampilan sedang disinkronkan. Klik tombol di bawah untuk melanjutkan secara aman ke portal Digitech IMS.
             </p>
             {this.state.error && (
-              <div className="w-full text-left bg-slate-900 text-red-400 p-3 rounded-xl font-mono text-[11px] mb-4 overflow-auto max-h-36 border border-red-900/50">
-                <div className="font-bold text-red-300 mb-1">{this.state.error.toString()}</div>
-                <div className="text-slate-400 text-[10px] whitespace-pre-wrap">{this.state.error.stack}</div>
+              <div className="w-full text-left bg-red-50 text-red-700 p-3 rounded-xl font-mono text-[11px] mb-4 overflow-auto max-h-36 border border-red-200">
+                <div className="font-bold text-red-800 mb-1">{this.state.error.toString()}</div>
+                <div className="text-red-600 text-[10px] whitespace-pre-wrap">{this.state.error.stack}</div>
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-2.5 w-full">

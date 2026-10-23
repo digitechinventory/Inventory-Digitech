@@ -219,9 +219,9 @@ export default function DocumentWaitingList({
           <div className="flex items-center gap-2 ml-auto justify-end shrink-0">
             <button
               onClick={() => onOpenUploadModal?.('local')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
             >
-              <Upload className="w-4 h-4 text-red-400" />
+              <Upload className="w-4 h-4 text-red-600" />
               <span>Upload Dokumen Lokal (PC)</span>
             </button>
 

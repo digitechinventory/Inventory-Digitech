@@ -107,6 +107,17 @@ app.use('/api/tools', toolsRoutes);
 app.use('/api/opname', opnameRoutes);
 app.use('/api/agendas', agendasRoutes);
 app.use('/api/notifications', notificationsRoutes);
+// ─── Static Files for Uploaded Documents (PDF & Images) ─────────────────────
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+const documentsUploadDir = path.join(uploadsDir, 'documents');
+if (!fs.existsSync(documentsUploadDir)) {
+  fs.mkdirSync(documentsUploadDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
 app.use('/api/project-inventory', projectInventoryRoutes);
 app.use('/api/printer', printerRoutes);
 

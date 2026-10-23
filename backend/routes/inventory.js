@@ -16,8 +16,13 @@ const __dirname = path.dirname(__filename);
 // Load FAMOUS summary for enterprise aggregation
 let FAMOUS_STATS = { total_items: 9416, fleet_units: 825, installed: 6531, onsite: 2021, damaged: 839 };
 try {
-  const famousSummaryPath = path.join(__dirname, '..', 'data', 'famous', 'famous_summary.json');
-  if (fs.existsSync(famousSummaryPath)) {
+  const possiblePaths = [
+    path.join(__dirname, '..', 'data', 'famous', 'famous_summary.json'),
+    path.join(process.cwd(), 'backend', 'data', 'famous', 'famous_summary.json'),
+    path.join(process.cwd(), 'data', 'famous', 'famous_summary.json')
+  ];
+  const famousSummaryPath = possiblePaths.find(p => fs.existsSync(p));
+  if (famousSummaryPath) {
     const raw = JSON.parse(fs.readFileSync(famousSummaryPath, 'utf-8'));
     FAMOUS_STATS = {
       total_items: raw.total_items || 9416,

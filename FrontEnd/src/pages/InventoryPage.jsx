@@ -774,7 +774,7 @@ export default function InventoryPage() {
                             onClick={() => setActiveKebabSku(activeKebabSku === sku ? null : sku)}
                             className={`p-1.5 rounded-xl border transition cursor-pointer ${
                               activeKebabSku === sku
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                                ? 'bg-red-600 text-white border-red-600 shadow-sm'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                             }`}
                             title="Opsi Suku Cadang"

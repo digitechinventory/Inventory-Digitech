@@ -32,7 +32,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/client';
 import ParallelogramCard from '../../components/common/ParallelogramCard';
-
+import ProjectWorkspacesBanner from '../../components/dashboard/ProjectWorkspacesBanner';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -163,6 +163,9 @@ export default function AdminDashboard() {
         />
       </div>
 
+      {/* ── PROJECT WORKSPACES & 8-STAGE DOCUMENT BANNER (WIM, FAMOUS, CCM) ── */}
+      <ProjectWorkspacesBanner userRole="Admin" />
+
       {/* ── PANEL VISUALISASI OPERASIONAL ADMIN ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
         
@@ -200,13 +203,13 @@ export default function AdminDashboard() {
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold border-b border-slate-700 pb-1 mb-1.5">{label} 2026</div>
-                          <div className="text-blue-400 flex items-center justify-between gap-3">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold border-b border-slate-100 pb-1 mb-1.5 text-slate-900">{label} 2026</div>
+                          <div className="text-blue-600 flex items-center justify-between gap-3">
                             <span>Masuk (Inbound MOS):</span>
                             <span className="font-mono font-bold">+{payload[0]?.value} Unit</span>
                           </div>
-                          <div className="text-red-400 flex items-center justify-between gap-3">
+                          <div className="text-red-600 flex items-center justify-between gap-3">
                             <span>Keluar (Outbound MR):</span>
                             <span className="font-mono font-bold">-{payload[1]?.value} Unit</span>
                           </div>
@@ -280,12 +283,12 @@ export default function AdminDashboard() {
                     if (active && payload && payload.length) {
                       const data = payload[0];
                       return (
-                        <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs border border-slate-700 shadow-xl">
-                          <div className="font-bold mb-1">{data.name}</div>
-                          <div className="font-mono text-emerald-400 font-bold">
+                        <div className="bg-white text-slate-800 p-2.5 rounded-xl text-xs border border-slate-200 shadow-xl">
+                          <div className="font-bold mb-1 text-slate-900">{data.name}</div>
+                          <div className="font-mono text-emerald-600 font-bold">
                             {data.value} Katalog Suku Cadang
                           </div>
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-500">
                             {((data.value / 649) * 100).toFixed(1)}% dari total katalog
                           </div>
                         </div>

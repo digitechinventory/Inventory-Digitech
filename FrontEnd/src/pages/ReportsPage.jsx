@@ -719,25 +719,25 @@ export default function ReportsPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200 overflow-y-auto">
           <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+            <div className="px-6 py-4 bg-red-600 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <FileText className="w-5 h-5 text-red-500" />
+                <FileText className="w-5 h-5 text-white" />
                 <div>
-                  <h3 className="font-bold text-sm leading-tight">Pratinjau Dokumen Berita Acara Resmi</h3>
-                  <p className="text-[10px] font-mono text-slate-400">{previewDoc.id}</p>
+                  <h3 className="font-bold text-sm leading-tight text-white">Pratinjau Dokumen Berita Acara Resmi</h3>
+                  <p className="text-[10px] font-mono text-red-100">{previewDoc.id}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExecuteBrowserPrint}
-                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-700 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Cetak / PDF</span>
                 </button>
                 <button
                   onClick={() => setPreviewDoc(null)}
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition"
+                  className="w-8 h-8 rounded-full bg-red-700 hover:bg-red-800 text-white flex items-center justify-center cursor-pointer transition"
                 >
                   <X className="w-4 h-4" />
                 </button>

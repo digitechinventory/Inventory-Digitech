@@ -847,14 +847,14 @@ export default function InteractiveDocumentSheet({
                     className="w-full h-auto max-h-24 object-contain filter drop-shadow-sm pointer-events-none"
                   />
                 ) : (
-                  <div className="font-serif italic font-bold text-slate-800 text-lg">
-                    {sig.signer_name}
-                  </div>
+                  <svg viewBox="0 0 120 40" className="w-28 h-10 text-slate-800" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 28 C 25 10, 35 35, 45 15 C 55 -5, 60 38, 75 22 C 85 10, 95 30, 110 20 M30 25 L90 24" />
+                  </svg>
                 )}
               </div>
             ))}
 
-          {/* ════════ ACTIVE DRAG & DROP SIGNATURE BOX ════════ */}
+          {/* ════════ ACTIVE DRAG & DROP SIGNATURE BOX (TANPA NAMA DI DALAM KOTAK) ════════ */}
           {isPlacingSignature && (
             <div
               style={{
@@ -866,21 +866,21 @@ export default function InteractiveDocumentSheet({
               }}
               onMouseDown={handlePointerDown}
               onTouchStart={handlePointerDown}
-              className={`p-2 rounded-2xl cursor-move transition-all z-30 select-none ${
+              className={`p-2 rounded-2xl cursor-move transition-all z-30 select-none shadow-xl ${
                 !isPositionValidForRole
-                  ? 'border-2 border-red-500 bg-red-50/40 shadow-lg ring-4 ring-red-400/30'
+                  ? 'border-2 border-red-500 bg-red-50/40 ring-4 ring-red-400/30'
                   : isPositionLocked
-                  ? 'border-2 border-emerald-500 bg-emerald-50/20 shadow-md ring-2 ring-emerald-400/30'
-                  : 'border-2 border-dashed border-blue-500 bg-blue-50/30 shadow-lg ring-4 ring-blue-500/20 animate-pulse'
+                  ? 'border-2 border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-400/30'
+                  : 'border-2 border-dashed border-blue-500 bg-blue-50/30 ring-4 ring-blue-500/20 animate-pulse'
               }`}
             >
-              {/* Header Badge */}
+              {/* Header Box (Purely Functional Status - NO PERSON NAME) */}
               <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-200/60 text-[10px]">
                 <span className="font-bold flex items-center gap-1">
                   {!isPositionValidForRole ? (
                     <>
                       <AlertTriangle className="w-3 h-3 text-red-600" />
-                      <span className="text-red-700">Bukan Kolom Anda</span>
+                      <span className="text-red-700">Area Tanda Tangan</span>
                     </>
                   ) : isPositionLocked ? (
                     <>
@@ -890,7 +890,7 @@ export default function InteractiveDocumentSheet({
                   ) : (
                     <>
                       <Move className="w-3 h-3 text-blue-600" />
-                      <span className="text-blue-700">Kolom {getSlotLabel(userAllowedSlot)}</span>
+                      <span className="text-blue-700">Geser ke Kolom TTD</span>
                     </>
                   )}
                 </span>
@@ -899,38 +899,37 @@ export default function InteractiveDocumentSheet({
                 </span>
               </div>
 
-              {/* Transparent Signature Ink Preview Only (NO NAME TEXT) */}
-              <div className="h-16 flex items-center justify-center overflow-hidden">
+              {/* Transparent Signature Ink Preview Only (NO NAME TEXT WHATSOEVER) */}
+              <div className="h-16 flex items-center justify-center overflow-hidden bg-white/40 rounded-xl border border-slate-200/50">
                 {userSignature ? (
                   <img
                     src={userSignature}
-                    alt="Signature Preview"
+                    alt="Signature Ink"
                     className="max-h-full max-w-full object-contain filter drop-shadow-sm pointer-events-none"
                   />
                 ) : (
-                  <span className="text-xs text-slate-400 italic">Belum ada tanda tangan</span>
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <PenTool className="w-5 h-5 mb-0.5 opacity-60" />
+                    <span className="text-[10px] italic">Letakkan Tanda Tangan</span>
+                  </div>
                 )}
               </div>
 
-              {/* AI Warning if placed in the wrong slot */}
+              {/* Action Buttons (Lock Position / Snap) - NO PERSON NAME */}
               {!isPositionValidForRole ? (
                 <div className="mt-1 pt-1 border-t border-red-200 space-y-1">
-                  <div className="text-[10px] text-red-700 font-semibold text-center leading-tight">
-                    Role Anda ({currentUser?.role || 'User'}) harus di kolom "{getSlotLabel(userAllowedSlot)}"
-                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       snapToMySlot();
                     }}
-                    className="w-full py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm transition-all"
+                    className="w-full py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold shadow-sm transition-all"
                   >
-                    ⚡ AI Snap ke Kolom Saya
+                    ⚡ Rapikan ke Kolom Dokumen
                   </button>
                 </div>
               ) : !isPositionLocked ? (
-                /* Inline quick-action button when not locked & valid */
                 <div className="mt-1.5 flex items-center justify-center">
                   <button
                     type="button"

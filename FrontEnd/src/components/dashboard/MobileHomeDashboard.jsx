@@ -59,8 +59,8 @@ export default function MobileHomeDashboard() {
 
   // Live Database Stats for Parallelogram Summary Cards
   const [stats, setStats] = useState({
-    totalEnterpriseUnits: 10065,
-    totalStockUnits: 649,
+    totalEnterpriseUnits: 10253,
+    totalStockUnits: 10253,
     catalogStockUnits: 649,
     famousTotalItems: 9416,
     famousFleetUnits: 825,
@@ -127,7 +127,7 @@ export default function MobileHomeDashboard() {
       status: 'ready',
       statusLabel: 'Siap Operasi',
       icon: Radio,
-      path: '/projects'
+      path: '/project-inventory?project=proj-famous'
     },
     {
       id: 'wim-01',
@@ -144,7 +144,7 @@ export default function MobileHomeDashboard() {
       status: 'ready',
       statusLabel: 'Ready Stock',
       icon: Activity,
-      path: '/projects'
+      path: '/project-inventory?project=proj-wim'
     },
     {
       id: 'ccm-01',
@@ -161,7 +161,7 @@ export default function MobileHomeDashboard() {
       status: 'ready',
       statusLabel: 'Ready Stock',
       icon: Cpu,
-      path: '/projects'
+      path: '/project-inventory?project=proj-ccm'
     },
     {
       id: 'cat-01',
@@ -621,7 +621,7 @@ export default function MobileHomeDashboard() {
             Kategori Proyek &amp; Fasilitas
           </h2>
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/project-inventory')}
             className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
           >
             <span>Lihat Semua</span>
@@ -634,7 +634,7 @@ export default function MobileHomeDashboard() {
           
           {/* Card 1: FAMOUS Fleet */}
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/project-inventory?project=proj-famous')}
             className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-red-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
           >
             <span className="absolute -top-1.5 px-1.5 py-0.5 bg-red-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
@@ -650,11 +650,11 @@ export default function MobileHomeDashboard() {
 
           {/* Card 2: WIM Scales */}
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/project-inventory?project=proj-wim')}
             className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-emerald-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
           >
             <span className="absolute -top-1.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
-              KM-14
+              189 Part
             </span>
             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mt-1">
               <Activity className="w-5 h-5" />
@@ -666,7 +666,7 @@ export default function MobileHomeDashboard() {
 
           {/* Card 3: CCM Crusher */}
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/project-inventory?project=proj-ccm')}
             className="relative bg-white rounded-2xl p-2.5 pt-3.5 flex flex-col items-center justify-between border border-slate-100 shadow-xs hover:border-amber-200 hover:shadow-md transition-all active:scale-95 cursor-pointer text-center aspect-[1/1.12]"
           >
             <span className="absolute -top-1.5 px-1.5 py-0.5 bg-amber-600 text-white rounded-full text-[8px] font-black uppercase tracking-wider shadow-2xs">
@@ -876,15 +876,15 @@ export default function MobileHomeDashboard() {
 
       {/* ── QUICK ROLE ACTION DRAWER / ACCORDION ── */}
       <div className="mt-6 px-5">
-        <div className="bg-slate-900 text-white rounded-3xl p-4.5 shadow-lg border border-slate-800">
+        <div className="bg-white text-slate-800 rounded-3xl p-4.5 shadow-md border border-slate-200/90">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-red-500" />
-              <span className="text-xs font-black uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-red-600" />
+              <span className="text-xs font-black uppercase tracking-wider text-slate-900">
                 Akses Peran: {normalizedRole}
               </span>
             </div>
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
               Sistem Aktif
             </span>
           </div>
@@ -892,45 +892,45 @@ export default function MobileHomeDashboard() {
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
               onClick={() => navigate('/mos')}
-              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+              className="p-2.5 bg-slate-50 hover:bg-red-50 hover:border-red-200 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-200/80 transition-colors"
             >
-              <FileCheck2 className="w-4 h-4 text-red-400 shrink-0" />
+              <FileCheck2 className="w-4 h-4 text-red-600 shrink-0" />
               <div className="min-w-0">
-                <p className="font-bold truncate">Approval MOS</p>
-                <p className="text-[9.5px] text-slate-400 truncate">3 Slot Signature</p>
+                <p className="font-bold text-slate-800 truncate">Approval MOS</p>
+                <p className="text-[9.5px] text-slate-500 truncate">3 Slot Signature</p>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/projects')}
-              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+              className="p-2.5 bg-slate-50 hover:bg-red-50 hover:border-red-200 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-200/80 transition-colors"
             >
-              <Radio className="w-4 h-4 text-rose-400 shrink-0" />
+              <Radio className="w-4 h-4 text-rose-600 shrink-0" />
               <div className="min-w-0">
-                <p className="font-bold truncate">Project FAMOUS</p>
-                <p className="text-[9.5px] text-slate-400 truncate">825 Unit Tambang</p>
+                <p className="font-bold text-slate-800 truncate">Project FAMOUS</p>
+                <p className="text-[9.5px] text-slate-500 truncate">825 Unit Tambang</p>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/tools')}
-              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+              className="p-2.5 bg-slate-50 hover:bg-red-50 hover:border-red-200 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-200/80 transition-colors"
             >
-              <Wrench className="w-4 h-4 text-amber-400 shrink-0" />
+              <Wrench className="w-4 h-4 text-amber-600 shrink-0" />
               <div className="min-w-0">
-                <p className="font-bold truncate">Peminjaman Tool</p>
-                <p className="text-[9.5px] text-slate-400 truncate">Logbook Alat</p>
+                <p className="font-bold text-slate-800 truncate">Peminjaman Tool</p>
+                <p className="text-[9.5px] text-slate-500 truncate">Logbook Alat</p>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/gis')}
-              className="p-2.5 bg-slate-800/80 hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-700/60 transition-colors"
+              className="p-2.5 bg-slate-50 hover:bg-red-50 hover:border-red-200 rounded-xl flex items-center gap-2 text-left cursor-pointer border border-slate-200/80 transition-colors"
             >
-              <Compass className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
               <div className="min-w-0">
-                <p className="font-bold truncate">Peta Satelit</p>
-                <p className="text-[9.5px] text-slate-400 truncate">Geofence Site</p>
+                <p className="font-bold text-slate-800 truncate">Peta Satelit</p>
+                <p className="text-[9.5px] text-slate-500 truncate">Geofence Site</p>
               </div>
             </button>
           </div>

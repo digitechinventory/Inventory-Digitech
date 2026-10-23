@@ -247,16 +247,16 @@ export default function InventoryLedgerPage() {
 
       {/* Bulk Action Bar (When rows are selected) */}
       {selectedIds.length > 0 && (
-        <div className="bg-slate-900 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-red-50 text-slate-800 rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-md border border-red-200 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-3">
             <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
               {selectedIds.length}
             </span>
             <div>
-              <p className="text-xs font-bold text-white">
+              <p className="text-xs font-bold text-slate-900">
                 {selectedIds.length} baris mutasi stok dipilih
               </p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500">
                 Pilih aksi massal untuk baris-baris yang telah ditandai
               </p>
             </div>
@@ -265,15 +265,15 @@ export default function InventoryLedgerPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => exportToExcel(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-semibold transition cursor-pointer border border-slate-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer border border-slate-300 shadow-xs"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
               Ekspor Terpilih
             </button>
 
             <button
               onClick={() => setSelectedIds([])}
-              className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+              className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-red-100 rounded-xl transition cursor-pointer"
             >
               Batal Pilih
             </button>
@@ -410,7 +410,7 @@ export default function InventoryLedgerPage() {
                           }}
                           className={`p-1.5 rounded-xl border transition cursor-pointer ${
                             activeMenuId === tr.id
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              ? 'bg-red-600 text-white border-red-600 shadow-sm'
                               : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                           }`}
                           title="Opsi Transaksi"

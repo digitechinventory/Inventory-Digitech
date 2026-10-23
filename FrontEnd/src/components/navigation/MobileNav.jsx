@@ -4,6 +4,7 @@ import {
   Home,
   Store,
   FileCheck2,
+  FolderGit2,
   PackagePlus,
   Wrench,
   ClipboardCheck,
@@ -41,7 +42,7 @@ export default function MobileNav() {
       return [
         { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
         { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
-        { id: 'mos', label: 'MOS', icon: FileCheck2, path: '/mos' },
+        { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
         { id: 'users', label: 'Pengguna', icon: Users, path: '/users' },
         { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
       ];
@@ -51,7 +52,7 @@ export default function MobileNav() {
       return [
         { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
         { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
-        { id: 'mos', label: 'MOS', icon: FileCheck2, path: '/mos' },
+        { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
         { id: 'opname', label: 'Opname', icon: ClipboardCheck, path: '/opname' },
         { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
       ];
@@ -61,7 +62,7 @@ export default function MobileNav() {
     return [
       { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
       { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
-      { id: 'mos', label: 'MOS', icon: FileCheck2, path: '/mos' },
+      { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
       { id: 'mr', label: 'Ambil', icon: PackagePlus, path: '/mr' },
       { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
     ];

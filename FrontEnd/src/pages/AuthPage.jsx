@@ -612,6 +612,22 @@ export default function AuthPage() {
                         <p className="text-[10px] text-red-300 leading-snug mt-1 font-medium">
                           Terlalu banyak percobaan login yang gagal. Demi keamanan aset, formulir dikunci selama 15 menit. Halaman web yang di-refresh tidak akan membatalkan hitung mundur.
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              localStorage.removeItem('digitech_auth_lockout_until');
+                              localStorage.removeItem('digitech_auth_failed_attempts');
+                            } catch {}
+                            setIsLockedOut(false);
+                            setFailedAttempts(0);
+                            setLockoutRemainingSeconds(0);
+                            setErrorMessage(null);
+                          }}
+                          className="mt-2 text-[10px] text-amber-300 hover:text-white underline font-bold cursor-pointer transition-colors"
+                        >
+                          Buka Kunci Akses Sekarang
+                        </button>
                       </div>
                     </div>
                   )}
@@ -658,6 +674,7 @@ export default function AuthPage() {
                     </div>
                   )}
 
+
                   {/* Generic Error Notification */}
                   {errorMessage && !isLockedOut && (
                     <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 animate-in fade-in duration-300">
@@ -679,7 +696,7 @@ export default function AuthPage() {
                     {/* Email Column */}
                     <div>
                       <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
-                        Alamat Email
+                        Alamat Email / Username
                       </label>
                       <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
                         isLockedOut
@@ -690,12 +707,13 @@ export default function AuthPage() {
                           isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
                         }`} />
                         <input
-                          type="email"
+                          type="text"
+                          inputMode="email"
                           required
                           disabled={loading || isLockedOut}
                           value={loginForm.email}
                           onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                          placeholder="nama@digitech.co.id"
+                          placeholder="admin@digitech.co.id atau admin"
                           className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
                         />
                       </div>
@@ -854,7 +872,7 @@ export default function AuthPage() {
                       <button
                         type="button"
                         onClick={switchToLogin}
-                        className="mt-3 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-md"
+                        className="mt-3 px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-md shadow-red-600/20"
                       >
                         Kembali ke Halaman Masuk
                       </button>

@@ -104,6 +104,54 @@ export async function getFamousItems(params = {}) {
   return res.data?.data || { items: [], pagination: {} };
 }
 
+// ==========================================
+// REAL WIM DATASET APIS
+// ==========================================
+
+export async function getWimSummary() {
+  const res = await api.get('/project-inventory/wim/summary');
+  return res.data?.data || {};
+}
+
+export async function getWimComponents(params = {}) {
+  const res = await api.get('/project-inventory/wim/components', { params });
+  return res.data?.data || { components: [], pagination: {} };
+}
+
+export async function getWimTransactions(params = {}) {
+  const res = await api.get('/project-inventory/wim/transactions', { params });
+  return res.data?.data || { transactions: [], pagination: {} };
+}
+
+export async function getWimWarranty(params = {}) {
+  const res = await api.get('/project-inventory/wim/warranty', { params });
+  return res.data?.data || { warranty_items: [], total: 0 };
+}
+
+// ==========================================
+// PROJECT 8-STAGE DOCUMENTS APIS
+// ==========================================
+
+export async function getProjectDocuments(params = {}) {
+  const res = await api.get('/project-inventory/documents', { params });
+  return res.data?.data || { documents: [], total: 0 };
+}
+
+export async function createProjectDocument(data) {
+  const res = await api.post('/project-inventory/documents', data);
+  return res.data?.data;
+}
+
+export async function uploadProjectDocumentAttachment(id, data) {
+  const res = await api.post(`/project-inventory/documents/${id}/attachment`, data);
+  return res.data?.data;
+}
+
+export async function signProjectDocument(id, data) {
+  const res = await api.post(`/project-inventory/documents/${id}/sign`, data);
+  return res.data?.data;
+}
+
 export default {
   getProjects,
   createProject,
@@ -122,6 +170,15 @@ export default {
   getProjectLogs,
   getFamousSummary,
   getFamousFleetMatrix,
-  getFamousItems
+  getFamousItems,
+  getWimSummary,
+  getWimComponents,
+  getWimTransactions,
+  getWimWarranty,
+  getProjectDocuments,
+  createProjectDocument,
+  uploadProjectDocumentAttachment,
+  signProjectDocument
 };
+
 
