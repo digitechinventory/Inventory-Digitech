@@ -24,7 +24,14 @@ import {
   Eye,
   ShieldCheck,
   X,
-  FileText
+  FileText,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Maximize2,
+  Minimize2,
+  QrCode,
+  BadgeCheck
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../api/client.js';
@@ -41,6 +48,7 @@ export default function ReportsPage() {
   const [selectedSite, setSelectedSite] = useState('ALL');
   const [activeReportTab, setActiveReportTab] = useState('summary'); // 'summary' | 'documents' | 'analytics'
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   // Fetch live ledger transactions for reports calculation
   const { data: ledgerData, isLoading } = useQuery({
@@ -117,8 +125,8 @@ export default function ReportsPage() {
   // Formal Official Documents Available for Preview & Printing
   const officialDocuments = [
     {
-      id: 'BAM-2026-10-001',
-      title: 'Berita Acara Rekonsiliasi Opname Fisik Bulanan (BAM)',
+      id: 'BA-2026-10-001',
+      title: 'Berita Acara Rekonsiliasi Opname Fisik & Audit Stok',
       type: 'Berita Acara Resmi',
       period: 'Periode Oktober 2026',
       site: 'BIB Pit Sebamban KM 24 (Base Workshop)',
@@ -212,7 +220,7 @@ export default function ReportsPage() {
             Laporan Logistik &amp; Dokumen Resmi
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Rekapitulasi berkala mutasi stok, berita acara rekonsiliasi (BAM), analitik arus material tambang, dan evaluasi buffer inventaris.
+            Rekapitulasi berkala mutasi stok, berita acara rekonsiliasi, analitik arus material tambang, dan evaluasi buffer inventaris.
           </p>
         </div>
 
@@ -230,7 +238,7 @@ export default function ReportsPage() {
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs font-bold transition shadow-xs shadow-red-900/20 cursor-pointer active:scale-95"
           >
             <Printer className="w-4 h-4" />
-            <span>Cetak Berita Acara (BAM)</span>
+            <span>Cetak Berita Acara</span>
           </button>
         </div>
       </div>
@@ -714,163 +722,365 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* ── PRINT & PREVIEW OFFICIAL DOCUMENT MODAL ── */}
+      {/* ── FULLSCREEN OFFICIAL DOCUMENT READER / PDF PREVIEW ── */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-red-600 text-white flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <FileText className="w-5 h-5 text-white" />
-                <div>
-                  <h3 className="font-bold text-sm leading-tight text-white">Pratinjau Dokumen Berita Acara Resmi</h3>
-                  <p className="text-[10px] font-mono text-red-100">{previewDoc.id}</p>
-                </div>
+        <div className="fixed inset-0 z-[9999] w-screen h-screen flex flex-col bg-slate-100 overflow-hidden animate-in fade-in duration-150">
+          {/* Top Document Reader Application Toolbar */}
+          <div className="bg-white border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-xs shrink-0 z-20">
+            {/* Left: Document Info */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center justify-center shrink-0">
+                <FileCheck2 className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExecuteBrowserPrint}
-                  className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-700 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Cetak / PDF</span>
-                </button>
-                <button
-                  onClick={() => setPreviewDoc(null)}
-                  className="w-8 h-8 rounded-full bg-red-700 hover:bg-red-800 text-white flex items-center justify-center cursor-pointer transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-sm text-slate-900 truncate">
+                    {previewDoc.title}
+                  </h3>
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[10px] font-bold">
+                    DIGITECH VERIFIED
+                  </span>
+                </div>
+                <p className="text-[11px] font-mono text-slate-500 truncate">
+                  Nomor: <span className="font-bold text-red-700">{previewDoc.id}</span> • {previewDoc.site}
+                </p>
               </div>
             </div>
 
-            {/* Document Body (Printable Paper Style) */}
-            <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-slate-900 print:p-0">
-              {/* Formal Letterhead */}
-              <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between">
-                <div>
-                  <div className="text-lg font-black tracking-tight text-slate-900">
-                    PT DIGITECH INVENTORY SYSTEMS
+            {/* Center: Reader Viewport Controls */}
+            <div className="hidden md:flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setZoomLevel(prev => Math.max(prev - 15, 60))}
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                title="Perkecil (-)"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setZoomLevel(100)}
+                className="font-mono font-bold text-slate-800 text-xs px-2 py-0.5 rounded hover:bg-slate-200 min-w-[50px] text-center cursor-pointer"
+                title="Klik untuk reset 100%"
+              >
+                {zoomLevel}%
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setZoomLevel(prev => Math.min(prev + 15, 200))}
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                title="Perbesar (+)"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+
+              <span className="text-[11px] font-mono text-slate-500 px-1">
+                Hal 1 / 1
+              </span>
+            </div>
+
+            {/* Right: Actions (Print, Download, Close) */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExecuteBrowserPrint}
+                className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                title="Cetak Berkas / Simpan ke PDF"
+              >
+                <Printer className="w-4 h-4" />
+                <span className="hidden sm:inline">Cetak Dokumen</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExecuteBrowserPrint}
+                className="p-2 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                title="Unduh Salinan PDF"
+              >
+                <Download className="w-4 h-4 text-slate-600" />
+                <span className="hidden sm:inline">Unduh PDF</span>
+              </button>
+
+              <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
+
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                title="Tutup Penampil Dokumen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Reader Document Canvas Workspace (Clean Slate-100, No Black Colors) */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center items-start bg-slate-100">
+            {/* The Authentic A4 Paper Sheet */}
+            <div
+              style={{
+                transform: `scale(${zoomLevel / 100})`,
+                transformOrigin: 'top center'
+              }}
+              className="w-full max-w-4xl bg-white rounded-xs shadow-2xl shadow-slate-300/80 border border-slate-300/80 p-8 sm:p-14 space-y-6 text-slate-800 transition-transform duration-100 my-4 select-text print:m-0 print:p-0 print:border-none print:shadow-none"
+            >
+              {/* 1. Official Corporate Letterhead (KOP SURAT RESMI DIGITECH) */}
+              <div className="border-b-2 border-red-700 pb-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 flex items-center justify-center text-white font-black text-2xl shadow-md shrink-0">
+                      D
+                    </div>
+                    <div>
+                      <h1 className="text-2xl sm:text-3xl font-black text-red-700 tracking-wider">
+                        DIGITECH
+                      </h1>
+                      <div className="text-[11px] font-bold text-slate-800 tracking-wide uppercase mt-0.5">
+                        Divisi Sistem Logistik, Telematika &amp; Otomasi Operasional Tambang
+                      </div>
+                      <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                        Site Operasional Pit Sebamban KM-24 &amp; KM-14 • Area Konsesi Batulicin, Kalimantan Selatan (WITA)
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs font-semibold text-slate-600">
-                    DEPARTEMEN LOGISTIK &amp; MATERIAL MANAGEMENT — SITE OPERASIONAL BIB
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Jl. Kodeco KM 24, Area Konsesi Batulicin, Tanah Bumbu, Kalimantan Selatan (WITA)
+
+                  <div className="text-right hidden sm:block shrink-0">
+                    <div className="text-[10px] font-mono text-slate-400">DIGITECH</div>
+                    <div className="text-xs font-mono font-bold text-slate-800">ISO 9001:2015 AUDITED</div>
+                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[9px] font-black">
+                      BERKAS OTORISASI SAH
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="inline-block px-2.5 py-1 bg-red-50 border border-red-300 text-red-700 font-mono text-xs font-black rounded">
-                    DOKUMEN RESMI
-                  </span>
-                  <div className="text-[10px] font-mono text-slate-400 mt-1">
-                    ISO-9001:2026 AUDITED
-                  </div>
+
+                {/* Double Official Line */}
+                <div className="mt-3 border-t-2 border-red-700 pt-0.5">
+                  <div className="border-t border-red-400" />
                 </div>
               </div>
 
-              {/* Document Title Header */}
-              <div className="text-center py-2">
-                <h2 className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900">
+              {/* 2. Judul & Nomor Registrasi Dokumen Berita Acara */}
+              <div className="text-center space-y-1.5 py-1">
+                <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase tracking-widest">
+                  DOKUMEN RESMI BERITA ACARA
+                </span>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-wide mt-2">
                   {previewDoc.title}
                 </h2>
-                <p className="text-xs font-mono text-slate-600 mt-0.5">
-                  Nomor Registrasi: <span className="font-bold text-red-700">{previewDoc.id}</span>
-                </p>
-              </div>
-
-              {/* Meta Details Table */}
-              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div>
-                  <span className="text-slate-500 font-medium">Fasilitas / Site:</span>
-                  <p className="font-bold text-slate-900">{previewDoc.site}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500 font-medium">Periode Audit:</span>
-                  <p className="font-bold text-slate-900">{previewDoc.period}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500 font-medium">Klasifikasi Dokumen:</span>
-                  <p className="font-bold text-slate-900">{previewDoc.type}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500 font-medium">Status Validasi:</span>
-                  <p className="font-bold text-emerald-700">{previewDoc.status}</p>
+                <div className="font-mono text-xs font-bold text-slate-700">
+                  Nomor Registrasi: <span className="text-red-700 font-black">{previewDoc.id}</span>
                 </div>
               </div>
 
-              {/* Content Description */}
-              <div className="space-y-2 text-xs leading-relaxed text-slate-700">
-                <p className="font-bold text-slate-900">Ringkasan Eksekutif &amp; Temuan:</p>
-                <p className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                  {previewDoc.summary}
-                </p>
+              {/* 3. Formal Legal Preamble (Kalimat Pembuka Resmi) */}
+              <div className="text-xs leading-relaxed text-slate-700 text-justify">
+                Pada hari ini, <strong className="text-slate-900">Kamis tanggal Dua Puluh Tiga bulan Oktober tahun Dua Ribu Dua Puluh Enam (23-10-2026)</strong>, telah dilaksanakan kegiatan pemeriksaan fisik material, rekonsiliasi data mutasi keluar-masuk, serta audit kesesuaian saldo inventaris sistem terintegrasi <strong className="text-red-700 font-black">DIGITECH</strong> dengan kondisi aktual di lapangan, bertempat di:
               </div>
 
-              {/* Sample Table in Document */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-100 font-mono text-[10px] uppercase text-slate-600 border-b border-slate-200">
-                    <tr>
-                      <th className="p-2.5">No</th>
-                      <th className="p-2.5">Item Suku Cadang</th>
-                      <th className="p-2.5">Part Number</th>
-                      <th className="p-2.5 text-center">Fisik</th>
-                      <th className="p-2.5 text-center">Sistem</th>
-                      <th className="p-2.5 text-center">Selisih</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
-                    <tr>
-                      <td className="p-2.5">01</td>
-                      <td className="p-2.5 font-sans font-bold">Cat 777D Engine Oil Filter</td>
-                      <td className="p-2.5 text-slate-500">BIB-CAT-777D-FLTR</td>
-                      <td className="p-2.5 text-center font-bold">24 PCS</td>
-                      <td className="p-2.5 text-center">24 PCS</td>
-                      <td className="p-2.5 text-center text-emerald-600 font-bold">0</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5">02</td>
-                      <td className="p-2.5 font-sans font-bold">Komatsu PC2000 Seal Kit</td>
-                      <td className="p-2.5 text-slate-500">BIB-KOM-PC2000-HYD</td>
-                      <td className="p-2.5 text-center font-bold">18 SET</td>
-                      <td className="p-2.5 text-center">18 SET</td>
-                      <td className="p-2.5 text-center text-emerald-600 font-bold">0</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5">03</td>
-                      <td className="p-2.5 font-sans font-bold">Shell Tellus S2 V 68 Drum</td>
-                      <td className="p-2.5 text-slate-500">BIB-LUB-SHL-T68</td>
-                      <td className="p-2.5 text-center font-bold">6 DRUM</td>
-                      <td className="p-2.5 text-center">6 DRUM</td>
-                      <td className="p-2.5 text-center text-emerald-600 font-bold">0</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Official 3-Slot Signature Block */}
-              <div className="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 text-center text-xs">
+              {/* 4. Parameter & Identitas Audit (Grid Resmi) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/90 p-4 rounded-xl border border-slate-200 text-xs font-mono">
                 <div>
-                  <p className="text-slate-500 text-[11px] mb-8">Dibuat Oleh (Staff Gudang):</p>
-                  <p className="font-bold text-slate-900 border-b border-slate-300 pb-1">
-                    {user?.full_name || 'Arya Staff'}
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-medium">Fasilitas / Lokasi</span>
+                  <span className="font-bold text-slate-900">{previewDoc.site}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-medium">Periode Audit</span>
+                  <span className="font-bold text-slate-900">{previewDoc.period}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-medium">Klasifikasi</span>
+                  <span className="font-bold text-red-700">{previewDoc.type}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-medium">Validasi Sistem</span>
+                  <span className="font-bold text-emerald-700 flex items-center gap-1">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    Terverifikasi
+                  </span>
+                </div>
+              </div>
+
+              {/* 5. Tabel Hasil Uji Petik Fisik & Rekonsiliasi Material */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-black text-slate-900 uppercase font-mono tracking-wider">
+                    Daftar Uji Petik Fisik &amp; Rekonsiliasi Material (Sample Audit):
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">Akurasi: 98.6%</span>
+                </div>
+
+                <div className="border border-slate-300 rounded-xl overflow-hidden text-xs">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-100/90 font-mono text-[10px] uppercase text-slate-700 border-b border-slate-300">
+                      <tr>
+                        <th className="p-3 w-10 text-center">No</th>
+                        <th className="p-3">Nama Material / Komponen</th>
+                        <th className="p-3">Part Number / SN</th>
+                        <th className="p-3 text-center">Lokasi Rak</th>
+                        <th className="p-3 text-center">Fisik</th>
+                        <th className="p-3 text-center">Sistem</th>
+                        <th className="p-3 text-center">Selisih</th>
+                        <th className="p-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 font-mono text-[11px]">
+                      <tr>
+                        <td className="p-3 text-center font-bold text-slate-500">01</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">Cat 777D Engine Oil Filter</td>
+                        <td className="p-3 text-slate-600">BIB-CAT-777D-FLTR</td>
+                        <td className="p-3 text-center text-slate-600">R-A01</td>
+                        <td className="p-3 text-center font-black text-slate-900">24 PCS</td>
+                        <td className="p-3 text-center text-slate-700">24 PCS</td>
+                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-center font-bold text-slate-500">02</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">Komatsu PC2000 Seal Kit</td>
+                        <td className="p-3 text-slate-600">BIB-KOM-PC2000-HYD</td>
+                        <td className="p-3 text-center text-slate-600">R-A02</td>
+                        <td className="p-3 text-center font-black text-slate-900">18 SET</td>
+                        <td className="p-3 text-center text-slate-700">18 SET</td>
+                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-center font-bold text-slate-500">03</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">Shell Tellus S2 V 68 Drum</td>
+                        <td className="p-3 text-slate-600">BIB-LUB-SHL-T68</td>
+                        <td className="p-3 text-center text-slate-600">R-C01</td>
+                        <td className="p-3 text-center font-black text-slate-900">6 DRUM</td>
+                        <td className="p-3 text-center text-slate-700">6 DRUM</td>
+                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-center font-bold text-slate-500">04</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">Intercomp Load Cell 50T Platform</td>
+                        <td className="p-3 text-slate-600">SN-92309683</td>
+                        <td className="p-3 text-center text-slate-600">WIM-L1</td>
+                        <td className="p-3 text-center font-black text-slate-900">4 UNIT</td>
+                        <td className="p-3 text-center text-slate-700">4 UNIT</td>
+                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-center font-bold text-slate-500">05</td>
+                        <td className="p-3 font-sans font-bold text-slate-900">MDVR AI 4-Channel Telematics</td>
+                        <td className="p-3 text-slate-600">SN-MDVR-88129</td>
+                        <td className="p-3 text-center text-slate-600">R-D02</td>
+                        <td className="p-3 text-center font-black text-slate-900">12 UNIT</td>
+                        <td className="p-3 text-center text-slate-700">12 UNIT</td>
+                        <td className="p-3 text-center font-bold text-emerald-700">0</td>
+                        <td className="p-3 text-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">Cocok</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot className="bg-slate-50 border-t border-slate-300 font-mono text-[10px] text-slate-700">
+                      <tr>
+                        <td colSpan={4} className="p-3 font-bold">TOTAL ITEM AUDIT SAMPEL RESMI: 5 KELOMPOK UTAMA</td>
+                        <td colSpan={4} className="p-3 text-right font-bold text-emerald-700">TINGKAT KESESUAIAN AUDIT: 100.0% PADA SAMPEL TERPILIH</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              {/* 6. Ringkasan Eksekutif & Temuan Resmi */}
+              <div className="space-y-2">
+                <span className="font-black text-xs text-slate-900 uppercase font-mono tracking-wider">
+                  Ringkasan Hasil Evaluasi &amp; Catatan Auditor:
+                </span>
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-1.5">
+                  <p>
+                    {previewDoc.summary}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">Logistics Officer</p>
-                </div>
-                <div>
-                  <p className="text-slate-500 text-[11px] mb-8">Diperiksa (Supervisor Logistik):</p>
-                  <p className="font-bold text-slate-900 border-b border-slate-300 pb-1">
-                    Surya Hendrawan, S.T.
+                  <p className="text-[11px] text-slate-500">
+                    Semua transaksi pengeluaran material (MR) dan penerimaan on site (MOS) telah terverifikasi secara digital pada sistem audit trail DIGITECH dengan pencatatan nomor PO dan Berita Acara yang valid.
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">Warehouse Supervisor</p>
                 </div>
+              </div>
+
+              {/* 7. Legal Closing Clause (Klausul Penutup Resmi) */}
+              <div className="text-xs leading-relaxed text-slate-700 text-justify pt-1">
+                Demikian Berita Acara ini dibuat dengan sebenarnya dan disahkan oleh pihak-pihak yang berwenang di lingkungan kerja <strong className="text-slate-900 font-black">DIGITECH</strong> untuk dipergunakan sebagaimana mestinya dan memiliki kekuatan pembuktian audit yang sah.
+              </div>
+
+              {/* 8. Tiga Otorisasi Tanda Tangan Resmi dengan Stempel Digital */}
+              <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs">
+                {/* Otorisator 1 */}
+                <div className="space-y-2">
+                  <p className="text-slate-500 text-[11px] font-medium">Dibuat Oleh (Pelaksana Audit):</p>
+                  <div className="h-16 flex items-center justify-center relative">
+                    {/* Official Verified Stamp Graphic */}
+                    <div className="border-2 border-emerald-600 rounded-lg px-3 py-1 rotate-[-4deg] text-emerald-700 bg-emerald-50/70 shadow-2xs">
+                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH VERIFIED</div>
+                      <div className="text-[7px] font-mono">SITE BIB SEBAMBAN</div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
+                      {user?.full_name || 'arya-superadmin'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Staff Logistik &amp; Material Controller</p>
+                  </div>
+                </div>
+
+                {/* Otorisator 2 */}
+                <div className="space-y-2">
+                  <p className="text-slate-500 text-[11px] font-medium">Diperiksa Oleh (Supervisor):</p>
+                  <div className="h-16 flex items-center justify-center relative">
+                    <div className="border-2 border-emerald-600 rounded-lg px-3 py-1 rotate-[3deg] text-emerald-700 bg-emerald-50/70 shadow-2xs">
+                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH APPROVED</div>
+                      <div className="text-[7px] font-mono">WAREHOUSE SUPERVISOR</div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
+                      Surya Hendrawan, S.T.
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Supervisor Logistik &amp; Workshop</p>
+                  </div>
+                </div>
+
+                {/* Otorisator 3 */}
+                <div className="space-y-2">
+                  <p className="text-slate-500 text-[11px] font-medium">Disetujui Oleh (Kepala Operasi):</p>
+                  <div className="h-16 flex items-center justify-center relative">
+                    <div className="border-2 border-red-700 rounded-lg px-3 py-1 rotate-[-2deg] text-red-700 bg-red-50/70 shadow-2xs">
+                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH MANAGEMENT</div>
+                      <div className="text-[7px] font-mono">HEAD OF SITE OPERATIONS</div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
+                      Ir. Bambang Prakoso
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Head of Mining Site Operations</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 9. Official A4 Paper Footer */}
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] font-mono text-slate-400 gap-2">
                 <div>
-                  <p className="text-slate-500 text-[11px] mb-8">Disetujui (Kepala Operasional):</p>
-                  <p className="font-bold text-slate-900 border-b border-slate-300 pb-1">
-                    Ir. Bambang Prakoso
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">Head of Site Operations</p>
+                  Dokumen Resmi Sistem Terintegrasi <strong className="text-slate-700">DIGITECH</strong>
+                </div>
+                <div className="text-center sm:text-right">
+                  Halaman 1 dari 1 • Kriptografi SHA-256 Integritas Data
                 </div>
               </div>
             </div>

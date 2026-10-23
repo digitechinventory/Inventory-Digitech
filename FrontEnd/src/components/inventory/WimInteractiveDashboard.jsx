@@ -1092,7 +1092,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
 
       {/* ── Modal Detail Komponen WIM & Tracking Histori ── */}
       {selectedItemDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">

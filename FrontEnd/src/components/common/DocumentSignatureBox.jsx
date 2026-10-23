@@ -386,7 +386,7 @@ export default function DocumentSignatureBox({
 
       {/* ── 4. Drawing Canvas Modal (if user clicks 'Gores TTD') ── */}
       {isDrawingOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-5 max-w-md w-full shadow-2xl border border-red-100 animate-in zoom-in-95 duration-200">
             <SignatureCanvas
               title={`Paraf Langsung: ${roleTitle}`}

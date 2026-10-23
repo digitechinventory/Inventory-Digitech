@@ -651,7 +651,7 @@ export default function PrinterSetupModal({ isOpen, onClose }) {
                 <div className="w-[320px] bg-white rounded-xl shadow-2xl border-2 border-slate-900 p-3 flex flex-col justify-between font-mono relative overflow-hidden select-none aspect-[5/3] text-black">
                   {/* Top Bar Brand */}
                   <div className="flex items-center justify-between border-b border-black pb-1">
-                    <span className="text-[10px] font-black tracking-wider uppercase">DIGITECH INVENTORY</span>
+                    <span className="text-[10px] font-black tracking-wider uppercase">DIGITECH</span>
                     <span className="text-[8px] font-bold border border-black px-1 rounded">CALIBRATION</span>
                   </div>
 

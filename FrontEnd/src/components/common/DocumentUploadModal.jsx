@@ -543,7 +543,7 @@ export default function DocumentUploadModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/80 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-700/30 backdrop-blur-sm animate-fadeIn overflow-y-auto">
       {/* ── EXPANDED WIDE MODAL CONTAINER (Up to 1540px / 98vw for desktop ERP experience) ── */}
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-[98vw] max-w-[1540px] overflow-hidden flex flex-col max-h-[96vh] my-auto">
         

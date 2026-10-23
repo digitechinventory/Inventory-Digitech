@@ -366,7 +366,7 @@ export default function DirectDocumentSheet({
         {/* ── 6. Official Footer Legal Note ── */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400 font-mono">
           <div>
-            Digitech IMS v1.0 &bull; Dokumen Elektronik Sah Berdasarkan UU ITE No. 11/2008
+            DIGITECH &bull; Dokumen Elektronik Sah Berdasarkan UU ITE No. 11/2008
           </div>
           <div>
             Sertifikasi SHA-256 Validated

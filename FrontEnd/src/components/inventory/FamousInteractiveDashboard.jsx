@@ -418,9 +418,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
       </div>
 
       {/* ── Banner Pusat Dokumen Resmi & Pengajuan (Alur 8-Tahap) ── */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white rounded-3xl p-4 sm:p-5 shadow-sm border border-red-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-red-600/30 border border-red-500/40 text-red-300 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 text-white flex items-center justify-center shrink-0">
             <FileCheck2 className="w-6 h-6 text-red-400" />
           </div>
           <div>
@@ -970,7 +970,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
 
       {/* ── Modal Detail Sensor Truk ── */}
       {selectedUnitDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
@@ -1035,7 +1035,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
 
       {/* ── Modal Detail Komponen Hardware & Tracking Mutasi ── */}
       {selectedAssetDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">

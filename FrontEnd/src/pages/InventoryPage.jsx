@@ -996,7 +996,7 @@ export default function InventoryPage() {
       {/* ── 7. ADD ITEM MODAL (Admin Only) ── */}
       {showAddModal && (
         <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
+          className="fixed inset-0 bg-slate-700/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
           onClick={() => setShowAddModal(false)}
         >
           <div
@@ -1105,7 +1105,7 @@ export default function InventoryPage() {
 
       {/* MODAL: EDIT DATA SUKU CADANG */}
       {editCatalogItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-700/30 backdrop-blur-sm animate-in fade-in duration-150">
           <div
             className="bg-white w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
             style={{
@@ -1250,7 +1250,7 @@ export default function InventoryPage() {
 
       {/* MODAL: KONFIRMASI HAPUS DARI KATALOG */}
       {catalogDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-700/30 backdrop-blur-sm animate-in fade-in duration-150">
           <div
             className="bg-white w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 text-center"
             style={{

@@ -233,7 +233,7 @@ export default function FullDocumentPreviewModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-700/30 backdrop-blur-sm animate-fade-in overflow-y-auto">
       <div
         ref={modalContainerRef}
         className={`bg-white rounded-3xl w-full max-w-6xl shadow-2xl border border-slate-200 flex flex-col transition-all overflow-hidden my-auto ${
@@ -435,7 +435,7 @@ export default function FullDocumentPreviewModal({
           {viewMode === 'sheet' && (
             <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-slate-200/90 p-8 sm:p-12 space-y-6 text-slate-800">
               
-              {/* Corporate Kop Surat PT Digitech Kharisma Indonesia */}
+              {/* Corporate Kop Surat Resmi DIGITECH */}
               <div className="border-b-2 border-red-700 pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -443,11 +443,11 @@ export default function FullDocumentPreviewModal({
                       D
                     </div>
                     <div>
-                      <h1 className="text-lg sm:text-xl font-black text-red-700 tracking-tight">
-                        PT DIGITECH KHARISMA INDONESIA
+                      <h1 className="text-xl sm:text-2xl font-black text-red-700 tracking-wider">
+                        DIGITECH
                       </h1>
-                      <div className="text-[11px] font-bold text-slate-700 tracking-wide">
-                        MINING AUTOMATION, WEIGH-IN-MOTION &amp; TELEMATICS DIVISION
+                      <div className="text-[11px] font-bold text-slate-700 tracking-wide uppercase">
+                        Mining Automation, Weigh-In-Motion &amp; Telematics Division
                       </div>
                       <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
                         Operational Site: KM 14 Pit Sebamban • Head Office: Jakarta Selatan, Indonesia
@@ -456,7 +456,7 @@ export default function FullDocumentPreviewModal({
                   </div>
 
                   <div className="text-right hidden sm:block">
-                    <div className="text-[10px] font-mono text-slate-400">DIGITECH IMS CERTIFIED</div>
+                    <div className="text-[10px] font-mono text-slate-400">DIGITECH</div>
                     <div className="text-xs font-mono font-bold text-slate-800">ISO 9001:2015 Compliant</div>
                     <div className="text-[10px] font-mono text-emerald-700 font-bold">DIGITAL AUDIT SYSTEM</div>
                   </div>
@@ -755,7 +755,7 @@ export default function FullDocumentPreviewModal({
       {/* POPUP MODAL: TANDA TANGAN DIGITAL                          */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {isSignModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-60 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">

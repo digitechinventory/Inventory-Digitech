@@ -167,7 +167,7 @@ export default function IronNestSidebar({
           id: 'grp-audit',
           title: 'Audit & Rekonsiliasi',
           items: [
-            { id: 'reports', label: 'Laporan & BAM', icon: FileSpreadsheet, path: '/reports' },
+            { id: 'reports', label: 'Laporan', icon: FileSpreadsheet, path: '/reports' },
             { id: 'finance', label: 'Audit Mutasi', icon: History, path: '/ledger' },
             { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda', badge: 'Live' },
           ]

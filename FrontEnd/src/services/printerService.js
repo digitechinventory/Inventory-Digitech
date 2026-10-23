@@ -140,7 +140,7 @@ export function generateTSPL(labelData, config = {}) {
     `REFERENCE 0,0`,
     `CLS`,
     // Header brand
-    `TEXT 20,15,"2",0,1,1,"DIGITECH INVENTORY"`,
+    `TEXT 20,15,"2",0,1,1,"DIGITECH"`,
     `TEXT 20,38,"1",0,1,1,"${name}"`,
     // QR Code: X, Y, ECC, cell_width, mode, rotation, "content"
     `QRCODE 20,65,M,4,A,0,"${qrPayload}"`,
@@ -171,7 +171,7 @@ export function generateZPL(labelData, config = {}) {
     `^XA`,
     `^PW400`,
     `^LL240`,
-    `^FO20,15^A0N,20,20^FD* DIGITECH INVENTORY *^FS`,
+    `^FO20,15^A0N,20,20^FD* DIGITECH *^FS`,
     `^FO20,40^A0N,18,18^FD${name}^FS`,
     `^FO20,70^BQN,2,4^FDMM,A${qrPayload}^FS`,
     `^FO150,70^A0N,20,20^FDSKU: ${sku}^FS`,
@@ -371,7 +371,7 @@ export function printViaBrowserDialog(labelData, config = {}, count = 1) {
       <div class="label-page">
         <div class="label-container">
           <div class="label-header">
-            <span class="brand">DIGITECH INVENTORY</span>
+            <span class="brand">DIGITECH</span>
             <span class="badge">ORIGINAL ASSET</span>
           </div>
           <div class="item-title">${name}</div>

@@ -205,7 +205,7 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
           
           {/* 1. Camera / Viewfinder Box */}
-          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 border-2 border-slate-800 shadow-inner flex items-center justify-center">
+          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-800 border-2 border-slate-700 shadow-inner flex items-center justify-center">
             
             {/* Real Video Element if camera active */}
             {cameraActive ? (
@@ -218,7 +218,7 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
               />
             ) : (
               /* Simulated High-Tech Viewfinder when camera is unavailable (desktop / test mode) */
-              <div className="w-full h-full bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 flex flex-col items-center justify-center p-6 text-center select-none">
+              <div className="w-full h-full bg-gradient-to-b from-slate-800 via-slate-700 to-slate-800 flex flex-col items-center justify-center p-6 text-center select-none">
                 <div className="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-3 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                   <Camera className="w-8 h-8" />
                 </div>

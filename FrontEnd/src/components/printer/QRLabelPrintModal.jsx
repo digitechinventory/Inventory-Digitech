@@ -93,9 +93,9 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
       <div className="w-full max-w-xl bg-white overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 font-sans" style={{ clipPath: "polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
         
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-slate-900 via-slate-800 to-red-950 text-white flex items-center justify-between border-b border-red-900/40">
+        <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white flex items-center justify-between border-b border-red-500/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-red-400">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center text-white">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
@@ -150,7 +150,7 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
           <div className="flex flex-col items-center">
             <div className="w-[300px] bg-white rounded-xl shadow-xl border-2 border-slate-900 p-3 flex flex-col justify-between font-mono aspect-[5/3] text-black select-none">
               <div className="flex items-center justify-between border-b border-black pb-1">
-                <span className="text-[9.5px] font-black uppercase tracking-wider">DIGITECH INVENTORY</span>
+                <span className="text-[9.5px] font-black uppercase tracking-wider">DIGITECH</span>
                 <span className="text-[7.5px] font-bold border border-black px-1 rounded uppercase">{category}</span>
               </div>
 
