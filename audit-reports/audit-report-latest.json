@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-10-25T03:48:29.864Z",
+  "timestamp": "2026-10-25T04:33:09.200Z",
   "environment": "development",
   "platform": "DIGITECH Inventory Management System (IMS)",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "summary": {
-    "totalChecks": 24,
-    "passed": 24,
+    "totalChecks": 47,
+    "passed": 47,
     "failed": 0,
     "warnings": 0,
     "scorePercentage": 100
@@ -13,85 +13,71 @@
   "categories": {
     "systemHealth": [
       {
-        "name": "Environment Configuration",
+        "name": "Backend API Gateway & Express Server",
         "status": "PASS",
-        "details": ".env configuration file present.",
+        "details": "Server aktif dan merespon pada port 3001.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:29.866Z"
+        "timestamp": "2026-10-25T04:33:09.235Z"
       },
       {
-        "name": "Backend API Health Endpoint",
+        "name": "HTTP Security Headers & CORS",
         "status": "PASS",
-        "details": "Backend aktif di http://127.0.0.1:3001 (200 OK, status: ok).",
+        "details": "Headers Content-Type, CORS, dan Security Policies aktif.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:29.896Z"
+        "timestamp": "2026-10-25T04:33:09.240Z"
       },
       {
-        "name": "Security HTTP Headers (Helmet)",
+        "name": "Cloud Database Connection Service (Supabase)",
         "status": "PASS",
-        "details": "Security headers (Helmet, XSS Guard, CSP) aktif pada response API.",
+        "details": "Koneksi Supabase DB terkonfigurasi dengan service role & pooling.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:29.896Z"
+        "timestamp": "2026-10-25T04:33:09.240Z"
       }
     ],
     "loginRules": [
       {
-        "name": "Malformed Email Rejection",
+        "name": "Validation of Empty Login Credentials",
         "status": "PASS",
-        "details": "Format email tidak valid ditolak dengan HTTP 401.",
+        "details": "POST /api/auth/login dengan body kosong ditolak dengan status 400 Bad Request.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.596Z"
+        "timestamp": "2026-10-25T04:33:09.260Z"
       },
       {
-        "name": "Empty Credentials Rejection",
+        "name": "Format & Schema Sanitization for Email",
         "status": "PASS",
-        "details": "Kredensial kosong ditolak dengan HTTP 400.",
+        "details": "Format email tidak valid dicegat oleh sanitasi input backend.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.614Z"
+        "timestamp": "2026-10-25T04:33:09.616Z"
       },
       {
-        "name": "Unauthorized Credentials Rejection",
+        "name": "Brute-Force Detection & Attempt Tracking",
         "status": "PASS",
-        "details": "Kredensial salah ditolak aman dengan status HTTP 401.",
+        "details": "Percobaan gagal dicatat: 4 sisa kesempatan.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.826Z"
-      },
-      {
-        "name": "MFA Interception Rule",
-        "status": "PASS",
-        "details": "Login endpoint mengembalikan mfaRequired: true dan mfaPendingToken (5m TTL) jika akun memiliki 2FA aktif.",
-        "critical": true,
-        "timestamp": "2026-10-25T03:48:30.826Z"
+        "timestamp": "2026-10-25T04:33:09.745Z"
       }
     ],
     "mfaGoogleAuth": [
       {
-        "name": "2FA Verification API Endpoint",
+        "name": "Standard RFC 6238 TOTP Engine",
         "status": "PASS",
-        "details": "POST /api/auth/verify-2fa aktif dan memvalidasi token pending & 6-digit PIN (HTTP 401).",
+        "details": "Engine TOTP mandiri mendukung Secret Base32, verifikasi 6-digit dengan drift window, dan 8 backup codes.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.829Z"
+        "timestamp": "2026-10-25T04:33:09.745Z"
       },
       {
-        "name": "Resend Email OTP API Endpoint",
+        "name": "MFA Challenge Verification Gate (/api/auth/verify-2fa)",
         "status": "PASS",
-        "details": "POST /api/auth/resend-email-otp aktif terhubung ke Gmail SMTP (HTTP 401).",
+        "details": "Endpoint menolak token verifikasi palsu/kedaluwarsa.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.844Z"
+        "timestamp": "2026-10-25T04:33:09.754Z"
       },
       {
-        "name": "RFC 6238 TOTP Engine & Backup Codes",
+        "name": "Email OTP Dispatcher & Cooldown",
         "status": "PASS",
-        "details": "Algoritma HMAC-SHA1 30 detik, Base32 secret 160-bit, dan 8 backup recovery codes terverifikasi.",
+        "details": "Resend OTP via Gmail SMTP dilindungi validasi challenge token.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.844Z"
-      },
-      {
-        "name": "Email OTP Delivery Service",
-        "status": "PASS",
-        "details": "Service sendTwoFactorOtpEmail terkonfigurasi dengan template resmi DIGITECH dan masa berlaku 5 menit.",
-        "critical": true,
-        "timestamp": "2026-10-25T03:48:30.845Z"
+        "timestamp": "2026-10-25T04:33:09.769Z"
       }
     ],
     "profileSecurity": [
@@ -100,21 +86,21 @@
         "status": "PASS",
         "details": "GET /api/users/me memblokir akses tanpa token (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.859Z"
+        "timestamp": "2026-10-25T04:33:09.784Z"
       },
       {
         "name": "MFA Status Route Protection",
         "status": "PASS",
         "details": "GET /api/users/mfa/status diproteksi ketat dengan requireAuth (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.875Z"
+        "timestamp": "2026-10-25T04:33:09.800Z"
       },
       {
         "name": "Frontend Account Settings MFA UI",
         "status": "PASS",
         "details": "Live scannable QR Code, backup codes card, copy secret, dan styling bebas aksen merah.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.876Z"
+        "timestamp": "2026-10-25T04:33:09.801Z"
       }
     ],
     "rbacAndDataProtection": [
@@ -123,35 +109,35 @@
         "status": "PASS",
         "details": "GET /api/inventory/ledger memblokir akses tanpa autentikasi (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.878Z"
+        "timestamp": "2026-10-25T04:33:09.815Z"
       },
       {
         "name": "User Management Store Route Protection",
         "status": "PASS",
         "details": "GET /api/users memblokir akses tanpa autentikasi (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.889Z"
+        "timestamp": "2026-10-25T04:33:09.816Z"
       },
       {
         "name": "Project Document Sign & Create Route Protection",
         "status": "PASS",
         "details": "POST /api/project-inventory/documents memblokir akses tanpa autentikasi (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.904Z"
+        "timestamp": "2026-10-25T04:33:09.831Z"
       },
       {
         "name": "Project Registration Gate Route Protection",
         "status": "PASS",
         "details": "POST /api/project-inventory/projects memblokir akses tanpa autentikasi (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.920Z"
+        "timestamp": "2026-10-25T04:33:09.846Z"
       },
       {
         "name": "Stock Opname Execution Route Protection",
         "status": "PASS",
         "details": "POST /api/opname/start memblokir akses tanpa autentikasi (401 Unauthorized).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.935Z"
+        "timestamp": "2026-10-25T04:33:09.861Z"
       }
     ],
     "featureIntegrity": [
@@ -160,28 +146,217 @@
         "status": "PASS",
         "details": "Modul backend/services/supabase.js terpasang dan melayani database cloud.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.936Z"
+        "timestamp": "2026-10-25T04:33:09.862Z"
       },
       {
         "name": "Redis Caching & Session Store Layer",
         "status": "PASS",
         "details": "Modul backend/services/redis.js terpasang untuk cache dan distributed locks.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.936Z"
+        "timestamp": "2026-10-25T04:33:09.862Z"
       },
       {
         "name": "Offline Resilience & Local DB Fallback",
         "status": "PASS",
         "details": "Modul backend/services/localDb.js aktif untuk offline resilience di site tambang.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.936Z"
+        "timestamp": "2026-10-25T04:33:09.862Z"
       },
       {
         "name": "Official PDF Document Generator Service",
         "status": "PASS",
         "details": "Modul backend/services/pdfService.js aktif untuk penerbitan berita acara & label.",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.936Z"
+        "timestamp": "2026-10-25T04:33:09.862Z"
+      }
+    ],
+    "projectInventory": [
+      {
+        "name": "Project Registry (FAMOUS & WIM)",
+        "status": "PASS",
+        "details": "Proyek aktif terdaftar: 3 proyek operasional.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.274Z"
+      },
+      {
+        "name": "FAMOUS Dataset Integrity (9,415 Items)",
+        "status": "PASS",
+        "details": "Dataset FAMOUS valid dengan 9.415 komponen aset tambang.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.334Z"
+      },
+      {
+        "name": "FAMOUS Fleet Matrix & Status Monitoring",
+        "status": "PASS",
+        "details": "Monitoring armada aktif: 10 unit truk dengan evaluasi status unit.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.390Z"
+      },
+      {
+        "name": "WIM Weight-In-Motion Sensor Components",
+        "status": "PASS",
+        "details": "Monitoring WIM aktif: 189 sensor & komponen dengan garansi tercatat.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.449Z"
+      },
+      {
+        "name": "Official 8-Stage Document Verification",
+        "status": "PASS",
+        "details": "16 dokumen alur 8-tahap (BAST, Pemasangan, Kalibrasi, PAC/FAC) tervalidasi.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.498Z"
+      },
+      {
+        "name": "Damage Report Payload Validation",
+        "status": "PASS",
+        "details": "Laporan kerusakan tanpa catatan dan klasifikasi dicegat dengan status 400.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.555Z"
+      }
+    ],
+    "mosWorkflow": [
+      {
+        "name": "MOS Auto-Number Sequence Generator",
+        "status": "PASS",
+        "details": "Penomoran dokumen otomatis aktif: format 008/VGT/MOS/MNTOA/BIBOA/X/2026.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.561Z"
+      },
+      {
+        "name": "Standard Site Document Templates",
+        "status": "PASS",
+        "details": "Template dokumen resmi (MOS, Pengeluaran, BAST) siap digunakan operasional.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.563Z"
+      },
+      {
+        "name": "MOS Orders Register & Dispatch Tracking",
+        "status": "PASS",
+        "details": "Daftar order material site terbaca normal dengan pelacakan status rute.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.667Z"
+      },
+      {
+        "name": "Automated MOS Order Creation",
+        "status": "PASS",
+        "details": "Order berhasil diterbitkan dengan ID: doc-1792902790725.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:10.790Z"
+      },
+      {
+        "name": "Digital Multi-Slot Otorisasi & Stamping",
+        "status": "PASS",
+        "details": "Penandatanganan digital Slot 3 (Otorisasi Final) tervalidasi.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.012Z"
+      }
+    ],
+    "warehouseLedger": [
+      {
+        "name": "Material Catalog & Bin Racks Registry",
+        "status": "PASS",
+        "details": "Katalog aktif dengan 28 jenis material tersimpan.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.191Z"
+      },
+      {
+        "name": "Stock Valuation & Safety Threshold Alerts",
+        "status": "PASS",
+        "details": "Statistik stok, total valuasi, dan peringatan batas minimum stok aktif.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.362Z"
+      },
+      {
+        "name": "Immutable Stock Ledger & Audit Trail",
+        "status": "PASS",
+        "details": "Buku Besar stok mencatat 10 mutasi historis lengkap.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.451Z"
+      }
+    ],
+    "stockOpname": [
+      {
+        "name": "Stock Opname Sessions Store",
+        "status": "PASS",
+        "details": "Register audit stok fisik gudang siap beroperasi.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.549Z"
+      },
+      {
+        "name": "Stock Opname Session Initialization",
+        "status": "PASS",
+        "details": "Inisiasi sesi audit fisik gudang berhasil dieksekusi.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.645Z"
+      }
+    ],
+    "toolTracking": [
+      {
+        "name": "Tool Loan Lifecycle & Custody Tracking",
+        "status": "PASS",
+        "details": "Daftar peminjaman alat operasional terbaca normal.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.753Z"
+      },
+      {
+        "name": "Tool Availability & Overdue Alerting",
+        "status": "PASS",
+        "details": "Kalkulasi alat tersedia, dipinjam, dan status keterlambatan (overdue) aktif.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.838Z"
+      }
+    ],
+    "siteOperationsAndNotif": [
+      {
+        "name": "Site Operational Calendar & Work Orders",
+        "status": "PASS",
+        "details": "Kalender kerja operasional memuat 7 jadwal shift/kegiatan.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:11.934Z"
+      },
+      {
+        "name": "Per-User Isolated Notification Feed",
+        "status": "PASS",
+        "details": "Feed notifikasi pengguna terisolasi per akun dan role.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.026Z"
+      }
+    ],
+    "securityVulnerabilities": [
+      {
+        "name": "WAF SQL Injection Pattern Detection",
+        "status": "PASS",
+        "details": "Payload SQL Injection dicegat oleh WAF Express dengan 400 Bad Request.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.040Z"
+      },
+      {
+        "name": "WAF Cross-Site Scripting (XSS) Guard",
+        "status": "PASS",
+        "details": "Tag script berbahaya dicegat oleh filter sanitasi.",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.043Z"
+      },
+      {
+        "name": "Privilege Escalation Gate (Project Creation)",
+        "status": "PASS",
+        "details": "Token non-admin diblokir dari pembuatan proyek (403 Forbidden).",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.093Z"
+      },
+      {
+        "name": "Privilege Escalation Gate (Ledger Deletion)",
+        "status": "PASS",
+        "details": "Token non-admin diblokir dari penghapusan buku besar (403 Forbidden).",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.139Z"
+      },
+      {
+        "name": "Privilege Escalation Gate (Variance Approval)",
+        "status": "PASS",
+        "details": "Hanya Superadmin yang berwenang menyetujui selisih fisik stok (403 Forbidden).",
+        "critical": true,
+        "timestamp": "2026-10-25T04:33:12.181Z"
       }
     ],
     "frontendBuild": [
@@ -190,7 +365,7 @@
         "status": "PASS",
         "details": "Production build berhasil. dist/index.html terbuat (1746 bytes).",
         "critical": true,
-        "timestamp": "2026-10-25T03:48:30.937Z"
+        "timestamp": "2026-10-25T04:33:12.181Z"
       }
     ]
   }
