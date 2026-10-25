@@ -193,42 +193,44 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
   };
 
   return (
-    <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-3.5 px-4 sm:px-6 lg:px-8 items-center justify-between gap-4 sticky top-0 z-50 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
-      {/* Left: Mobile hamburger + Universal Search Bar */}
-      <div className="flex items-center gap-3 flex-1 max-w-xl">
-        <button
-          onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shadow-xs hover:shadow-md cursor-pointer"
-          aria-label="Open sidebar"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-2 sm:py-2.5 lg:py-3.5 px-3 sm:px-6 lg:px-8 flex-col lg:flex-row items-center justify-between gap-2 sm:gap-2.5 lg:gap-4 sticky top-0 z-50 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
+      {/* Top Row: Navigation Controls & Action Buttons (Aligned on one row across all viewports) */}
+      <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
+        {/* Left: Mobile hamburger + Emblem (Mobile) / Frosted Search Bar (Desktop: Unchanged) */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shadow-xs hover:shadow-md cursor-pointer shrink-0"
+            aria-label="Open sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
-        <div className="lg:hidden flex items-center shrink-0">
-          <img
-            src="/digitech-emblem.png"
-            alt="Digitech"
-            className="w-7 h-7 object-contain"
-          />
-        </div>
+          <div className="lg:hidden flex items-center shrink-0">
+            <img
+              src="/digitech-emblem.png"
+              alt="Digitech"
+              className="w-7 h-7 object-contain"
+            />
+          </div>
 
-        {/* Elevated "Timbul" Frosted Search Bar */}
-        <div className="relative w-full group">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => onSearch && onSearch(e.target.value)}
-            placeholder="Cari material, nomor MOS, atau laporan..."
-            className="w-full bg-slate-50/80 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-4 pr-10 py-2.5 rounded-full border border-slate-200/90 shadow-xs hover:shadow-sm focus:shadow-[0_4px_16px_rgba(220,38,38,0.12)] focus:border-red-500/60 focus:outline-none transition-all duration-200 font-sans"
-          />
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-red-600 transition-colors pointer-events-none">
-            <Search className="w-4 h-4" />
+          {/* Elevated "Timbul" Frosted Search Bar (Desktop: Unaltered) */}
+          <div className="hidden lg:block relative w-full group">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => onSearch && onSearch(e.target.value)}
+              placeholder="Cari material, nomor MOS, atau laporan..."
+              className="w-full bg-slate-50/80 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-4 pr-10 py-2.5 rounded-full border border-slate-200/90 shadow-xs hover:shadow-sm focus:shadow-[0_4px_16px_rgba(220,38,38,0.12)] focus:border-red-500/60 focus:outline-none transition-all duration-200 font-sans"
+            />
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-red-600 transition-colors pointer-events-none">
+              <Search className="w-4 h-4" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Controls: Notification Bell, Calendar, and Profile */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Right Controls: Notification Bell, Printer, Calendar, and Profile */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Notification Bell with Floating Badge */}
         <div className="relative" ref={notifRef}>
           <button
@@ -248,9 +250,9 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
             )}
           </button>
 
-          {/* Notifications Dropdown (High z-index to avoid clipping behind maps/panes) */}
+          {/* Notifications Dropdown (Centered bounds on mobile, right-aligned on desktop) */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-84 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-[1200] animate-in fade-in zoom-in-95 duration-150 max-h-[85vh] flex flex-col">
+            <div className="fixed inset-x-3 sm:inset-x-auto sm:right-0 top-[calc(env(safe-area-inset-top,0px)+112px)] sm:top-full mt-2 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-[1200] animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] flex flex-col">
               
               {/* Header with Title & Action Tools */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
@@ -443,13 +445,15 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
         </div>
 
         {/* Elevated User Profile Pill */}
-        <div className="relative" ref={profileRef}>
+        <div className="relative shrink-0" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 pl-1 pr-3 py-1 bg-white border border-slate-200/90 rounded-full shadow-xs hover:shadow-md hover:border-red-300 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+            className="flex items-center gap-2 p-0.5 sm:pl-1 sm:pr-3 sm:py-1 bg-white border border-slate-200/90 rounded-full shadow-xs hover:shadow-md hover:border-red-300 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+            title={user?.full_name || 'Profil Pengguna'}
+            aria-label="Menu Profil"
           >
             {/* Avatar image with Merah-Putih Gradient */}
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-700 flex items-center justify-center text-white font-black text-xs overflow-hidden ring-1 ring-white shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-700 flex items-center justify-center text-white font-black text-xs overflow-hidden ring-1 ring-white shadow-2xs shrink-0">
               {user?.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -457,17 +461,17 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
               )}
             </div>
 
-            {/* Name */}
-            <span className="text-xs font-semibold text-slate-800 max-w-[100px] sm:max-w-[140px] truncate">
+            {/* Name - hidden on mobile screens, visible on tablet & desktop */}
+            <span className="hidden sm:inline text-xs font-semibold text-slate-800 max-w-[100px] sm:max-w-[140px] truncate">
               {user?.full_name || 'Arya Superadmin'}
             </span>
 
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDown className="hidden sm:inline w-3.5 h-3.5 text-slate-400" />
           </button>
 
           {/* Profile Dropdown */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="p-2 border-b border-slate-100">
                 <div className="font-semibold text-sm text-slate-900">{user?.full_name || 'Pengguna'}</div>
                 <div className="text-xs text-slate-500 truncate">{user?.email || 'user@digitech.co.id'}</div>
@@ -503,6 +507,33 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+      {/* Row 2 on Mobile: Dedicated Full-Width Frosted Search Bar */}
+      <div className="lg:hidden w-full pt-0.5">
+        <div className="relative w-full group">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-red-600 transition-colors pointer-events-none">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => onSearch && onSearch(e.target.value)}
+            placeholder="Cari material, nomor MOS, atau laporan..."
+            className="w-full bg-slate-50/90 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs pl-10 pr-9 py-2 rounded-full border border-slate-200/90 shadow-2xs hover:shadow-xs focus:shadow-[0_4px_16px_rgba(220,38,38,0.12)] focus:border-red-500/60 focus:outline-none transition-all duration-200 font-sans"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => onSearch && onSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition cursor-pointer"
+              title="Hapus pencarian"
+              type="button"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>
