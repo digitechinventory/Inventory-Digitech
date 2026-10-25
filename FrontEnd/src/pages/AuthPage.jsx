@@ -15,6 +15,9 @@ import {
   ArrowRight,
   Loader2,
   Building2,
+  Smartphone,
+  KeyRound,
+  RefreshCw,
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -24,12 +27,18 @@ import SwipeButton from '../components/auth/SwipeButton.jsx';
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, verify2FA, resendEmailOtp } = useAuth();
   const { addToast } = useToast();
   const iframeRef = useRef(null);
 
   // Active mode: 'login' | 'register' (swipes horizontally, no 3D flip)
   const [authMode, setAuthMode] = useState('login');
+
+  // 2FA Challenge State (Google Authenticator / Email OTP)
+  const [mfaChallenge, setMfaChallenge] = useState(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [isBackupMode, setIsBackupMode] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({
@@ -198,6 +207,54 @@ export default function AuthPage() {
     });
   };
 
+  // Hitung mundur cooldown resend OTP
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
+
+  const handleAutoVerify = async (codeToVerify) => {
+    if (!mfaChallenge?.mfaPendingToken) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await verify2FA(mfaChallenge.mfaPendingToken, codeToVerify);
+      try {
+        localStorage.removeItem('digitech_auth_failed_attempts');
+        localStorage.removeItem('digitech_auth_lockout_until');
+      } catch {}
+      setFailedAttempts(0);
+      setIsLockedOut(false);
+      addToast('Verifikasi 2FA berhasil! Selamat datang di portal DIGITECH.', 'success');
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setErrorMessage(err.message || 'Kode verifikasi 2FA tidak valid atau telah kedaluwarsa.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify2FASubmit = async (e) => {
+    e?.preventDefault();
+    if (!twoFactorCode) {
+      setErrorMessage('Masukkan kode verifikasi 2FA.');
+      return;
+    }
+    await handleAutoVerify(twoFactorCode.trim());
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || !mfaChallenge?.mfaPendingToken) return;
+    try {
+      await resendEmailOtp(mfaChallenge.mfaPendingToken);
+      setResendCooldown(60);
+      addToast('Kode OTP 2FA baru telah dikirimkan ke email Anda.', 'info');
+    } catch (err) {
+      setErrorMessage(err.message || 'Gagal mengirim ulang kode OTP.');
+    }
+  };
+
   // Submit Login — Responsif & Cepat (Tanpa Delay Buatan)
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -209,7 +266,13 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      await login(loginForm.email, loginForm.password);
+      const result = await login(loginForm.email, loginForm.password);
+      if (result?.mfaRequired) {
+        setMfaChallenge(result);
+        setTwoFactorCode('');
+        setErrorMessage(null);
+        return;
+      }
       // Login sukses — bersihkan rekaman gagal dan lockout dari penyimpanan lokal
       try {
         localStorage.removeItem('digitech_auth_failed_attempts');
@@ -691,137 +754,248 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  {/* Form Login */}
-                  <form onSubmit={handleLoginSubmit} autoComplete="off" className="space-y-3.5 sm:space-y-4">
-                    {/* Email Column */}
-                    <div>
-                      <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
-                        Alamat Email / Username
-                      </label>
-                      <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
-                        isLockedOut
-                          ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
-                          : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
-                      }`}>
-                        <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
-                          isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
-                        }`} />
+                  {/* Form Login or 2FA Challenge */}
+                  {mfaChallenge ? (
+                    <form onSubmit={handleVerify2FASubmit} autoComplete="off" className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                      {/* 2FA Header Notice */}
+                      <div className="p-3.5 bg-red-50/80 border border-red-200 rounded-2xl flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          {mfaChallenge.mfaType === 'authenticator' ? <Smartphone className="w-5 h-5" /> : <Mail className="w-5 h-5" />}
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <h4 className="text-xs font-black text-slate-900 tracking-tight">
+                            {mfaChallenge.mfaType === 'authenticator' ? 'Verifikasi Google Authenticator' : 'Verifikasi OTP Email'}
+                          </h4>
+                          <p className="text-[11px] text-slate-600 leading-relaxed mt-0.5">
+                            {mfaChallenge.mfaType === 'authenticator'
+                              ? 'Buka aplikasi Google Authenticator atau Authy Anda dan masukkan 6-digit kode token aktif.'
+                              : `Kode OTP 6-digit telah dikirim ke ${mfaChallenge.maskedEmail}.`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 6 Digit Input */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[10px] sm:text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                            {isBackupMode ? 'Kode Pemulihan Darurat (Backup Code)' : '6-Digit Kode Verifikasi'}
+                          </label>
+                          {!isBackupMode && mfaChallenge.mfaType === 'authenticator' && (
+                            <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                              Rotasi 30s
+                            </span>
+                          )}
+                        </div>
+
                         <input
                           type="text"
-                          inputMode="email"
-                          required
-                          disabled={loading || isLockedOut}
-                          value={loginForm.email}
-                          onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                          placeholder="admin@digitech.co.id atau admin"
-                          className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
+                          autoFocus
+                          maxLength={isBackupMode ? 14 : 6}
+                          value={twoFactorCode}
+                          onChange={(e) => {
+                            const val = isBackupMode ? e.target.value.toUpperCase() : e.target.value.replace(/\D/g, '');
+                            setTwoFactorCode(val);
+                            if (!isBackupMode && val.length === 6) {
+                              handleAutoVerify(val);
+                            }
+                          }}
+                          placeholder={isBackupMode ? 'DGT-XXXX-XX' : '000000'}
+                          className="w-full text-center font-mono font-black text-2xl tracking-[0.35em] py-2.5 sm:py-3 px-4 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-red-600 focus:ring-4 focus:ring-red-600/15 outline-none transition text-slate-900"
                         />
                       </div>
-                    </div>
 
-                    {/* Password Column */}
-                    <div>
-                      <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
-                        Kata Sandi
-                      </label>
-                      <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
-                        isLockedOut
-                          ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
-                          : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
-                      }`}>
-                        <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
-                          isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
-                        }`} />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          disabled={loading || isLockedOut}
-                          value={loginForm.password}
-                          onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                          placeholder="Masukkan kata sandi akun"
-                          className="w-full pl-10 sm:pl-11 pr-11 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
-                        />
+                      {/* Actions */}
+                      <div className="space-y-2 pt-1">
+                        <button
+                          type="submit"
+                          disabled={loading || (isBackupMode ? twoFactorCode.length < 8 : twoFactorCode.length !== 6)}
+                          className="w-full py-2.5 sm:py-3.5 bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-red-900/30 transition cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-white" />
+                              <span>Memverifikasi Otorisasi 2FA...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-4 h-4" />
+                              <span>Verifikasi &amp; Masuk ke Portal</span>
+                            </>
+                          )}
+                        </button>
+
+                        {mfaChallenge.mfaType === 'email' && (
+                          <button
+                            type="button"
+                            disabled={resendCooldown > 0}
+                            onClick={handleResendOtp}
+                            className="w-full py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>{resendCooldown > 0 ? `Kirim ulang OTP dalam ${resendCooldown}s` : 'Kirim Ulang Kode OTP ke Email'}</span>
+                          </button>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsBackupMode(!isBackupMode);
+                              setTwoFactorCode('');
+                            }}
+                            className="text-red-600 hover:underline font-bold cursor-pointer"
+                          >
+                            {isBackupMode ? '← Gunakan Aplikasi Authenticator' : 'Gunakan Kode Pemulihan (Backup Code)'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMfaChallenge(null);
+                              setTwoFactorCode('');
+                              setErrorMessage(null);
+                            }}
+                            className="text-slate-500 hover:text-slate-800 font-bold cursor-pointer"
+                          >
+                            Batal &amp; Kembali
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleLoginSubmit} autoComplete="off" className="space-y-3.5 sm:space-y-4">
+                      {/* Email Column */}
+                      <div>
+                        <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
+                          Alamat Email / Username
+                        </label>
+                        <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
+                          isLockedOut
+                            ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
+                            : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
+                        }`}>
+                          <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
+                            isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
+                          }`} />
+                          <input
+                            type="text"
+                            inputMode="email"
+                            required
+                            disabled={loading || isLockedOut}
+                            value={loginForm.email}
+                            onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                            placeholder="admin@digitech.co.id atau admin"
+                            className="w-full pl-10 sm:pl-11 pr-3.5 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Password Column */}
+                      <div>
+                        <label className="block text-[10px] sm:text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
+                          Kata Sandi
+                        </label>
+                        <div className={`relative group w-full border rounded-xl transition-all shadow-xs ${
+                          isLockedOut
+                            ? 'bg-slate-100 border-slate-300 opacity-70 cursor-not-allowed'
+                            : 'bg-slate-50/95 border-slate-300 focus-within:border-red-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-red-600/15'
+                        }`}>
+                          <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 sm:w-4.5 h-4 sm:h-4.5 transition-colors pointer-events-none ${
+                            isLockedOut ? 'text-slate-400' : 'text-slate-400 group-focus-within:text-red-600'
+                          }`} />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            disabled={loading || isLockedOut}
+                            value={loginForm.password}
+                            onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                            placeholder="Masukkan kata sandi akun"
+                            className="w-full pl-10 sm:pl-11 pr-11 py-2 sm:py-3 text-xs sm:text-sm bg-transparent border-0 outline-none font-semibold text-slate-900 transition-all placeholder:text-slate-400 placeholder:font-normal disabled:cursor-not-allowed"
+                          />
+                          <button
+                            type="button"
+                            disabled={isLockedOut}
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer transition-colors disabled:cursor-not-allowed"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Remember Me & Forgot Password Row */}
+                      <div className="flex items-center justify-between pt-0.5 px-1">
+                        <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer text-slate-600 hover:text-slate-900 transition-colors select-none">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            disabled={isLockedOut}
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600 disabled:cursor-not-allowed"
+                          />
+                          <span className="text-[10px] sm:text-[11px] font-bold">Ingat Akun</span>
+                        </label>
                         <button
                           type="button"
-                          disabled={isLockedOut}
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer transition-colors disabled:cursor-not-allowed"
+                          onClick={() => addToast('Fitur pemulihan kata sandi dapat diajukan langsung melalui Superadmin IT Digitech.', 'info')}
+                          className="text-[10px] sm:text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
                         >
-                          {showPassword ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                          Lupa Kata Sandi?
                         </button>
                       </div>
-                    </div>
 
-                    {/* Remember Me & Forgot Password Row */}
-                    <div className="flex items-center justify-between pt-0.5 px-1">
-                      <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer text-slate-600 hover:text-slate-900 transition-colors select-none">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          disabled={isLockedOut}
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer accent-red-600 disabled:cursor-not-allowed"
-                        />
-                        <span className="text-[10px] sm:text-[11px] font-bold">Ingat Akun</span>
-                      </label>
+                      {/* Submit Button */}
                       <button
-                        type="button"
-                        onClick={() => addToast('Fitur pemulihan kata sandi dapat diajukan langsung melalui Superadmin IT Digitech.', 'info')}
-                        className="text-[10px] sm:text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline transition cursor-pointer"
+                        type="submit"
+                        disabled={loading || isLockedOut}
+                        className={`relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center justify-center gap-2 overflow-hidden border ${
+                          isLockedOut
+                            ? 'bg-slate-800/95 text-red-200 border-red-500/50 cursor-not-allowed shadow-none'
+                            : 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black shadow-lg shadow-red-900/30 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait border-red-500/50'
+                        }`}
                       >
-                        Lupa Kata Sandi?
+                        {loading ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
+                            <span className="tracking-wider font-extrabold text-xs">Memproses Masuk...</span>
+                          </div>
+                        ) : isLockedOut ? (
+                          <div className="flex items-center justify-center gap-2 text-red-300">
+                            <Lock className="w-4 h-4 text-red-400" />
+                            <span className="font-extrabold tracking-wide">Akses Terkunci ({formatLockoutTimer(lockoutRemainingSeconds)})</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2">
+                            <span>Masuk ke Portal</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        )}
+                        {loading && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_1.2s_infinite]" />
+                        )}
                       </button>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      disabled={loading || isLockedOut}
-                      className={`relative w-full mt-1.5 sm:mt-2.5 py-2.5 sm:py-3.5 font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center justify-center gap-2 overflow-hidden border ${
-                        isLockedOut
-                          ? 'bg-slate-800/95 text-red-200 border-red-500/50 cursor-not-allowed shadow-none'
-                          : 'bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-500 hover:via-red-600 hover:to-red-700 text-white font-black shadow-lg shadow-red-900/30 active:scale-[0.98] cursor-pointer disabled:opacity-90 disabled:cursor-wait border-red-500/50'
-                      }`}
-                    >
-                      {loading ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
-                          <span className="tracking-wider font-extrabold text-xs">Memproses Masuk...</span>
-                        </div>
-                      ) : isLockedOut ? (
-                        <div className="flex items-center justify-center gap-2 text-red-300">
-                          <Lock className="w-4 h-4 text-red-400" />
-                          <span className="font-extrabold tracking-wide">Akses Terkunci ({formatLockoutTimer(lockoutRemainingSeconds)})</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-2">
-                          <span>Masuk ke Portal</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </div>
-                      )}
-                      {loading && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_1.2s_infinite]" />
-                      )}
-                    </button>
-                  </form>
+                    </form>
+                  )}
                 </div>
 
                 {/* ────── INTERACTIVE SWIPE TO SIGNUP SECTION ────── */}
-                <div className="mt-3 sm:mt-4 pt-1.5 sm:pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5 w-full max-w-[270px] sm:max-w-[280px] mx-auto shrink-0 mb-1 sm:mb-2">
-                  <div className="flex items-center gap-2 w-full">
-                    <div className="h-px bg-slate-200 flex-1" />
-                    <span className="text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">
-                      Belum Punya Akun?
-                    </span>
-                    <div className="h-px bg-slate-200 flex-1" />
-                  </div>
+                {!mfaChallenge && (
+                  <div className="mt-3 sm:mt-4 pt-1.5 sm:pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5 w-full max-w-[270px] sm:max-w-[280px] mx-auto shrink-0 mb-1 sm:mb-2">
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="h-px bg-slate-200 flex-1" />
+                      <span className="text-[9px] sm:text-[9.5px] uppercase font-bold text-slate-400 tracking-wider">
+                        Belum Punya Akun?
+                      </span>
+                      <div className="h-px bg-slate-200 flex-1" />
+                    </div>
 
-                  {/* Hyper-Responsive Swipe Button (Light Theme, Fits within borders) */}
-                  <SwipeButton
-                    label="Geser untuk Daftar Akun"
-                    direction="right"
-                    onSwipe={switchToRegister}
-                  />
-                </div>
+                    {/* Hyper-Responsive Swipe Button (Light Theme, Fits within borders) */}
+                    <SwipeButton
+                      label="Geser untuk Daftar Akun"
+                      direction="right"
+                      onSwipe={switchToRegister}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* ────── PANEL 2: REGISTER (WHITE THEME) ────── */}

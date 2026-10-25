@@ -8,52 +8,14 @@ import { sendSuccess } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { sendActivationEmail, sendAccountSettingsChangeEmail } from '../services/mailer.js';
 
-// Base32 Decoder for RFC 6238 TOTP
-function base32Decode(str) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (let c of str.toUpperCase().replace(/=+$/, '')) {
-    const val = alphabet.indexOf(c);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  const bytes = [];
-  for (let i = 0; i + 8 <= bits.length; i += 8) {
-    bytes.push(parseInt(bits.substr(i, 8), 2));
-  }
-  return Buffer.from(bytes);
-}
-
-// RFC 6238 Standard TOTP Generator (SHA1, 30s period, 6 digits)
-function generateTotp(secret, timeStepOffset = 0) {
-  const key = base32Decode(secret);
-  const counter = Math.floor(Date.now() / 1000 / 30) + timeStepOffset;
-  const buf = Buffer.alloc(8);
-  buf.writeBigInt64BE(BigInt(counter));
-  const hmac = crypto.createHmac('sha1', key).update(buf).digest();
-  const offset = hmac[hmac.length - 1] & 0x0f;
-  const code = (
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff)
-  ) % 1000000;
-  return code.toString().padStart(6, '0');
-}
-
-// RFC 6238 TOTP Verifier with +/- 2 time-step window for clock skew & 123456 test bypass
-function verifyTotp(secret, userCode) {
-  if (!userCode || typeof userCode !== 'string') return false;
-  const clean = userCode.trim();
-  if (clean === '123456') return true;
-  for (let offset of [0, -1, 1, -2, 2]) {
-    if (generateTotp(secret, offset) === clean) {
-      return true;
-    }
-  }
-  return false;
-}
-
+import { 
+  base32Decode, 
+  generateTotp, 
+  verifyTotp, 
+  generateTotpSecret, 
+  generateOtpAuthUrl, 
+  generateBackupCodes 
+} from '../utils/totp.js';
 
 const router = Router();
 
@@ -460,24 +422,71 @@ router.post('/signature', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/users/mfa/authenticator — Enable/Disable App Authenticator (TOTP)
+// GET /api/users/mfa/status — Cek status MFA akun saat ini
+router.get('/mfa/status', requireAuth, async (req, res, next) => {
+  try {
+    let profile = null;
+    try {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('email_mfa_enabled, authenticator_mfa_enabled, totp_secret')
+        .eq('id', req.user.id)
+        .maybeSingle();
+      if (data) profile = data;
+    } catch {}
+
+    const isEmailMfa = Boolean(profile?.email_mfa_enabled);
+    const isAuthMfa = Boolean(profile?.authenticator_mfa_enabled);
+    const secretKey = profile?.totp_secret || 'JBSWY3DPEHPK3PXP';
+    const otpAuthUrl = generateOtpAuthUrl(req.user.email, secretKey);
+
+    return sendSuccess(res, {
+      email_mfa_enabled: isEmailMfa,
+      authenticator_mfa_enabled: isAuthMfa,
+      secretKey,
+      otpAuthUrl,
+      email: req.user.email
+    }, 'Status keamanan MFA akun.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/users/mfa/generate-secret — Generate secret baru untuk scan Google Authenticator
+router.post('/mfa/generate-secret', requireAuth, async (req, res, next) => {
+  try {
+    const newSecret = generateTotpSecret();
+    const otpAuthUrl = generateOtpAuthUrl(req.user.email, newSecret);
+    return sendSuccess(res, {
+      secretKey: newSecret,
+      otpAuthUrl
+    }, 'Secret Google Authenticator baru berhasil dibuat.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/users/mfa/authenticator — Enable/Disable Google Authenticator (TOTP)
 router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
   try {
-    const { enabled, code } = req.body;
+    const { enabled, code, secret } = req.body;
     const isEnabled = Boolean(enabled);
-    const secretKey = 'JBSWY3DPEHPK3PXP'; // Base32 TOTP secret
+    const secretKey = secret || 'JBSWY3DPEHPK3PXP'; // Base32 TOTP secret
+
+    let backupCodes = null;
 
     if (isEnabled) {
       if (!code || !verifyTotp(secretKey, code)) {
         throw new AppError(
-          'Kode verifikasi Authenticator 6-digit tidak valid atau telah kadaluarsa. Pastikan jam pada smartphone Anda sinkron otomatis.',
+          'Kode verifikasi Authenticator 6-digit tidak valid atau telah kedaluwarsa. Pastikan jam pada smartphone Anda sinkron otomatis.',
           400,
           'INVALID_TOTP'
         );
       }
+      backupCodes = generateBackupCodes(8);
     }
 
-    const otpAuthUrl = `otpauth://totp/Digitech%20IMS:${encodeURIComponent(req.user.email)}?secret=${secretKey}&issuer=Digitech%20IMS`;
+    const otpAuthUrl = generateOtpAuthUrl(req.user.email, secretKey);
 
     try {
       await supabase
@@ -493,8 +502,8 @@ router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
       sendAccountSettingsChangeEmail(
         req.user.email,
         req.user.full_name,
-        'Pengaturan Aplikasi Authenticator (TOTP)',
-        isEnabled ? 'Aplikasi Authenticator telah berhasil dihubungkan' : 'Aplikasi Authenticator telah dinonaktifkan'
+        'Pengaturan Aplikasi Authenticator (Google / TOTP)',
+        isEnabled ? 'Aplikasi Authenticator telah berhasil dihubungkan dan diaktifkan' : 'Aplikasi Authenticator telah dinonaktifkan'
       ).catch(e => console.warn('[Users] Email alert error:', e.message));
     }
 
@@ -503,7 +512,8 @@ router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
       {
         authenticator_mfa_enabled: isEnabled,
         secretKey,
-        otpAuthUrl
+        otpAuthUrl,
+        backupCodes
       },
       isEnabled
         ? 'MFA dengan Aplikasi Authenticator (Google/Authy) berhasil diverifikasi dan aktif.'

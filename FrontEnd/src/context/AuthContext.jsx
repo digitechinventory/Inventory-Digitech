@@ -155,6 +155,9 @@ export function AuthProvider({ children }) {
     try {
       const res = await axios.post('/api/auth/login', { email, password });
       const payload = res.data?.data || res.data;
+      if (payload?.mfaRequired) {
+        return payload;
+      }
       if (payload?.user && payload?.session) {
         setUser(payload.user);
         setSession(payload.session);
@@ -202,6 +205,41 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const verify2FA = useCallback(async (mfaPendingToken, code) => {
+    setLoading(true);
+    try {
+      const res = await axios.post('/api/auth/verify-2fa', { mfaPendingToken, code });
+      const payload = res.data?.data || res.data;
+      if (payload?.user && payload?.session) {
+        setUser(payload.user);
+        setSession(payload.session);
+        if (payload.session.access_token) {
+          localStorage.setItem('token', payload.session.access_token);
+        }
+        return { success: true, user: payload.user };
+      }
+      throw new Error('Verifikasi 2FA gagal diproses.');
+    } catch (err) {
+      const apiErr = err.response?.data?.error;
+      const errMsg = apiErr?.message || err.response?.data?.message || err.message || 'Kode verifikasi 2FA tidak valid.';
+      const customErr = new Error(errMsg);
+      customErr.code = apiErr?.code || 'INVALID_2FA_CODE';
+      throw customErr;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const resendEmailOtp = useCallback(async (mfaPendingToken) => {
+    try {
+      const res = await axios.post('/api/auth/resend-email-otp', { mfaPendingToken });
+      return res.data;
+    } catch (err) {
+      const errMsg = err.response?.data?.error?.message || err.message || 'Gagal mengirim ulang kode OTP.';
+      throw new Error(errMsg);
+    }
+  }, []);
+
   const register = useCallback(async (formData) => {
     setLoading(true);
     try {
@@ -242,6 +280,8 @@ export function AuthProvider({ children }) {
     isSuperadmin: role === 'Superadmin',
     loading,
     login,
+    verify2FA,
+    resendEmailOtp,
     register,
     logout,
     switchDemoRole

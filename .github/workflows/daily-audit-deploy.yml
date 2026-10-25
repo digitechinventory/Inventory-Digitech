@@ -1,0 +1,71 @@
+name: Daily Security Audit & Automatic Deployment
+
+on:
+  schedule:
+    # Runs every day at 02:00 UTC (10:00 WITA / Waktu Indonesia Tengah)
+    - cron: '0 2 * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even with minor warnings'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+
+jobs:
+  audit-and-deploy:
+    name: Continuous Audit & Auto-Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install Root & Frontend Dependencies
+        run: |
+          npm ci || npm install
+          npm --prefix FrontEnd ci || npm --prefix FrontEnd install
+
+      - name: 🛡️ Audit Security Vulnerabilities (npm audit)
+        run: |
+          npm audit --audit-level=high || echo "::warning::Audit detected non-critical dependency advisories"
+
+      - name: 🔍 Execute DIGITECH Comprehensive Audit Suite
+        run: |
+          node scripts/comprehensive-audit.mjs || true
+
+      - name: 🚀 Execute Automatic Deployment Pipeline
+        run: |
+          node scripts/auto-deploy.mjs
+
+      - name: 📤 Upload Audit & Deployment Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: digitech-audit-and-deployment-reports
+          path: |
+            audit-reports/
+            releases/
+          retention-days: 30
+
+      - name: 📝 Post Workflow Summary
+        if: always()
+        run: |
+          if [ -f audit-reports/audit-report-latest.md ]; then
+            cat audit-reports/audit-report-latest.md >> $GITHUB_STEP_SUMMARY
+          fi

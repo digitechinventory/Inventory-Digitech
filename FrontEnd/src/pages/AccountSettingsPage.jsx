@@ -140,6 +140,8 @@ export default function AccountSettingsPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [isZoomQrOpen, setIsZoomQrOpen] = useState(false);
   const [totpCountdown, setTotpCountdown] = useState(30);
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [copiedBackupCodes, setCopiedBackupCodes] = useState(false);
 
   // Password Change State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -211,6 +213,21 @@ export default function AccountSettingsPage() {
         }
       } catch (err) {
         console.warn('Could not load profile from backend, using session');
+      }
+
+      // Check MFA status specifically
+      try {
+        const mfaRes = await api.get('/users/mfa/status');
+        if (mfaRes.data?.data) {
+          const m = mfaRes.data.data;
+          setEmailMfa(Boolean(m.email_mfa_enabled));
+          setAuthenticatorMfa(Boolean(m.authenticator_mfa_enabled));
+          if (m.secretKey) {
+            setAuthSecret(m.secretKey);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load MFA status:', err);
       }
     }
     loadProfile();
@@ -298,15 +315,22 @@ export default function AccountSettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await api.post('/users/mfa/authenticator', { enabled: true, code: authCode });
+      const res = await api.post('/users/mfa/authenticator', {
+        enabled: true,
+        code: authCode,
+        secret: authSecret
+      });
       setAuthenticatorMfa(true);
       setAuthCode('');
+      if (res.data?.data?.backupCodes) {
+        setBackupCodes(res.data.data.backupCodes);
+      }
       setMessage({
         type: 'success',
         text: 'Aplikasi Authenticator berhasil diverifikasi dan terhubung ke akun Anda.'
       });
     } catch (err) {
-      setMessage({ type: 'error', text: 'Kode verifikasi tidak sesuai. Pastikan jam pada perangkat akurat.' });
+      setMessage({ type: 'error', text: err.response?.data?.error?.message || 'Kode verifikasi tidak sesuai. Pastikan jam pada perangkat akurat.' });
     } finally {
       setSaving(false);
     }
@@ -318,12 +342,33 @@ export default function AccountSettingsPage() {
     try {
       await api.post('/users/mfa/authenticator', { enabled: false });
       setAuthenticatorMfa(false);
+      setBackupCodes([]);
       setMessage({ type: 'success', text: 'MFA Aplikasi Authenticator dinonaktifkan.' });
     } catch (err) {
       setMessage({ type: 'error', text: 'Gagal menonaktifkan Authenticator.' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCopyBackupCodes = () => {
+    if (backupCodes.length > 0 && navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(backupCodes.join('\n'));
+      setCopiedBackupCodes(true);
+      setTimeout(() => setCopiedBackupCodes(false), 2000);
+    }
+  };
+
+  const handleDownloadBackupCodes = () => {
+    if (backupCodes.length === 0) return;
+    const content = `DIGITECH IMS - EMERGENCY RECOVERY BACKUP CODES\nAkun: ${email || user?.email}\nTanggal Dibuat: ${new Date().toLocaleString('id-ID')}\n\nGunakan salah satu kode ini jika Anda kehilangan akses ke aplikasi Authenticator:\n\n${backupCodes.map((c, i) => `${i + 1}. ${c}`).join('\n')}\n\nPERINGATAN: Simpan file ini di tempat yang aman dan rahasia.`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `DIGITECH-backup-codes-${(email || 'user').split('@')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Handle Change Password
@@ -362,8 +407,8 @@ export default function AccountSettingsPage() {
   // Generate accurate RFC 6238 TOTP QR Code using 'qrcode'
   useEffect(() => {
     let active = true;
-    const userEmail = email || user?.email || 'arya-superadmin@digitech.co.id';
-    const totpUri = `otpauth://totp/Digitech%20IMS:${encodeURIComponent(userEmail)}?secret=${authSecret}&issuer=Digitech%20IMS&algorithm=SHA1&digits=6&period=30`;
+    const userEmail = email || user?.email || 'user@digitech.internal';
+    const totpUri = `otpauth://totp/DIGITECH:${encodeURIComponent(userEmail)}?secret=${authSecret}&issuer=DIGITECH&algorithm=SHA1&digits=6&period=30`;
 
     QRCode.toDataURL(totpUri, {
       width: 320,
@@ -438,12 +483,12 @@ export default function AccountSettingsPage() {
     <div className="space-y-6 pb-16 font-sans animate-in fade-in duration-200">
       
       {/* ─── Top Header Banner ─── */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-red-500/10 via-red-500/5 to-transparent pointer-events-none rounded-r-3xl" />
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(59,130,246,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-500/10 via-blue-500/5 to-transparent pointer-events-none rounded-r-3xl" />
 
         <div className="relative z-10 flex-1 min-w-0 pr-0 sm:pr-4">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-[10px] font-mono font-bold mb-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-mono font-bold mb-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span>Profil Resmi &amp; Keamanan Terpusat</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
@@ -455,25 +500,25 @@ export default function AccountSettingsPage() {
         </div>
 
         {/* User Identity Chip */}
-        <div className="relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-2xs ml-auto shrink-0 justify-end">
-          <ShieldCheck className="w-4 h-4 text-red-600" />
+        <div className="relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-2xs ml-auto shrink-0 justify-end">
+          <ShieldCheck className="w-4 h-4 text-blue-600" />
           <span>Role: {role || 'User'}</span>
         </div>
       </div>
 
       {/* ─── Elevated Hero Profile Card with Mega Mendung & Live Authority Metrics ─── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-700 border border-slate-700/80 p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 border border-indigo-900/40 p-6 sm:p-8 text-white shadow-xl">
         <MegaMendungDefs />
-        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-red-600/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Avatar & Main Identity */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="relative shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-red-600 via-rose-600 to-red-500 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-lg shadow-red-600/30 ring-4 ring-white/10">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-lg shadow-blue-600/30 ring-4 ring-white/10">
                 {fullName?.charAt(0)?.toUpperCase() || user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
-              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-slate-800" title="Akun Aktif & Terverifikasi">
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-slate-900" title="Akun Aktif & Terverifikasi">
                 <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
               </span>
             </div>
@@ -482,12 +527,12 @@ export default function AccountSettingsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                   role === 'Superadmin'
-                    ? 'bg-red-500/20 text-rose-300 border-red-500/40 shadow-xs'
+                    ? 'bg-blue-500/20 text-blue-200 border-blue-400/40 shadow-xs'
                     : role === 'Admin'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                     : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                 }`}>
-                  {role === 'Superadmin' ? <Crown className="w-3.5 h-3.5 text-rose-400" /> : role === 'Admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> : <Wrench className="w-3.5 h-3.5 text-emerald-400" />}
+                  {role === 'Superadmin' ? <Crown className="w-3.5 h-3.5 text-blue-300" /> : role === 'Admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> : <Wrench className="w-3.5 h-3.5 text-emerald-400" />}
                   <span>
                     {role === 'Superadmin'
                       ? 'Level 3 — Root System Administrator'
@@ -529,7 +574,7 @@ export default function AccountSettingsPage() {
                 </span>
 
                 <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-mono">
-                  <MapPin className="w-3.5 h-3.5 text-red-400" />
+                  <MapPin className="w-3.5 h-3.5 text-blue-400" />
                   <span>{siteLocation}</span>
                 </span>
               </div>
@@ -543,7 +588,7 @@ export default function AccountSettingsPage() {
               onClick={() => setActiveTab('security')}
               className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition cursor-pointer active:scale-95"
             >
-              <Key className="w-3.5 h-3.5 text-rose-400" />
+              <Key className="w-3.5 h-3.5 text-blue-300" />
               <span>Ganti Password</span>
             </button>
             <button
@@ -633,7 +678,7 @@ export default function AccountSettingsPage() {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <User className="w-4 h-4 text-red-600" />
+          <User className="w-4 h-4 text-blue-600" />
           Data Diri &amp; Organisasi
         </button>
 
@@ -645,7 +690,7 @@ export default function AccountSettingsPage() {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Shield className="w-4 h-4 text-red-600" />
+          <Shield className="w-4 h-4 text-blue-600" />
           Keamanan &amp; MFA
         </button>
 
@@ -657,7 +702,7 @@ export default function AccountSettingsPage() {
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Monitor className="w-4 h-4 text-red-600" />
+          <Monitor className="w-4 h-4 text-blue-600" />
           Sesi Aktif &amp; Perangkat
         </button>
       </div>
@@ -670,7 +715,7 @@ export default function AccountSettingsPage() {
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
@@ -762,7 +807,7 @@ export default function AccountSettingsPage() {
           {/* Section 2: Penugasan Unit & Organisasi Kerja */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
                 <Building className="w-5 h-5" />
               </div>
               <div>
@@ -786,7 +831,7 @@ export default function AccountSettingsPage() {
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Contoh: DIGITECH"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   />
                 </div>
               </div>
@@ -802,7 +847,7 @@ export default function AccountSettingsPage() {
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
                     placeholder="Contoh: Operasional Lapangan & Maintenance"
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                   />
                 </div>
               </div>
@@ -812,11 +857,11 @@ export default function AccountSettingsPage() {
                   Site Penempatan Operasional Utama
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-red-600" />
+                  <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-blue-600" />
                   <select
                     value={siteLocation}
                     onChange={(e) => setSiteLocation(e.target.value)}
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition bg-white"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                   >
                     <option value="BIB Pit Sebamban KM-24">Site Pit Sebamban KM-24 (BIB-02) — Workshop &amp; Pit Tambang</option>
                     <option value="BIB Port Batulicin Terminal">BIB Port Batulicin Terminal — Pelabuhan &amp; Stockpile Batubara</option>
@@ -832,7 +877,7 @@ export default function AccountSettingsPage() {
           {/* Section 3: Preferensi Kerja & Notifikasi Audio Lapangan */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
                 <Settings className="w-5 h-5" />
               </div>
               <div>
@@ -909,7 +954,7 @@ export default function AccountSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 hover:via-rose-700 hover:to-red-700 active:scale-95 text-white font-bold text-sm shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm shadow-md shadow-blue-600/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
@@ -929,7 +974,7 @@ export default function AccountSettingsPage() {
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
@@ -949,7 +994,7 @@ export default function AccountSettingsPage() {
                 className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
                   emailMfa
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
                 }`}
               >
                 {emailMfa ? '✓ Aktif (Klik untuk Nonaktifkan)' : 'Aktifkan OTP Email'}
@@ -976,7 +1021,7 @@ export default function AccountSettingsPage() {
                     )}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
-                    Standar industri RFC 6238 TOTP dengan rotasi kode 30 detik. Berjalan luring (offline) tanpa pulsa atau internet di lokasi tambang.
+                    Standar industri RFC 6238 TOTP dengan rotasi kode 30 detik. Berjalan luring (offline) tanpa pulsa atau internet di lokasi operasional.
                   </p>
                 </div>
               </div>
@@ -986,7 +1031,7 @@ export default function AccountSettingsPage() {
                   type="button"
                   onClick={handleDisableAuthenticator}
                   disabled={saving}
-                  className="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition cursor-pointer shrink-0"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition cursor-pointer shrink-0"
                 >
                   Nonaktifkan Authenticator
                 </button>
@@ -1003,18 +1048,18 @@ export default function AccountSettingsPage() {
                       {qrCodeUrl ? (
                         <img
                           src={qrCodeUrl}
-                          alt="QR Code TOTP Digitech IMS"
+                          alt="QR Code TOTP DIGITECH IMS"
                           className="w-36 h-36 object-contain"
                         />
                       ) : (
                         <div className="w-36 h-36 flex items-center justify-center">
-                          <RefreshCw className="w-6 h-6 animate-spin text-red-600" />
+                          <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
                         </div>
                       )}
                     </div>
 
                     <div className="space-y-2 text-center sm:text-left min-w-0 flex-1">
-                      <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider block">
+                      <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">
                         1. Pindai Menggunakan Kamera Smartphone
                       </span>
                       <p className="text-xs text-slate-600 leading-relaxed">
@@ -1051,7 +1096,7 @@ export default function AccountSettingsPage() {
                             </button>
                             <a
                               href={qrCodeUrl}
-                              download={`DigitechIMS-MFA-${email || 'user'}.png`}
+                              download={`DIGITECH-MFA-${email || 'user'}.png`}
                               className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
                             >
                               <Download className="w-3 h-3" />
@@ -1071,7 +1116,7 @@ export default function AccountSettingsPage() {
                           2. Masukkan 6 Digit Kode Token Verifikasi
                         </label>
                         <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Timer className="w-3 h-3 text-red-600" />
+                          <Timer className="w-3 h-3 text-blue-600" />
                           <span>Rotasi: {totpCountdown}s</span>
                         </span>
                       </div>
@@ -1123,7 +1168,52 @@ export default function AccountSettingsPage() {
             ) : (
               <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center gap-2 text-xs font-semibold text-emerald-800">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Aplikasi Authenticator aktif. Anda dapat menggunakannya untuk login aman kapan saja di lokasi tambang.
+                Aplikasi Authenticator aktif. Anda dapat menggunakannya untuk login aman kapan saja di seluruh sistem DIGITECH IMS.
+              </div>
+            )}
+
+            {/* Emergency Recovery Backup Codes Display Card */}
+            {backupCodes && backupCodes.length > 0 && (
+              <div className="p-5 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
+                    <Key className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>Kode Cadangan Pemulihan Darurat (Backup Codes)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyBackupCodes}
+                      className="px-3 py-1.5 bg-white hover:bg-amber-100/80 border border-amber-300 rounded-lg text-xs font-bold text-amber-900 flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                    >
+                      {copiedBackupCodes ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedBackupCodes ? 'Tersalin' : 'Salin Semua'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadBackupCodes}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Unduh .TXT</span>
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  Simpan 8 kode cadangan sekali pakai ini di tempat aman. Gunakan jika Anda kehilangan akses ke smartphone atau aplikasi Google Authenticator saat login:
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  {backupCodes.map((bCode, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2 bg-white rounded-xl border border-amber-200 text-center font-mono font-bold text-xs text-slate-800 shadow-2xs select-all"
+                    >
+                      {bCode}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -1131,7 +1221,7 @@ export default function AccountSettingsPage() {
           {/* Section 3: Ubah Password */}
           <form onSubmit={handleChangePassword} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <Key className="w-5 h-5 text-red-600" />
+              <Key className="w-5 h-5 text-blue-600" />
               <h3 className="text-base font-bold text-slate-900">Perbarui Password Akun</h3>
             </div>
 
@@ -1146,7 +1236,7 @@ export default function AccountSettingsPage() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1160,7 +1250,7 @@ export default function AccountSettingsPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimal 6 karakter"
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1174,7 +1264,7 @@ export default function AccountSettingsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Ulangi password baru"
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -1183,7 +1273,7 @@ export default function AccountSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-600/25 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-600/20 transition-all cursor-pointer"
               >
                 Perbarui Password
               </button>
@@ -1207,7 +1297,7 @@ export default function AccountSettingsPage() {
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2">
                     <span>Kebijakan Masa Berlaku JWT Sesi Global:</span>
-                    <span className="px-2 py-0.5 rounded-full bg-red-600 text-white font-mono text-[11px] font-black">{sessionDuration} Jam</span>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white font-mono text-[11px] font-black">{sessionDuration} Jam</span>
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-0.5">
                     Pengguna otomatis terpental keluar (auto kick-out) ke halaman login bila sesi melewati batas waktu.
@@ -1219,9 +1309,9 @@ export default function AccountSettingsPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/users')}
-                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-red-300 text-red-700 text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" />
                   <span>Kelola di Manajemen User</span>
                 </button>
               )}
@@ -1233,7 +1323,7 @@ export default function AccountSettingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Monitor className="w-5 h-5 text-red-600" />
+                  <Monitor className="w-5 h-5 text-blue-600" />
                   <span>Informasi Sesi Login Aktif &amp; Perangkat Riil</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1310,7 +1400,7 @@ export default function AccountSettingsPage() {
                   <Radio className="w-3.5 h-3.5 text-slate-500" />
                   Host Node &amp; Port
                 </span>
-                <div className="text-sm font-mono font-bold text-red-700 truncate">
+                <div className="text-sm font-mono font-bold text-blue-700 truncate">
                   {clientHost}
                 </div>
                 <p className="text-[10px] text-slate-500 font-mono">
@@ -1324,7 +1414,7 @@ export default function AccountSettingsPage() {
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex flex-wrap items-center gap-4 text-slate-700">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
                   Lokasi Sesi: <strong>{siteLocation}</strong>
                 </span>
                 <span className="hidden sm:inline text-slate-300">•</span>
@@ -1341,7 +1431,7 @@ export default function AccountSettingsPage() {
               <button
                 type="button"
                 onClick={logout}
-                className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ml-auto"
+                className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ml-auto"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Akhiri Sesi (Logout)</span>
@@ -1354,8 +1444,8 @@ export default function AccountSettingsPage() {
 
       {/* ─── Modal Zoom Barcode QR Code ────────────────────────── */}
       {isZoomQrOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-800/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white w-full max-w-sm p-6 pt-8 pb-8 overflow-hidden animate-in zoom-in-95 duration-150 text-center relative" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.12)" }}>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm p-6 pt-8 pb-7 rounded-3xl border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-center relative">
             <button
               type="button"
               onClick={() => setIsZoomQrOpen(false)}
@@ -1376,11 +1466,11 @@ export default function AccountSettingsPage() {
               {qrCodeUrl ? (
                 <img
                   src={qrCodeUrl}
-                  alt="QR Code TOTP Digitech IMS"
+                  alt="QR Code TOTP DIGITECH IMS"
                   className="w-60 h-60 object-contain bg-white p-3 rounded-xl border border-slate-200 shadow-sm"
                 />
               ) : (
-                <RefreshCw className="w-8 h-8 animate-spin text-red-600" />
+                <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
               )}
             </div>
 
@@ -1391,7 +1481,7 @@ export default function AccountSettingsPage() {
                 <button
                   type="button"
                   onClick={handleCopyKey}
-                  className="text-red-600 hover:text-red-700 font-sans text-xs font-bold cursor-pointer"
+                  className="text-blue-600 hover:text-blue-700 font-sans text-xs font-bold cursor-pointer"
                 >
                   {copiedKey ? '✓ Tersalin' : 'Salin'}
                 </button>
@@ -1401,7 +1491,7 @@ export default function AccountSettingsPage() {
             <button
               type="button"
               onClick={() => setIsZoomQrOpen(false)}
-              className="w-full py-2.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md shadow-red-600/20"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-md shadow-blue-600/20"
             >
               Tutup Tampilan Barcode
             </button>

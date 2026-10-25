@@ -220,3 +220,47 @@ export const sendAgendaNotificationEmail = async (email, { title, date, time, si
   const text = `Agenda Site: ${title} pada tanggal ${date} (${time}) di ${site}. PIC: ${pic}.`;
   return sendEmail({ to: email, subject, html, text });
 };
+
+/**
+ * Template Email: Kode OTP Verifikasi Dua Langkah (2FA Login)
+ */
+export const sendTwoFactorOtpEmail = async (email, fullName, otpCode) => {
+  const subject = `🔐 [Verifikasi 2FA] Kode Keamanan Login Digitech IMS: ${otpCode}`;
+  const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar' });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+      <div style="background-color: #0f172a; padding: 20px; border-radius: 12px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ef4444; font-size: 20px; letter-spacing: 1px;">DIGITECH SECURITY AUTH</h2>
+        <p style="margin: 6px 0 0 0; font-size: 12px; color: #94a3b8;">Verifikasi Dua Langkah (Two-Factor Authentication)</p>
+      </div>
+      <div style="padding: 24px 0; text-align: center;">
+        <h3 style="color: #1e293b; margin-top: 0;">Halo, ${fullName || 'Pengguna'}!</h3>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; max-width: 460px; margin: 0 auto;">
+          Gunakan 6-digit kode verifikasi di bawah ini untuk menyelesaikan otorisasi masuk ke portal <strong>Digitech IMS</strong>:
+        </p>
+
+        <div style="background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; margin: 24px auto; max-width: 320px;">
+          <div style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #dc2626; font-family: monospace;">
+            ${otpCode}
+          </div>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b; font-weight: 600;">
+            Berlaku selama 5 menit • Sekali Pakai (One-Time Passcode)
+          </p>
+        </div>
+
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 20px 0; text-align: left; border-radius: 4px;">
+          <p style="margin: 0; color: #991b1b; font-size: 12px; line-height: 1.5;">
+            <strong>Penting:</strong> Jangan berikan kode ini kepada siapa pun termasuk staf operasional Digitech. Jika Anda tidak mencoba masuk pada ${timestamp} WITA, segera amankan akun Anda.
+          </p>
+        </div>
+      </div>
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+        &copy; 2026 Digitech Systems &amp; Security Operations. Email otomatis aman.
+      </div>
+    </div>
+  `;
+  const text = `Kode verifikasi 2FA Anda adalah: ${otpCode}. Berlaku 5 menit. Jangan bagikan kepada siapa pun.`;
+  return sendEmail({ to: email, subject, html, text });
+};
+

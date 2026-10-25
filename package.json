@@ -7,6 +7,8 @@
         "dev": "npm --prefix backend run dev",
         "dev:frontend": "cd FrontEnd && npm run dev",
         "build": "npm --prefix FrontEnd install && npm --prefix FrontEnd run build",
+        "audit": "node scripts/comprehensive-audit.mjs",
+        "auto-deploy": "node scripts/auto-deploy.mjs",
         "test:e2e": "npm --prefix e2e run test:e2e"
     },
     "dependencies": {

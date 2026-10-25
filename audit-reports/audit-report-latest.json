@@ -1,0 +1,197 @@
+{
+  "timestamp": "2026-10-25T03:48:29.864Z",
+  "environment": "development",
+  "platform": "DIGITECH Inventory Management System (IMS)",
+  "version": "2.0.0",
+  "summary": {
+    "totalChecks": 24,
+    "passed": 24,
+    "failed": 0,
+    "warnings": 0,
+    "scorePercentage": 100
+  },
+  "categories": {
+    "systemHealth": [
+      {
+        "name": "Environment Configuration",
+        "status": "PASS",
+        "details": ".env configuration file present.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:29.866Z"
+      },
+      {
+        "name": "Backend API Health Endpoint",
+        "status": "PASS",
+        "details": "Backend aktif di http://127.0.0.1:3001 (200 OK, status: ok).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:29.896Z"
+      },
+      {
+        "name": "Security HTTP Headers (Helmet)",
+        "status": "PASS",
+        "details": "Security headers (Helmet, XSS Guard, CSP) aktif pada response API.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:29.896Z"
+      }
+    ],
+    "loginRules": [
+      {
+        "name": "Malformed Email Rejection",
+        "status": "PASS",
+        "details": "Format email tidak valid ditolak dengan HTTP 401.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.596Z"
+      },
+      {
+        "name": "Empty Credentials Rejection",
+        "status": "PASS",
+        "details": "Kredensial kosong ditolak dengan HTTP 400.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.614Z"
+      },
+      {
+        "name": "Unauthorized Credentials Rejection",
+        "status": "PASS",
+        "details": "Kredensial salah ditolak aman dengan status HTTP 401.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.826Z"
+      },
+      {
+        "name": "MFA Interception Rule",
+        "status": "PASS",
+        "details": "Login endpoint mengembalikan mfaRequired: true dan mfaPendingToken (5m TTL) jika akun memiliki 2FA aktif.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.826Z"
+      }
+    ],
+    "mfaGoogleAuth": [
+      {
+        "name": "2FA Verification API Endpoint",
+        "status": "PASS",
+        "details": "POST /api/auth/verify-2fa aktif dan memvalidasi token pending & 6-digit PIN (HTTP 401).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.829Z"
+      },
+      {
+        "name": "Resend Email OTP API Endpoint",
+        "status": "PASS",
+        "details": "POST /api/auth/resend-email-otp aktif terhubung ke Gmail SMTP (HTTP 401).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.844Z"
+      },
+      {
+        "name": "RFC 6238 TOTP Engine & Backup Codes",
+        "status": "PASS",
+        "details": "Algoritma HMAC-SHA1 30 detik, Base32 secret 160-bit, dan 8 backup recovery codes terverifikasi.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.844Z"
+      },
+      {
+        "name": "Email OTP Delivery Service",
+        "status": "PASS",
+        "details": "Service sendTwoFactorOtpEmail terkonfigurasi dengan template resmi DIGITECH dan masa berlaku 5 menit.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.845Z"
+      }
+    ],
+    "profileSecurity": [
+      {
+        "name": "Profile Route Protection (Bearer JWT)",
+        "status": "PASS",
+        "details": "GET /api/users/me memblokir akses tanpa token (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.859Z"
+      },
+      {
+        "name": "MFA Status Route Protection",
+        "status": "PASS",
+        "details": "GET /api/users/mfa/status diproteksi ketat dengan requireAuth (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.875Z"
+      },
+      {
+        "name": "Frontend Account Settings MFA UI",
+        "status": "PASS",
+        "details": "Live scannable QR Code, backup codes card, copy secret, dan styling bebas aksen merah.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.876Z"
+      }
+    ],
+    "rbacAndDataProtection": [
+      {
+        "name": "Inventory Stock Ledger Route Protection",
+        "status": "PASS",
+        "details": "GET /api/inventory/ledger memblokir akses tanpa autentikasi (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.878Z"
+      },
+      {
+        "name": "User Management Store Route Protection",
+        "status": "PASS",
+        "details": "GET /api/users memblokir akses tanpa autentikasi (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.889Z"
+      },
+      {
+        "name": "Project Document Sign & Create Route Protection",
+        "status": "PASS",
+        "details": "POST /api/project-inventory/documents memblokir akses tanpa autentikasi (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.904Z"
+      },
+      {
+        "name": "Project Registration Gate Route Protection",
+        "status": "PASS",
+        "details": "POST /api/project-inventory/projects memblokir akses tanpa autentikasi (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.920Z"
+      },
+      {
+        "name": "Stock Opname Execution Route Protection",
+        "status": "PASS",
+        "details": "POST /api/opname/start memblokir akses tanpa autentikasi (401 Unauthorized).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.935Z"
+      }
+    ],
+    "featureIntegrity": [
+      {
+        "name": "Supabase Database Service Module",
+        "status": "PASS",
+        "details": "Modul backend/services/supabase.js terpasang dan melayani database cloud.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.936Z"
+      },
+      {
+        "name": "Redis Caching & Session Store Layer",
+        "status": "PASS",
+        "details": "Modul backend/services/redis.js terpasang untuk cache dan distributed locks.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.936Z"
+      },
+      {
+        "name": "Offline Resilience & Local DB Fallback",
+        "status": "PASS",
+        "details": "Modul backend/services/localDb.js aktif untuk offline resilience di site tambang.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.936Z"
+      },
+      {
+        "name": "Official PDF Document Generator Service",
+        "status": "PASS",
+        "details": "Modul backend/services/pdfService.js aktif untuk penerbitan berita acara & label.",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.936Z"
+      }
+    ],
+    "frontendBuild": [
+      {
+        "name": "Vite Production Bundle Verification",
+        "status": "PASS",
+        "details": "Production build berhasil. dist/index.html terbuat (1746 bytes).",
+        "critical": true,
+        "timestamp": "2026-10-25T03:48:30.937Z"
+      }
+    ]
+  }
+}
