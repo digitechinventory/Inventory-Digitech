@@ -12,7 +12,8 @@ export const DEMO_USERS = {
     company: 'Digitech',
     department: 'Operations',
     site_id: 'site-bib-02',
-    is_active: true
+    is_active: true,
+    allowed_projects: ['proj-wim']
   },
   Admin: {
     id: 'demo-admin-001',
@@ -22,7 +23,8 @@ export const DEMO_USERS = {
     company: 'Digitech',
     department: 'Inventory Control',
     site_id: 'site-bib-02',
-    is_active: true
+    is_active: true,
+    allowed_projects: ['proj-famous']
   },
   Superadmin: {
     id: 'demo-sa-001',
@@ -32,7 +34,8 @@ export const DEMO_USERS = {
     company: 'Digitech',
     department: 'System Administration',
     site_id: null,
-    is_active: true
+    is_active: true,
+    allowed_projects: ['proj-wim', 'proj-famous', 'proj-ccm']
   }
 };
 
@@ -269,6 +272,35 @@ export function AuthProvider({ children }) {
 
   const role = user?.role || 'User';
 
+  const hasProjectAccess = useCallback((projectId) => {
+    if (!projectId) return true;
+    if (role === 'Superadmin') return true;
+    const normalized = String(projectId).toLowerCase();
+    const allowed = user?.allowed_projects || [];
+    return allowed.some(p => {
+      const pNorm = String(p).toLowerCase();
+      return pNorm === normalized || pNorm.replace('proj-', '') === normalized.replace('proj-', '');
+    });
+  }, [user, role]);
+
+  const refreshUserAuthorities = useCallback(async () => {
+    try {
+      const tok = session?.access_token || localStorage.getItem('token');
+      const res = await axios.get('/api/users/me', {
+        headers: tok ? { Authorization: `Bearer ${tok}` } : {}
+      });
+      if (res.data?.data) {
+        setUser(prev => ({
+          ...prev,
+          ...res.data.data,
+          allowed_projects: res.data.data.allowed_projects || prev?.allowed_projects || []
+        }));
+      }
+    } catch (err) {
+      console.warn('Failed to refresh user authorities:', err);
+    }
+  }, [session?.access_token]);
+
   const value = {
     user,
     role,
@@ -284,7 +316,9 @@ export function AuthProvider({ children }) {
     resendEmailOtp,
     register,
     logout,
-    switchDemoRole
+    switchDemoRole,
+    hasProjectAccess,
+    refreshUserAuthorities
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

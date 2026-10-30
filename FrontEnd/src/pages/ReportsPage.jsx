@@ -257,7 +257,7 @@ export default function ReportsPage() {
 
           <button
             onClick={() => handlePrintDocument(officialDocuments[0])}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
           >
             <Printer className="w-4 h-4" />
             <span>Cetak Berita Acara</span>
@@ -728,7 +728,7 @@ export default function ReportsPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => handlePrintDocument(doc)}
-                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                        className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                       >
                         <Printer className="w-3.5 h-3.5" />
                         <span>Buka &amp; Cetak</span>
@@ -961,9 +961,15 @@ export default function ReportsPage() {
               <div className="border-b-2 border-red-700 pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 flex items-center justify-center text-white font-black text-2xl shadow-md shrink-0">
-                      D
-                    </div>
+                    <img
+                      src="/digitech-emblem.png"
+                      alt="Digitech"
+                      className="w-14 h-14 object-contain shrink-0 drop-shadow-2xs"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/favicon.png';
+                      }}
+                    />
                     <div>
                       <h1 className="text-2xl sm:text-3xl font-black text-red-700 tracking-wider">
                         DIGITECH

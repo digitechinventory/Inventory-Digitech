@@ -284,7 +284,7 @@ const normalizeMosDoc = (d) => {
     subtitle: d.subtitle || sigs.subtitle || '',
     vendor_name: d.vendor_name || 'PT Trakindo Utama',
     
-    // Rute Pengiriman (Dari Siapa ➔ Akan Kemana)
+    // Rute Pengiriman (Dari Siapa -> Akan Kemana)
     site_location: destLoc,
     origin_location: originLoc,
     destination_location: destLoc,

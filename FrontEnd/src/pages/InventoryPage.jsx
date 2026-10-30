@@ -32,7 +32,8 @@ import {
   MinusSquare,
   Loader2,
   FileSpreadsheet,
-  Printer
+  Printer,
+  Sparkles
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -40,6 +41,8 @@ import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 import QRLabelPrintModal from '../components/printer/QRLabelPrintModal.jsx';
 import PrinterSetupModal from '../components/printer/PrinterSetupModal.jsx';
+import CyberQRCodeModal from '../components/common/CyberQRCodeModal.jsx';
+import IncomingStockQRModal from '../components/inventory/IncomingStockQRModal.jsx';
 import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockData.js';
 
 
@@ -61,10 +64,45 @@ export default function InventoryPage() {
   const [selectedStatus, setSelectedStatus] = useState('ALL'); // 'ALL' | 'optimal' | 'low' | 'critical'
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table' | 'rack'
   const [selectedItem, setSelectedItem] = useState(null);
+  const [incomingModalData, setIncomingModalData] = useState({ isOpen: false, item: null });
   const [showAddModal, setShowAddModal] = useState(false);
   const [copiedSku, setCopiedSku] = useState(null);
   const [qrPrintItem, setQrPrintItem] = useState(null);
+  const [batchPrintItems, setBatchPrintItems] = useState(null);
+  const [cyberQrItem, setCyberQrItem] = useState(null);
   const [showPrinterSetup, setShowPrinterSetup] = useState(false);
+  const [selectedQrFilter, setSelectedQrFilter] = useState('ALL'); // 'ALL' | 'WITHOUT_QR' | 'WITH_QR'
+  const [isSubmittingNewItem, setIsSubmittingNewItem] = useState(false);
+
+  // Track printed/installed QR labels in localStorage
+  const [printedSkus, setPrintedSkus] = useState(() => {
+    try {
+      const stored = localStorage.getItem('digitech_printed_qr_skus');
+      if (stored) return JSON.parse(stored);
+      // Default initial seeds so users immediately see both tagged and untagged assets
+      const initial = ['BIB-CAT-777D-FLTR', 'BIB-OIL-TELLUS-46', 'BIB-BRG-SKF-6205'];
+      localStorage.setItem('digitech_printed_qr_skus', JSON.stringify(initial));
+      return initial;
+    } catch {
+      return ['BIB-CAT-777D-FLTR', 'BIB-OIL-TELLUS-46'];
+    }
+  });
+
+  useEffect(() => {
+    const handleQrPrinted = () => {
+      try {
+        setPrintedSkus(JSON.parse(localStorage.getItem('digitech_printed_qr_skus') || '[]'));
+      } catch {}
+    };
+    window.addEventListener('qr-label-printed', handleQrPrinted);
+    return () => window.removeEventListener('qr-label-printed', handleQrPrinted);
+  }, []);
+
+  const isItemQrReady = (item) => {
+    const sku = item?.sku || item?.SKU || item?.item_code;
+    if (!sku) return false;
+    return printedSkus.includes(sku) || Boolean(item?.qr_printed || item?.has_qr);
+  };
 
   // Table selection & 3-dots action state
   const [selectedTableSkus, setSelectedTableSkus] = useState([]);
@@ -107,7 +145,7 @@ export default function InventoryPage() {
   // Extract categories dynamically
   const categories = ['ALL', ...new Set(inventory.map(i => i.category).filter(Boolean))];
 
-  // Filtering
+  // Filtering with QR Status filter
   const filteredItems = inventory.filter(item => {
     const q = search.toLowerCase().trim();
     const matchSearch =
@@ -129,7 +167,12 @@ export default function InventoryPage() {
     if (selectedStatus === 'low') matchStatus = isLow && !isCritical;
     if (selectedStatus === 'critical') matchStatus = isCritical;
 
-    return matchSearch && matchCategory && matchStatus;
+    const hasQr = isItemQrReady(item);
+    let matchQr = true;
+    if (selectedQrFilter === 'WITHOUT_QR') matchQr = !hasQr;
+    if (selectedQrFilter === 'WITH_QR') matchQr = hasQr;
+
+    return matchSearch && matchCategory && matchStatus && matchQr;
   });
 
   // Calculate metrics
@@ -140,6 +183,8 @@ export default function InventoryPage() {
     return curr <= min;
   }).length;
   const optimalCount = totalSku - lowStockCount;
+  const withoutQrCount = inventory.filter(i => !isItemQrReady(i)).length;
+  const withQrCount = totalSku - withoutQrCount;
   const totalUnits = inventory.reduce((sum, i) => sum + Number(i.current_stock ?? i.currentStock ?? 0), 0);
 
   const handleCopySku = (sku, e) => {
@@ -249,22 +294,21 @@ export default function InventoryPage() {
         </div>
 
         <div className="flex items-center gap-2.5 relative z-10 ml-auto justify-end shrink-0">
-          {isAdmin && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-2xl text-xs font-bold transition shadow-md shadow-red-600/25 active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Item Baru</span>
-            </button>
-          )}
+          <button
+            onClick={() => setIncomingModalData({ isOpen: true, item: null })}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-2xl text-xs font-bold transition shadow-md shadow-red-600/25 active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Input Barang Masuk</span>
+          </button>
 
           <button
             onClick={() => navigate('/mr')}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-700 hover:text-red-700 rounded-2xl text-xs font-bold transition shadow-xs cursor-pointer"
           >
             <PackagePlus className="w-4 h-4 text-red-600" />
-            <span>Buat Tiket Permintaan (MR)</span>
+            <span className="hidden sm:inline">Buat Tiket Permintaan (MR)</span>
+            <span className="sm:hidden">MR</span>
           </button>
         </div>
       </div>
@@ -373,20 +417,40 @@ export default function InventoryPage() {
             )}
           </div>
 
-          {/* Controls: Status Filter & View Mode Toggle — Pushed to right edge */}
-          <div className="flex items-center gap-3 ml-auto justify-end shrink-0">
+          {/* Controls: Status Filter, QR Filter & View Mode Toggle — Pushed to right edge */}
+          <div className="flex flex-wrap items-center gap-2.5 ml-auto justify-end shrink-0">
             {/* Status Filter Dropdown */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Status:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Stok:</span>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="h-10 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
               >
-                <option value="ALL">Semua Status</option>
+                <option value="ALL">Semua Stok</option>
                 <option value="optimal">Optimal (Cukup)</option>
                 <option value="low">Menipis (Low Stock)</option>
                 <option value="critical">Kritis (Hampir Habis)</option>
+              </select>
+            </div>
+
+            {/* QR Label Filter Dropdown for Asset Tracking */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Tracking QR:</span>
+              <select
+                value={selectedQrFilter}
+                onChange={(e) => setSelectedQrFilter(e.target.value)}
+                className={`h-10 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer transition-all ${
+                  selectedQrFilter === 'WITHOUT_QR'
+                    ? 'bg-amber-50 border-amber-300 text-amber-800'
+                    : selectedQrFilter === 'WITH_QR'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+              >
+                <option value="ALL">Semua Status QR ({totalSku})</option>
+                <option value="WITHOUT_QR">Belum Ber-QR ({withoutQrCount})</option>
+                <option value="WITH_QR">Sudah Ber-QR ({withQrCount})</option>
               </select>
             </div>
 
@@ -494,28 +558,48 @@ export default function InventoryPage() {
                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-red-500/10 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
                     <div>
-                      {/* Top Header: Category Pill & Status Badge */}
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[140px]">
+                      {/* Top Header: Category Pill & Status Badge & QR Indicator */}
+                      <div className="flex items-start justify-between gap-1.5 mb-3 flex-wrap">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/60 truncate max-w-[130px]">
                           {item.category || 'Sparepart Umum'}
                         </span>
 
-                        {isCritical ? (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 flex items-center gap-1 shrink-0">
-                            <AlertTriangle className="w-3 h-3 text-red-600" />
-                            Kritis
-                          </span>
-                        ) : isLow ? (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 shrink-0">
-                            <AlertTriangle className="w-3 h-3 text-amber-600" />
-                            Menipis
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            Optimal
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isItemQrReady(item) ? (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1" title="QR Code terpasang pada fisik aset">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                              QR Ready
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIncomingModalData({ isOpen: true, item });
+                              }}
+                              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 cursor-pointer transition animate-pulse"
+                              title="Klik untuk Registrasi & Cetak QR Code"
+                            >
+                              <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
+                              Belum QR
+                            </button>
+                          )}
+
+                          {isCritical ? (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 flex items-center gap-1">
+                              <AlertTriangle className="w-2.5 h-2.5 text-red-600" />
+                              Kritis
+                            </span>
+                          ) : isLow ? (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                              Menipis
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                              Optimal
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Part Name & SKU */}
@@ -570,7 +654,7 @@ export default function InventoryPage() {
                       </div>
                     </div>
 
-                    {/* Card Footer: Stock Count & Quick MR Action */}
+                    {/* Card Footer: Stock Count & Operational Actions */}
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                       <div>
                         <div className="text-[10px] uppercase font-bold text-slate-400">Stok Tersedia</div>
@@ -585,29 +669,31 @@ export default function InventoryPage() {
                       </div>
 
                       <div className="flex items-center gap-1.5">
+                        {/* Unified Action: Penerimaan & Cetak QR (Side-by-side) */}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate('/mr');
+                            setIncomingModalData({ isOpen: true, item });
                           }}
-                          className="px-2.5 py-1.5 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-xl text-xs font-bold transition-all border border-red-200 hover:border-red-600 flex items-center gap-1 cursor-pointer"
-                          title="Buat Permintaan Material (MR)"
+                          className="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Penerimaan Suku Cadang & Registrasi Label QR"
                         >
-                          <PackagePlus className="w-3.5 h-3.5" />
-                          <span>Ambil</span>
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>Label &amp; Cetak QR</span>
                         </button>
 
+                        {/* Detail Modal */}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedItem(item);
                           }}
-                          className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 transition cursor-pointer"
-                          title="Lihat Detail & QR"
+                          className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 rounded-xl border border-slate-200 transition cursor-pointer"
+                          title="Lihat Detail Suku Cadang"
                         >
-                          <QrCode className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -641,8 +727,22 @@ export default function InventoryPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
+                  onClick={() => {
+                    const selected = inventory.filter(i => selectedTableSkus.includes(i.sku || i.SKU));
+                    if (selected.length > 0) {
+                      setBatchPrintItems(selected);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-red-600" />
+                  <span>Cetak Batch QR ({selectedTableSkus.length})</span>
+                </button>
+
+                <button
                   onClick={() => setSelectedTableSkus([])}
-                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                  className="px-3 py-1.5 text-xs text-red-200 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
                 >
                   Batal Pilih
                 </button>
@@ -658,7 +758,7 @@ export default function InventoryPage() {
                   className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Hapus Terpilih ({selectedTableSkus.length})
+                  Hapus ({selectedTableSkus.length})
                 </button>
               </div>
             </div>
@@ -695,7 +795,8 @@ export default function InventoryPage() {
                     <th className="px-4 py-3.5 text-center">Safety Stock</th>
                     <th className="px-4 py-3.5 text-left">Lokasi Rak</th>
                     <th className="px-4 py-3.5 text-left">Status</th>
-                    <th className="px-4 py-3.5 text-center w-20">Aksi Cepat</th>
+                    <th className="px-4 py-3.5 text-center">Tracking QR</th>
+                    <th className="px-4 py-3.5 text-center w-28">Aksi Cepat</th>
                     <th className="px-4 py-3.5 text-center w-14">Opsi</th>
                   </tr>
                 </thead>
@@ -756,15 +857,53 @@ export default function InventoryPage() {
                           )}
                         </td>
 
-                        {/* Quick MR Button */}
-                        <td className="px-4 py-3 text-center w-20" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => navigate('/mr')}
-                            className="px-2.5 py-1 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-lg text-xs font-bold transition border border-red-200 hover:border-red-600 cursor-pointer"
-                          >
-                            MR
-                          </button>
+                        {/* QR Tracking Status Cell */}
+                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          {isItemQrReady(item) ? (
+                            <button
+                              type="button"
+                              onClick={() => setQrPrintItem(item)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+                              title="QR Code Siap & Terdaftar. Klik untuk cetak ulang label."
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              QR Ready
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setQrPrintItem(item)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition cursor-pointer animate-pulse"
+                              title="Belum terpasang QR Code. Klik untuk langsung generate & cetak stiker."
+                            >
+                              <AlertTriangle className="w-3 h-3 text-amber-600" />
+                              Cetak QR
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Quick Actions (Cetak QR & MR) */}
+                        <td className="px-4 py-3 text-center w-28" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setQrPrintItem(item)}
+                              className="px-2 py-1 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                              title="Cetak Label Stiker QR Thermal"
+                            >
+                              <Printer className="w-3 h-3" />
+                              <span>QR</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => navigate('/mr')}
+                              className="px-2 py-1 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-lg text-xs font-bold transition border border-red-200 hover:border-red-600 cursor-pointer"
+                              title="Buat Tiket Permintaan (MR)"
+                            >
+                              MR
+                            </button>
+                          </div>
                         </td>
 
                         {/* 3-Dots Action Cell */}
@@ -786,8 +925,20 @@ export default function InventoryPage() {
                           {activeKebabSku === sku && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
+                              className="absolute right-3 top-10 z-40 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
                             >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIncomingModalData({ isOpen: true, item });
+                                  setActiveKebabSku(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-red-600" />
+                                <span>Penerimaan &amp; Cetak QR</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -797,7 +948,7 @@ export default function InventoryPage() {
                                 className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
                               >
                                 <Eye className="w-3.5 h-3.5 text-blue-600" />
-                                <span>Detail & Barcode QR</span>
+                                <span>Detail Informasi</span>
                               </button>
 
                               <button
@@ -936,8 +1087,16 @@ export default function InventoryPage() {
               {/* QR Code and Location Banner */}
               <div className="p-4 rounded-2xl bg-red-50/40 border border-red-100 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 bg-white p-1 rounded-xl border border-red-200 flex items-center justify-center shadow-xs">
-                    <QrCode className="w-10 h-10 text-slate-900" />
+                  <div
+                    onClick={() => {
+                      const itm = selectedItem;
+                      setSelectedItem(null);
+                      setIncomingModalData({ isOpen: true, item: itm });
+                    }}
+                    className="w-14 h-14 bg-white p-1 rounded-xl border border-red-200 flex items-center justify-center shadow-xs cursor-pointer hover:border-red-500 hover:shadow-md transition group"
+                    title="Buka Penerimaan & Registrasi QR (Side-by-Side)"
+                  >
+                    <QrCode className="w-10 h-10 text-slate-900 group-hover:text-red-600 transition" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-slate-900">QR Asset Tag Terverifikasi</div>
@@ -948,14 +1107,21 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setQrPrintItem(selectedItem)}
-                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5"
-                >
-                  <QrCode className="w-3.5 h-3.5" />
-                  Print QR
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const itm = selectedItem;
+                      setSelectedItem(null);
+                      setIncomingModalData({ isOpen: true, item: itm });
+                    }}
+                    className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                    title="Buka Formulir & Live QR Generator"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    <span>Registrasi &amp; Cetak QR</span>
+                  </button>
+                </div>
               </div>
 
               {/* Specs Grid */}
@@ -993,115 +1159,19 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* ── 7. ADD ITEM MODAL (Admin Only) ── */}
-      {showAddModal && (
-        <div
-          className="fixed inset-0 bg-slate-700/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in"
-          onClick={() => setShowAddModal(false)}
-        >
-          <div
-            className="bg-white w-full max-w-md border border-slate-200 p-0 overflow-hidden"
-            style={{
-              clipPath: 'polygon(0 16px, 100% 0, 100% calc(100% - 16px), 0 100%)',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.15), 0 8px 24px rgba(220,38,38,0.08)',
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.08))'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Accent top bar */}
-            <div style={{ background: 'linear-gradient(90deg, #DC2626, #EF4444)', height: '4px', width: '100%' }} />
-            <div className="p-6 pt-8 pb-9 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="font-bold text-base text-slate-900">Tambah Suku Cadang Baru</h3>
-                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">Input data material ke katalog gudang</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowPrinterSetup(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 hover:bg-red-50 hover:border-red-200 text-slate-600 hover:text-red-600 rounded-xl text-[10px] font-bold transition cursor-pointer"
-                    title="Setup Printer QR Label"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Printer</span>
-                  </button>
-                  <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                try {
-                  await api.post('/inventory', {
-                    name: fd.get('name'),
-                    sku: fd.get('sku'),
-                    category: fd.get('category'),
-                    current_stock: Number(fd.get('current_stock')),
-                    min_threshold: Number(fd.get('min_threshold')),
-                    unit: fd.get('unit'),
-                    rack: fd.get('rack')
-                  });
-                  addToast('Item baru berhasil ditambahkan ke katalog.', 'success');
-                  setShowAddModal(false);
-                  refetch();
-                } catch (err) {
-                  addToast(err.response?.data?.error?.message || err.message || 'Gagal menambahkan item.', 'error');
-                }
-              }}
-              className="space-y-3"
-            >
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase">Nama Material / Suku Cadang</label>
-                <input required name="name" placeholder="cth: Komatsu PC2000 Hydraulic Hose" className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold mt-1 focus:ring-2 focus:ring-red-500" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Part Number / SKU</label>
-                  <input required name="sku" placeholder="BIB-HYD-001" className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold mt-1 focus:ring-2 focus:ring-red-500" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Kategori</label>
-                  <input required name="category" placeholder="Hydraulics" className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold mt-1 focus:ring-2 focus:ring-red-500" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Stok Awal</label>
-                  <input required type="number" name="current_stock" defaultValue={10} className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold mt-1" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Safety Stock</label>
-                  <input required type="number" name="min_threshold" defaultValue={5} className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold mt-1" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Satuan</label>
-                  <input required name="unit" defaultValue="PCS" className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold mt-1" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase">Bin / Posisi Rak</label>
-                <input required name="rack" placeholder="R-A01" className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold mt-1" />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-600/25 cursor-pointer mt-2"
-              >
-                Simpan ke Katalog
-              </button>
-            </form>
-          </div>
-          </div>
-        </div>
-      )}
+      {/* ── 7. PENERIMAAN BARANG MASUK & LIVE QR CODE MODAL (SIDE-BY-SIDE) ── */}
+      <IncomingStockQRModal
+        isOpen={incomingModalData.isOpen || showAddModal}
+        initialItem={incomingModalData.item}
+        onClose={() => {
+          setIncomingModalData({ isOpen: false, item: null });
+          setShowAddModal(false);
+        }}
+        onSaved={() => {
+          refetch();
+        }}
+        onOpenPrinterSetup={() => setShowPrinterSetup(true)}
+      />
 
       {/* MODAL: EDIT DATA SUKU CADANG */}
       {editCatalogItem && (
@@ -1301,11 +1371,15 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* Real Thermal QR Label Print Modal */}
+      {/* Real Thermal QR Label Print Modal (Single or Batch) */}
       <QRLabelPrintModal
         item={qrPrintItem}
-        isOpen={!!qrPrintItem}
-        onClose={() => setQrPrintItem(null)}
+        items={batchPrintItems}
+        isOpen={Boolean(qrPrintItem || batchPrintItems)}
+        onClose={() => {
+          setQrPrintItem(null);
+          setBatchPrintItems(null);
+        }}
         onOpenPrinterSetup={() => setShowPrinterSetup(true)}
       />
 
@@ -1314,6 +1388,17 @@ export default function InventoryPage() {
         isOpen={showPrinterSetup}
         onClose={() => setShowPrinterSetup(false)}
       />
+
+      {/* Fallback Cyber QR Item handler redirected to side-by-side IncomingStockQRModal */}
+      {cyberQrItem && (
+        <IncomingStockQRModal
+          isOpen={Boolean(cyberQrItem)}
+          initialItem={cyberQrItem}
+          onClose={() => setCyberQrItem(null)}
+          onSaved={() => refetch()}
+          onOpenPrinterSetup={() => setShowPrinterSetup(true)}
+        />
+      )}
 
     </div>
   );

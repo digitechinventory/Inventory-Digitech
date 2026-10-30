@@ -16,10 +16,11 @@ import {
   generateOtpAuthUrl, 
   generateBackupCodes 
 } from '../utils/totp.js';
+import { getUserAllowedProjects, setUserAllowedProjects } from '../services/projectAuthorityService.js';
 
 const router = Router();
 
-const FALLBACK_USERS_LIST = [
+let FALLBACK_USERS_LIST = [
   {
     id: 'demo-user-001',
     email: 'arya-user@digitech.co.id',
@@ -90,17 +91,25 @@ router.get('/', requireAuth, adminOnly, async (req, res, next) => {
     }
 
     const { data, error } = await query;
+    let list = (error || !data || data.length === 0) ? FALLBACK_USERS_LIST : data;
     if (error || !data || data.length === 0) {
-      let filtered = FALLBACK_USERS_LIST;
-      if (status === 'pending') filtered = filtered.filter(u => !u.is_active || !u.is_approved);
-      if (status === 'active') filtered = filtered.filter(u => u.is_active && u.is_approved);
-      if (role) filtered = filtered.filter(u => u.role === role);
-      return sendSuccess(res, filtered, 'Daftar pengguna (fallback).');
+      if (status === 'pending') list = list.filter(u => !u.is_active || !u.is_approved);
+      if (status === 'active') list = list.filter(u => u.is_active && u.is_approved);
+      if (role) list = list.filter(u => u.role === role);
     }
 
-    return sendSuccess(res, data, 'Daftar pengguna berhasil diambil.');
+    const enriched = list.map(u => ({
+      ...u,
+      allowed_projects: getUserAllowedProjects(u.id, u.role)
+    }));
+
+    return sendSuccess(res, enriched, 'Daftar pengguna berhasil diambil.');
   } catch (err) {
-    return sendSuccess(res, FALLBACK_USERS_LIST, 'Daftar pengguna fallback.');
+    const enrichedFallback = FALLBACK_USERS_LIST.map(u => ({
+      ...u,
+      allowed_projects: getUserAllowedProjects(u.id, u.role)
+    }));
+    return sendSuccess(res, enrichedFallback, 'Daftar pengguna fallback.');
   }
 });
 
@@ -210,20 +219,77 @@ router.put('/:id/role', requireAuth, superadminOnly, async (req, res, next) => {
       throw new AppError('Role tidak valid. Harus User, Admin, atau Superadmin.', 400, 'VALIDATION_FAILED');
     }
 
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update({ role })
-      .eq('id', req.params.id)
-      .select()
-      .single();
+    let updatedData = null;
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({ role })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+      if (!error && data) updatedData = data;
+    } catch {}
 
-    if (error || !data) {
-      throw new AppError('Gagal mengubah role pengguna.', 400, 'DATABASE_ERROR');
+    const idx = FALLBACK_USERS_LIST.findIndex(u => u.id === req.params.id);
+    if (idx !== -1) {
+      FALLBACK_USERS_LIST[idx].role = role;
+      if (!updatedData) updatedData = FALLBACK_USERS_LIST[idx];
+    }
+
+    if (!updatedData) {
+      throw new AppError('Pengguna tidak ditemukan untuk diubah rolenya.', 404, 'RESOURCE_NOT_FOUND');
     }
 
     await cacheDel(`user:${req.params.id}`).catch(() => {});
 
-    return sendSuccess(res, data, `Role pengguna berhasil diubah menjadi ${role}.`);
+    return sendSuccess(res, updatedData, `Role pengguna berhasil diubah menjadi ${role}.`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/users/:id/status — Superadmin only: Activate or Deactivate user
+router.put('/:id/status', requireAuth, superadminOnly, async (req, res, next) => {
+  try {
+    const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') {
+      throw new AppError('Field is_active harus berupa boolean (true/false).', 400, 'VALIDATION_FAILED');
+    }
+
+    if (req.params.id === req.user.id && !is_active) {
+      throw new AppError('Tidak dapat menonaktifkan akun Anda sendiri yang sedang aktif.', 400, 'VALIDATION_FAILED');
+    }
+
+    let updatedData = null;
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({ is_active })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+      if (!error && data) updatedData = data;
+    } catch {}
+
+    // Update in fallback list as well
+    const idx = FALLBACK_USERS_LIST.findIndex(u => u.id === req.params.id);
+    if (idx !== -1) {
+      FALLBACK_USERS_LIST[idx].is_active = is_active;
+      if (!updatedData) updatedData = FALLBACK_USERS_LIST[idx];
+    }
+
+    if (!updatedData) {
+      throw new AppError('Pengguna tidak ditemukan untuk diubah statusnya.', 404, 'RESOURCE_NOT_FOUND');
+    }
+
+    await cacheDel(`user:${req.params.id}`).catch(() => {});
+
+    const statusLabel = is_active ? 'diaktifkan' : 'dinonaktifkan';
+    return sendSuccess(
+      res,
+      updatedData,
+      `Akun pengguna ${updatedData.full_name || req.params.id} berhasil ${statusLabel}.`
+    );
   } catch (err) {
     next(err);
   }
@@ -233,15 +299,19 @@ router.put('/:id/role', requireAuth, superadminOnly, async (req, res, next) => {
 router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     if (req.params.id === req.user.id) {
-      throw new AppError('Tidak dapat menghapus akun Anda sendiri.', 400, 'VALIDATION_FAILED');
+      throw new AppError('Tidak dapat menghapus akun Anda sendiri yang sedang aktif.', 400, 'VALIDATION_FAILED');
     }
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .delete()
-      .eq('id', req.params.id);
+    try {
+      await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', req.params.id);
+    } catch {}
 
-    if (error) throw error;
+    // Remove from fallback list
+    FALLBACK_USERS_LIST = FALLBACK_USERS_LIST.filter(u => u.id !== req.params.id);
+
     await cacheDel(`user:${req.params.id}`).catch(() => {});
 
     return sendSuccess(res, { id: req.params.id }, 'Pengguna berhasil dihapus.');
@@ -250,7 +320,30 @@ router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// GET /api/users/me — Get profile of currently authenticated user with MFA info
+// PUT /api/users/:id/projects — Superadmin only: Update project authority for user
+router.put('/:id/projects', requireAuth, superadminOnly, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { allowed_projects } = req.body;
+
+    if (!Array.isArray(allowed_projects)) {
+      throw new AppError('allowed_projects harus berupa array project ID.', 400, 'VALIDATION_FAILED');
+    }
+
+    const updatedProjects = setUserAllowedProjects(id, allowed_projects);
+    await cacheDel(`user:${id}`).catch(() => {});
+
+    return sendSuccess(
+      res,
+      { id, allowed_projects: updatedProjects },
+      `Hak otoritas project untuk pengguna ${id} berhasil diperbarui.`
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/users/me — Get profile of currently authenticated user with MFA info & project authorities
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     let profile = null;
@@ -282,8 +375,10 @@ router.get('/me', requireAuth, async (req, res, next) => {
     }
 
     const defaultSecret = 'JBSWY3DPEHPK3PXP';
+    const effectiveRole = profile.role || req.user.role || 'User';
     const enrichedProfile = {
       ...profile,
+      allowed_projects: getUserAllowedProjects(req.user.id, effectiveRole),
       totp_secret: profile.totp_secret || defaultSecret,
       otp_auth_url: `otpauth://totp/Digitech%20IMS:${encodeURIComponent(profile.email || req.user.email)}?secret=${profile.totp_secret || defaultSecret}&issuer=Digitech%20IMS`
     };

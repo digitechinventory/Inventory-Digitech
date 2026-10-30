@@ -507,9 +507,9 @@ export default function AccountSettingsPage() {
       </div>
 
       {/* ─── Elevated Hero Profile Card with Mega Mendung & Live Authority Metrics ─── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 border border-indigo-900/40 p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-700 to-red-800 border border-red-500/40 p-6 sm:p-8 text-white shadow-xl">
         <MegaMendungDefs />
-        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-blue-600/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Avatar & Main Identity */}
@@ -609,7 +609,7 @@ export default function AccountSettingsPage() {
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
               Status Akun
             </span>
-            <span className="font-bold text-emerald-300 block">✓ Aktif &amp; Terverifikasi</span>
+            <span className="font-bold text-emerald-300 block">Aktif &amp; Terverifikasi</span>
             <span className="text-[10px] text-slate-400 block font-mono">Otentikasi SSO Digitech</span>
           </div>
 
@@ -764,7 +764,7 @@ export default function AccountSettingsPage() {
                     className="w-full h-11 pl-10 pr-24 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm font-medium cursor-not-allowed outline-none"
                   />
                   <span className="absolute right-3 top-3 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                    ✓ Terverifikasi
+                    Terverifikasi
                   </span>
                 </div>
               </div>
@@ -997,7 +997,7 @@ export default function AccountSettingsPage() {
                     : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
                 }`}
               >
-                {emailMfa ? '✓ Aktif (Klik untuk Nonaktifkan)' : 'Aktifkan OTP Email'}
+                {emailMfa ? 'Aktif (Klik untuk Nonaktifkan)' : 'Aktifkan OTP Email'}
               </button>
             </div>
           </div>
@@ -1483,7 +1483,7 @@ export default function AccountSettingsPage() {
                   onClick={handleCopyKey}
                   className="text-blue-600 hover:text-blue-700 font-sans text-xs font-bold cursor-pointer"
                 >
-                  {copiedKey ? '✓ Tersalin' : 'Salin'}
+                  {copiedKey ? 'Tersalin' : 'Salin'}
                 </button>
               </div>
             </div>

@@ -725,7 +725,7 @@ export default function InteractiveDocumentSheet({
                     </div>
                     <div className="flex-1 flex items-center justify-center text-[10px] text-slate-400 italic">
                       {isSlotSigned('maker') ? (
-                        <span className="text-emerald-700 font-semibold text-[10px]">✓ Terverifikasi</span>
+                        <span className="text-emerald-700 font-semibold text-[10px]">Terverifikasi</span>
                       ) : isPlacingSignature && userAllowedSlot === 'maker' ? (
                         <span className="text-emerald-600 font-bold text-[10px] animate-pulse">Area TTD Anda</span>
                       ) : null}
@@ -750,7 +750,7 @@ export default function InteractiveDocumentSheet({
                     </div>
                     <div className="flex-1 flex items-center justify-center text-[10px] text-slate-400 italic">
                       {isSlotSigned('checker') ? (
-                        <span className="text-emerald-700 font-semibold text-[10px]">✓ Terverifikasi</span>
+                        <span className="text-emerald-700 font-semibold text-[10px]">Terverifikasi</span>
                       ) : isPlacingSignature && userAllowedSlot === 'checker' ? (
                         <span className="text-emerald-600 font-bold text-[10px] animate-pulse">Area TTD Anda</span>
                       ) : null}
@@ -775,7 +775,7 @@ export default function InteractiveDocumentSheet({
                     </div>
                     <div className="flex-1 flex items-center justify-center text-[10px] text-slate-400 italic">
                       {isSlotSigned('approver') ? (
-                        <span className="text-emerald-700 font-semibold text-[10px]">✓ Terverifikasi</span>
+                        <span className="text-emerald-700 font-semibold text-[10px]">Terverifikasi</span>
                       ) : isPlacingSignature && userAllowedSlot === 'approver' ? (
                         <span className="text-emerald-600 font-bold text-[10px] animate-pulse">Area TTD Anda</span>
                       ) : null}
@@ -793,7 +793,7 @@ export default function InteractiveDocumentSheet({
               {/* Bottom Warning Note */}
               <div className="p-2 border border-red-200 bg-red-50/40 text-red-700 text-[11px] font-semibold flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                <span>⚠ Laporkan ke Supervisor VGT dan Digitech jika terdapat item yang tidak sesuai atau kondisi barang tidak baik.</span>
+                <span>Laporkan ke Supervisor VGT dan Digitech jika terdapat item yang tidak sesuai atau kondisi barang tidak baik.</span>
               </div>
 
             </div>
@@ -926,7 +926,7 @@ export default function InteractiveDocumentSheet({
                     }}
                     className="w-full py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold shadow-sm transition-all"
                   >
-                    ⚡ Rapikan ke Kolom Dokumen
+                    Rapikan ke Kolom Dokumen
                   </button>
                 </div>
               ) : !isPositionLocked ? (
@@ -939,7 +939,7 @@ export default function InteractiveDocumentSheet({
                     }}
                     className="w-full py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold shadow-sm transition-all"
                   >
-                    ✓ Kunci Posisi Ini
+                    Kunci Posisi Ini
                   </button>
                 </div>
               ) : null}

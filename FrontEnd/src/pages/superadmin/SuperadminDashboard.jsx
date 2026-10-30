@@ -164,6 +164,7 @@ export default function SuperadminDashboard() {
         />
       </div>
 
+
       {/* ── PROJECT WORKSPACES & 8-STAGE DOCUMENT BANNER (WIM, FAMOUS, CCM) ── */}
       <ProjectWorkspacesBanner userRole="Superadmin" />
 
@@ -185,7 +186,7 @@ export default function SuperadminDashboard() {
               </p>
             </div>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-              ⚡ SLA Rata-rata: 0.9 Hari
+              SLA Rata-rata: 0.9 Hari
             </span>
           </div>
 

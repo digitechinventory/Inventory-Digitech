@@ -152,6 +152,23 @@ export async function signProjectDocument(id, data) {
   return res.data?.data;
 }
 
+export async function getProjectAuthorities() {
+  const res = await api.get('/project-inventory/authorities');
+  return res.data?.data;
+}
+
+export async function updateUserProjectAuthority(userId, allowedProjects) {
+  const res = await api.put(`/project-inventory/authorities/${userId}`, {
+    allowed_projects: allowedProjects
+  });
+  return res.data?.data;
+}
+
+export async function getMyProjectAuthorities() {
+  const res = await api.get('/project-inventory/my-authorities');
+  return res.data?.data;
+}
+
 export default {
   getProjects,
   createProject,
@@ -178,7 +195,10 @@ export default {
   getProjectDocuments,
   createProjectDocument,
   uploadProjectDocumentAttachment,
-  signProjectDocument
+  signProjectDocument,
+  getProjectAuthorities,
+  updateUserProjectAuthority,
+  getMyProjectAuthorities
 };
 
 

@@ -8,6 +8,15 @@ import { adminOnly, superadminOnly } from '../middleware/rbac.js';
 import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { FALLBACK_MOS, generateUniqueDocNumber } from './mos.js';
+import {
+  getUserAllowedProjects,
+  setUserAllowedProjects,
+  checkUserProjectAccess,
+  requireProjectAccess,
+  getAuthoritiesMap,
+  ALL_PROJECT_IDS,
+  registerProjectId
+} from '../services/projectAuthorityService.js';
 
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -555,6 +564,102 @@ const computeWarrantyStatus = (expiryDate) => {
 };
 
 // ==========================================
+// 0. PROJECT AUTHORITIES & ACCESS CONTROL
+// ==========================================
+
+// GET /api/project-inventory/authorities — Superadmin only: view user project authorities
+router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) => {
+  try {
+    let users = [];
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, email, full_name, role, department, company, is_active, is_approved')
+        .order('created_at', { ascending: false });
+      if (!error && data && data.length > 0) {
+        users = data;
+      }
+    } catch (e) {}
+
+    if (users.length === 0) {
+      users = [
+        { id: 'demo-user-001', email: 'arya-user@digitech.co.id', full_name: 'arya-user', role: 'User', company: 'Digitech', department: 'Operations', is_active: true, is_approved: true },
+        { id: 'demo-admin-001', email: 'arya-admin@digitech.co.id', full_name: 'arya-admin', role: 'Admin', company: 'Digitech', department: 'Inventory Control', is_active: true, is_approved: true },
+        { id: 'demo-sa-001', email: 'arya-superadmin@digitech.co.id', full_name: 'arya-superadmin', role: 'Superadmin', company: 'Digitech', department: 'System Administration', is_active: true, is_approved: true },
+        { id: 'user-pending-001', email: 'budi.santoso@vgt.co.id', full_name: 'Budi Santoso', role: 'User', company: 'VGT', department: 'Maintenance Pit 2', is_active: false, is_approved: false }
+      ];
+    }
+
+    let allProjects = FALLBACK_PROJECTS;
+    try {
+      const { data: dbProjects } = await supabase
+        .from('project_workspaces')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (dbProjects && dbProjects.length > 0) {
+        allProjects = dbProjects;
+      }
+    } catch (e) {}
+
+    allProjects.forEach(p => registerProjectId(p.id));
+
+    const authoritiesMap = getAuthoritiesMap();
+    const enrichedUsers = users.map(u => ({
+      ...u,
+      allowed_projects: u.role === 'Superadmin'
+        ? [...ALL_PROJECT_IDS]
+        : (authoritiesMap[u.id] || (u.role === 'Admin' ? ['proj-famous'] : ['proj-wim']))
+    }));
+
+    const projectsList = allProjects.map(p => ({
+      id: p.id,
+      code: p.code,
+      name: p.name,
+      description: p.description,
+      site_location: p.site_location,
+      color_theme: p.color_theme,
+      status: p.status
+    }));
+
+    return sendSuccess(res, {
+      users: enrichedUsers,
+      projects: projectsList,
+      all_project_ids: ALL_PROJECT_IDS
+    }, 'Daftar hak otoritas project pengguna berhasil diambil.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/project-inventory/authorities/:userId — Superadmin only: update user's allowed projects
+router.put('/authorities/:userId', requireAuth, superadminOnly, async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { allowed_projects } = req.body;
+
+    if (!Array.isArray(allowed_projects)) {
+      throw new AppError('allowed_projects wajib berupa array kode project ID.', 400, 'VALIDATION_FAILED');
+    }
+
+    const updated = setUserAllowedProjects(userId, allowed_projects);
+    return sendSuccess(res, { userId, allowed_projects: updated }, `Hak otoritas project untuk pengguna ${userId} berhasil diperbarui.`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/project-inventory/my-authorities — Current user's project authorities
+router.get('/my-authorities', requireAuth, (req, res) => {
+  const allowed = getUserAllowedProjects(req.user.id, req.user.role);
+  return sendSuccess(res, {
+    user_id: req.user.id,
+    role: req.user.role,
+    allowed_projects: allowed,
+    is_superadmin: req.user.role === 'Superadmin'
+  }, 'Hak otoritas project akun aktif.');
+});
+
+// ==========================================
 // 1. PROJECTS (WORKSPACES)
 // ==========================================
 
@@ -587,6 +692,9 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
     } catch (e) {}
 
     const enriched = projects.map(proj => {
+      const isAuthorized = req.user ? checkUserProjectAccess(req.user, proj.id) : true;
+      const isLocked = !isAuthorized;
+
       // If FAMOUS, use real dataset statistics!
       if (proj.id === 'proj-famous' || proj.code === 'FAMOUS') {
         const totalItems = FAMOUS_SUMMARY.total_items || FAMOUS_ITEMS.length || 9416;
@@ -597,6 +705,8 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
 
         return {
           ...proj,
+          is_authorized: isAuthorized,
+          is_locked: isLocked,
           stats: {
             total_items: totalItems,
             installed_count: installedCount,
@@ -620,6 +730,8 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
 
         return {
           ...proj,
+          is_authorized: isAuthorized,
+          is_locked: isLocked,
           stats: {
             total_items: totalComponents,
             installed_count: installedCount,
@@ -651,6 +763,8 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
 
       return {
         ...proj,
+        is_authorized: isAuthorized,
+        is_locked: isLocked,
         stats: {
           total_items: projItems.length,
           installed_count: installedCount,
@@ -690,6 +804,8 @@ router.post('/projects', requireAuth, adminOnly, async (req, res, next) => {
       status: 'active',
       created_at: new Date().toISOString()
     };
+
+    registerProjectId(newProject.id);
 
     try {
       const { data, error } = await supabase
@@ -757,7 +873,7 @@ router.put('/projects/:id', requireAuth, adminOnly, async (req, res, next) => {
 // ==========================================
 
 // GET /api/project-inventory/warehouses
-router.get('/warehouses', optionalAuth, async (req, res, next) => {
+router.get('/warehouses', requireAuth, requireProjectAccess(req => req.query.project_id), async (req, res, next) => {
   try {
     const { project_id } = req.query;
     let warehouses = FALLBACK_PROJECT_WAREHOUSES;
@@ -848,12 +964,12 @@ router.delete('/warehouses/:id', requireAuth, adminOnly, async (req, res, next) 
 // ==========================================
 
 // GET /api/project-inventory/famous/summary
-router.get('/famous/summary', optionalAuth, (req, res) => {
+router.get('/famous/summary', requireAuth, requireProjectAccess('proj-famous'), (req, res) => {
   return sendSuccess(res, FAMOUS_SUMMARY, 'Ringkasan data real project FAMOUS.');
 });
 
 // GET /api/project-inventory/famous/fleet-matrix
-router.get('/famous/fleet-matrix', optionalAuth, (req, res) => {
+router.get('/famous/fleet-matrix', requireAuth, requireProjectAccess('proj-famous'), (req, res) => {
   let { search, mitra, health, page = 1, limit = 50 } = req.query;
   page = parseInt(page) || 1;
   const isAll = limit === 'all';
@@ -899,7 +1015,7 @@ router.get('/famous/fleet-matrix', optionalAuth, (req, res) => {
 });
 
 // GET /api/project-inventory/famous/items
-router.get('/famous/items', optionalAuth, (req, res) => {
+router.get('/famous/items', requireAuth, requireProjectAccess('proj-famous'), (req, res) => {
   let { search, category, status, mitra, is_pindahan, page = 1, limit = 50 } = req.query;
   page = parseInt(page) || 1;
   const isAll = limit === 'all';
@@ -966,12 +1082,12 @@ router.get('/famous/items', optionalAuth, (req, res) => {
 // ==========================================
 
 // GET /api/project-inventory/wim/summary
-router.get('/wim/summary', optionalAuth, (req, res) => {
+router.get('/wim/summary', requireAuth, requireProjectAccess('proj-wim'), (req, res) => {
   return sendSuccess(res, WIM_SUMMARY, 'Ringkasan data real project WIM (Weigh-In-Motion).');
 });
 
 // GET /api/project-inventory/wim/components
-router.get('/wim/components', optionalAuth, (req, res) => {
+router.get('/wim/components', requireAuth, requireProjectAccess('proj-wim'), (req, res) => {
   let { search, category, status, condition, lane, page = 1, limit = 50 } = req.query;
   page = parseInt(page) || 1;
   const isAll = limit === 'all';
@@ -1026,7 +1142,7 @@ router.get('/wim/components', optionalAuth, (req, res) => {
 });
 
 // GET /api/project-inventory/wim/transactions
-router.get('/wim/transactions', optionalAuth, (req, res) => {
+router.get('/wim/transactions', requireAuth, requireProjectAccess('proj-wim'), (req, res) => {
   let { search, category, stock_type, lane, page = 1, limit = 50 } = req.query;
   page = parseInt(page) || 1;
   const isAll = limit === 'all';
@@ -1073,7 +1189,7 @@ router.get('/wim/transactions', optionalAuth, (req, res) => {
 });
 
 // GET /api/project-inventory/wim/warranty
-router.get('/wim/warranty', optionalAuth, (req, res) => {
+router.get('/wim/warranty', requireAuth, requireProjectAccess('proj-wim'), (req, res) => {
   let { search, section } = req.query;
   let filtered = WIM_WARRANTY;
 
@@ -1101,7 +1217,7 @@ router.get('/wim/warranty', optionalAuth, (req, res) => {
 // ==========================================
 
 // GET /api/project-inventory/documents
-router.get('/documents', optionalAuth, (req, res) => {
+router.get('/documents', requireAuth, requireProjectAccess(req => req.query.project_id), (req, res) => {
   let { project_id, stage_code, status, search } = req.query;
   let filtered = PROJECT_DOCUMENTS;
 
@@ -1285,7 +1401,7 @@ router.post('/documents/:id/sign', requireAuth, async (req, res) => {
 // ==========================================
 
 // GET /api/project-inventory/items
-router.get('/items', optionalAuth, async (req, res, next) => {
+router.get('/items', requireAuth, requireProjectAccess(req => req.query.project_id), async (req, res, next) => {
   try {
     const { project_id, warehouse_id, status, condition, is_damaged, search, limit = 100 } = req.query;
 
@@ -1827,7 +1943,7 @@ router.post('/items/:id/replace', requireAuth, adminOnly, async (req, res, next)
 // ==========================================
 
 // POST /api/project-inventory/request — Permohonan Komponen / Material Lengkap (Official Material Request)
-router.post('/request', requireAuth, async (req, res, next) => {
+router.post('/request', requireAuth, requireProjectAccess(req => req.body.project_id), async (req, res, next) => {
   try {
     const {
       project_id,
@@ -1983,7 +2099,7 @@ router.post('/request', requireAuth, async (req, res, next) => {
 });
 
 // GET /api/project-inventory/logs
-router.get('/logs', optionalAuth, async (req, res, next) => {
+router.get('/logs', requireAuth, requireProjectAccess(req => req.query.project_id), async (req, res, next) => {
   try {
     const { project_id, item_id } = req.query;
 

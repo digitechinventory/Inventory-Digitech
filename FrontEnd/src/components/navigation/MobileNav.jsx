@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
-import PrinterSetupModal from '../printer/PrinterSetupModal';
 
 export default function MobileNav() {
   const location = useLocation();
@@ -421,23 +420,23 @@ export default function MobileNav() {
               </div>
               <div className="space-y-1.5 pl-1 border-l-2 border-red-100">
                 <button
+                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/project-inventory?tab=documents'); }}
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                    Riwayat Dokumen &amp; BASTM
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
+                <button
                   onClick={() => { setIsAccountDrawerOpen(false); navigate('/settings'); }}
                   className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5">
                     <UserIcon className="w-4 h-4 text-red-600" />
                     Pengaturan Akun &amp; Keamanan
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => { setIsAccountDrawerOpen(false); setShowPrinterSetup(true); }}
-                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Printer className="w-4 h-4 text-red-600" />
-                    Pengaturan Web (Printer QR)
                   </span>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
                 </button>
@@ -467,12 +466,6 @@ export default function MobileNav() {
           await logout();
           navigate('/login');
         }}
-      />
-
-      {/* Printer Setup Modal for Mobile */}
-      <PrinterSetupModal
-        isOpen={showPrinterSetup}
-        onClose={() => setShowPrinterSetup(false)}
       />
     </>
   );

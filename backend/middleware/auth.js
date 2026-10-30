@@ -1,4 +1,5 @@
 import { supabase } from '../services/supabase.js';
+import { getUserAllowedProjects } from '../services/projectAuthorityService.js';
 
 /**
  * Parse and validate a demo token (format: "demo.{base64payload}")
@@ -30,6 +31,21 @@ const DEMO_USERS = {
   'demo-sa-001': {
     id: 'demo-sa-001', email: 'arya-superadmin@digitech.co.id',
     full_name: 'arya-superadmin', role: 'Superadmin',
+    site_id: null, is_approved: true
+  },
+  'usr-aryatonys-01': {
+    id: 'usr-aryatonys-01', email: 'aryatonys01@gmail.com',
+    full_name: 'Arya Toni Saputra', role: 'User',
+    site_id: 'site-bib-02', is_approved: true
+  },
+  'adm-thegodsun-01': {
+    id: 'adm-thegodsun-01', email: 'thegodsun1212@gmail.com',
+    full_name: 'Admin Inventaris & Logistik', role: 'Admin',
+    site_id: 'site-bib-02', is_approved: true
+  },
+  'sa-archcronus-01': {
+    id: 'sa-archcronus-01', email: 'arch.cronus.corp@gmail.com',
+    full_name: 'Superadmin Digitech', role: 'Superadmin',
     site_id: null, is_approved: true
   }
 };
@@ -85,13 +101,15 @@ export async function requireAuth(req, res, next) {
         profile = DEMO_USERS[payload.id];
       }
 
+      const userRole = profile?.role || payload.role || 'User';
       req.user = {
         id: payload.id,
         email: payload.email,
-        role: profile?.role || payload.role || 'User',
+        role: userRole,
         full_name: profile?.full_name || payload.full_name || payload.email,
         site_id: profile?.site_id || null,
         is_approved: profile?.is_approved ?? profile?.is_active ?? true,
+        allowed_projects: getUserAllowedProjects(payload.id, userRole),
       };
       req.isDemo = false;
       return next();
@@ -114,6 +132,7 @@ export async function requireAuth(req, res, next) {
         site_id: 'site-bib-02',
         is_approved: true
       };
+      demoUser.allowed_projects = getUserAllowedProjects(demoUser.id, demoUser.role);
       req.user = demoUser;
       req.isDemo = true;
       return next();
@@ -138,13 +157,15 @@ export async function requireAuth(req, res, next) {
         profile = data;
       } catch {}
 
+      const userRole = profile?.role || 'User';
       req.user = {
         id: user.id,
         email: user.email,
-        role: profile?.role || 'User',
+        role: userRole,
         full_name: profile?.full_name || user.email,
         site_id: profile?.site_id,
         is_approved: profile?.is_approved ?? true,
+        allowed_projects: getUserAllowedProjects(user.id, userRole),
       };
       req.isDemo = false;
       return next();

@@ -37,13 +37,13 @@ async function initRedis() {
         del: (key) => client.del(key),
         keys: (pattern) => client.keys(pattern),
       };
-      console.log('[Redis] ✅ Local Redis connected via:', localRedisUrl.replace(/:[^@]+@/, ':***@'));
+      console.log('[Redis] Local Redis connected via:', localRedisUrl.replace(/:[^@]+@/, ':***@'));
     } catch (err) {
       redisClient = null;
-      console.warn('[Redis] ⚠️ Local Redis connection failed (' + err.message + '). In-memory cache will serve as fallback.');
+      console.warn('[Redis] Warning: Local Redis connection failed (' + err.message + '). In-memory cache will serve as fallback.');
     }
   } else {
-    console.log('[Redis] ℹ️ No REDIS_URL configured — using in-memory cache.');
+    console.log('[Redis] Info: No REDIS_URL configured — using in-memory cache.');
   }
 }
 

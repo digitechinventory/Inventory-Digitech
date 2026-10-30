@@ -42,7 +42,8 @@ import {
   Eye,
   FileCheck2,
   UserCheck,
-  ArrowRight
+  ArrowRight,
+  Printer
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -68,7 +69,11 @@ import {
 } from '../api/projectInventoryApi';
 import FamousInteractiveDashboard from '../components/inventory/FamousInteractiveDashboard';
 import WimInteractiveDashboard from '../components/inventory/WimInteractiveDashboard';
+import ProjectWorkflowGuide from '../components/inventory/ProjectWorkflowGuide';
 import FullDocumentPreviewModal from '../components/common/FullDocumentPreviewModal';
+import IncomingStockQRModal from '../components/inventory/IncomingStockQRModal';
+import QRLabelPrintModal from '../components/printer/QRLabelPrintModal';
+import PrinterSetupModal from '../components/printer/PrinterSetupModal';
 
 /**
  * Authentic Mega Mendung Batik SVG Corner Ornament (Nuansa Merah Putih Khas Digitech)
@@ -126,7 +131,7 @@ const CLIP_PARALLELOGRAM = `polygon(0 ${SLANT}, 100% 0, 100% calc(100% - ${SLANT
 export default function ProjectInventoryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { role, user } = useAuth();
+  const { role, user, hasProjectAccess } = useAuth();
   const isAdminOrSuperadmin = role === 'Admin' || role === 'Superadmin';
   const isUserReadOnly = !isAdminOrSuperadmin;
 
@@ -137,6 +142,20 @@ export default function ProjectInventoryPage() {
   const [items, setItems] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isCurrentProjectLocked = role !== 'Superadmin' && (hasProjectAccess ? !hasProjectAccess(selectedProjectId) : false);
+
+  // Auto-switch to first authorized project if active project is unauthorized and no explicit URL parameter was provided
+  useEffect(() => {
+    if (role === 'Superadmin') return;
+    const projParam = searchParams.get('project');
+    if (!projParam && hasProjectAccess && !hasProjectAccess(selectedProjectId)) {
+      const firstAllowed = ['proj-famous', 'proj-wim', 'proj-ccm'].find(pid => hasProjectAccess(pid));
+      if (firstAllowed) {
+        setSelectedProjectId(firstAllowed);
+      }
+    }
+  }, [hasProjectAccess, role, searchParams, selectedProjectId]);
 
   // 8-Stage Documents State (Per-Project Documents & MOS)
   const [projectDocs, setProjectDocs] = useState([]);
@@ -157,8 +176,8 @@ export default function ProjectInventoryPage() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all'); // all | installed | warranty | transfers | damaged | documents | warehouses | logs
-  const [famousViewMode, setFamousViewMode] = useState('command_center'); // 'command_center' | 'standard'
-  const [wimViewMode, setWimViewMode] = useState('command_center'); // 'command_center' | 'standard'
+  const [famousViewMode, setFamousViewMode] = useState(searchParams.get('tab') === 'documents' ? 'standard' : 'command_center'); // 'command_center' | 'standard'
+  const [wimViewMode, setWimViewMode] = useState(searchParams.get('tab') === 'documents' ? 'standard' : 'command_center'); // 'command_center' | 'standard'
 
   // Synchronize state when URL Search Params change
   useEffect(() => {
@@ -171,11 +190,32 @@ export default function ProjectInventoryPage() {
     }
     if (tabParam) {
       setActiveTab(tabParam);
+      if (tabParam === 'documents') {
+        setFamousViewMode('standard');
+        setWimViewMode('standard');
+      }
     }
     if (stageParam) {
       setSelectedStageFilter(stageParam);
     }
   }, [searchParams]);
+
+  // Navigate directly from 6-Stage Workflow Stepper to corresponding tab/filter
+  const handleWorkflowStepNavigate = (targetTab, stageId) => {
+    setActiveTab(targetTab);
+    if (stageId === 'mos') {
+      setSelectedStageFilter('MOS');
+    } else if (stageId === 'bastm') {
+      setSelectedStageFilter('BASTM');
+    }
+    // Switch to standard view mode if needed so the target tab/table is directly visible
+    if (famousViewMode === 'command_center') {
+      setFamousViewMode('standard');
+    }
+    if (wimViewMode === 'command_center') {
+      setWimViewMode('standard');
+    }
+  };
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,6 +234,35 @@ export default function ProjectInventoryPage() {
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [cyberQrItem, setCyberQrItem] = useState(null);
+  const [qrPrintItem, setQrPrintItem] = useState(null);
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
+  const [qrFilter, setQrFilter] = useState('all'); // 'all' | 'without_qr' | 'with_qr'
+
+  // Sync printed QR status from localStorage
+  const [printedItemCodes, setPrintedItemCodes] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('digitech_printed_qr_skus') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const handleQrPrinted = () => {
+      try {
+        setPrintedItemCodes(JSON.parse(localStorage.getItem('digitech_printed_qr_skus') || '[]'));
+      } catch {}
+    };
+    window.addEventListener('qr-label-printed', handleQrPrinted);
+    return () => window.removeEventListener('qr-label-printed', handleQrPrinted);
+  }, []);
+
+  const isItemQrReady = (item) => {
+    const code = item?.item_code || item?.serial_number || item?.sku;
+    if (!code) return false;
+    return printedItemCodes.includes(code) || Boolean(item?.qr_printed || item?.has_qr);
+  };
 
   // Active Item for modal actions
   const [activeItem, setActiveItem] = useState(null);
@@ -331,39 +400,42 @@ export default function ProjectInventoryPage() {
   };
 
   const handleAddRequestItemRow = () => {
-    setRequestForm(prev => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: `item-${Date.now()}-${prev.items.length + 1}`,
-          item_name: '',
-          part_number: '',
-          serial_number: '',
-          quantity: 1,
-          unit: 'PCS',
-          rack_location: '',
-          condition: 'Baru',
-          notes: ''
-        }
-      ]
-    }));
+    setRequestForm(prev => {
+      const currentItems = prev?.items || [];
+      return {
+        ...prev,
+        items: [
+          ...currentItems,
+          {
+            id: `item-${Date.now()}-${currentItems.length + 1}`,
+            item_name: '',
+            part_number: '',
+            serial_number: '',
+            quantity: 1,
+            unit: 'PCS',
+            rack_location: '',
+            condition: 'Baru',
+            notes: ''
+          }
+        ]
+      };
+    });
   };
 
   const handleRemoveRequestItemRow = (index) => {
-    if (requestForm.items.length <= 1) {
+    if ((requestForm.items?.length || 0) <= 1) {
       showToast('Minimal harus ada 1 baris material pada permohonan', 'warning');
       return;
     }
     setRequestForm(prev => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index)
+      items: (prev?.items || []).filter((_, i) => i !== index)
     }));
   };
 
   const handleUpdateRequestItemRow = (index, field, value) => {
     setRequestForm(prev => {
-      const updated = [...prev.items];
+      const updated = [...(prev?.items || [])];
       updated[index] = { ...updated[index], [field]: value };
       return { ...prev, items: updated };
     });
@@ -386,15 +458,26 @@ export default function ProjectInventoryPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projList, whList, itList, lgList, docList] = await Promise.all([
-        getProjects(),
+      const projList = await getProjects();
+      setProjects(projList);
+
+      const isAllowed = role === 'Superadmin' || (hasProjectAccess ? hasProjectAccess(selectedProjectId) : true);
+      if (!isAllowed) {
+        setWarehouses([]);
+        setItems([]);
+        setLogs([]);
+        setProjectDocs([]);
+        setLoading(false);
+        return;
+      }
+
+      const [whList, itList, lgList, docList] = await Promise.all([
         getProjectWarehouses(selectedProjectId),
         getProjectItems({ project_id: selectedProjectId }),
         getProjectLogs({ project_id: selectedProjectId }),
         getProjectDocuments({ project_id: selectedProjectId }).then(r => r?.documents || []).catch(() => [])
       ]);
 
-      setProjects(projList);
       setWarehouses(whList);
       setItems(itList);
       setLogs(lgList);
@@ -465,6 +548,8 @@ export default function ProjectInventoryPage() {
       if (warehouseFilter !== 'all' && item.warehouse_id !== warehouseFilter) return false;
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (conditionFilter !== 'all' && item.condition !== conditionFilter) return false;
+      if (qrFilter === 'without_qr' && isItemQrReady(item)) return false;
+      if (qrFilter === 'with_qr' && !isItemQrReady(item)) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -478,7 +563,7 @@ export default function ProjectInventoryPage() {
 
       return true;
     });
-  }, [items, activeTab, warehouseFilter, statusFilter, conditionFilter, searchQuery]);
+  }, [items, activeTab, warehouseFilter, statusFilter, conditionFilter, searchQuery, qrFilter, printedItemCodes]);
 
   // Overall statistics for active project
   const stats = useMemo(() => {
@@ -633,15 +718,15 @@ export default function ProjectInventoryPage() {
     }
   };
 
-  // Admin Create Item Handler
-  const handleCreateItem = async (e) => {
-    e.preventDefault();
+  // Admin Create Item Handler (Barang Masuk)
+  const handleCreateItem = async (e, printAfterSave = false) => {
+    if (e?.preventDefault) e.preventDefault();
     if (!itemForm.name || !itemForm.item_code) {
       showToast('Nama barang dan part number / kode wajib diisi', 'error');
       return;
     }
     try {
-      await createProjectItem({
+      const res = await createProjectItem({
         ...itemForm,
         project_id: selectedProjectId,
         installed_unit: itemForm.direct_install ? itemForm.installed_unit : null,
@@ -649,7 +734,11 @@ export default function ProjectInventoryPage() {
         unit_hm_at_install: itemForm.direct_install ? itemForm.unit_hm_at_install : null,
         technician_name: user?.full_name || 'Staff Logistik'
       });
-      showToast(`Material ${itemForm.name} berhasil dicatat ke sistem!`);
+      const savedItem = {
+        ...itemForm,
+        id: res?.id || Date.now(),
+        sku: itemForm.item_code
+      };
       setShowAddItemModal(false);
       setItemForm({
         item_code: '',
@@ -673,6 +762,13 @@ export default function ProjectInventoryPage() {
         expected_lifetime_hours: ''
       });
       await fetchData();
+
+      if (printAfterSave) {
+        showToast(`Material ${savedItem.name} berhasil dicatat! Menyiapkan stiker label QR...`);
+        setQrPrintItem(savedItem);
+      } else {
+        showToast(`Material ${savedItem.name} berhasil dicatat ke sistem!`);
+      }
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal menambahkan barang', 'error');
     }
@@ -882,17 +978,7 @@ export default function ProjectInventoryPage() {
 
           <button
             onClick={() => {
-              setRequestForm({
-                item_id: '',
-                item_name: '',
-                part_number: '',
-                requested_unit: '',
-                quantity: 1,
-                unit: 'PCS',
-                urgency: 'Normal Maintenance',
-                justification: '',
-                requester_name: user?.full_name || 'Teknisi Lapangan'
-              });
+              resetRequestForm();
               setShowRequestModal(true);
             }}
             className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition cursor-pointer"
@@ -947,6 +1033,7 @@ export default function ProjectInventoryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 py-2">
           {projects.map((proj) => {
             const isSelected = proj.id === selectedProjectId;
+            const isProjLocked = role !== 'Superadmin' && (hasProjectAccess ? !hasProjectAccess(proj.id) : false);
             const projStats = proj.stats || {
               total_items: 0,
               installed_count: 0,
@@ -1025,6 +1112,12 @@ export default function ProjectInventoryPage() {
                         }`}>
                           {proj.code}
                         </span>
+                        {isProjLocked && (
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1 shadow-2xs">
+                            <Lock className="w-2.5 h-2.5 text-rose-600" />
+                            Terkunci
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -1144,75 +1237,156 @@ export default function ProjectInventoryPage() {
         </div>
       </div>
 
-      {/* Main Content Card: Inventory Details for Active Workspace */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-        {/* Workspace Context Sub-Header */}
-        <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-xs font-bold text-slate-700">Workspace Terpilih:</span>
-            <span className="text-xs font-mono font-extrabold bg-red-600 text-white px-2.5 py-0.5 rounded-md">
-              {activeProject.code}
-            </span>
-            <span className="text-xs font-semibold text-slate-800">
-              {activeProject.name?.replace(/^Project\s+/i, '')}
-            </span>
+      {/* Main Content: If unauthorized, render Locked Workspace Screen */}
+      {isCurrentProjectLocked ? (
+        <div className="relative overflow-hidden bg-white rounded-3xl border border-red-200/90 shadow-xl p-8 md:p-14 text-center max-w-3xl mx-auto my-6">
+          <MegaMendungCorner position="top-left" size={130} />
+          <MegaMendungCorner position="bottom-right" size={110} />
 
-            {/* FAMOUS View Mode Switcher */}
-            {activeProject.code === 'FAMOUS' && (
-              <div className="flex items-center gap-1 ml-2 bg-white p-0.5 rounded-xl border border-slate-200 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setFamousViewMode('command_center')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    famousViewMode === 'command_center'
-                      ? 'bg-red-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  Command Center Real (9.416 Item)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFamousViewMode('standard')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    famousViewMode === 'standard'
-                      ? 'bg-red-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  Menu &amp; Form Standar
-                </button>
-              </div>
-            )}
+          <div className="relative z-10 space-y-6">
+            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-xl shadow-red-600/30 text-white animate-bounce-subtle">
+              <Lock className="w-10 h-10" />
+            </div>
 
-            {/* WIM View Mode Switcher */}
-            {activeProject.code === 'WIM' && (
-              <div className="flex items-center gap-1 ml-2 bg-white p-0.5 rounded-xl border border-slate-200 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setWimViewMode('command_center')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    wimViewMode === 'command_center'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  Dashboard WIM Real (189 Komponen &amp; 8 Tahap)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWimViewMode('standard')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    wimViewMode === 'standard'
-                      ? 'bg-red-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  Menu &amp; Form Standar
-                </button>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-mono font-bold uppercase tracking-wider">
+                <ShieldAlert className="w-3.5 h-3.5" /> Akses Otoritas Terbatas
               </div>
-            )}
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                Akses Project {activeProject?.code || selectedProjectId} Terkunci
+              </h2>
+              <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
+                Akun Anda (<strong className="text-slate-800">{user?.full_name || 'User'}</strong> &bull; <span className="font-bold text-red-600">{role}</span>) belum diberikan izin otoritas oleh <strong>Superadmin</strong> untuk membuka dan mengelola inventaris proyek <strong>{activeProject?.name || selectedProjectId}</strong>.
+              </p>
+            </div>
+
+            {/* Information Card */}
+            <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 max-w-lg mx-auto text-left flex items-start gap-3">
+              <Info className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-slate-700 space-y-1">
+                <p className="font-bold text-red-900">Perlindungan Hak Otoritas Proyek</p>
+                <p className="text-slate-600">
+                  Setiap workspace project memiliki hak otoritas terisolasi untuk menjaga keamanan data logistik, mutasi barang fisik, dan dokumen MOS 8-tahap.
+                </p>
+                <p className="text-slate-500 font-mono text-[11px] pt-1">
+                  Hubungi Superadmin untuk mengaktifkan otoritas akses proyek ini melalui menu <strong>Hak Otoritas Project</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {projects
+                .filter(p => (hasProjectAccess ? hasProjectAccess(p.id) : false) && p.id !== selectedProjectId)
+                .map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedProjectId(p.id)}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-xs shadow-md shadow-red-600/20 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowRightLeft className="w-4 h-4" />
+                    <span>Beralih ke Project {p.code}</span>
+                  </button>
+                ))}
+
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+              >
+                Kembali ke Dashboard
+              </button>
+            </div>
           </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* ── Peta Alur Siklus Hidup Aset Proyek (Lifecycle Pipeline Stepper) ── */}
+          <ProjectWorkflowGuide
+            activeProject={activeProject}
+            activeTab={activeTab}
+            famousViewMode={famousViewMode}
+            wimViewMode={wimViewMode}
+            onNavigateStep={handleWorkflowStepNavigate}
+            stats={stats}
+          />
+
+          {/* Main Content Card: Inventory Details for Active Workspace */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+            {/* Workspace Context Sub-Header */}
+            <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-xs font-bold text-slate-700">Workspace Terpilih:</span>
+                <span className="text-xs font-mono font-extrabold bg-red-600 text-white px-2.5 py-0.5 rounded-md">
+                  {activeProject.code}
+                </span>
+                <span className="text-xs font-semibold text-slate-800">
+                  {activeProject.name?.replace(/^Project\s+/i, '')}
+                </span>
+
+                {/* FAMOUS View Mode Switcher */}
+                {activeProject.code === 'FAMOUS' && (
+                  <div className="flex items-center gap-1 ml-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setFamousViewMode('command_center')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        famousViewMode === 'command_center'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                      }`}
+                      title="Mode visual: Matriks Armada Truk & Radar Sensor"
+                    >
+                      <Gauge className="w-3.5 h-3.5" />
+                      <span>Mode 1: Command Center Real (825 Unit)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFamousViewMode('standard')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        famousViewMode === 'standard'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                      }`}
+                      title="Mode formulir: Tabel suku cadang, mutasi & dokumen BASTM"
+                    >
+                      <Boxes className="w-3.5 h-3.5" />
+                      <span>Mode 2: Tabel &amp; Formulir Standar</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* WIM View Mode Switcher */}
+                {activeProject.code === 'WIM' && (
+                  <div className="flex items-center gap-1 ml-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setWimViewMode('command_center')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        wimViewMode === 'command_center'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                      }`}
+                      title="Mode visual: Dashboard komponen gardu timbang WIM"
+                    >
+                      <Gauge className="w-3.5 h-3.5" />
+                      <span>Mode 1: Dashboard WIM (189 Komponen)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWimViewMode('standard')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        wimViewMode === 'standard'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                      }`}
+                      title="Mode formulir: Tabel komponen & berkas dokumen 8 tahap"
+                    >
+                      <Boxes className="w-3.5 h-3.5" />
+                      <span>Mode 2: Tabel &amp; Formulir Standar</span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
             <span className="flex items-center gap-1 font-semibold text-slate-700">
@@ -1257,7 +1431,7 @@ export default function ProjectInventoryPage() {
           <>
             {/* Prominent Operational Menu Bar (Menu-Menu Operasional Lengkap) */}
             <div className="px-5 py-4 bg-gradient-to-b from-white to-slate-50/60 border-b border-slate-200/90">
-          <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 font-mono">
@@ -1280,7 +1454,7 @@ export default function ProjectInventoryPage() {
                   <Boxes className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-bold text-slate-900 group-hover:text-red-700">Barang Masuk</span>
-                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Input stok / part baru</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Input stok &amp; cetak label QR</span>
               </button>
             )}
 
@@ -1375,7 +1549,7 @@ export default function ProjectInventoryPage() {
                   : 'bg-white hover:bg-slate-50 border-slate-200'
               }`}
             >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white flex items-center justify-center transition-colors mb-2">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
                 <Warehouse className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-slate-900">Gudang Project</span>
@@ -1435,17 +1609,7 @@ export default function ProjectInventoryPage() {
           {isUserReadOnly && (
             <button
               onClick={() => {
-                setRequestForm({
-                  item_id: '',
-                  item_name: '',
-                  part_number: '',
-                  requested_unit: '',
-                  quantity: 1,
-                  unit: 'PCS',
-                  urgency: 'Normal Maintenance',
-                  justification: '',
-                  requester_name: user?.full_name || 'Teknisi Lapangan'
-                });
+                resetRequestForm();
                 setShowRequestModal(true);
               }}
               className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1.5 pb-2 cursor-pointer"
@@ -1511,12 +1675,28 @@ export default function ProjectInventoryPage() {
                 <option value="Rusak Berat">Rusak Berat</option>
                 <option value="Afkir / Scrap">Afkir / Scrap</option>
               </select>
+
+              <select
+                value={qrFilter}
+                onChange={e => setQrFilter(e.target.value)}
+                className={`px-3 py-2 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${
+                  qrFilter === 'without_qr'
+                    ? 'bg-amber-50 border-amber-300 text-amber-900'
+                    : qrFilter === 'with_qr'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    : 'bg-white border-slate-300 text-slate-700'
+                }`}
+              >
+                <option value="all">Semua Status QR Tracking</option>
+                <option value="without_qr">Belum Terpasang QR</option>
+                <option value="with_qr">Sudah Terpasang QR</option>
+              </select>
             </div>
           </div>
         )}
 
         {/* ASSET DATA TABLE */}
-        {activeTab !== 'warehouses' && activeTab !== 'logs' && (
+        {activeTab !== 'warehouses' && activeTab !== 'logs' && activeTab !== 'documents' && (
           <div className="overflow-x-auto">
             {filteredItems.length === 0 ? (
               <div className="py-16 text-center text-slate-400">
@@ -1529,7 +1709,10 @@ export default function ProjectInventoryPage() {
                 </p>
                 {isUserReadOnly ? (
                   <button
-                    onClick={() => setShowRequestModal(true)}
+                    onClick={() => {
+                      resetRequestForm();
+                      setShowRequestModal(true);
+                    }}
                     className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-red-700 cursor-pointer"
                   >
                     + Ajukan Request Material
@@ -1553,6 +1736,7 @@ export default function ProjectInventoryPage() {
                     <th className="py-3 px-4">Masa Garansi</th>
                     <th className="py-3 px-4">Kondisi & Status</th>
                     <th className="py-3 px-4">Jadwal Ganti / Kanibal</th>
+                    <th className="py-3 px-4">Tracking QR</th>
                     <th className="py-3 px-4 text-center">Aksi</th>
                   </tr>
                 </thead>
@@ -1729,6 +1913,37 @@ export default function ProjectInventoryPage() {
                           )}
                         </td>
 
+                        {/* Tracking QR */}
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                              isItemQrReady(item)
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}>
+                              {isItemQrReady(item) ? (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span>QR Ready</span>
+                                </>
+                              ) : (
+                                <>
+                                  <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                  <span>Belum Ber-QR</span>
+                                </>
+                              )}
+                            </span>
+                            <button
+                              onClick={() => setQrPrintItem(item)}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
+                              title="Cetak stiker label thermal QR untuk aset ini"
+                            >
+                              <Printer className="w-3 h-3" />
+                              <span>{isItemQrReady(item) ? 'Cetak Ulang' : 'Cetak QR'}</span>
+                            </button>
+                          </div>
+                        </td>
+
                         {/* Aksi Kolom (Operasional Lengkap: Pasang, Kanibal, Lapor Rusak, Request, Detail) */}
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-1">
@@ -1830,6 +2045,14 @@ export default function ProjectInventoryPage() {
                               title="Ajukan Permohonan / Request Part Ini"
                             >
                               <Send className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setQrPrintItem(item)}
+                              className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
+                              title="Cetak Stiker Label Thermal QR Code"
+                            >
+                              <Printer className="w-4 h-4" />
                             </button>
 
                             <button
@@ -2230,7 +2453,7 @@ export default function ProjectInventoryPage() {
                         <div className="mt-3 pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
                           <div className="flex items-center gap-3">
                             <span>Asal: <strong className="text-slate-700">{log.source_location || '-'}</strong></span>
-                            <span>➔</span>
+                            <span className="text-slate-400">&rarr;</span>
                             <span>Tujuan: <strong className="text-slate-700">{log.destination_location || '-'}</strong></span>
                           </div>
                           <div>
@@ -2248,6 +2471,8 @@ export default function ProjectInventoryPage() {
       </>
     )}
   </div>
+</div>
+      )}
 
       {/* ===================================================================== */}
       {/* MODAL: FORMULIR PERMOHONAN MATERIAL RESMI (MATERIAL REQUEST - FULL DOC) */}
@@ -2399,12 +2624,12 @@ export default function ProjectInventoryPage() {
                 </div>
               </div>
 
-              {/* ── SEKSI 2: RUTE DISTRIBUSI & ALOKASI UNIT (DARI MANA ➔ AKAN KEMANA) ── */}
+              {/* ── SEKSI 2: RUTE DISTRIBUSI & ALOKASI UNIT (DARI MANA KE MANA) ── */}
               <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <span className="w-2 h-2 rounded-full bg-red-600" />
                   <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
-                    2. Rute Distribusi &amp; Alokasi Pemasangan (Dari Mana ➔ Akan Kemana)
+                    2. Rute Distribusi &amp; Alokasi Pemasangan (Dari Asal ke Tujuan)
                   </h4>
                 </div>
 
@@ -2574,7 +2799,7 @@ export default function ProjectInventoryPage() {
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-blue-600" />
                     <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wide">
-                      4. Tabel Rincian Material yang Diminta ({requestForm.items.length} Item)
+                      4. Tabel Rincian Material yang Diminta ({(requestForm.items || []).length} Item)
                     </h4>
                   </div>
 
@@ -2603,7 +2828,7 @@ export default function ProjectInventoryPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {requestForm.items.map((row, idx) => (
+                      {(requestForm.items || []).map((row, idx) => (
                         <tr key={row.id || idx} className="hover:bg-slate-50/60">
                           <td className="py-2 px-3 font-mono font-bold text-slate-400">{idx + 1}</td>
                           
@@ -2700,7 +2925,7 @@ export default function ProjectInventoryPage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveRequestItemRow(idx)}
-                              disabled={requestForm.items.length <= 1}
+                              disabled={(requestForm.items || []).length <= 1}
                               className="p-1.5 text-slate-300 hover:text-red-600 disabled:opacity-20 transition-colors cursor-pointer"
                               title="Hapus Baris"
                             >
@@ -2846,7 +3071,7 @@ export default function ProjectInventoryPage() {
                   <span className="font-mono font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-lg border border-red-200">
                     {requestForm.document_number}
                   </span>
-                  <span>&bull; Total: <strong>{requestForm.items.length} Baris Material</strong></span>
+                  <span>&bull; Total: <strong>{(requestForm.items || []).length} Baris Material</strong></span>
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -2969,6 +3194,26 @@ export default function ProjectInventoryPage() {
                 )}
 
                 <button
+                  type="button"
+                  onClick={() => {
+                    setCyberQrItem({
+                      sku: activeItem.item_code,
+                      name: activeItem.name,
+                      category: activeItem.category,
+                      current_stock: activeItem.quantity || 1,
+                      serialNumber: activeItem.serial_number,
+                      location: activeItem.installed_unit || 'Gudang Utama',
+                      rack: activeItem.installation_location_detail || 'R-01',
+                      projectId: selectedProjectId
+                    });
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>Registrasi &amp; Cetak QR</span>
+                </button>
+
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer ml-auto transition"
                 >
@@ -2996,12 +3241,38 @@ export default function ProjectInventoryPage() {
                   <p className="text-xs text-slate-500">Workspace: {activeProject.name?.replace(/^Project\s+/i, '')}</p>
                 </div>
               </div>
-              <button onClick={() => setShowAddItemModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPrinterSetup(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  title="Pengaturan Kertas &amp; Printer Thermal"
+                >
+                  <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Setup Printer</span>
+                </button>
+                <button onClick={() => setShowAddItemModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Auto QR Label Generation Banner */}
+            <div className="mt-4 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl flex items-center justify-between text-xs text-indigo-900">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                <span><strong>Auto QR Generator:</strong> Label tracking fisik akan dibuat otomatis saat material disimpan.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPrinterSetup(true)}
+                className="text-[11px] font-bold text-indigo-700 underline hover:text-indigo-900 cursor-pointer ml-2 flex-shrink-0"
+              >
+                Ubah Ukuran Label
               </button>
             </div>
 
-            <form onSubmit={handleCreateItem} className="mt-5 space-y-4">
+            <form onSubmit={(e) => handleCreateItem(e, true)} className="mt-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Barang / Komponen *</label>
@@ -3195,20 +3466,39 @@ export default function ProjectInventoryPage() {
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
                 <button
                   type="button"
-                  onClick={() => setShowAddItemModal(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 cursor-pointer"
+                  onClick={() => setShowPrinterSetup(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 cursor-pointer self-start sm:self-auto"
                 >
-                  Batal
+                  <Printer className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Setting Printer Thermal</span>
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 cursor-pointer"
-                >
-                  Simpan Penerimaan Material
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddItemModal(false)}
+                    className="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCreateItem(e, false)}
+                    className="px-4 py-2 bg-slate-100 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 cursor-pointer"
+                  >
+                    Simpan Saja
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCreateItem(e, true)}
+                    className="px-4 py-2 bg-gradient-to-r from-red-600 to-indigo-600 text-white rounded-xl text-xs font-bold shadow-md hover:from-red-700 hover:to-indigo-700 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Simpan &amp; Cetak Label QR</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -4051,6 +4341,30 @@ export default function ProjectInventoryPage() {
           </div>
         </div>
       )}
+
+      {/* Side-by-Side Goods Receipt & Live QR Code Generator */}
+      {cyberQrItem && (
+        <IncomingStockQRModal
+          isOpen={Boolean(cyberQrItem)}
+          onClose={() => setCyberQrItem(null)}
+          initialItem={cyberQrItem}
+          onOpenPrinterSetup={() => setShowPrinterSetup(true)}
+        />
+      )}
+
+      {/* Thermal QR Label Print Modal */}
+      <QRLabelPrintModal
+        isOpen={Boolean(qrPrintItem)}
+        onClose={() => setQrPrintItem(null)}
+        item={qrPrintItem}
+        onOpenSetup={() => setShowPrinterSetup(true)}
+      />
+
+      {/* Thermal Printer Hardware Setup Modal */}
+      <PrinterSetupModal
+        isOpen={showPrinterSetup}
+        onClose={() => setShowPrinterSetup(false)}
+      />
     </div>
   );
 }

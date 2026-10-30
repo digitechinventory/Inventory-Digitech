@@ -254,8 +254,9 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
                   className="max-h-40 max-w-full object-contain mx-auto"
                 />
               </div>
-              <span className="text-[10px] font-mono font-bold text-slate-600 mt-2 bg-white/80 px-2 py-0.5 rounded-full border border-slate-200">
-                ✨ Ekstraksi Tinta AI Lokal Berhasil
+              <span className="text-[10px] font-mono font-bold text-slate-700 mt-2 bg-white/90 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-xs flex items-center gap-1.5">
+                <Check className="w-3 h-3 text-emerald-600" />
+                <span>Ekstraksi Tinta Digital Berhasil</span>
               </span>
             </div>
           )}

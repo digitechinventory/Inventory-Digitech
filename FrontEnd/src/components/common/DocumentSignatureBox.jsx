@@ -241,8 +241,9 @@ export default function DocumentSignatureBox({
                 />
               </div>
             ) : (
-              <div className="py-2 px-3 rounded-lg bg-emerald-100/50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold">
-                ✓ PENGESAHAN ELEKTRONIK RESMI
+              <div className="py-2 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>PENGESAHAN ELEKTRONIK RESMI</span>
               </div>
             )}
             

@@ -23,11 +23,11 @@ import {
   ChevronDown,
   ChevronRight,
   History,
-  ShieldCheck
+  ShieldCheck,
+  FileCheck2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import LogoutConfirmModal from '../common/LogoutConfirmModal.jsx';
-import PrinterSetupModal from '../printer/PrinterSetupModal.jsx';
 
 /* ─── Authentic Mega Mendung Batik Ornament (Matching Login Card) ─────────── */
 const MegaMendungDefs = () => (
@@ -137,7 +137,6 @@ export default function IronNestSidebar({
   const { role, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
 
   const getNavGroupsForRole = (currentRole) => {
     const normalizedRole = currentRole || 'User';
@@ -150,6 +149,7 @@ export default function IronNestSidebar({
           items: [
             { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview', badge: 'VIP' },
             { id: 'users', label: 'Kelola User', icon: Users, path: '/users', badge: 'Khusus' },
+            { id: 'authorities', label: 'Hak Akses Project', icon: ShieldCheck, path: '/users?tab=authorities', badge: 'Otoritas' },
             { id: 'opname', label: 'Approval Opname', icon: Truck, path: '/opname', badge: 'Approval' },
           ]
         },
@@ -158,6 +158,7 @@ export default function IronNestSidebar({
           title: 'Aset & Inventaris Site',
           items: [
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
             { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Tracking Tools', icon: Compass, path: '/tracking' },
@@ -183,6 +184,7 @@ export default function IronNestSidebar({
           items: [
             { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
             { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
@@ -213,6 +215,7 @@ export default function IronNestSidebar({
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
           { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+          { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
         ]
       },
       {
@@ -533,11 +536,15 @@ export default function IronNestSidebar({
                   <div className="space-y-1">
                     {group.items.map((item) => {
                       const Icon = item.icon;
+                      const itemPathBase = item.path ? item.path.split('?')[0] : '';
+                      const itemSearch = item.path && item.path.includes('?') ? item.path.split('?')[1] : null;
                       const isActive =
                         item.path &&
-                        (location.pathname === item.path ||
-                          ((item.path === '/dashboard' || item.path === '/overview') &&
-                            location.pathname === '/'));
+                        (itemSearch
+                          ? location.pathname === itemPathBase && location.search.includes(itemSearch)
+                          : location.pathname === item.path && (!location.search || (!location.search.includes('tab=authorities') && !location.search.includes('tab=documents'))) ||
+                            ((item.path === '/dashboard' || item.path === '/overview') &&
+                              location.pathname === '/'));
 
                       if (item.isAction) {
                         return (
@@ -697,13 +704,6 @@ export default function IronNestSidebar({
                       <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>Pengaturan Akun</span>
                     </button>
-                    <button
-                      onClick={() => { setShowPrinterSetup(true); setShowSettingsMenu(false); }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer"
-                    >
-                      <Printer className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Pengaturan Web (Printer)</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -739,12 +739,6 @@ export default function IronNestSidebar({
           await logout();
           navigate('/login', { replace: true });
         }}
-      />
-
-      {/* Printer Setup & Test Integration Modal */}
-      <PrinterSetupModal
-        isOpen={showPrinterSetup}
-        onClose={() => setShowPrinterSetup(false)}
       />
     </>
   );

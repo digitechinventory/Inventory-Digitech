@@ -96,7 +96,7 @@ export default function DocumentUploadModal({
   const [docTitle, setDocTitle] = useState('MATERIAL ON SITE');
   const [docSubtitle, setDocSubtitle] = useState('BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE');
 
-  // ── Section 2: Rute Alur Pengiriman (Dari Siapa ➔ Akan Kemana) ──
+  // ── Section 2: Rute Alur Pengiriman (Dari Siapa -> Akan Kemana) ──
   // Sisi Pengirim (Asal)
   const [originLocation, setOriginLocation] = useState('Office VGT');
   const [originSpecificArea, setOriginSpecificArea] = useState('Main Warehouse Bay 1');
@@ -708,7 +708,7 @@ export default function DocumentUploadModal({
                     <div>
                       <div className="text-xs font-bold text-slate-900">{fileName}</div>
                       <div className="text-[11px] text-emerald-600 mt-1 font-semibold">
-                        ✓ Berhasil memuat {convertedPages.length} halaman ({orientation})
+                        Berhasil memuat {convertedPages.length} halaman ({orientation})
                       </div>
                     </div>
                   ) : (
@@ -860,9 +860,9 @@ export default function DocumentUploadModal({
                     onChange={(e) => setUrgency(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 font-bold focus:outline-none focus:border-red-500 shadow-2xs"
                   >
-                    <option value="Normal">🟢 Normal (SOP Terjadwal)</option>
-                    <option value="Urgent">🟡 Urgent (Prioritas Tinggi)</option>
-                    <option value="Emergency">🔴 Emergency (Unit Breakdown / Kritis)</option>
+                    <option value="Normal">Normal (SOP Terjadwal)</option>
+                    <option value="Urgent">Urgent (Prioritas Tinggi)</option>
+                    <option value="Emergency">Emergency (Unit Breakdown / Kritis)</option>
                   </select>
                 </div>
 
@@ -911,7 +911,7 @@ export default function DocumentUploadModal({
               </div>
             </div>
 
-            {/* ════════ SECTION 3: RUTE ALUR PENGIRIMAN DETAIL (DARI SIAPA ➔ AKAN KEMANA) ════════ */}
+            {/* ════════ SECTION 3: RUTE ALUR PENGIRIMAN DETAIL (DARI SIAPA -> AKAN KEMANA) ════════ */}
             <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-red-600" />

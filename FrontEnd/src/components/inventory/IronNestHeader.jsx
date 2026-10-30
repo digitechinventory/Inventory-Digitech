@@ -19,13 +19,14 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
-  Printer
+  Printer,
+  Sparkles,
+  Scan
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import RealWorldCalendar from '../calendar/RealWorldCalendar';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
-import PrinterSetupModal from '../printer/PrinterSetupModal';
-import { getPrinterConfig } from '../../services/printerService';
+import AiSiteSearchDetectorModal from '../search/AiSiteSearchDetectorModal';
 import { playNotificationSound, isSoundMuted, setSoundMuted } from '../../utils/notificationSound';
 import api from '../../api/client';
 
@@ -38,15 +39,20 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
-  const [printerConfig, setPrinterConfig] = useState(() => getPrinterConfig());
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiModalTab, setAiModalTab] = useState('search');
 
+  // Global Keyboard Shortcut: Ctrl + K or Cmd + K to trigger AI In-Site Engine
   useEffect(() => {
-    const handlePrinterConfigChange = (e) => {
-      setPrinterConfig(e.detail || getPrinterConfig());
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setAiModalTab('search');
+        setShowAiModal(prev => !prev);
+      }
     };
-    window.addEventListener('digitech:printer-config-changed', handlePrinterConfigChange);
-    return () => window.removeEventListener('digitech:printer-config-changed', handlePrinterConfigChange);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const [notifications, setNotifications] = useState([]);
@@ -193,7 +199,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
   };
 
   return (
-    <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-2 sm:py-2.5 lg:py-3.5 px-3 sm:px-6 lg:px-8 flex-col lg:flex-row items-center justify-between gap-2 sm:gap-2.5 lg:gap-4 sticky top-0 z-50 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
+    <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-2 sm:py-2.5 lg:py-3.5 px-3 sm:px-6 lg:px-8 flex-col lg:flex-row items-center justify-between gap-2 sm:gap-2.5 lg:gap-4 sticky top-0 z-30 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
       {/* Top Row: Navigation Controls & Action Buttons (Aligned on one row across all viewports) */}
       <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Mobile hamburger + Emblem (Mobile) / Frosted Search Bar (Desktop: Unchanged) */}
@@ -214,17 +220,38 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
             />
           </div>
 
-          {/* Elevated "Timbul" Frosted Search Bar (Desktop: Unaltered) */}
-          <div className="hidden lg:block relative w-full group">
+          {/* Elevated "Timbul" Frosted Search Bar (Desktop: Triggers Spotlight Search / AI Lens) */}
+          <div className="hidden lg:block relative w-full group animate-searchbar-in transition-transform duration-200 active:scale-[0.99]">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-red-600 transition-colors">
+              <Search className="w-4 h-4" />
+            </div>
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => onSearch && onSearch(e.target.value)}
-              placeholder="Cari material, nomor MOS, atau laporan..."
-              className="w-full bg-slate-50/80 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-4 pr-10 py-2.5 rounded-full border border-slate-200/90 shadow-xs hover:shadow-sm focus:shadow-[0_4px_16px_rgba(220,38,38,0.12)] focus:border-red-500/60 focus:outline-none transition-all duration-200 font-sans"
+              readOnly
+              onClick={() => {
+                setAiModalTab('search');
+                setShowAiModal(true);
+              }}
+              placeholder="Cari material, nomor MOS, atau tekan Ctrl + K..."
+              className="w-full bg-slate-50/90 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-10 pr-28 py-2.5 rounded-full border border-slate-200/90 shadow-xs hover:shadow-md hover:border-red-300 focus:outline-none transition-all duration-200 font-sans cursor-pointer group-hover:scale-[1.005]"
             />
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-red-600 transition-colors pointer-events-none">
-              <Search className="w-4 h-4" />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 border border-slate-200 rounded pointer-events-none">
+                Ctrl K
+              </kbd>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAiModalTab('lens');
+                  setShowAiModal(true);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-300 text-xs font-bold transition shadow-2xs group/lens cursor-pointer"
+                title="Buka AI Lens Scanner (Kamera & Dokumen)"
+              >
+                <Scan className="w-3.5 h-3.5 text-red-600 group-hover/lens:scale-110 transition-transform" />
+                <span className="text-[11px] font-semibold">Lens</span>
+              </button>
             </div>
           </div>
         </div>
@@ -391,22 +418,6 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
           )}
         </div>
 
-        {/* Thermal Sticker Printer Quick Button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowPrinterSetup(true)}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-red-600 hover:border-red-300 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 relative cursor-pointer"
-            aria-label="Setup Printer"
-            title="Setup & Integrasi Printer Stiker QR (Wireless / USB)"
-          >
-            <Printer className="w-4 h-4" />
-            <span
-              className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
-                printerConfig.simulationMode ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-            />
-          </button>
-        </div>
 
         {/* Site Calendar Button & Dropdown Popover */}
         <div className="relative" ref={calendarRef}>
@@ -513,28 +524,36 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
     </div>
 
       {/* Row 2 on Mobile: Dedicated Full-Width Frosted Search Bar */}
-      <div className="lg:hidden w-full pt-0.5">
-        <div className="relative w-full group">
+      <div className="lg:hidden w-full pt-0.5 animate-searchbar-in">
+        <div className="relative w-full group transition-transform duration-200 active:scale-[0.99]">
           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-red-600 transition-colors pointer-events-none">
             <Search className="w-4 h-4" />
           </div>
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => onSearch && onSearch(e.target.value)}
-            placeholder="Cari material, nomor MOS, atau laporan..."
-            className="w-full bg-slate-50/90 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs pl-10 pr-9 py-2 rounded-full border border-slate-200/90 shadow-2xs hover:shadow-xs focus:shadow-[0_4px_16px_rgba(220,38,38,0.12)] focus:border-red-500/60 focus:outline-none transition-all duration-200 font-sans"
+            readOnly
+            onClick={() => {
+              setAiModalTab('search');
+              setShowAiModal(true);
+            }}
+            placeholder="Cari material, nomor MOS, atau SKU..."
+            className="w-full bg-slate-50/90 hover:bg-white focus:bg-white text-slate-800 placeholder-slate-400 text-xs pl-10 pr-20 py-2 rounded-full border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-red-300 focus:outline-none transition-all duration-200 font-sans cursor-pointer"
           />
-          {searchTerm && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             <button
-              onClick={() => onSearch && onSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition cursor-pointer"
-              title="Hapus pencarian"
               type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAiModalTab('lens');
+                setShowAiModal(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-300 text-[11px] font-mono font-bold shadow-2xs cursor-pointer transition-all"
+              title="Buka AI Lens Scanner"
             >
-              <X className="w-3.5 h-3.5" />
+              <Scan className="w-3 h-3 text-red-600" />
+              <span>Lens</span>
             </button>
-          )}
+          </div>
         </div>
       </div>
 
@@ -548,10 +567,12 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
         }}
       />
 
-      {/* Printer Setup Modal */}
-      <PrinterSetupModal
-        isOpen={showPrinterSetup}
-        onClose={() => setShowPrinterSetup(false)}
+
+      {/* AI Site Search & Document Detector Modal */}
+      <AiSiteSearchDetectorModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        initialTab={aiModalTab}
       />
     </header>
   );

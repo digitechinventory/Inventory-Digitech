@@ -405,3 +405,107 @@ table tbody tr:hover {
 .animate-micro-bounce {
   animation: micro-bounce 2s ease-in-out infinite;
 }
+
+/* ─── High-Performance Spotlight Search & Modal Morph Animations ─── */
+@keyframes spotlight-morph-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.92);
+    filter: blur(6px);
+  }
+  65% {
+    transform: translateY(2px) scale(1.006);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes spotlight-backdrop-in {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes searchbar-intro {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.93) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-spotlight-modal {
+  animation: spotlight-morph-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity, filter;
+}
+
+.animate-spotlight-backdrop {
+  animation: spotlight-backdrop-in 0.22s ease-out forwards !important;
+  will-change: opacity, backdrop-filter;
+}
+
+.animate-searchbar-in {
+  animation: searchbar-intro 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal-pop {
+  animation: modal-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity;
+}
+
+/* Fallback definitions for standard Tailwind-animate utilities in Tailwind v4 */
+.animate-in {
+  animation-duration: 0.25s;
+  animation-fill-mode: both;
+}
+.fade-in {
+  animation-name: modal-fade-in;
+}
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.zoom-in-95 {
+  animation-name: modal-zoom-95;
+}
+@keyframes modal-zoom-95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.zoom-in-75 {
+  animation-name: modal-zoom-75;
+}
+@keyframes modal-zoom-75 {
+  from { opacity: 0; transform: scale(0.75); }
+  to { opacity: 1; transform: scale(1); }
+}
+.slide-in-from-top-4 {
+  animation-name: modal-slide-top-4;
+}
+@keyframes modal-slide-top-4 {
+  from { opacity: 0; transform: translateY(-1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}

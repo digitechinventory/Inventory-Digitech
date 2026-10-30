@@ -1,0 +1,14 @@
+{
+  "demo-sa-001": [
+    "proj-wim",
+    "proj-famous",
+    "proj-ccm"
+  ],
+  "demo-admin-001": [
+    "proj-famous"
+  ],
+  "demo-user-001": [
+    "proj-wim"
+  ],
+  "user-pending-001": []
+}

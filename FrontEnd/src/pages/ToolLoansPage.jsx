@@ -287,7 +287,7 @@ export default function ToolLoansPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelectedIds([])}
-              className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition cursor-pointer"
+              className="px-3 py-1.5 text-xs text-red-200 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
             >
               Batal Pilih
             </button>
@@ -396,7 +396,7 @@ export default function ToolLoansPage() {
                             ? 'bg-red-50 text-red-700 border-red-200'
                             : 'bg-blue-50 text-blue-700 border-blue-200'
                         }`}>
-                          {item.status === 'returned' ? 'Kembali' : isOverdue ? '⚠️ Overdue' : 'Dipinjam'}
+                          {item.status === 'returned' ? 'Kembali' : isOverdue ? 'Overdue' : 'Dipinjam'}
                         </span>
                       </td>
 

@@ -116,15 +116,22 @@ export default function ParallelogramCard({
   valueColor = 'text-slate-900',
   badgeText,
   badgeDotColor,
-  padding = 'p-4 sm:p-5',
+  padding,
+  compact = false,
   onClick,
   className = ''
 }) {
+  const currentSlant = compact ? '6px' : '12px';
+  const currentClip = `polygon(0 ${currentSlant}, 100% 0, 100% calc(100% - ${currentSlant}), 0 100%)`;
+  const effectivePadding = padding || (compact ? 'p-2 sm:p-2.5' : 'p-4 sm:p-5');
+
   return (
     <div
       onClick={onClick}
       style={{
-        filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.06)) drop-shadow(0 2px 6px rgba(192,17,27,0.10))',
+        filter: compact
+          ? 'drop-shadow(0 3px 8px rgba(0,0,0,0.05)) drop-shadow(0 1px 3px rgba(192,17,27,0.08))'
+          : 'drop-shadow(0 6px 16px rgba(0,0,0,0.06)) drop-shadow(0 2px 6px rgba(192,17,27,0.10))',
       }}
       className={`group relative transition-all duration-300 ${
         onClick ? 'cursor-pointer hover:-translate-y-1' : ''
@@ -136,9 +143,9 @@ export default function ParallelogramCard({
         style={{
           position: 'absolute',
           inset: 0,
-          clipPath: CLIP_PARALLELOGRAM,
-          transform: 'translate(4px, 4px)',
-          background: 'linear-gradient(135deg, rgba(185,28,28,0.45), rgba(220,38,38,0.25))',
+          clipPath: currentClip,
+          transform: compact ? 'translate(2.5px, 2.5px)' : 'translate(4px, 4px)',
+          background: 'linear-gradient(135deg, rgba(185,28,28,0.40), rgba(220,38,38,0.20))',
           zIndex: 0,
           pointerEvents: 'none',
         }}
@@ -147,93 +154,71 @@ export default function ParallelogramCard({
       {/* ── Layer 1: Main Parallelogram Body (Clean White + Red Accents) ── */}
       <div
         style={{
-          clipPath: CLIP_PARALLELOGRAM,
+          clipPath: currentClip,
           background: '#FFFFFF',
-          borderLeft: '5px solid #C0111B',
+          borderLeft: compact ? '3.5px solid #C0111B' : '5px solid #C0111B',
           borderRight: '1px solid #CBD5E1',
+          borderTop: '1px solid #E2E8F0',
+          borderBottom: '1px solid #E2E8F0',
         }}
-        className={`relative z-10 w-full h-full min-h-[120px] sm:min-h-[130px] ${padding} pt-5 pb-5 flex flex-col justify-between overflow-hidden`}
+        className={`relative z-10 w-full h-full ${compact ? 'min-h-[82px] pt-2 pb-2' : 'min-h-[120px] sm:min-h-[130px] pt-5 pb-5'} ${effectivePadding} flex flex-col justify-between overflow-hidden`}
       >
-        {/* ── Top Slanted Edge Border (Diagonal from 0,12 to 100%,0) ──── */}
-        <svg
-          aria-hidden="true"
-          className="absolute top-0 left-0 w-full pointer-events-none overflow-visible"
-          style={{ height: '12px', zIndex: 30 }}
-        >
-          <line
-            x1="0"
-            y1="12"
-            x2="100%"
-            y2="0"
-            stroke="#CBD5E1"
-            strokeWidth="2.5"
-          />
-        </svg>
-
-        {/* ── Bottom Slanted Edge Border (Diagonal from 0,12 to 100%,0 of bottom 12px slice) ──── */}
-        <svg
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 w-full pointer-events-none overflow-visible"
-          style={{ height: '12px', zIndex: 30 }}
-        >
-          <line
-            x1="0"
-            y1="12"
-            x2="100%"
-            y2="0"
-            stroke="#CBD5E1"
-            strokeWidth="2.5"
-          />
-        </svg>
-
         {/* ── Corner 1: Top-Left Mega Mendung Batik Wave ──────────────── */}
-        <MegaMendungCorner position="top-left" size={56} />
+        <MegaMendungCorner
+          position="top-left"
+          size={compact ? 30 : 56}
+          className={compact ? '!opacity-35 group-hover:!opacity-55' : ''}
+        />
 
         {/* ── Corner 2: Bottom-Right Mega Mendung Batik Wave ──────────── */}
-        <MegaMendungCorner position="bottom-right" size={48} />
+        <MegaMendungCorner
+          position="bottom-right"
+          size={compact ? 24 : 48}
+          className={compact ? '!opacity-30 group-hover:!opacity-50' : ''}
+        />
 
         {/* ── Inner Content (Strictly upright, shifted away from red accents) ───── */}
         <div className="relative z-10 flex flex-col justify-between h-full">
           
-          {/* Top Row: Title & Top-Right Icon / Badge (pl-16 ensures clearance from 56px corner) */}
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-[10px] sm:text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono truncate pl-16 sm:pl-18">
+          {/* Top Row: Title & Top-Right Icon / Badge */}
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className={`font-black text-slate-700 uppercase tracking-wider font-mono truncate ${compact ? 'text-[9px] pl-1.5' : 'text-[10px] sm:text-[11px] pl-16 sm:pl-18'}`}>
               {title}
             </span>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               {badgeText && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
                   {badgeText}
                 </span>
               )}
               {badgeDotColor && (
-                <span className={`w-2.5 h-2.5 rounded-full ${badgeDotColor}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${badgeDotColor}`} />
               )}
               {Icon && (
-                <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-center">
-                  <Icon className={`w-4 h-4 ${iconColor}`} />
+                <div className={`${compact ? 'w-5 h-5 rounded' : 'w-7 h-7 rounded-lg'} bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0`}>
+                  <Icon className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} ${iconColor}`} />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Middle Row: Value & Unit (pl-6 ensures clearance from 5px red border) */}
-          <div className="flex items-baseline gap-1.5 my-1 pl-6 sm:pl-7">
-            <span className={`text-2xl sm:text-3xl font-black tracking-tight leading-none ${valueColor}`}>
+          {/* Middle Row: Value & Unit */}
+          <div className={`flex items-baseline gap-1 my-0.5 ${compact ? 'pl-1.5' : 'pl-6 sm:pl-7'}`}>
+            <span className={`font-black tracking-tight leading-none ${compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'} ${valueColor}`}>
               {value}
             </span>
             {unit && (
-              <span className="text-xs sm:text-sm font-bold text-slate-500 font-mono uppercase">
+              <span className={`font-bold text-slate-500 font-mono uppercase ${compact ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
                 {unit}
               </span>
             )}
           </div>
 
-          {/* Bottom Row: Subtitle with Icon (pl-6 aligned with value) */}
+          {/* Bottom Row: Subtitle with Icon */}
           {subtitle && (
-            <div className={`flex items-center gap-1.5 text-[11px] font-semibold mt-2 pt-1.5 border-t border-slate-100/90 pl-6 sm:pl-7 ${subtitleColor}`}>
-              {SubtitleIcon && <SubtitleIcon className="w-3.5 h-3.5 shrink-0" />}
+            <div className={`flex items-center gap-1 font-semibold mt-0.5 pt-1 border-t border-slate-100/90 ${compact ? 'text-[9px] pl-1.5' : 'text-[11px] pl-6 sm:pl-7'} ${subtitleColor}`}>
+              {SubtitleIcon && <SubtitleIcon className={`${compact ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'} shrink-0`} />}
               <span className="truncate">{subtitle}</span>
             </div>
           )}

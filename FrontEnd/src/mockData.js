@@ -287,8 +287,8 @@ export const CURRENT_USERS = [
     name: "arya-superadmin",
     email: "arya-superadmin@digitech.co.id",
     role: "Superadmin",
-    badgeTitle: "Lead Engineer / Digitech Systems",
-    siteAssignment: "Akses Global Sistem"
+    badgeTitle: "Lead Engineer / Digitech",
+    siteAssignment: "Seluruh Site & Akses Pusat"
   }
 ];
 

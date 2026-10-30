@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Users,
@@ -24,12 +25,134 @@ import {
   KeyRound,
   Sparkles,
   Lock,
-  Check
+  Check,
+  Truck,
+  Scale,
+  Cpu,
+  FolderGit2,
+  AlertTriangle,
+  Save,
+  RotateCcw,
+  CheckSquare,
+  Square,
+  Unlock,
+  Boxes,
+  Layers,
+  HardHat,
+  X,
+  Loader2
 } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Navigate } from 'react-router-dom';
+import {
+  getProjects,
+  getProjectAuthorities,
+  updateUserProjectAuthority
+} from '../api/projectInventoryApi.js';
+
+// Dynamic Visual & Theme Mapper for Projects
+const getProjectVisual = (proj, index = 0) => {
+  const code = (proj?.code || '').toUpperCase();
+  const theme = (proj?.color_theme || '').toLowerCase();
+
+  if (code === 'FAMOUS' || theme === 'blue') {
+    return {
+      icon: Truck,
+      color: 'blue',
+      borderClass: 'border-blue-200',
+      bgLightClass: 'bg-blue-50',
+      textAccentClass: 'text-blue-600',
+      textTitleClass: 'text-blue-700',
+      textNumberClass: 'text-blue-900',
+      pillClass: 'bg-blue-100 text-blue-800 border-blue-200',
+      activeBorderClass: 'border-blue-300 bg-blue-50/50 hover:bg-blue-50',
+      activePillClass: 'bg-blue-600 text-white',
+    };
+  }
+  if (code === 'WIM' || theme === 'emerald' || theme === 'green') {
+    return {
+      icon: Scale,
+      color: 'emerald',
+      borderClass: 'border-emerald-200',
+      bgLightClass: 'bg-emerald-50',
+      textAccentClass: 'text-emerald-600',
+      textTitleClass: 'text-emerald-700',
+      textNumberClass: 'text-emerald-900',
+      pillClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      activeBorderClass: 'border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50',
+      activePillClass: 'bg-emerald-600 text-white',
+    };
+  }
+  if (code === 'CCM' || theme === 'amber' || theme === 'orange') {
+    return {
+      icon: Cpu,
+      color: 'amber',
+      borderClass: 'border-amber-200',
+      bgLightClass: 'bg-amber-50',
+      textAccentClass: 'text-amber-600',
+      textTitleClass: 'text-amber-700',
+      textNumberClass: 'text-amber-900',
+      pillClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      activeBorderClass: 'border-amber-300 bg-amber-50/50 hover:bg-amber-50',
+      activePillClass: 'bg-amber-600 text-white',
+    };
+  }
+
+  // Fallback palette cycling for any new projects added to DB
+  const dynamicPalettes = [
+    {
+      icon: Layers,
+      color: 'indigo',
+      borderClass: 'border-indigo-200',
+      bgLightClass: 'bg-indigo-50',
+      textAccentClass: 'text-indigo-600',
+      textTitleClass: 'text-indigo-700',
+      textNumberClass: 'text-indigo-900',
+      pillClass: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      activeBorderClass: 'border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50',
+      activePillClass: 'bg-indigo-600 text-white',
+    },
+    {
+      icon: Boxes,
+      color: 'teal',
+      borderClass: 'border-teal-200',
+      bgLightClass: 'bg-teal-50',
+      textAccentClass: 'text-teal-600',
+      textTitleClass: 'text-teal-700',
+      textNumberClass: 'text-teal-900',
+      pillClass: 'bg-teal-100 text-teal-800 border-teal-200',
+      activeBorderClass: 'border-teal-300 bg-teal-50/50 hover:bg-teal-50',
+      activePillClass: 'bg-teal-600 text-white',
+    },
+    {
+      icon: HardHat,
+      color: 'purple',
+      borderClass: 'border-purple-200',
+      bgLightClass: 'bg-purple-50',
+      textAccentClass: 'text-purple-600',
+      textTitleClass: 'text-purple-700',
+      textNumberClass: 'text-purple-900',
+      pillClass: 'bg-purple-100 text-purple-800 border-purple-200',
+      activeBorderClass: 'border-purple-300 bg-purple-50/50 hover:bg-purple-50',
+      activePillClass: 'bg-purple-600 text-white',
+    },
+    {
+      icon: FolderGit2,
+      color: 'rose',
+      borderClass: 'border-rose-200',
+      bgLightClass: 'bg-rose-50',
+      textAccentClass: 'text-rose-600',
+      textTitleClass: 'text-rose-700',
+      textNumberClass: 'text-rose-900',
+      pillClass: 'bg-rose-100 text-rose-800 border-rose-200',
+      activeBorderClass: 'border-rose-300 bg-rose-50/50 hover:bg-rose-50',
+      activePillClass: 'bg-rose-600 text-white',
+    }
+  ];
+
+  return dynamicPalettes[index % dynamicPalettes.length];
+};
 
 export default function UsersPage() {
   const { user, role, isSuperadmin, session } = useAuth();
@@ -40,10 +163,131 @@ export default function UsersPage() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'active' | 'security'
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'pending'); // 'pending' | 'active' | 'authorities' | 'security'
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [selectedRoleForApproval, setSelectedRoleForApproval] = useState({});
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [userToToggle, setUserToToggle] = useState(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  // Sync activeTab when query param ?tab= changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['pending', 'active', 'authorities', 'security'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  // Project Authorities State
+  const {
+    data: authoritiesData,
+    isLoading: loadingAuthorities,
+    refetch: refetchAuthorities
+  } = useQuery({
+    queryKey: ['project-authorities'],
+    queryFn: getProjectAuthorities,
+    enabled: isSuperadmin
+  });
+
+  // Project Workspaces State for dynamic projects
+  const { data: projectsFromApi, refetch: refetchProjects } = useQuery({
+    queryKey: ['project-workspaces-list'],
+    queryFn: getProjects,
+    enabled: isSuperadmin
+  });
+
+  // Dynamic Projects List from backend API (Supabase / local DB)
+  const dynamicProjects = React.useMemo(() => {
+    if (Array.isArray(authoritiesData?.projects) && authoritiesData.projects.length > 0) {
+      return authoritiesData.projects;
+    }
+    if (Array.isArray(projectsFromApi) && projectsFromApi.length > 0) {
+      return projectsFromApi;
+    }
+    return [
+      {
+        id: 'proj-famous',
+        code: 'FAMOUS',
+        name: 'Fleet Asset Management (FAMOUS)',
+        description: 'Telematika alat berat, GPS tracker, MDVR, fleet matrix',
+        site_location: 'Pit South BIB & Workshop Utama',
+        color_theme: 'blue'
+      },
+      {
+        id: 'proj-wim',
+        code: 'WIM',
+        name: 'Weigh-In-Motion Scale (WIM)',
+        description: 'Jembatan timbang dinamis, load cell, kalibrasi QC',
+        site_location: 'BIB Pit Sebamban KM-14 & KM-28',
+        color_theme: 'emerald'
+      },
+      {
+        id: 'proj-ccm',
+        code: 'CCM',
+        name: 'Coal Crushing & Processing (CCM)',
+        description: 'Crusher plant ROM, conveyor belt weigher, motor drive',
+        site_location: 'Port Terminal Sebamban & ROM Stockpile',
+        color_theme: 'amber'
+      }
+    ];
+  }, [authoritiesData?.projects, projectsFromApi]);
+
+  const [authorityDrafts, setAuthorityDrafts] = useState({});
+  const [savingAuthorityUserId, setSavingAuthorityUserId] = useState(null);
+  const [authorityRoleFilter, setAuthorityRoleFilter] = useState('ALL'); // 'ALL' | 'Admin' | 'User'
+  const [authorityProjectFilter, setAuthorityProjectFilter] = useState('ALL'); // 'ALL' | dynamic project IDs | 'NONE'
+  const [authoritySearch, setAuthoritySearch] = useState('');
+
+  // Sync authority drafts when data loads
+  useEffect(() => {
+    if (authoritiesData?.users) {
+      const drafts = {};
+      authoritiesData.users.forEach(u => {
+        drafts[u.id] = [...(u.allowed_projects || [])];
+      });
+      setAuthorityDrafts(drafts);
+    }
+  }, [authoritiesData]);
+
+  const handleToggleProject = (userId, projId) => {
+    setAuthorityDrafts(prev => {
+      const current = prev[userId] || [];
+      const has = current.includes(projId);
+      const updated = has ? current.filter(p => p !== projId) : [...current, projId];
+      return { ...prev, [userId]: updated };
+    });
+  };
+
+  const handleGrantAllProjects = (userId) => {
+    setAuthorityDrafts(prev => ({
+      ...prev,
+      [userId]: dynamicProjects.map(p => p.id)
+    }));
+  };
+
+  const handleRevokeAllProjects = (userId) => {
+    setAuthorityDrafts(prev => ({
+      ...prev,
+      [userId]: []
+    }));
+  };
+
+  const handleSaveUserAuthority = async (targetUser) => {
+    const newAllowed = authorityDrafts[targetUser.id] || [];
+    setSavingAuthorityUserId(targetUser.id);
+    try {
+      await updateUserProjectAuthority(targetUser.id, newAllowed);
+      addToast(`Hak otoritas project untuk ${targetUser.full_name} berhasil disimpan!`, 'success');
+      await refetchAuthorities();
+      refetch();
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menyimpan otoritas project.', 'error');
+    } finally {
+      setSavingAuthorityUserId(null);
+    }
+  };
 
   // Superadmin JWT Session Duration State
   const [sessionDuration, setSessionDuration] = useState(8);
@@ -131,8 +375,8 @@ export default function UsersPage() {
   });
 
   const users = usersData || [];
-  const pendingUsers = users.filter(u => !u.is_active && !u.is_approved);
-  const activeUsers = users.filter(u => u.is_active || u.is_approved);
+  const pendingUsers = users.filter(u => u.is_approved === false);
+  const activeUsers = users.filter(u => u.is_approved !== false);
 
   const displayList = (activeTab === 'pending' ? pendingUsers : activeUsers).filter(u => {
     const q = search.toLowerCase();
@@ -176,6 +420,52 @@ export default function UsersPage() {
     }
   };
 
+  const handleToggleStatus = async () => {
+    if (!userToToggle) return;
+    if (userToToggle.id === user?.id) {
+      addToast('Anda tidak dapat menonaktifkan akun Anda sendiri yang sedang aktif.', 'error');
+      setUserToToggle(null);
+      return;
+    }
+
+    const nextStatus = userToToggle.is_active === false;
+    setIsProcessingAction(true);
+    try {
+      await api.put(`/users/${userToToggle.id}/status`, { is_active: nextStatus });
+      addToast(
+        `Akun ${userToToggle.full_name} berhasil ${nextStatus ? 'diaktifkan kembali' : 'dinonaktifkan'}.`,
+        nextStatus ? 'success' : 'info'
+      );
+      setUserToToggle(null);
+      refetch();
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal mengubah status pengguna.', 'error');
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    if (userToDelete.id === user?.id) {
+      addToast('Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif.', 'error');
+      setUserToDelete(null);
+      return;
+    }
+
+    setIsProcessingAction(true);
+    try {
+      await api.delete(`/users/${userToDelete.id}`);
+      addToast(`Pengguna ${userToDelete.full_name} (${userToDelete.email}) berhasil dihapus dari sistem.`, 'success');
+      setUserToDelete(null);
+      refetch();
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal menghapus pengguna.', 'error');
+    } finally {
+      setIsProcessingAction(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-16 font-sans select-none animate-in fade-in duration-200">
       
@@ -194,11 +484,14 @@ export default function UsersPage() {
           </p>
         </div>
 
-        {/* 3 Tabs: Antrean, Pengguna Aktif, Keamanan Sistem & JWT — Pushed to right edge */}
+        {/* 4 Tabs: Antrean, Pengguna Aktif, Hak Otoritas Project, Keamanan Sistem & JWT — Pushed to right edge */}
         <div className="flex flex-wrap items-center justify-end gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold ml-auto shrink-0">
           <button
             type="button"
-            onClick={() => setActiveTab('pending')}
+            onClick={() => {
+              setActiveTab('pending');
+              setSearchParams({ tab: 'pending' });
+            }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === 'pending'
                 ? 'bg-white text-red-600 shadow-2xs'
@@ -206,12 +499,15 @@ export default function UsersPage() {
             }`}
           >
             <Clock className="w-4 h-4" />
-            <span>Antrean Aktivasi ({pendingUsers.length})</span>
+            <span>Antrean ({pendingUsers.length})</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTab('active')}
+            onClick={() => {
+              setActiveTab('active');
+              setSearchParams({ tab: 'active' });
+            }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === 'active'
                 ? 'bg-white text-red-600 shadow-2xs'
@@ -219,12 +515,36 @@ export default function UsersPage() {
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>Pengguna Aktif ({activeUsers.length})</span>
+            <span>Pengguna ({activeUsers.length})</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveTab('security')}
+            onClick={() => {
+              setActiveTab('authorities');
+              setSearchParams({ tab: 'authorities' });
+            }}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
+              activeTab === 'authorities'
+                ? 'bg-white text-red-600 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-red-600" />
+            <span>Hak Otoritas Project</span>
+            <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold ${
+              activeTab === 'authorities' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-200 text-slate-700'
+            }`}>
+              {dynamicProjects.length > 0 ? `${dynamicProjects.length} Proyek` : 'Multi-Proyek'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('security');
+              setSearchParams({ tab: 'security' });
+            }}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
               activeTab === 'security'
                 ? 'bg-red-600 text-white shadow-xs'
@@ -232,7 +552,7 @@ export default function UsersPage() {
             }`}
           >
             <Lock className="w-4 h-4" />
-            <span>Keamanan Sesi &amp; JWT</span>
+            <span>Keamanan Sesi</span>
           </button>
         </div>
       </div>
@@ -283,11 +603,13 @@ export default function UsersPage() {
                         <span className="text-[11px] font-mono text-slate-500">{u.email}</span>
                       </div>
                       <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                        u.is_active || u.is_approved
+                        u.is_approved === false
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : u.is_active !== false
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
                       }`}>
-                        {u.is_active || u.is_approved ? 'AKTIF' : 'PENDING'}
+                        {u.is_approved === false ? 'PENDING' : u.is_active !== false ? 'AKTIF' : 'NONAKTIF'}
                       </span>
                     </div>
 
@@ -336,20 +658,68 @@ export default function UsersPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-slate-500">Role:</span>
-                          <span className="font-mono text-xs font-bold text-red-600">{u.role}</span>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Role:</span>
+                            <span className="font-mono text-xs font-bold text-red-600">{u.role}</span>
+                          </div>
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                            className="text-[11px] bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-semibold cursor-pointer outline-none focus:border-red-500"
+                          >
+                            <option value="User">Ubah ke User</option>
+                            <option value="Admin">Ubah ke Admin</option>
+                            <option value="Superadmin">Ubah ke Superadmin</option>
+                          </select>
                         </div>
-                        <select
-                          value={u.role}
-                          onChange={(e) => handleChangeRole(u.id, e.target.value)}
-                          className="text-[11px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 cursor-pointer"
-                        >
-                          <option value="User">Ubah ke User</option>
-                          <option value="Admin">Ubah ke Admin</option>
-                          <option value="Superadmin">Ubah ke Superadmin</option>
-                        </select>
+
+                        {/* Operational Actions: Nonaktifkan / Aktifkan & Hapus User */}
+                        <div className="flex items-center gap-2 pt-0.5">
+                          {u.id === user?.id ? (
+                            <span className="text-[11px] text-slate-400 font-mono italic py-1">
+                              (Akun Anda Saat Ini)
+                            </span>
+                          ) : (
+                            <>
+                              {/* Toggle Status (Nonaktifkan / Aktifkan) */}
+                              <button
+                                type="button"
+                                onClick={() => setUserToToggle(u)}
+                                className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
+                                  u.is_active !== false
+                                    ? 'bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border-slate-200 hover:border-amber-300'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
+                                }`}
+                                title={u.is_active !== false ? 'Nonaktifkan akun pengguna ini' : 'Aktifkan kembali akun ini'}
+                              >
+                                {u.is_active !== false ? (
+                                  <>
+                                    <UserX className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Nonaktifkan</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Aktifkan</span>
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Hapus User */}
+                              <button
+                                type="button"
+                                onClick={() => setUserToDelete(u)}
+                                className="py-1.5 px-3 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                                title="Hapus pengguna dari sistem"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                <span>Hapus</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -381,20 +751,74 @@ export default function UsersPage() {
                       <td className="px-4 py-3 text-slate-600">{u.department || 'Operasional'}</td>
                       <td className="px-4 py-3 font-mono font-bold text-red-600">{u.role}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {u.is_active || u.is_approved ? 'Aktif' : 'Pending'}
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                          u.is_approved === false
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : u.is_active !== false
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {u.is_approved === false ? 'Pending' : u.is_active !== false ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         {activeTab === 'pending' ? (
-                          <button
-                            onClick={() => handleApprove(u.id)}
-                            className="px-2.5 py-1 bg-red-600 text-white rounded-lg text-xs font-bold cursor-pointer"
-                          >
-                            Aktifkan
-                          </button>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleReject(u.id)}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg text-xs font-bold transition cursor-pointer"
+                            >
+                              Tolak
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(u.id)}
+                              className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition cursor-pointer"
+                            >
+                              Aktifkan
+                            </button>
+                          </div>
+                        ) : u.id === user?.id ? (
+                          <span className="text-[11px] text-slate-400 font-mono italic">Akun Anda</span>
                         ) : (
-                          <span className="text-slate-400 text-xs">Terverifikasi</span>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <select
+                              value={u.role}
+                              onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                              className="text-[11px] bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-semibold cursor-pointer outline-none focus:border-red-500"
+                            >
+                              <option value="User">User</option>
+                              <option value="Admin">Admin</option>
+                              <option value="Superadmin">Superadmin</option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => setUserToToggle(u)}
+                              className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                u.is_active !== false
+                                  ? 'bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-700 border-slate-200 hover:border-amber-300'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
+                              }`}
+                              title={u.is_active !== false ? 'Nonaktifkan Pengguna' : 'Aktifkan Pengguna'}
+                            >
+                              {u.is_active !== false ? (
+                                <UserX className="w-3.5 h-3.5 text-amber-600" />
+                              ) : (
+                                <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setUserToDelete(u)}
+                              className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-lg transition cursor-pointer"
+                              title="Hapus Pengguna"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -403,6 +827,408 @@ export default function UsersPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── TAB: HAK OTORITAS PROJECT WEB (WIM, FAMOUS, CCM) ── */}
+      {activeTab === 'authorities' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* Executive Overview Banner */}
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xs relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 pointer-events-none z-0 overflow-hidden rounded-tr-3xl">
+              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-gradient-to-br from-red-100/60 via-red-50/20 to-transparent" />
+            </div>
+
+            <div className="relative z-10 space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100/70 border border-red-200 text-red-700 text-xs font-black uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-red-600" />
+                <span>Otoritas Khusus Superadmin Web IMS</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <FolderGit2 className="w-6 h-6 text-red-600" />
+                <span>Pengaturan Hak Otoritas Akses Proyek</span>
+                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 ml-1">
+                  {dynamicProjects.length} Proyek Terdaftar
+                </span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-4xl leading-relaxed">
+                Superadmin memegang kendali penuh wewenang akses setiap proyek. Akun personel dengan role <strong>Admin</strong> atau <strong>User</strong> tidak dapat membuka data, inventaris alat berat, atau telematika suatu proyek tanpa adanya izin otoritas resmi dari Superadmin.
+              </p>
+            </div>
+          </div>
+
+          {/* Metric KPI Cards (Dynamic for all database projects) */}
+          {(() => {
+            const authUsers = authoritiesData?.users || [];
+            const totalUsers = authUsers.length;
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Personel</div>
+                    <div className="text-2xl font-black text-slate-900 mt-0.5">{totalUsers} <span className="text-xs font-normal text-slate-500">Akun</span></div>
+                    <div className="text-[10px] text-slate-400">Terdaftar di sistem</div>
+                  </div>
+                </div>
+
+                {dynamicProjects.map((proj, idx) => {
+                  const visual = getProjectVisual(proj, idx);
+                  const IconComp = visual.icon;
+                  const count = authUsers.filter(u =>
+                    u.role === 'Superadmin' ||
+                    (authorityDrafts[u.id] || u.allowed_projects || []).includes(proj.id)
+                  ).length;
+
+                  return (
+                    <div
+                      key={proj.id}
+                      className={`bg-white rounded-2xl p-4 border ${visual.borderClass} shadow-2xs flex items-center gap-3`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl ${visual.bgLightClass} ${visual.textAccentClass} flex items-center justify-center shrink-0`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className={`text-[11px] font-bold ${visual.textTitleClass} uppercase tracking-wider truncate`}>
+                          Otoritas {proj.code || proj.name}
+                        </div>
+                        <div className={`text-2xl font-black ${visual.textNumberClass} mt-0.5`}>
+                          {count} <span className="text-xs font-normal opacity-70">Personel</span>
+                        </div>
+                        <div className={`text-[10px] ${visual.textAccentClass} truncate`}>
+                          {proj.site_location || proj.description || 'Akses Operasional'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Search, Filter Toolbar & Quick Actions */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-[240px] max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={authoritySearch}
+                onChange={(e) => setAuthoritySearch(e.target.value)}
+                placeholder="Cari nama personel, email, divisi, departemen..."
+                className="w-full h-10 pl-10 pr-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Role Filter */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+                {['ALL', 'Admin', 'User'].map((rf) => (
+                  <button
+                    key={rf}
+                    type="button"
+                    onClick={() => setAuthorityRoleFilter(rf)}
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                      authorityRoleFilter === rf
+                        ? 'bg-white text-slate-900 shadow-2xs font-black'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {rf === 'ALL' ? 'Semua Role' : rf}
+                  </button>
+                ))}
+              </div>
+
+              {/* Project Access Filter */}
+              <select
+                value={authorityProjectFilter}
+                onChange={(e) => setAuthorityProjectFilter(e.target.value)}
+                className="h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+              >
+                <option value="ALL">Semua Proyek</option>
+                {dynamicProjects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    Hanya Akses {p.code || p.name}
+                  </option>
+                ))}
+                <option value="NONE">Belum Ada Akses</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  refetchAuthorities();
+                  refetchProjects();
+                }}
+                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
+                title="Segarkan data otoritas dan proyek"
+              >
+                <RotateCcw className={`w-4 h-4 ${loadingAuthorities ? 'animate-spin text-red-600' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* User Project Authority Cards Grid */}
+          {loadingAuthorities ? (
+            <div className="bg-white rounded-3xl p-12 text-center text-slate-400 font-medium border border-slate-200">
+              <RotateCcw className="w-8 h-8 animate-spin mx-auto text-red-600 mb-3" />
+              Memuat konfigurasi hak otoritas proyek...
+            </div>
+          ) : (
+            (() => {
+              const rawUsers = authoritiesData?.users || [];
+              const allProjIds = dynamicProjects.map(p => p.id);
+              const filteredUsers = rawUsers.filter(u => {
+                const q = authoritySearch.toLowerCase().trim();
+                const matchesSearch = !q || (
+                  u.full_name?.toLowerCase().includes(q) ||
+                  u.email?.toLowerCase().includes(q) ||
+                  u.department?.toLowerCase().includes(q) ||
+                  u.company?.toLowerCase().includes(q)
+                );
+                const matchesRole = authorityRoleFilter === 'ALL' || u.role === authorityRoleFilter;
+                
+                const userProjects = u.role === 'Superadmin'
+                  ? allProjIds
+                  : (authorityDrafts[u.id] || u.allowed_projects || []);
+
+                let matchesProject = true;
+                if (authorityProjectFilter === 'NONE') {
+                  matchesProject = userProjects.length === 0;
+                } else if (authorityProjectFilter !== 'ALL') {
+                  matchesProject = userProjects.includes(authorityProjectFilter);
+                }
+
+                return matchesSearch && matchesRole && matchesProject;
+              });
+
+              if (filteredUsers.length === 0) {
+                return (
+                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+                    <ShieldAlert className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h3 className="text-base font-bold text-slate-800">Tidak ada personel yang sesuai filter</h3>
+                    <p className="text-xs text-slate-500 mt-1">Coba sesuaikan kata kunci pencarian atau pilihan filter role/proyek Anda.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                  {filteredUsers.map((targetUser) => {
+                    const isSa = targetUser.role === 'Superadmin';
+                    const allProjIds = dynamicProjects.map(p => p.id);
+                    const userDraft = isSa
+                      ? allProjIds
+                      : (authorityDrafts[targetUser.id] || targetUser.allowed_projects || []);
+
+                    const originalAllowed = isSa
+                      ? allProjIds
+                      : (targetUser.allowed_projects || []);
+
+                    const hasUnsavedChanges = !isSa && (
+                      userDraft.length !== originalAllowed.length ||
+                      userDraft.some(p => !originalAllowed.includes(p))
+                    );
+
+                    const isSavingThis = savingAuthorityUserId === targetUser.id;
+
+                    return (
+                      <div
+                        key={targetUser.id}
+                        className={`bg-white rounded-3xl p-5 sm:p-6 border transition-all duration-200 flex flex-col justify-between ${
+                          hasUnsavedChanges
+                            ? 'border-red-400 shadow-md ring-2 ring-red-100'
+                            : 'border-slate-200 shadow-xs hover:border-slate-300'
+                        }`}
+                      >
+                        {/* User Identity Header */}
+                        <div>
+                          <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm text-white shrink-0 shadow-xs ${
+                                targetUser.role === 'Superadmin'
+                                  ? 'bg-gradient-to-br from-red-600 to-rose-700'
+                                  : targetUser.role === 'Admin'
+                                  ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                                  : 'bg-gradient-to-br from-slate-700 to-slate-900'
+                              }`}>
+                                {targetUser.full_name?.charAt(0).toUpperCase() || 'U'}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-black text-slate-900 text-sm truncate">
+                                    {targetUser.full_name}
+                                  </h4>
+                                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase ${
+                                    targetUser.role === 'Superadmin'
+                                      ? 'bg-red-50 text-red-700 border-red-200'
+                                      : targetUser.role === 'Admin'
+                                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  }`}>
+                                    {targetUser.role}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-500 font-mono truncate mt-0.5">
+                                  {targetUser.email}
+                                </div>
+                                <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                  {targetUser.department || 'Operasional Site'} • {targetUser.company || 'DIGITECH'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Status Indicator */}
+                            <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                              {targetUser.is_active || targetUser.is_approved ? 'Aktif' : 'Non-Aktif'}
+                            </span>
+                          </div>
+
+                          {/* If Superadmin: VIP Unrestricted Banner */}
+                          {isSa ? (
+                            <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-amber-50 border border-red-200 text-slate-800 space-y-2">
+                              <div className="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-wider">
+                                <Sparkles className="w-4 h-4 text-amber-600" />
+                                <span>Hak Otoritas Eksekutif Mutlak</span>
+                              </div>
+                              <p className="text-xs text-slate-600 leading-relaxed">
+                                Akun ini bertindak sebagai <strong>Superadmin</strong>. Sistem secara otomatis memberikan wewenang penuh tanpa batas untuk membuka, mengedit, dan mengaudit seluruh proyek web ({dynamicProjects.map(p => p.code || p.name).join(', ')}).
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                {dynamicProjects.map((p, idx) => {
+                                  const visual = getProjectVisual(p, idx);
+                                  return (
+                                    <span
+                                      key={p.id}
+                                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 ${visual.pillClass}`}
+                                    >
+                                      <Check className="w-3 h-3" /> {p.code || p.name}: Akses Penuh
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : (
+                            /* Project Tiles for Admin & User */
+                            <div className="mt-4 space-y-2.5">
+                              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center justify-between">
+                                <span>Pilih Wewenang Akses Proyek:</span>
+                                <span className="text-slate-600 font-bold">
+                                  {userDraft.length} dari {dynamicProjects.length} Diizinkan
+                                </span>
+                              </div>
+
+                              <div className="space-y-2">
+                                {dynamicProjects.map((proj, idx) => {
+                                  const visual = getProjectVisual(proj, idx);
+                                  const IconComponent = visual.icon;
+                                  const isAllowed = userDraft.includes(proj.id);
+
+                                  return (
+                                    <div
+                                      key={proj.id}
+                                      onClick={() => handleToggleProject(targetUser.id, proj.id)}
+                                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                                        isAllowed
+                                          ? 'border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 shadow-2xs'
+                                          : 'border-slate-200 hover:border-slate-300 bg-slate-50/60 opacity-80 hover:opacity-100'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                          isAllowed
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : 'bg-slate-200 text-slate-500'
+                                        }`}>
+                                          <IconComponent className="w-4 h-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-md ${
+                                              isAllowed
+                                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                                : 'bg-slate-200 text-slate-600'
+                                            }`}>
+                                              {proj.code || proj.name?.substring(0, 6)?.toUpperCase()}
+                                            </span>
+                                            <span className="text-xs font-bold text-slate-900 truncate">
+                                              {proj.name}
+                                            </span>
+                                          </div>
+                                          <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                                            {proj.description || proj.site_location || 'Akses Operasional Proyek'}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Status Toggle Pill */}
+                                      <div className="shrink-0">
+                                        {isAllowed ? (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-2xs">
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Diberi Akses</span>
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold">
+                                            <Lock className="w-3.5 h-3.5" />
+                                            <span>Terkunci</span>
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Footer Actions (Only for Admin & User) */}
+                        {!isSa && (
+                          <div className="pt-4 mt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleGrantAllProjects(targetUser.id)}
+                                className="text-[11px] font-bold text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-slate-200 transition cursor-pointer"
+                              >
+                                Beri Semua
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeAllProjects(targetUser.id)}
+                                className="text-[11px] font-bold text-slate-600 hover:text-red-700 bg-slate-100 hover:bg-red-50 px-2.5 py-1.5 rounded-xl border border-slate-200 transition cursor-pointer"
+                              >
+                                Cabut Semua
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSaveUserAuthority(targetUser)}
+                              disabled={isSavingThis || !hasUnsavedChanges}
+                              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                                hasUnsavedChanges
+                                  ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
+                                  : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                              }`}
+                            >
+                              <Save className="w-3.5 h-3.5" />
+                              <span>{isSavingThis ? 'Menyimpan...' : (hasUnsavedChanges ? 'Simpan Perubahan' : 'Tersimpan')}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          )}
+
         </div>
       )}
 
@@ -597,6 +1423,166 @@ export default function UsersPage() {
                 <Check className="w-4 h-4" />
                 <span>{sessionConfigSaving ? 'Menerapkan Kebijakan...' : 'Terapkan Kebijakan Sesi Global'}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: KONFIRMASI HAPUS PENGGUNA ── */}
+      {userToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => !isProcessingAction && setUserToDelete(null)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-1.5 w-full bg-gradient-to-r from-red-600 to-rose-600" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shrink-0">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Hapus Akun Pengguna?
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Tindakan ini permanen dan tidak dapat dibatalkan.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 mb-5 space-y-1.5 text-xs">
+                <div className="font-bold text-slate-900 text-sm">{userToDelete.full_name}</div>
+                <div className="font-mono text-slate-500 text-[11px]">{userToDelete.email}</div>
+                <div className="pt-2 flex items-center gap-2 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold">
+                    Role: {userToDelete.role}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-semibold">
+                    {userToDelete.company || 'DIGITECH'} &bull; {userToDelete.department || 'Site'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-red-50/70 border border-red-200/80 text-[11px] text-red-800 mb-6 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span>
+                  Seluruh hak akses, otorisasi project, dan sesi login pengguna ini akan segera dicabut dari database.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  disabled={isProcessingAction}
+                  onClick={() => setUserToDelete(null)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Batalkan
+                </button>
+                <button
+                  type="button"
+                  disabled={isProcessingAction}
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isProcessingAction ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>{isProcessingAction ? 'Menghapus...' : 'Ya, Hapus Pengguna'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: KONFIRMASI NONAKTIFKAN / AKTIFKAN STATUS PENGGUNA ── */}
+      {userToToggle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => !isProcessingAction && setUserToToggle(null)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`h-1.5 w-full ${userToToggle.is_active !== false ? 'bg-amber-500' : 'bg-emerald-600'}`} />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                  userToToggle.is_active !== false
+                    ? 'bg-amber-50 border-amber-200 text-amber-600'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                }`}>
+                  {userToToggle.is_active !== false ? (
+                    <UserX className="w-6 h-6" />
+                  ) : (
+                    <UserCheck className="w-6 h-6" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    {userToToggle.is_active !== false ? 'Nonaktifkan Akun Pengguna?' : 'Aktifkan Kembali Akun Pengguna?'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {userToToggle.is_active !== false
+                      ? 'Pengguna tidak akan dapat mengakses sistem'
+                      : 'Pengguna akan dapat login kembali ke sistem'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 mb-5 space-y-1 text-xs">
+                <div className="font-bold text-slate-900 text-sm">{userToToggle.full_name}</div>
+                <div className="font-mono text-slate-500 text-[11px]">{userToToggle.email}</div>
+                <div className="text-[11px] text-slate-600 pt-1">
+                  Role Akses: <strong className="text-red-600 font-mono">{userToToggle.role}</strong>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+                {userToToggle.is_active !== false
+                  ? `Apakah Anda yakin ingin menonaktifkan akun ${userToToggle.full_name}? Pengguna ini tidak akan bisa login ke Digitech IMS, namun data histori transaksi dan dokumen tetap aman.`
+                  : `Apakah Anda yakin ingin mengaktifkan kembali akun ${userToToggle.full_name}? Pengguna ini akan dapat login kembali dengan hak akses ${userToToggle.role}.`}
+              </p>
+
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  disabled={isProcessingAction}
+                  onClick={() => setUserToToggle(null)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Batalkan
+                </button>
+                <button
+                  type="button"
+                  disabled={isProcessingAction}
+                  onClick={handleToggleStatus}
+                  className={`px-4 py-2.5 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50 ${
+                    userToToggle.is_active !== false
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                >
+                  {isProcessingAction ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : userToToggle.is_active !== false ? (
+                    <UserX className="w-3.5 h-3.5" />
+                  ) : (
+                    <UserCheck className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {isProcessingAction
+                      ? 'Memproses...'
+                      : userToToggle.is_active !== false
+                      ? 'Ya, Nonaktifkan'
+                      : 'Ya, Aktifkan Kembali'}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

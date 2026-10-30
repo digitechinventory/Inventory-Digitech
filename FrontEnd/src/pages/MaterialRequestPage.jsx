@@ -227,8 +227,8 @@ export default function MaterialRequestPage() {
       {submitSuccess && (
         <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
-              ✓
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
+              <Check className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
               <div className="text-xs font-black">

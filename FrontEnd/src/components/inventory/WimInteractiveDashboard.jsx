@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Scale,
   Boxes,
   Cpu,
   Layers,
   CheckCircle2,
+  Check,
   AlertTriangle,
   RotateCcw,
   Search,
@@ -1091,36 +1093,28 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
       )}
 
       {/* ── Modal Detail Komponen WIM & Tracking Histori ── */}
-      {selectedItemDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+      {selectedItemDetail && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[90vh] my-auto overflow-y-auto">
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4 pt-1">
               <div className="flex items-center gap-3.5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shadow-xs ${
-                  selectedItemDetail.status === 'Terpasang'
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-100 text-amber-700 border border-amber-200'
-                }`}>
-                  <Scale className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shadow-xs shrink-0 bg-slate-100 text-slate-700 border border-slate-200">
+                  <Scale className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">
                       {selectedItemDetail.category}
                     </span>
-                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      selectedItemDetail.status === 'Terpasang'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                        : 'bg-amber-50 text-amber-700 border-amber-300'
-                    }`}>
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-slate-50 text-slate-700 border-slate-200">
                       {selectedItemDetail.status}
                     </span>
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                    <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
                       Kondisi: {selectedItemDetail.condition}
                     </span>
                   </div>
-                  <h3 className="text-lg font-black text-slate-900 mt-1">{selectedItemDetail.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mt-1">{selectedItemDetail.name}</h3>
                   <p className="text-xs font-mono text-slate-500">
                     Serial Number: <span className="font-bold text-slate-800">{selectedItemDetail.serial_number}</span> | Kode: {selectedItemDetail.item_code}
                   </p>
@@ -1135,22 +1129,16 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
 
             {/* 1. Alasan Dismantle / Status Kondisi */}
-            <div className={`p-4 rounded-2xl border ${
-              selectedItemDetail.status === 'Dilepas'
-                ? 'bg-amber-50/70 border-amber-200 text-amber-950'
-                : selectedItemDetail.is_pindahan || (selectedItemDetail.transferred_from && selectedItemDetail.transferred_from !== '-')
-                ? 'bg-purple-50/70 border-purple-200 text-purple-950'
-                : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-            }`}>
-              <div className="flex items-center gap-2 mb-1.5 font-bold text-xs uppercase font-mono tracking-wider">
+            <div className="p-4 rounded-2xl border bg-slate-50 border-slate-200 text-slate-800 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs uppercase font-mono tracking-wider text-slate-800">
                 {selectedItemDetail.status === 'Dilepas' ? (
                   <>
-                    <ShieldAlert className="w-4 h-4 text-amber-600" />
+                    <ShieldAlert className="w-4 h-4 text-red-600" />
                     <span>Alasan Dismantle: Pelepasan Komponen &amp; Penggantian Suku Cadang</span>
                   </>
                 ) : selectedItemDetail.is_pindahan ? (
                   <>
-                    <ArrowRightLeft className="w-4 h-4 text-purple-600" />
+                    <ArrowRightLeft className="w-4 h-4 text-red-600" />
                     <span>Alasan Dismantle: Mutasi Antar Jembatan Timbang / Lane</span>
                   </>
                 ) : (
@@ -1161,20 +1149,20 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 )}
               </div>
 
-              <div className="text-xs leading-relaxed font-medium">
+              <div className="text-xs leading-relaxed font-normal text-slate-700">
                 {selectedItemDetail.status === 'Dilepas' ? (
                   <div>
                     Komponen ini telah dibongkar/dilepas (dismantle) dari platform jembatan timbang karena proses kalibrasi, pemeliharaan rutin, atau penggantian dengan part baru.
                     {selectedItemDetail.notes && selectedItemDetail.notes !== '-' && (
-                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-amber-200 font-mono text-[11px] text-amber-900">
-                        <span className="font-bold">Keterangan Catatan Lapangan:</span> "{selectedItemDetail.notes}"
+                      <div className="mt-2.5 p-3 bg-white rounded-xl border border-slate-200 font-mono text-[11px] text-slate-700">
+                        <span className="font-bold text-slate-900">Keterangan Catatan Lapangan:</span> "{selectedItemDetail.notes}"
                       </div>
                     )}
                   </div>
                 ) : selectedItemDetail.is_pindahan ? (
                   <div>
                     Komponen ini sebelumnya dimutasi dari posisi{' '}
-                    <span className="font-bold font-mono bg-purple-100 px-1.5 py-0.5 rounded text-purple-900">
+                    <span className="font-bold font-mono bg-slate-200 text-slate-900 px-2 py-0.5 rounded border border-slate-300">
                       {selectedItemDetail.transferred_from}
                     </span>{' '}
                     menuju alokasi timbangan WIM terkini.
@@ -1182,7 +1170,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 ) : (
                   <div>
                     Komponen beroperasi normal dan terpasang kokoh pada{' '}
-                    <span className="font-bold font-mono text-emerald-800">
+                    <span className="font-bold font-mono text-slate-900">
                       {selectedItemDetail.lane !== '-' ? selectedItemDetail.lane : selectedItemDetail.location}
                     </span>.
                   </div>
@@ -1193,96 +1181,105 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             {/* 2. Visual Tracking Riwayat (Lifecycle & History Timeline) */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-slate-700" />
                   Tracking Riwayat &amp; Posisi Komponen:
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">Audit Trail WIM</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase">1. Penerimaan Onsite</div>
-                  <div className="text-xs font-black text-slate-800 font-mono">{selectedItemDetail.tanggal_onsite !== '-' ? selectedItemDetail.tanggal_onsite : '2024-05-10'}</div>
-                  <div className="text-[10px] text-slate-500">Pit Sebamban KM-14</div>
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">1. Penerimaan Onsite</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">{selectedItemDetail.tanggal_onsite !== '-' ? selectedItemDetail.tanggal_onsite : '2024-05-10'}</div>
+                  <div className="text-[11px] text-slate-500">Pit Sebamban KM-14</div>
+                  <div className="text-[10px] text-emerald-700 font-mono font-semibold flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    Fisik Terverifikasi
+                  </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-mono font-bold text-purple-700 uppercase">2. Terpasang Dimana Sebelumnya</div>
-                  <div className="text-xs font-black text-purple-900 font-mono">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">2. Terpasang Sebelumnya</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">
                     {selectedItemDetail.transferred_from !== '-' ? selectedItemDetail.transferred_from : 'Instalasi Awal'}
                   </div>
-                  <div className="text-[10px] text-purple-700">Origin Site</div>
+                  <div className="text-[11px] text-slate-500">Origin Site</div>
+                  <div className="text-[10px] text-slate-600 font-mono font-semibold">Fresh Asset</div>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-mono font-bold text-amber-700 uppercase">3. Waktu Dismantle</div>
-                  <div className="text-xs font-black text-amber-900 font-mono">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">3. Waktu Dismantle</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">
                     {selectedItemDetail.tanggal_dismantle !== '-' ? selectedItemDetail.tanggal_dismantle : 'Belum Dilepas'}
                   </div>
-                  <div className="text-[10px] text-amber-800">
+                  <div className="text-[11px] text-slate-500">
+                    {selectedItemDetail.tanggal_dismantle !== '-' ? 'Dilepas oleh Teknisi' : 'Aktif Terpasang'}
+                  </div>
+                  <div className="text-[10px] text-slate-600 font-mono font-semibold">
                     {selectedItemDetail.tanggal_dismantle !== '-' ? 'Dismantled' : 'Mounted'}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-mono font-bold text-emerald-700 uppercase">4. Posisi Terkini</div>
-                  <div className="text-xs font-black font-mono text-emerald-900 truncate">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">4. Posisi Terkini</div>
+                  <div className="text-xs font-bold font-mono text-slate-900 truncate">
                     {selectedItemDetail.lane !== '-' ? selectedItemDetail.lane : selectedItemDetail.location}
                   </div>
-                  <div className="text-[10px] text-slate-600">Pasang: {selectedItemDetail.tanggal_instal}</div>
+                  <div className="text-[11px] text-slate-500">Pasang: {selectedItemDetail.tanggal_instal}</div>
+                  <div className="text-[10px] text-slate-600 font-mono font-semibold">Aktif Operasional</div>
                 </div>
               </div>
             </div>
 
             {/* 3. Spesifikasi Teknis */}
             <div className="space-y-2">
-              <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider">
+              <span className="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider">
                 Spesifikasi Teknis:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs font-mono">
                 <div>
-                  <span className="text-[10px] text-slate-400 block">KATEGORI</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">KATEGORI</span>
                   <span className="font-bold text-slate-900">{selectedItemDetail.category}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">MODEL / TIPE</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">MODEL / TIPE</span>
                   <span className="font-bold text-slate-900">{selectedItemDetail.model_type || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">SERIAL NUMBER</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">SERIAL NUMBER</span>
                   <span className="font-bold text-slate-900">{selectedItemDetail.serial_number}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">NO. PO REFERENSI</span>
-                  <span className="font-bold text-blue-600">{selectedItemDetail.po_number || '-'}</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">NO. PO REFERENSI</span>
+                  <span className="font-bold text-slate-800">{selectedItemDetail.po_number || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">LOKASI FISIK</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">LOKASI FISIK</span>
                   <span className="font-bold text-slate-800">{selectedItemDetail.location}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">KONDISI FISIK</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">KONDISI FISIK</span>
                   <span className="font-bold text-slate-800">{selectedItemDetail.condition}</span>
                 </div>
               </div>
             </div>
 
             {/* 4. Dokumen Bukti & Akses Dokumen Proyek */}
-            <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-4 space-y-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center font-bold">
                     <FileCheck2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 font-mono">DOKUMEN PEMBUKTIAN &amp; KONTRAK</h4>
+                    <h4 className="text-xs font-bold text-slate-900 font-mono">DOKUMEN PEMBUKTIAN &amp; KONTRAK</h4>
                     <p className="text-[11px] text-slate-600 font-medium">
-                      No. PO: <span className="font-bold font-mono text-emerald-800">{selectedItemDetail.po_number || 'PO-WIM-2024-001'}</span>
+                      No. PO: <span className="font-bold font-mono text-red-700">{selectedItemDetail.po_number || 'PO-WIM-2024-001'}</span>
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px] border border-slate-200">
                   Tersertifikasi
                 </span>
               </div>
@@ -1294,7 +1291,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                     setSelectedItemDetail(null);
                     onOpenDocuments?.();
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <ExternalLink className="w-4 h-4" />
                   Buka Dokumen 8-Tahap Proyek (PR/PO/MOS/Afkir)
@@ -1305,9 +1302,9 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                     setSelectedItemDetail(null);
                     onOpenMos?.();
                   }}
-                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <FileText className="w-4 h-4 text-slate-600" />
                   Buka Portal Digital MOS &amp; Tanda Tangan
                 </button>
               </div>
@@ -1327,7 +1324,8 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Modal Pratinjau Dokumen Penuh & Berkas Fisik (PDF / Gambar) ── */}

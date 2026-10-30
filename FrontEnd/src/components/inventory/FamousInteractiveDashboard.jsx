@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Truck,
   Boxes,
@@ -10,6 +11,7 @@ import {
   Tv,
   Eye,
   CheckCircle2,
+  Check,
   AlertTriangle,
   RotateCcw,
   Search,
@@ -515,7 +517,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-red-400 focus:bg-white transition"
                 />
                 {fleetSearch && (
-                  <button onClick={() => setFleetSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+                  <button onClick={() => setFleetSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
 
@@ -700,7 +704,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-red-400 focus:bg-white transition"
                 />
                 {hardwareSearch && (
-                  <button onClick={() => setHardwareSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+                  <button onClick={() => setHardwareSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
 
@@ -951,9 +957,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
       )}
 
       {/* ── Modal Detail Sensor Truk ── */}
-      {selectedUnitDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+      {selectedUnitDetail && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150 my-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -968,7 +974,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 onClick={() => setSelectedUnitDetail(null)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1012,50 +1018,35 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Modal Detail Komponen Hardware & Tracking Mutasi ── */}
-      {selectedAssetDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-700/30 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+      {selectedAssetDetail && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95 duration-150 max-h-[90vh] my-auto overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4 pt-1">
               <div className="flex items-center gap-3.5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shadow-xs ${
-                  selectedAssetDetail.status === 'Pindahan' || selectedAssetDetail.transferred_from
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                    : selectedAssetDetail.status?.toLowerCase().includes('rusak')
-                    ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                    : selectedAssetDetail.status?.toLowerCase().includes('return')
-                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                }`}>
-                  <Cpu className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl shadow-xs shrink-0 bg-slate-100 text-slate-700 border border-slate-200">
+                  <Cpu className="w-6 h-6 text-red-600" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg bg-red-100 text-red-800 border border-red-200">
-                      {selectedAssetDetail.category?.toUpperCase()}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1.5 pt-0.5">
+                    <span className="text-xs font-bold font-mono px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">
+                      {selectedAssetDetail.category?.toUpperCase() || 'HARDWARE'}
                     </span>
-                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      selectedAssetDetail.status === 'Pindahan'
-                        ? 'bg-purple-50 text-purple-700 border-purple-300'
-                        : selectedAssetDetail.status?.toLowerCase().includes('rusak')
-                        ? 'bg-rose-50 text-rose-700 border-rose-300'
-                        : selectedAssetDetail.status?.toLowerCase().includes('return')
-                        ? 'bg-amber-50 text-amber-700 border-amber-300'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                    }`}>
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-slate-50 text-slate-700 border-slate-200">
                       {selectedAssetDetail.status}
                     </span>
                     {selectedAssetDetail.asset_number && selectedAssetDetail.asset_number !== '-' && (
-                      <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                      <span className="text-[11px] font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200">
                         Asset #{selectedAssetDetail.asset_number}
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-black text-slate-900 mt-1">{selectedAssetDetail.name || selectedAssetDetail.category_name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mt-1">{selectedAssetDetail.name || selectedAssetDetail.category_name}</h3>
                   <p className="text-xs font-mono text-slate-500">
                     Serial Number: <span className="font-bold text-slate-800">{selectedAssetDetail.serial_number}</span>
                   </p>
@@ -1070,29 +1061,21 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
 
             {/* 1. Alasan Dismantle / Status Kondisi Khusus */}
-            <div className={`p-4 rounded-2xl border ${
-              selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-')
-                ? 'bg-purple-50/70 border-purple-200 text-purple-950'
-                : selectedAssetDetail.status?.toLowerCase().includes('rusak')
-                ? 'bg-rose-50/70 border-rose-200 text-rose-950'
-                : selectedAssetDetail.status?.toLowerCase().includes('return')
-                ? 'bg-amber-50/70 border-amber-200 text-amber-950'
-                : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-            }`}>
-              <div className="flex items-center gap-2 mb-1.5 font-bold text-xs uppercase font-mono tracking-wider">
+            <div className="p-4 rounded-2xl border bg-slate-50 border-slate-200 text-slate-800 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs uppercase font-mono tracking-wider text-slate-800">
                 {selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-') ? (
                   <>
-                    <ArrowRightLeft className="w-4 h-4 text-purple-600" />
+                    <ArrowRightLeft className="w-4 h-4 text-red-600" />
                     <span>Alasan Dismantle: Mutasi &amp; Pindahan Antar-Unit Armada</span>
                   </>
                 ) : selectedAssetDetail.status?.toLowerCase().includes('rusak') ? (
                   <>
-                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <ShieldAlert className="w-4 h-4 text-red-600" />
                     <span>Alasan Dismantle: Kerusakan Komponen Sensor (RMA Workshop)</span>
                   </>
                 ) : selectedAssetDetail.status?.toLowerCase().includes('return') ? (
                   <>
-                    <RotateCcw className="w-4 h-4 text-amber-600" />
+                    <RotateCcw className="w-4 h-4 text-slate-700" />
                     <span>Alasan Dismantle: Retur Garansi ke Vendor Penyedia</span>
                   </>
                 ) : (
@@ -1103,18 +1086,18 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 )}
               </div>
 
-              <div className="text-xs leading-relaxed font-medium">
+              <div className="text-xs leading-relaxed font-normal text-slate-700">
                 {selectedAssetDetail.status === 'Pindahan' || (selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-') ? (
                   <div>
                     Perangkat telematika ini sebelumnya dibongkar (dismantle) dari armada truk{' '}
-                    <span className="font-bold underline decoration-purple-400 font-mono text-[13px] bg-purple-100 px-1.5 py-0.5 rounded">
+                    <span className="font-bold font-mono text-[12px] bg-slate-200 text-slate-900 px-2 py-0.5 rounded border border-slate-300">
                       {selectedAssetDetail.transferred_from}
                     </span>{' '}
                     karena kebutuhan rotasi armada atau peremajaan unit kontraktor mitra{' '}
-                    <span className="font-bold">{selectedAssetDetail.mitra}</span>.
+                    <span className="font-bold text-slate-900">{selectedAssetDetail.mitra}</span>.
                     {selectedAssetDetail.notes && selectedAssetDetail.notes !== '-' && (
-                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-purple-200 font-mono text-[11px] text-purple-900">
-                        <span className="font-bold">Keterangan Catatan Data:</span> "{selectedAssetDetail.notes}"
+                      <div className="mt-2.5 p-3 bg-white rounded-xl border border-slate-200 font-mono text-[11px] text-slate-700">
+                        <span className="font-bold text-slate-900">Keterangan Catatan Data:</span> "{selectedAssetDetail.notes}"
                       </div>
                     )}
                   </div>
@@ -1122,11 +1105,11 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   <div>
                     Perangkat dilepas dari unit operasional karena mengalami gangguan teknis / kerusakan hardware saat bertugas di area hauling tambang.
                     {selectedAssetDetail.notes && selectedAssetDetail.notes !== '-' ? (
-                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-rose-200 font-mono text-[11px] text-rose-900">
-                        <span className="font-bold">Diagnosa Teknis / Keterangan:</span> "{selectedAssetDetail.notes}"
+                      <div className="mt-2.5 p-3 bg-white rounded-xl border border-slate-200 font-mono text-[11px] text-slate-700">
+                        <span className="font-bold text-slate-900">Diagnosa Teknis / Keterangan:</span> "{selectedAssetDetail.notes}"
                       </div>
                     ) : (
-                      <div className="mt-2 text-[11px] text-rose-800">
+                      <div className="mt-2 text-[11px] text-slate-600">
                         Unit sensor ditarik ke Workshop Telematika untuk investigasi sirkuit dan penerbitan Berita Acara Kerusakan / Afkir.
                       </div>
                     )}
@@ -1135,15 +1118,15 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   <div>
                     Perangkat dilepas dan dikembalikan ke pihak vendor (supplier garansi) untuk proses penggantian suku cadang baru sesuai SLA kontrak.
                     {selectedAssetDetail.notes && (
-                      <div className="mt-2 p-2.5 bg-white/80 rounded-xl border border-amber-200 font-mono text-[11px] text-amber-900">
-                        <span className="font-bold">Catatan Retur:</span> "{selectedAssetDetail.notes}"
+                      <div className="mt-2.5 p-3 bg-white rounded-xl border border-slate-200 font-mono text-[11px] text-slate-700">
+                        <span className="font-bold text-slate-900">Catatan Retur:</span> "{selectedAssetDetail.notes}"
                       </div>
                     )}
                   </div>
                 ) : (
                   <div>
                     Perangkat beroperasi secara optimal pada armada truk{' '}
-                    <span className="font-bold font-mono text-emerald-800">
+                    <span className="font-bold font-mono text-slate-900">
                       {selectedAssetDetail.unit_code !== '-' ? selectedAssetDetail.unit_code : selectedAssetDetail.unit_number}
                     </span>{' '}
                     tanpa ada riwayat komplain kerusakan.
@@ -1155,8 +1138,8 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             {/* 2. Visual Tracking Riwayat (Lifecycle & History Timeline) */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-red-600" />
+                <span className="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-slate-700" />
                   Tracking Riwayat &amp; Histori Mutasi Lokasi:
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">Status Audit Trail</span>
@@ -1164,81 +1147,70 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative">
                 {/* Step 1: Onsite */}
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-mono font-bold text-slate-400 uppercase">1. Penerimaan Onsite</div>
-                  <div className="text-xs font-black text-slate-800 font-mono">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">1. Penerimaan Onsite</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">
                     {selectedAssetDetail.tanggal_onsite && selectedAssetDetail.tanggal_onsite !== '-'
                       ? selectedAssetDetail.tanggal_onsite
                       : '2024-07-19'}
                   </div>
-                  <div className="text-[10px] text-slate-500">Workshop Logistik BIB</div>
-                  <div className="text-[9px] text-emerald-600 font-mono font-bold">✓ Fisik Verifikasi</div>
+                  <div className="text-[11px] text-slate-500">Workshop Logistik BIB</div>
+                  <div className="text-[10px] text-emerald-700 font-mono font-semibold flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    Fisik Terverifikasi
+                  </div>
                 </div>
 
                 {/* Step 2: Unit Terpasang Sebelumnya */}
-                <div className={`p-3 border rounded-2xl space-y-1 ${
-                  selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
-                    ? 'bg-purple-50/70 border-purple-200'
-                    : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="text-[9px] font-mono font-bold text-purple-700 uppercase">2. Terpasang Dimana Sebelumnya</div>
-                  <div className="text-xs font-black text-purple-900 font-mono">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">2. Terpasang Sebelumnya</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">
                     {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
                       ? selectedAssetDetail.transferred_from
                       : 'Unit Perdana'}
                   </div>
-                  <div className="text-[10px] text-purple-700">
+                  <div className="text-[11px] text-slate-500">
                     {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-'
                       ? 'Eks Unit Armada Hauling'
                       : 'Alokasi Pertama kali'}
                   </div>
-                  <div className="text-[9px] text-purple-600 font-mono font-bold">
+                  <div className="text-[10px] text-slate-600 font-mono font-semibold">
                     {selectedAssetDetail.transferred_from && selectedAssetDetail.transferred_from !== '-' ? 'Ex-Installed' : 'Fresh Asset'}
                   </div>
                 </div>
 
                 {/* Step 3: Dismantle / Lepas */}
-                <div className={`p-3 border rounded-2xl space-y-1 ${
-                  selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
-                    ? 'bg-amber-50/70 border-amber-200'
-                    : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="text-[9px] font-mono font-bold text-amber-700 uppercase">3. Waktu Dismantle</div>
-                  <div className="text-xs font-black text-amber-900 font-mono">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">3. Waktu Dismantle</div>
+                  <div className="text-xs font-bold text-slate-900 font-mono">
                     {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
                       ? selectedAssetDetail.tanggal_dismantle
                       : 'Belum Dilepas'}
                   </div>
-                  <div className="text-[10px] text-amber-800">
+                  <div className="text-[11px] text-slate-500">
                     {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-'
                       ? 'Dilepas oleh Teknisi'
                       : 'Aktif Terpasang'}
                   </div>
-                  <div className="text-[9px] text-amber-700 font-mono font-bold">
+                  <div className="text-[10px] text-slate-600 font-mono font-semibold">
                     {selectedAssetDetail.tanggal_dismantle && selectedAssetDetail.tanggal_dismantle !== '-' ? 'Dismantled' : 'Mounted'}
                   </div>
                 </div>
 
                 {/* Step 4: Lokasi Sekarang */}
-                <div className={`p-3 border rounded-2xl space-y-1 ${
-                  selectedAssetDetail.status === 'Terinstall'
-                    ? 'bg-emerald-50/70 border-emerald-200'
-                    : selectedAssetDetail.status?.toLowerCase().includes('rusak')
-                    ? 'bg-rose-50/70 border-rose-200'
-                    : 'bg-blue-50/70 border-blue-200'
-                }`}>
-                  <div className="text-[9px] font-mono font-bold text-slate-500 uppercase">4. Posisi Sekarang</div>
-                  <div className="text-xs font-black font-mono text-slate-900 truncate">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">4. Posisi Sekarang</div>
+                  <div className="text-xs font-bold font-mono text-slate-900 truncate">
                     {selectedAssetDetail.unit_code && selectedAssetDetail.unit_code !== '-'
                       ? `Unit ${selectedAssetDetail.unit_code}`
                       : selectedAssetDetail.unit_number && selectedAssetDetail.unit_number !== '-'
                       ? `Unit ${selectedAssetDetail.unit_number}`
                       : 'Stock Workshop BIB'}
                   </div>
-                  <div className="text-[10px] text-slate-600">
-                    Mitra: <span className="font-bold">{selectedAssetDetail.mitra}</span>
+                  <div className="text-[11px] text-slate-500">
+                    Mitra: <span className="font-semibold text-slate-700">{selectedAssetDetail.mitra}</span>
                   </div>
-                  <div className="text-[9px] font-mono font-bold text-emerald-700">
+                  <div className="text-[10px] font-mono font-semibold text-slate-600">
                     Pasang: {selectedAssetDetail.tanggal_instal || '-'}
                   </div>
                 </div>
@@ -1247,54 +1219,54 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
 
             {/* 3. Detail Identitas Spesifikasi Teknis Hardware */}
             <div className="space-y-2">
-              <span className="text-xs font-black font-mono text-slate-800 uppercase tracking-wider">
+              <span className="text-xs font-bold font-mono text-slate-800 uppercase tracking-wider">
                 Spesifikasi &amp; Identitas Fisik Perangkat:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs font-mono">
                 <div>
-                  <span className="text-[10px] text-slate-400 block">KATEGORI SENSOR</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">KATEGORI SENSOR</span>
                   <span className="font-bold text-slate-900">{selectedAssetDetail.category_name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">SERIAL NUMBER (SN)</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">SERIAL NUMBER (SN)</span>
                   <span className="font-bold text-slate-900">{selectedAssetDetail.serial_number}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">ASSET TAG / NO. BARANG</span>
-                  <span className="font-bold text-blue-600">{selectedAssetDetail.asset_number || '-'}</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">ASSET TAG / NO. BARANG</span>
+                  <span className="font-bold text-slate-800">{selectedAssetDetail.asset_number || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">IMEI UTAMA</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">IMEI UTAMA</span>
                   <span className="font-bold text-slate-800">{selectedAssetDetail.imei || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">IMEI 1 / IMEI 2</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">IMEI 1 / IMEI 2</span>
                   <span className="font-bold text-slate-800">
                     {selectedAssetDetail.imei_1 && selectedAssetDetail.imei_1 !== '-' ? `${selectedAssetDetail.imei_1} / ${selectedAssetDetail.imei_2}` : '-'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">MITRA KONTRAKTOR</span>
+                  <span className="text-[10px] text-slate-400 block tracking-wider font-bold">MITRA KONTRAKTOR</span>
                   <span className="font-bold text-slate-900">{selectedAssetDetail.mitra}</span>
                 </div>
               </div>
             </div>
 
             {/* 4. Dokumen Bukti Sah & Akses Pengajuan */}
-            <div className="bg-red-50/50 border border-red-200 rounded-2xl p-4 space-y-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 border border-red-100 flex items-center justify-center font-bold">
                     <FileCheck2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 font-mono">DOKUMEN PEMBUKTIAN RESMI (BASTM / BAP)</h4>
+                    <h4 className="text-xs font-bold text-slate-900 font-mono">DOKUMEN PEMBUKTIAN RESMI (BASTM / BAP)</h4>
                     <p className="text-[11px] text-slate-600 font-medium">
                       No. Berkas: <span className="font-bold font-mono text-red-700">{selectedAssetDetail.bastm_number || '007/MVM-BIB/VII/2024'}</span>
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px] border border-slate-200">
                   Terverifikasi 3 Pihak
                 </span>
               </div>
@@ -1319,7 +1291,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                     setSelectedAssetDetail(null);
                     onOpenDocuments?.();
                   }}
-                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ExternalLink className="w-4 h-4 text-slate-500" />
                   Buka Dokumen 8-Tahap Proyek (PR/PO/MOS/Afkir)
@@ -1341,7 +1313,8 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Official Legal Proof Document Preview Modal ── */}

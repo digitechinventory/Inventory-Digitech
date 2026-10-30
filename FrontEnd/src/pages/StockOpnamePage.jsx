@@ -120,7 +120,7 @@ export default function StockOpnamePage() {
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
                           : 'bg-blue-50 text-blue-700 border-blue-200'
                       }`}>
-                        {so.status === 'completed' ? '✓ Selesai Direkonsiliasi' : so.status === 'pending_approval' ? '⚠️ Menunggu Otorisasi Varians' : 'Sedang Berjalan'}
+                        {so.status === 'completed' ? 'Selesai Direkonsiliasi' : so.status === 'pending_approval' ? 'Menunggu Otorisasi Varians' : 'Sedang Berjalan'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">

@@ -163,11 +163,11 @@ export default function DocumentWaitingList({
               </h3>
               {userSignature ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                  ✓ Terdaftar &amp; Siap
+                  Terdaftar &amp; Siap
                 </span>
               ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400/40 animate-pulse">
-                  ⚠ Wajib Diunggah
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400/40">
+                  Wajib Diunggah
                 </span>
               )}
             </div>
@@ -354,7 +354,7 @@ export default function DocumentWaitingList({
                           : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
                         {isCompleted
-                          ? '✓ Disetujui Lengkap'
+                          ? 'Disetujui Lengkap'
                           : doc.status === 'waiting_superadmin'
                           ? 'Menunggu Otorisasi Superadmin'
                           : doc.status === 'waiting_admin'
@@ -367,7 +367,7 @@ export default function DocumentWaitingList({
                       {doc.title}
                     </h4>
 
-                    {/* Route: Dari Asal ➔ Ke Tujuan */}
+                    {/* Route: Dari Asal -> Ke Tujuan */}
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80">
                         <span className="text-[10px] uppercase font-bold text-slate-400">Rute:</span>
@@ -428,7 +428,7 @@ export default function DocumentWaitingList({
                               className="w-6 h-6 rounded-full bg-emerald-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-emerald-800"
                               title={`${s.signer_name} (${s.signer_role})`}
                             >
-                              {s.signer_name?.[0] || '✓'}
+                              {s.signer_name?.[0] || 'V'}
                             </div>
                           ))}
                         </div>

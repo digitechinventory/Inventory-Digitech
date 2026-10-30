@@ -55,10 +55,10 @@ const createCustomIcon = (bgColor, iconChar, label) => {
   });
 };
 
-const warehouseIcon = createCustomIcon('#DC2626', '🏭', 'Gudang');
-const assetIcon = createCustomIcon('#2563EB', '🚜', 'Aset Unit');
-const toolIcon = createCustomIcon('#D97706', '🔧', 'Peralatan');
-const simulatedDeviceIcon = createCustomIcon('#10B981', '📍', 'GPS Perangkat');
+const warehouseIcon = createCustomIcon('#DC2626', 'WH', 'Gudang');
+const assetIcon = createCustomIcon('#2563EB', 'EQ', 'Aset Unit');
+const toolIcon = createCustomIcon('#D97706', 'TL', 'Peralatan');
+const simulatedDeviceIcon = createCustomIcon('#10B981', 'GPS', 'GPS Perangkat');
 
 // Sample Operational Assets & Equipment deployed across mining sites
 const OPERATIONAL_ASSETS = [
@@ -358,7 +358,7 @@ export default function AssetTrackingPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            🛰️ Satelit HD (Esri)
+            Satelit HD (Esri)
           </button>
           <button
             type="button"
@@ -369,7 +369,7 @@ export default function AssetTrackingPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            🗺️ Satelit + Label
+            Satelit &amp; Label
           </button>
           <button
             type="button"
@@ -380,7 +380,7 @@ export default function AssetTrackingPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            🛣️ Peta Jalan (OSM)
+            Peta Jalan (OSM)
           </button>
         </div>
 

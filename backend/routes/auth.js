@@ -10,6 +10,7 @@ import { bruteForceProtection, authRateLimit } from '../middlewares/security.js'
 import { getSessionDurationConfig, updateSessionDurationConfig } from '../services/systemSettings.js';
 import { verifyTotp } from '../utils/totp.js';
 import localDb from '../services/localDb.js';
+import { getUserAllowedProjects } from '../services/projectAuthorityService.js';
 
 const router = Router();
 const MFA_PENDING_OTPS = {};
@@ -80,6 +81,39 @@ const FALLBACK_USERS = {
     site_id: null,
     is_active: true,
     phone: '+6281200000003'
+  },
+  'aryatonys01@gmail.com': {
+    id: 'usr-aryatonys-01',
+    email: 'aryatonys01@gmail.com',
+    full_name: 'Arya Toni Saputra',
+    role: 'User',
+    company: 'PT Borneo Indobara',
+    department: 'Digital Sustainability Operations',
+    site_id: 'site-bib-02',
+    is_active: true,
+    phone: '+6281234567890'
+  },
+  'thegodsun1212@gmail.com': {
+    id: 'adm-thegodsun-01',
+    email: 'thegodsun1212@gmail.com',
+    full_name: 'Admin Inventaris & Logistik',
+    role: 'Admin',
+    company: 'Digitech',
+    department: 'Logistics & Warehouse Operations',
+    site_id: 'site-bib-02',
+    is_active: true,
+    phone: '+6281298765432'
+  },
+  'arch.cronus.corp@gmail.com': {
+    id: 'sa-archcronus-01',
+    email: 'arch.cronus.corp@gmail.com',
+    full_name: 'Superadmin Digitech',
+    role: 'Superadmin',
+    company: 'Digitech',
+    department: 'Executive & Security System',
+    site_id: null,
+    is_active: true,
+    phone: '+6281112223334'
   }
 };
 
@@ -429,6 +463,7 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
       department: profile.department || 'Operasional',
       site_id: profile.site_id,
       is_active: true,
+      allowed_projects: getUserAllowedProjects(profile.id, profile.role || 'User'),
       email_mfa_enabled: isEmailMfa,
       authenticator_mfa_enabled: isAuthenticatorMfa
     };

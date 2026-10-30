@@ -20,53 +20,97 @@ import {
 } from '../../services/printerService';
 import { useToast } from '../../context/ToastContext';
 
-export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinterSetup }) {
+export default function QRLabelPrintModal({ item, items = null, isOpen, onClose, onOpenPrinterSetup }) {
   const { addToast } = useToast();
   const [qrUrl, setQrUrl] = useState('');
   const [printCount, setPrintCount] = useState(1);
   const [isPrinting, setIsPrinting] = useState(false);
   const [config, setConfig] = useState(() => getPrinterConfig());
+  const [activeBatchIndex, setActiveBatchIndex] = useState(0);
+
+  const isBatch = Array.isArray(items) && items.length > 0;
+  const currentItem = isBatch ? items[activeBatchIndex] || items[0] : item;
 
   useEffect(() => {
-    if (isOpen && item) {
+    if (isOpen && currentItem) {
       const cfg = getPrinterConfig();
       setConfig(cfg);
-      const sku = item.sku || item.SKU || 'SKU-001';
-      const qrPayload = `IMS:ITEM:SKU:${sku}:LOK:${item.rack || 'R-A01'}`;
+      const sku = currentItem.sku || currentItem.SKU || currentItem.item_code || currentItem.part_number || 'SKU-001';
+      const rack = currentItem.rack || currentItem.bin_location || 'R-A01';
+      const qrPayload = `IMS:ITEM:SKU:${sku}:LOK:${rack}:ASSET-DIGITECH:2026`;
       generateQRCodeDataUrl(qrPayload).then((url) => {
         setQrUrl(url);
       });
       setPrintCount(1);
     }
-  }, [isOpen, item]);
+  }, [isOpen, currentItem, activeBatchIndex]);
 
-  if (!isOpen || !item) return null;
+  if (!isOpen || (!item && !isBatch)) return null;
 
-  const sku = item.sku || item.SKU || 'SKU-001';
-  const name = item.name || 'MATERIAL SITE';
-  const category = item.category || 'Sparepart';
-  const rack = item.rack || 'R-A01';
-  const stock = item.current_stock ?? item.currentStock ?? 1;
-  const unit = item.unit || 'PCS';
+  const sku = currentItem?.sku || currentItem?.SKU || currentItem?.item_code || currentItem?.part_number || 'SKU-001';
+  const name = currentItem?.name || currentItem?.item_name || 'MATERIAL SITE';
+  const category = currentItem?.category || 'Sparepart';
+  const rack = currentItem?.rack || currentItem?.bin_location || 'R-A01';
+  const stock = currentItem?.current_stock ?? currentItem?.currentStock ?? currentItem?.quantity ?? 1;
+  const unit = currentItem?.unit || 'PCS';
   const dateStr = new Date().toLocaleDateString('id-ID');
+
+  const recordPrintedSkus = (skusToRecord) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('digitech_printed_qr_skus') || '[]');
+      const updated = Array.from(new Set([...saved, ...skusToRecord]));
+      localStorage.setItem('digitech_printed_qr_skus', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('qr-label-printed', { detail: { skus: skusToRecord } }));
+    } catch {}
+  };
 
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
-      const labelData = {
-        sku,
-        name,
-        category,
-        rack,
-        qty: `${stock} ${unit}`,
-        date: dateStr,
-        qrCode: `IMS:ITEM:SKU:${sku}`,
-        qrCodeDataUrl: qrUrl
-      };
+      if (isBatch && items.length > 1) {
+        // Print all items in batch
+        const printedSkus = [];
+        for (const it of items) {
+          const itSku = it.sku || it.SKU || it.item_code || it.part_number || 'SKU-001';
+          const itName = it.name || it.item_name || 'MATERIAL SITE';
+          const itCategory = it.category || 'Sparepart';
+          const itRack = it.rack || it.bin_location || 'R-A01';
+          const itStock = it.current_stock ?? it.currentStock ?? it.quantity ?? 1;
+          const itUnit = it.unit || 'PCS';
+          const itQr = await generateQRCodeDataUrl(`IMS:ITEM:SKU:${itSku}:LOK:${itRack}:ASSET-DIGITECH:2026`);
 
-      const res = await executePrintSticker(labelData, { count: printCount });
-      addToast(res.message || `Berhasil memproses cetak ${printCount} stiker untuk ${sku}.`, 'success');
-      onClose();
+          await executePrintSticker({
+            sku: itSku,
+            name: itName,
+            category: itCategory,
+            rack: itRack,
+            qty: `${itStock} ${itUnit}`,
+            date: dateStr,
+            qrCode: `IMS:ITEM:SKU:${itSku}`,
+            qrCodeDataUrl: itQr
+          }, { count: printCount });
+          printedSkus.push(itSku);
+        }
+        recordPrintedSkus(printedSkus);
+        addToast(`Berhasil mencetak ${items.length * printCount} label QR untuk ${items.length} material terpilih.`, 'success');
+        onClose();
+      } else {
+        const labelData = {
+          sku,
+          name,
+          category,
+          rack,
+          qty: `${stock} ${unit}`,
+          date: dateStr,
+          qrCode: `IMS:ITEM:SKU:${sku}`,
+          qrCodeDataUrl: qrUrl
+        };
+
+        const res = await executePrintSticker(labelData, { count: printCount });
+        recordPrintedSkus([sku]);
+        addToast(res.message || `Berhasil memproses cetak ${printCount} stiker untuk ${sku}.`, 'success');
+        onClose();
+      }
     } catch (err) {
       addToast(`Gagal mencetak: ${err.message}`, 'error');
     } finally {
@@ -80,6 +124,7 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
     a.href = qrUrl;
     a.download = `QR_LABEL_${sku}.png`;
     a.click();
+    recordPrintedSkus([sku]);
     addToast('File QR Code berhasil diunduh.', 'success');
   };
 
@@ -114,6 +159,38 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
 
         {/* Content Body */}
         <div className="p-6 space-y-6">
+
+          {/* Batch Selector if multiple items */}
+          {isBatch && items.length > 1 && (
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-red-50 border border-red-200 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-red-600 text-white font-mono font-bold text-[10px]">
+                  BATCH {items.length} ITEM
+                </span>
+                <span className="font-bold text-red-900">
+                  Pratinjau Item {activeBatchIndex + 1} dari {items.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={activeBatchIndex === 0}
+                  onClick={() => setActiveBatchIndex(Math.max(0, activeBatchIndex - 1))}
+                  className="px-2.5 py-1 bg-white border border-red-200 rounded-lg text-slate-700 font-bold disabled:opacity-30 cursor-pointer text-xs"
+                >
+                  &larr; Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={activeBatchIndex >= items.length - 1}
+                  onClick={() => setActiveBatchIndex(Math.min(items.length - 1, activeBatchIndex + 1))}
+                  className="px-2.5 py-1 bg-white border border-red-200 rounded-lg text-slate-700 font-bold disabled:opacity-30 cursor-pointer text-xs"
+                >
+                  Next &rarr;
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Active Printer Mode Banner */}
           <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
@@ -246,7 +323,13 @@ export default function QRLabelPrintModal({ item, isOpen, onClose, onOpenPrinter
               className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Printer className={`w-4 h-4 ${isPrinting ? 'animate-bounce' : ''}`} />
-              <span>{isPrinting ? 'Mencetak...' : `Cetak (${printCount} Stiker)`}</span>
+              <span>
+                {isPrinting
+                  ? 'Mencetak...'
+                  : isBatch && items.length > 1
+                  ? `Cetak Batch (${items.length} Label x ${printCount})`
+                  : `Cetak (${printCount} Stiker)`}
+              </span>
             </button>
           </div>
         </div>
