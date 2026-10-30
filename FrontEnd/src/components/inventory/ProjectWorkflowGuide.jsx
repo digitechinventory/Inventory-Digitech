@@ -439,7 +439,7 @@ export default function ProjectWorkflowGuide({
                         1
                       </div>
                       <div className="font-bold text-slate-900">Dibuat Oleh</div>
-                      <div className="text-[11px] font-semibold text-slate-500">Teknisi Lapangan / VGT</div>
+                      <div className="text-[11px] font-semibold text-slate-500">Teknisi Lapangan / Pelaksana</div>
                       <p className="text-[10.5px] text-slate-500">
                         Memeriksa kondisi fisik, mencatat Serial Number &amp; IMEI, dan menandatangani lembar berita acara.
                       </p>
@@ -450,7 +450,7 @@ export default function ProjectWorkflowGuide({
                         2
                       </div>
                       <div className="font-bold text-slate-900">Diperiksa Oleh</div>
-                      <div className="text-[11px] font-semibold text-slate-500">Supervisor Logistik VGT</div>
+                      <div className="text-[11px] font-semibold text-slate-500">Supervisor Vendor / Mitra Site</div>
                       <p className="text-[10.5px] text-slate-500">
                         Memvalidasi kesesuaian data pengiriman dengan manifest fisik barang di workshop atau gudang site.
                       </p>
@@ -461,7 +461,7 @@ export default function ProjectWorkflowGuide({
                         3
                       </div>
                       <div className="font-bold text-slate-900">Diketahui Oleh</div>
-                      <div className="text-[11px] font-semibold text-slate-500">Head of Digitech</div>
+                      <div className="text-[11px] font-semibold text-slate-500">Head of DIGITECH</div>
                       <p className="text-[10.5px] text-slate-500">
                         Otorisasi final eksekutif. Sistem secara otomatis menyematkan stempel digital terenkripsi dan kode QR validasi.
                       </p>

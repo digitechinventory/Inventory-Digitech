@@ -356,7 +356,7 @@ export default function InteractiveDocumentSheet({
             <div className="text-[11px] text-slate-500 flex items-center gap-2">
               <span>{doc.title}</span>
               <span>&bull;</span>
-              <span>{doc.site_location || 'Office VGT'}</span>
+              <span>{doc.site_location || 'Site Office'}</span>
             </div>
           </div>
         </div>
@@ -593,7 +593,7 @@ export default function InteractiveDocumentSheet({
                   <div className="divide-y divide-[#16325C]/20 border-r border-[#16325C]/30">
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
                       <span className="font-bold text-[#16325C]">Lokasi Asal (Dari)</span>
-                      <span className="col-span-2 font-medium text-slate-800">{doc.origin_location || 'Office VGT'}</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.origin_location || 'Gudang Site / Buffer'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-2">
                       <span className="font-bold text-[#16325C]">Lokasi Tujuan (Ke)</span>
@@ -601,7 +601,7 @@ export default function InteractiveDocumentSheet({
                     </div>
                     <div className="grid grid-cols-3 p-2 bg-[#F1F5F9]/60">
                       <span className="font-bold text-[#16325C]">Pengirim / Pembuat</span>
-                      <span className="col-span-2 font-medium text-slate-800">{doc.sender_name || 'Rayhans Najib Al-Faruq'} ({doc.sender_role || 'Teknisi VGT'})</span>
+                      <span className="col-span-2 font-medium text-slate-800">{doc.sender_name || 'Rayhans Najib Al-Faruq'} ({doc.sender_role || 'Teknisi Lapangan'})</span>
                     </div>
                     <div className="grid grid-cols-3 p-2">
                       <span className="font-bold text-[#16325C]">Penerima / Tujuan</span>
@@ -733,7 +733,7 @@ export default function InteractiveDocumentSheet({
                     <div className="border-t border-slate-200 py-1.5 px-2">
                       <div className="font-bold text-slate-900">( {doc.approval_maker_name || doc.sender_name || 'Rayhans Najib A.'} )</div>
                       <div className="text-[10px] text-slate-500 italic">
-                        {doc.approval_maker_role || doc.sender_role || 'Teknisi VGT'} {doc.approval_maker_dept ? `— ${doc.approval_maker_dept}` : ''}
+                        {doc.approval_maker_role || doc.sender_role || 'Teknisi Lapangan'} {doc.approval_maker_dept ? `— ${doc.approval_maker_dept}` : ''}
                       </div>
                     </div>
                   </div>
@@ -758,7 +758,7 @@ export default function InteractiveDocumentSheet({
                     <div className="border-t border-slate-200 py-1.5 px-2">
                       <div className="font-bold text-slate-900">( {doc.approval_checker_name || 'Zainal Fahriandy'} )</div>
                       <div className="text-[10px] text-slate-500 italic">
-                        {doc.approval_checker_role || 'Supervisor VGT'} {doc.approval_checker_dept ? `— ${doc.approval_checker_dept}` : ''}
+                        {doc.approval_checker_role || 'Supervisor Logistik Site'} {doc.approval_checker_dept ? `— ${doc.approval_checker_dept}` : ''}
                       </div>
                     </div>
                   </div>
@@ -793,7 +793,7 @@ export default function InteractiveDocumentSheet({
               {/* Bottom Warning Note */}
               <div className="p-2 border border-red-200 bg-red-50/40 text-red-700 text-[11px] font-semibold flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                <span>Laporkan ke Supervisor VGT dan Digitech jika terdapat item yang tidak sesuai atau kondisi barang tidak baik.</span>
+                <span>Laporkan ke Pengawas Site dan Digitech jika terdapat item yang tidak sesuai atau kondisi barang tidak baik.</span>
               </div>
 
             </div>

@@ -59,12 +59,12 @@ let FALLBACK_USERS_LIST = [
   },
   {
     id: 'user-pending-001',
-    email: 'budi.santoso@vgt.co.id',
+    email: 'budi.santoso@mitra.co.id',
     full_name: 'Budi Santoso',
     role: 'User',
-    company: 'VGT',
+    company: 'Mitra Site',
     department: 'Maintenance Pit 2',
-    site_id: 'site-vgt-office',
+    site_id: 'site-central-office',
     is_active: false,
     is_approved: false,
     created_at: '2026-09-26T10:15:00.000Z'

@@ -275,7 +275,7 @@ export default function SuperadminDashboard() {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Office VGT', value: 3520, color: '#DC2626' },
+                    { name: 'Site Office', value: 3520, color: '#DC2626' },
                     { name: 'Central Warehouse', value: 4025, color: '#2563EB' },
                     { name: 'WIM KM 13', value: 1510, color: '#059669' },
                     { name: 'BIB Pit KM-14', value: 1010, color: '#D97706' }
@@ -325,7 +325,7 @@ export default function SuperadminDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-[11px]">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0" />
-              <span className="text-slate-600 truncate" title="Office VGT (35%)">Office VGT (35%)</span>
+              <span className="text-slate-600 truncate" title="Site Office (35%)">Site Office (35%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
@@ -382,7 +382,7 @@ export default function SuperadminDashboard() {
                 slot3Queue.map((doc) => (
                   <tr key={doc.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3 font-mono font-bold text-blue-700">{doc.doc_number || doc.id}</td>
-                    <td className="px-4 py-3 text-slate-800 font-medium">{doc.site_location || 'Office VGT'}</td>
+                    <td className="px-4 py-3 text-slate-800 font-medium">{doc.site_location || 'Site Office'}</td>
                     <td className="px-4 py-3 text-slate-600">{doc.pic_receiver_name || 'Rayhans Najib A.'}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">

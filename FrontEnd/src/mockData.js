@@ -178,7 +178,7 @@ export const INITIAL_MOS_DOCUMENTS = [
     },
     signatures: {
       slot1: { signerName: null, role: "Teknisi Lapangan", timestamp: null, signed: false, hash: null },
-      slot2: { signerName: null, role: "Supervisor Logistik VGT", timestamp: null, signed: false, hash: null },
+      slot2: { signerName: null, role: "Supervisor Logistik Site", timestamp: null, signed: false, hash: null },
       slot3: { signerName: null, role: "Superadmin Digitech", timestamp: null, signed: false, hash: null }
     }
   }

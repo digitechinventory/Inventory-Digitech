@@ -346,7 +346,7 @@ export default function ProjectInventoryPage() {
     const monthRoman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][new Date().getMonth()];
     const year = new Date().getFullYear();
     const randomSeq = String(Math.floor(Math.random() * 800) + 100).padStart(3, '0');
-    return `${randomSeq}/VGT/MR/MNTOA/BIBOA/${monthRoman}/${year}`;
+    return `${randomSeq}/SITE/MR/MNTOA/BIBOA/${monthRoman}/${year}`;
   };
 
   const getInitialRequestForm = () => ({
@@ -367,7 +367,7 @@ export default function ProjectInventoryPage() {
     approval_maker_name: user?.full_name || 'Teknisi Lapangan',
     approval_maker_role: user?.role || 'Teknisi Lapangan',
     approval_checker_name: 'Zainal Fahriandy',
-    approval_checker_role: 'Supervisor Logistik VGT',
+    approval_checker_role: 'Supervisor Logistik Site',
     approval_approver_name: 'Harris',
     approval_approver_role: 'Head of Digitech',
     publish_to_mos: true,
@@ -2495,7 +2495,7 @@ export default function ProjectInventoryPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      DOKUMEN RESMI MR (007_VGT_MR)
+                      DOKUMEN RESMI MATERIAL REQUEST (MR)
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                       Workspace: {activeProject.name?.replace(/^Project\s+/i, '')}
@@ -2555,7 +2555,7 @@ export default function ProjectInventoryPage() {
                         required
                         value={requestForm.document_number}
                         onChange={e => setRequestForm({ ...requestForm, document_number: e.target.value })}
-                        placeholder="Contoh: 007/VGT/MR/MNTOA/BIBOA/X/2026"
+                        placeholder="Contoh: 007/SITE/MR/MNTOA/BIBOA/X/2026"
                         className="flex-1 px-3 py-2 bg-white rounded-xl border border-slate-300 font-mono font-bold text-red-700 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"
                       />
                       <button
@@ -3403,7 +3403,7 @@ export default function ProjectInventoryPage() {
                     type="text"
                     value={itemForm.document_number}
                     onChange={e => setItemForm({ ...itemForm, document_number: e.target.value })}
-                    placeholder="Contoh: DO-VGT-2026-88"
+                    placeholder="Contoh: DO-SITE-2026-88"
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500"
                   />
                 </div>

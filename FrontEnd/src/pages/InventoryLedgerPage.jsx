@@ -613,7 +613,7 @@ export default function InventoryLedgerPage() {
                     type="text"
                     value={editForm.reference_doc_id}
                     onChange={(e) => setEditForm({ ...editForm, reference_doc_id: e.target.value })}
-                    placeholder="Contoh: 001/VGT/MOS/... atau MR-2026-..."
+                    placeholder="Contoh: 001/SITE/MOS/... atau MR-2026-..."
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 outline-none focus:border-red-500 focus:bg-white transition"
                   />
                 </div>

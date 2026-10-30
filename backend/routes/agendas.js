@@ -90,7 +90,7 @@ const FALLBACK_AGENDAS = [
     start_time: '07:30',
     end_time: '09:00',
     category: 'Meeting',
-    site_location: 'Office VGT',
+    site_location: 'Site Office',
     pic_name: 'arya-superadmin',
     status: 'scheduled',
     description: 'Evaluasi supply chain suku cadang, re-order threshold, dan zero accident K3.'

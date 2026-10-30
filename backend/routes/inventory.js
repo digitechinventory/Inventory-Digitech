@@ -45,9 +45,9 @@ let FALLBACK_INVENTORY = [
 ];
 
 let FALLBACK_LEDGER = [
-  { id: 'led-001', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: 12, transaction_type: 'MOS_IN', reference_doc_id: '001/VGT/MOS/MNTOA/BIBOA/VIII/2026', notes: 'Penerimaan barang vendor via DO #DO-BIB-8821', performed_by: 'arya-admin', created_at: '2026-08-14T09:15:00.000Z' },
+  { id: 'led-001', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: 12, transaction_type: 'MOS_IN', reference_doc_id: '001/SITE/MOS/MNTOA/BIBOA/VIII/2026', notes: 'Penerimaan barang vendor via DO #DO-BIB-8821', performed_by: 'arya-admin', created_at: '2026-08-14T09:15:00.000Z' },
   { id: 'led-002', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: -8, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-09-001', notes: 'Pengambilan material penggantian oli unit DT-04', performed_by: 'arya-user', created_at: '2026-08-20T14:20:00.000Z' },
-  { id: 'led-003', item_name: 'Komatsu PC2000 Hydraulic Seal Kit', part_number: 'BIB-KOM-PC2000-HYD', bin_location: 'R-A02', qty_change: 20, transaction_type: 'MOS_IN', reference_doc_id: '002/VGT/MOS/MNTOA/BIBOA/VIII/2026', notes: 'Penerimaan sparepart hidrolik', performed_by: 'arya-superadmin', created_at: '2026-09-02T10:00:00.000Z' }
+  { id: 'led-003', item_name: 'Komatsu PC2000 Hydraulic Seal Kit', part_number: 'BIB-KOM-PC2000-HYD', bin_location: 'R-A02', qty_change: 20, transaction_type: 'MOS_IN', reference_doc_id: '002/SITE/MOS/MNTOA/BIBOA/VIII/2026', notes: 'Penerimaan sparepart hidrolik', performed_by: 'arya-superadmin', created_at: '2026-09-02T10:00:00.000Z' }
 ];
 
 // GET /api/inventory

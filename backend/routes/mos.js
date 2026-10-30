@@ -16,13 +16,13 @@ export const DOCUMENT_TEMPLATES = {
   MOS: {
     id: 'tpl-mos-001',
     type: 'MOS',
-    code: '001_VGT_MOS',
+    code: '001_SITE_MOS',
     title: 'MATERIAL ON SITE',
     subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
     defaultOrientation: 'landscape',
-    defaultSite: 'Office VGT',
+    defaultSite: 'Site Office',
     defaultReceiver: 'Rayhans Najib Al-Faruq',
-    defaultDocNumber: '001/VGT/MOS/MNTOA/BIBOA/IV/2026',
+    defaultDocNumber: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
     defaultDate: '2026-04-07',
     defaultCondition: 'Baik',
     columns: [
@@ -38,22 +38,22 @@ export const DOCUMENT_TEMPLATES = {
       { id: 'm6', name: 'LOADCELL INTERCOMP', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '91913125', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '550k weighing cycle', notes: '' },
       { id: 'm7', name: 'LOADCELL INTERCOMP', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '92309685', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '550k weighing cycle', notes: '' },
       { id: 'm8', name: 'LOADCELL INTERCOMP', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '92285792', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '550k weighing cycle', notes: '' },
-      { id: 'm9', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'VGT-MNTG-01', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
-      { id: 'm10', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'VGT-MNTG-02', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
-      { id: 'm11', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'VGT-MNTG-03', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
-      { id: 'm12', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'VGT-MNTG-04', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' }
+      { id: 'm9', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'MNTG-01', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
+      { id: 'm10', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'MNTG-02', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
+      { id: 'm11', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'MNTG-03', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' },
+      { id: 'm12', name: 'AX920 PLATFORM MOUNT', spec: 'UC50-30', sn: 'MNTG-04', qty_received: 1, qty_do: 1, condition: 'Baru', warranty: '1 Tahun', notes: '' }
     ]
   },
   MDT: {
     id: 'tpl-mdt-005',
     type: 'MDT',
-    code: '005_VGT_MDT',
+    code: '005_SITE_MDT',
     title: 'MATERIAL DISMANTLING',
     subtitle: 'BERITA ACARA PEMBONGKARAN & PELEPASAN MATERIAL SITE',
     defaultOrientation: 'landscape',
     defaultSite: 'WIM KM 13',
     defaultReceiver: 'Zainal Fahriandy',
-    defaultDocNumber: '005/VGT/MDT/MNTOA/BIBOA/V/2026',
+    defaultDocNumber: '005/SITE/MDT/MNTOA/BIBOA/V/2026',
     defaultDate: '2026-05-22',
     defaultCondition: 'Barang dummy',
     columns: [
@@ -70,13 +70,13 @@ export const DOCUMENT_TEMPLATES = {
   MRP: {
     id: 'tpl-mrp-006',
     type: 'MRP',
-    code: '006_VGT_MRP',
+    code: '006_SITE_MRP',
     title: 'MATERIAL REPLACEMENT',
     subtitle: 'BERITA ACARA PEMASANGAN & PENGGANTIAN MATERIAL UNIT',
     defaultOrientation: 'landscape',
     defaultSite: 'WIM KM 13',
     defaultReceiver: 'Zainal Fahriandy',
-    defaultDocNumber: '006/VGT/MRP/MNTOA/BIBOA/V/2026',
+    defaultDocNumber: '006/SITE/MRP/MNTOA/BIBOA/V/2026',
     defaultDate: '2026-05-26',
     defaultCondition: 'Barang baru',
     columns: [
@@ -96,12 +96,12 @@ export const DOCUMENT_TEMPLATES = {
 export let FALLBACK_MOS = [
   {
     id: 'doc-001-mos',
-    doc_number: '001/VGT/MOS/MNTOA/BIBOA/IV/2026',
+    doc_number: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
     template_type: 'MOS',
     title: 'MATERIAL ON SITE',
     subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
-    site_location: 'Office VGT',
-    site_id: 'site-vgt-office',
+    site_location: 'Site Office',
+    site_id: 'site-central-office',
     pic_receiver_name: 'Rayhans Najib Al-Faruq',
     received_date: '2026-04-07',
     po_do_number: '-',
@@ -119,7 +119,7 @@ export let FALLBACK_MOS = [
         width_percent: 18.0,
         height_percent: 10.0,
         signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi VGT',
+        signer_role: 'Teknisi Lapangan',
         timestamp: '2026-04-07 10:15',
         hash: 'SHA256:001-MOS-MAKER-VALIDATED'
       },
@@ -131,7 +131,7 @@ export let FALLBACK_MOS = [
         width_percent: 18.0,
         height_percent: 10.0,
         signer_name: 'Zainal Fahriandy',
-        signer_role: 'Supervisor VGT',
+        signer_role: 'Supervisor Logistik Site',
         timestamp: '2026-04-07 13:20',
         hash: 'SHA256:001-MOS-CHECKER-VALIDATED'
       },
@@ -151,7 +151,7 @@ export let FALLBACK_MOS = [
   },
   {
     id: 'doc-002-mos',
-    doc_number: '002/VGT/MOS/MNTOA/BIBOA/V/2026',
+    doc_number: '002/SITE/MOS/MNTOA/BIBOA/V/2026',
     template_type: 'MOS',
     title: 'MATERIAL ON SITE',
     subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
@@ -169,7 +169,7 @@ export let FALLBACK_MOS = [
   },
   {
     id: 'doc-005-mdt',
-    doc_number: '005/VGT/MDT/MNTOA/BIBOA/V/2026',
+    doc_number: '005/SITE/MDT/MNTOA/BIBOA/V/2026',
     template_type: 'MDT',
     title: 'MATERIAL DISMANTLING',
     subtitle: 'BERITA ACARA PEMBONGKARAN & PELEPASAN MATERIAL SITE',
@@ -192,7 +192,7 @@ export let FALLBACK_MOS = [
         width_percent: 18.0,
         height_percent: 10.0,
         signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi VGT',
+        signer_role: 'Teknisi Lapangan',
         timestamp: '2026-05-22 11:00',
         hash: 'SHA256:005-MDT-MAKER-VALIDATED'
       },
@@ -204,7 +204,7 @@ export let FALLBACK_MOS = [
         width_percent: 18.0,
         height_percent: 10.0,
         signer_name: 'Zainal Fahriandy',
-        signer_role: 'Supervisor VGT',
+        signer_role: 'Supervisor Logistik Site',
         timestamp: '2026-05-22 14:10',
         hash: 'SHA256:005-MDT-CHECKER-VALIDATED'
       }
@@ -212,7 +212,7 @@ export let FALLBACK_MOS = [
   },
   {
     id: 'doc-006-mrp',
-    doc_number: '006/VGT/MRP/MNTOA/BIBOA/V/2026',
+    doc_number: '006/SITE/MRP/MNTOA/BIBOA/V/2026',
     template_type: 'MRP',
     title: 'MATERIAL REPLACEMENT',
     subtitle: 'BERITA ACARA PEMASANGAN & PENGGANTIAN MATERIAL UNIT',
@@ -235,7 +235,7 @@ export let FALLBACK_MOS = [
         width_percent: 18.0,
         height_percent: 10.0,
         signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi VGT',
+        signer_role: 'Teknisi Lapangan',
         timestamp: '2026-05-26 11:30',
         hash: 'SHA256:006-MRP-MAKER-VALIDATED'
       }
@@ -253,7 +253,7 @@ export const generateUniqueDocNumber = (type = 'MOS') => {
   let maxSeq = 6;
   for (const doc of FALLBACK_MOS) {
     const num = doc.doc_number || doc.mos_number || '';
-    const match = num.match(/^(\d+)\/VGT\//);
+    const match = num.match(/^(\d+)\/(?:SITE|VGT)\//i);
     if (match) {
       const val = parseInt(match[1], 10);
       if (val > maxSeq) maxSeq = val;
@@ -261,7 +261,7 @@ export const generateUniqueDocNumber = (type = 'MOS') => {
   }
 
   const nextSeq = Math.max(maxSeq + 1, FALLBACK_MOS.length + 1);
-  return `${String(nextSeq).padStart(3, '0')}/VGT/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
+  return `${String(nextSeq).padStart(3, '0')}/SITE/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
 };
 
 // Helper to normalize MOS/Approval document
@@ -269,10 +269,10 @@ const normalizeMosDoc = (d) => {
   const sigs = (typeof d.signatures === 'object' && d.signatures !== null) ? d.signatures : {};
   const placed = sigs.signatures_placed || sigs.placed || d.signatures_placed || [];
 
-  const originLoc = d.origin_location || sigs.origin_location || 'Office VGT';
+  const originLoc = d.origin_location || sigs.origin_location || 'Gudang Site / Buffer';
   const destLoc = d.destination_location || sigs.destination_location || d.site_location || d.site_name || 'BIB Pit Sebamban KM-14';
   const senderNm = d.sender_name || sigs.sender_name || d.requester_name || 'Rayhans Najib Al-Faruq';
-  const senderRl = d.sender_role || sigs.sender_role || d.department || 'Teknisi VGT';
+  const senderRl = d.sender_role || sigs.sender_role || d.department || 'Teknisi Lapangan';
   const destRecv = d.destination_receiver || sigs.destination_receiver || d.pic_receiver_name || 'Team Mekanik Pit';
 
   return {
@@ -298,7 +298,7 @@ const normalizeMosDoc = (d) => {
     approval_maker_role: d.approval_maker_role || sigs.approval_maker_role || senderRl,
     approval_maker_dept: d.approval_maker_dept || sigs.approval_maker_dept || 'Teknisi Operasional',
     approval_checker_name: d.approval_checker_name || sigs.approval_checker_name || 'Zainal Fahriandy',
-    approval_checker_role: d.approval_checker_role || sigs.approval_checker_role || 'Supervisor VGT',
+    approval_checker_role: d.approval_checker_role || sigs.approval_checker_role || 'Supervisor Logistik Site',
     approval_checker_dept: d.approval_checker_dept || sigs.approval_checker_dept || 'Gudang & Logistik',
     approval_approver_name: d.approval_approver_name || sigs.approval_approver_name || 'Harris',
     approval_approver_role: d.approval_approver_role || sigs.approval_approver_role || 'Digitech',
@@ -466,19 +466,19 @@ router.post('/', requireAuth, async (req, res, next) => {
       purpose,
       site_location,
       site_id,
-      origin_location = 'Office VGT',
+      origin_location = 'Gudang Site / Buffer',
       destination_location = 'BIB Pit Sebamban KM-14',
       sender_name,
-      sender_role = 'Teknisi VGT',
+      sender_role = 'Teknisi Lapangan',
       sender_phone = '-',
       destination_receiver,
       pic_receiver_name,
       receiver_phone = '-',
       approval_maker_name,
-      approval_maker_role = 'Teknisi VGT',
+      approval_maker_role = 'Teknisi Lapangan',
       approval_maker_dept = 'Teknisi Operasional',
       approval_checker_name = 'Zainal Fahriandy',
-      approval_checker_role = 'Supervisor VGT',
+      approval_checker_role = 'Supervisor Logistik Site',
       approval_checker_dept = 'Gudang & Logistik',
       approval_approver_name = 'Harris',
       approval_approver_role = 'Digitech',
@@ -521,10 +521,10 @@ router.post('/', requireAuth, async (req, res, next) => {
       
       // Rute Alur Pengiriman
       site_location: destination_location || site_location || 'BIB Pit Sebamban KM-14',
-      origin_location: origin_location || 'Office VGT',
+      origin_location: origin_location || 'Gudang Site / Buffer',
       destination_location: destination_location || site_location || 'BIB Pit Sebamban KM-14',
       sender_name: effectiveSender,
-      sender_role: sender_role || req.user.department || 'Teknisi VGT',
+      sender_role: sender_role || req.user.department || 'Teknisi Lapangan',
       sender_phone: sender_phone || '-',
       destination_receiver: effectiveReceiver,
       pic_receiver_name: effectiveReceiver,
@@ -532,16 +532,16 @@ router.post('/', requireAuth, async (req, res, next) => {
 
       // Alur Otorisasi / Approval
       approval_maker_name: effectiveMakerName,
-      approval_maker_role: approval_maker_role || 'Teknisi VGT',
+      approval_maker_role: approval_maker_role || 'Teknisi Lapangan',
       approval_maker_dept: approval_maker_dept || 'Teknisi Operasional',
       approval_checker_name: approval_checker_name || 'Zainal Fahriandy',
-      approval_checker_role: approval_checker_role || 'Supervisor VGT',
+      approval_checker_role: approval_checker_role || 'Supervisor Logistik Site',
       approval_checker_dept: approval_checker_dept || 'Gudang & Logistik',
       approval_approver_name: approval_approver_name || 'Harris',
       approval_approver_role: approval_approver_role || 'Digitech',
       approval_approver_dept: approval_approver_dept || 'Head of Operation',
 
-      site_id: site_id || 'site-vgt-office',
+      site_id: site_id || 'site-central-office',
       requester_name: effectiveSender,
       requester_email: req.user.email,
       department: department || req.user.department || sender_role || 'Operasional Site',

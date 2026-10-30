@@ -303,10 +303,10 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 mt-2">
-            {summary?.by_lane?.['Gudang / Office VGT'] || 70} <span className="text-sm font-normal text-slate-400">unit</span>
+            {summary?.by_lane?.['Gudang / Site Office'] || summary?.by_lane?.['Gudang Buffer'] || summary?.by_lane?.['Gudang'] || 70} <span className="text-sm font-normal text-slate-400">unit</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-1 font-medium">
-            Office VGT &amp; Workshop KM 14
+            Gudang Buffer &amp; Workshop KM 14
           </div>
         </div>
 
@@ -430,7 +430,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 <option value="ALL">Semua Lane / Lokasi</option>
                 <option value="Lane 1">Lane 1</option>
                 <option value="Lane 3">Lane 3</option>
-                <option value="Office VGT">Office VGT / Gudang</option>
+                <option value="Gudang">Gudang Site / Buffer</option>
               </select>
 
               {/* Status Filter */}
@@ -679,7 +679,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 </div>
 
                 <div className="text-[11px] text-slate-500 flex items-center justify-between font-mono pt-1">
-                  <span>Junction Box: Summing Box VGT241</span>
+                  <span>Junction Box: Summing Box JB-241</span>
                   <span>CPU: WIM Logix LS</span>
                 </div>
               </div>
@@ -747,7 +747,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 </div>
 
                 <div className="text-[11px] text-slate-500 flex items-center justify-between font-mono pt-1">
-                  <span>Junction Box: Summing Box VGT241</span>
+                  <span>Junction Box: Summing Box JB-241</span>
                   <span>CPU: WIM Logix LS</span>
                 </div>
               </div>
@@ -796,7 +796,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                  <th className="px-4 py-3">Part Number (VGT)</th>
+                  <th className="px-4 py-3">Part Number</th>
                   <th className="px-4 py-3">Nama Item Sparepart</th>
                   <th className="px-4 py-3">Sektor Komponen</th>
                   <th className="px-4 py-3 text-center">Estimasi 2 Thn</th>

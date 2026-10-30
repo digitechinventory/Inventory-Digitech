@@ -50,10 +50,10 @@ const PRESETS = {
     { id: 'm8', name: 'LOADCELL INTERCOMP', category: 'Sensor & Loadcell', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '92285792', qty_received: 1, qty_do: 1, unit: 'PCS', condition: 'Baru', warranty: '550k weighing cycle', bin_location: 'RAK-LC-01', notes: 'Kondisi segel utuh pabrik' }
   ],
   AX920_PLATFORM_4: [
-    { id: 'm9', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'VGT-MNTG-01', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
-    { id: 'm10', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'VGT-MNTG-02', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
-    { id: 'm11', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'VGT-MNTG-03', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
-    { id: 'm12', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'VGT-MNTG-04', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' }
+    { id: 'm9', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'MNTG-01', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
+    { id: 'm10', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'MNTG-02', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
+    { id: 'm11', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'MNTG-03', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' },
+    { id: 'm12', name: 'AX920 PLATFORM MOUNT', category: 'Heavy Structure', spec: 'UC50-30 Heavy Duty Steel Mount', sn: 'MNTG-04', qty_received: 1, qty_do: 1, unit: 'SET', condition: 'Baru', warranty: '1 Tahun', bin_location: 'YARD-B1', notes: 'Mounting scale plate' }
   ],
   MDT_DISMANTLING_4: [
     { id: 'd1', name: 'LOADCELL INTERCOMP', category: 'Sensor & Loadcell', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '91066926', qty_received: 1, qty_do: 0, unit: 'PCS', condition: 'Dummy', warranty: '550k weighing cycle', bin_location: 'SCRAP-W1', notes: 'Diganti dengan Loadcell Bosche' },
@@ -98,10 +98,10 @@ export default function DocumentUploadModal({
 
   // ── Section 2: Rute Alur Pengiriman (Dari Siapa -> Akan Kemana) ──
   // Sisi Pengirim (Asal)
-  const [originLocation, setOriginLocation] = useState('Office VGT');
+  const [originLocation, setOriginLocation] = useState('Site Office');
   const [originSpecificArea, setOriginSpecificArea] = useState('Main Warehouse Bay 1');
   const [senderName, setSenderName] = useState(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
-  const [senderRole, setSenderRole] = useState(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi VGT');
+  const [senderRole, setSenderRole] = useState(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi Lapangan');
   const [senderPhone, setSenderPhone] = useState('0812-3456-7890');
 
   // Sisi Penerima (Tujuan)
@@ -112,7 +112,7 @@ export default function DocumentUploadModal({
   const [receiverPhone, setReceiverPhone] = useState('0821-9876-5432');
 
   // Transportasi & Peruntukan
-  const [transportMode, setTransportMode] = useState('Armada Internal VGT (Truck Pickup)');
+  const [transportMode, setTransportMode] = useState('Armada Logistik Site (Truck Pickup)');
   const [driverName, setDriverName] = useState('Bpk. Mulyadi (KT 8821 BB)');
   const [unitTargeted, setUnitTargeted] = useState('Unit Jembatan Timbang WIM KM 13 / Fleet HD-785');
   const [purpose, setPurpose] = useState('Verifikasi fisik dan penerimaan material/sparepart baru di area gudang site.');
@@ -122,11 +122,11 @@ export default function DocumentUploadModal({
 
   // ── Section 4: Alur Otorisasi 3 Slot (Approval untuk Siapa) ──
   const [approvalMakerName, setApprovalMakerName] = useState(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
-  const [approvalMakerRole, setApprovalMakerRole] = useState('Teknisi VGT');
+  const [approvalMakerRole, setApprovalMakerRole] = useState('Teknisi Lapangan');
   const [approvalMakerDept, setApprovalMakerDept] = useState('Teknisi Operasional');
 
   const [approvalCheckerName, setApprovalCheckerName] = useState('Zainal Fahriandy');
-  const [approvalCheckerRole, setApprovalCheckerRole] = useState('Supervisor VGT');
+  const [approvalCheckerRole, setApprovalCheckerRole] = useState('Supervisor Vendor / Mitra Site');
   const [approvalCheckerDept, setApprovalCheckerDept] = useState('Gudang & Logistik');
 
   const [approvalApproverName, setApprovalApproverName] = useState('Harris');
@@ -151,7 +151,7 @@ export default function DocumentUploadModal({
     const year = new Date().getFullYear();
     const typeCode = type === 'MDT' ? 'MDT' : type === 'MRP' ? 'MRP' : type === 'CUSTOM' ? 'DOC' : 'MOS';
     const randSeq = Math.floor(Math.random() * 800) + 10;
-    return `${String(randSeq).padStart(3, '0')}/VGT/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
+    return `${String(randSeq).padStart(3, '0')}/SITE/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
   };
 
   // Fetch unique number from backend
@@ -185,10 +185,10 @@ export default function DocumentUploadModal({
       setDocTitle(editDocument.title || '');
       setDocSubtitle(editDocument.subtitle || '');
 
-      setOriginLocation(editDocument.origin_location || 'Office VGT');
+      setOriginLocation(editDocument.origin_location || 'Site Office');
       setOriginSpecificArea(editDocument.origin_specific_area || 'Main Warehouse Bay 1');
       setSenderName(editDocument.sender_name || currentUser?.full_name || 'Rayhans Najib Al-Faruq');
-      setSenderRole(editDocument.sender_role || 'Teknisi VGT');
+      setSenderRole(editDocument.sender_role || 'Teknisi Lapangan');
       setSenderPhone(editDocument.sender_phone || '0812-3456-7890');
 
       setDestinationLocation(editDocument.destination_location || editDocument.site_location || 'BIB Pit Sebamban KM-14');
@@ -197,18 +197,18 @@ export default function DocumentUploadModal({
       setReceiverRole(editDocument.receiver_role || 'Field Mechanical Lead');
       setReceiverPhone(editDocument.receiver_phone || '0821-9876-5432');
 
-      setTransportMode(editDocument.transport_mode || 'Armada Internal VGT');
+      setTransportMode(editDocument.transport_mode || 'Armada Logistik Site');
       setDriverName(editDocument.driver_name || '-');
       setUnitTargeted(editDocument.unit_targeted || '-');
       setPurpose(editDocument.purpose || 'Verifikasi dan serah terima material operasional di site');
       setNotesJustification(editDocument.notes_justification || '');
 
       setApprovalMakerName(editDocument.approval_maker_name || editDocument.sender_name || 'Rayhans Najib Al-Faruq');
-      setApprovalMakerRole(editDocument.approval_maker_role || 'Teknisi VGT');
+      setApprovalMakerRole(editDocument.approval_maker_role || 'Teknisi Lapangan');
       setApprovalMakerDept(editDocument.approval_maker_dept || 'Teknisi Operasional');
 
       setApprovalCheckerName(editDocument.approval_checker_name || 'Zainal Fahriandy');
-      setApprovalCheckerRole(editDocument.approval_checker_role || 'Supervisor VGT');
+      setApprovalCheckerRole(editDocument.approval_checker_role || 'Supervisor Vendor / Mitra Site');
       setApprovalCheckerDept(editDocument.approval_checker_dept || 'Gudang & Logistik');
 
       setApprovalApproverName(editDocument.approval_approver_name || 'Harris');
@@ -227,17 +227,17 @@ export default function DocumentUploadModal({
       setRequiredDate(next3Days.toISOString().split('T')[0]);
       setPoDoNumber('-');
       setDoSjNumber('-');
-      setWoSpkNumber('SPK-2026/VGT-BIB/014');
+      setWoSpkNumber('SPK-2026/SITE-BIB/014');
       setDepartment('Workshop & Fleet Maintenance');
       setUrgency('Normal');
       setPackageCondition('Baik');
       setDocTitle('MATERIAL ON SITE');
       setDocSubtitle('BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE');
 
-      setOriginLocation('Office VGT');
+      setOriginLocation('Site Office');
       setOriginSpecificArea('Main Warehouse Bay 1');
       setSenderName(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
-      setSenderRole(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi VGT');
+      setSenderRole(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi Lapangan');
       setSenderPhone('0812-3456-7890');
 
       setDestinationLocation('BIB Pit Sebamban KM-14');
@@ -246,18 +246,18 @@ export default function DocumentUploadModal({
       setReceiverRole('Field Mechanical Lead');
       setReceiverPhone('0821-9876-5432');
 
-      setTransportMode('Armada Internal VGT (Truck Pickup)');
+      setTransportMode('Armada Logistik Site (Truck Pickup)');
       setDriverName('Bpk. Mulyadi (KT 8821 BB)');
       setUnitTargeted('Unit Jembatan Timbang WIM KM 13 / Fleet HD-785');
       setPurpose('Verifikasi fisik dan penerimaan material/sparepart baru di area gudang site.');
       setNotesJustification('Barang diterima sesuai spesifikasi Purchase Order. Dilakukan pengecekan fisik menyeluruh dan serial number tercatat lengkap.');
 
       setApprovalMakerName(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
-      setApprovalMakerRole('Teknisi VGT');
+      setApprovalMakerRole('Teknisi Lapangan');
       setApprovalMakerDept('Teknisi Operasional');
 
       setApprovalCheckerName('Zainal Fahriandy');
-      setApprovalCheckerRole('Supervisor VGT');
+      setApprovalCheckerRole('Supervisor Vendor / Mitra Site');
       setApprovalCheckerDept('Gudang & Logistik');
 
       setApprovalApproverName('Harris');
@@ -280,7 +280,7 @@ export default function DocumentUploadModal({
         if (tplType === 'MDT') {
           setOriginLocation('WIM KM 13');
           setOriginSpecificArea('Scale Pit 1');
-          setDestinationLocation('Workshop Central VGT');
+          setDestinationLocation('Workshop Central Site');
           setDestinationSpecificArea('Area Servis Kalibrasi');
           setDestinationReceiver('Zainal Fahriandy');
           setPurpose('Pelepasan & pembongkaran loadcell/material dummy atau rusak di site WIM.');
@@ -296,7 +296,7 @@ export default function DocumentUploadModal({
           setPackageCondition('Barang baru');
           setNotesJustification('Penggantian komponen loadcell baru garansi 550k weighing cycle guna menunjang akurasi penimbangan hauling.');
         } else {
-          setOriginLocation('Office VGT');
+          setOriginLocation('Site Office');
           setOriginSpecificArea('Main Warehouse Bay 1');
           setDestinationLocation('BIB Pit Sebamban KM-14');
           setDestinationSpecificArea('Pitstop Area KM-14');
@@ -639,21 +639,21 @@ export default function DocumentUploadModal({
                   {[
                     {
                       id: 'MOS',
-                      code: '001_VGT_MOS',
+                      code: '001_MOS_SITE',
                       title: 'MATERIAL ON SITE',
                       badge: 'Penerimaan Site',
                       desc: 'Verifikasi & penerimaan fisik material/sparepart baru di gudang site.'
                     },
                     {
                       id: 'MDT',
-                      code: '005_VGT_MDT',
+                      code: '005_MDT_SITE',
                       title: 'MATERIAL DISMANTLING',
                       badge: 'Pembongkaran',
                       desc: 'Pelepasan & pembongkaran loadcell/part dummy atau rusak dari unit lapangan.'
                     },
                     {
                       id: 'MRP',
-                      code: '006_VGT_MRP',
+                      code: '006_MRP_SITE',
                       title: 'MATERIAL REPLACEMENT',
                       badge: 'Penggantian Baru',
                       desc: 'Pemasangan & penggantian material suku cadang baru pada unit operasional.'
@@ -749,7 +749,7 @@ export default function DocumentUploadModal({
                       type="text"
                       value={docNumber}
                       onChange={(e) => setDocNumber(e.target.value)}
-                      placeholder="007/VGT/MOS/MNTOA/BIBOA/X/2026"
+                      placeholder="007/SITE/MOS/MNTOA/BIBOA/X/2026"
                       className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-white font-mono font-bold text-slate-900 focus:outline-none focus:border-red-500 shadow-2xs"
                     />
                     <button
@@ -830,7 +830,7 @@ export default function DocumentUploadModal({
                     type="text"
                     value={woSpkNumber}
                     onChange={(e) => setWoSpkNumber(e.target.value)}
-                    placeholder="SPK-2026/VGT-BIB/014"
+                    placeholder="SPK-2026/SITE-BIB/014"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 font-mono focus:outline-none focus:border-red-500 shadow-2xs"
                   />
                 </div>
@@ -940,11 +940,11 @@ export default function DocumentUploadModal({
                       type="text"
                       value={originLocation}
                       onChange={(e) => setOriginLocation(e.target.value)}
-                      placeholder="Contoh: Office VGT / Central Warehouse Batulicin"
+                      placeholder="Contoh: Gudang Buffer Site / Central Warehouse Batulicin"
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 font-bold focus:outline-none focus:border-blue-500"
                     />
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                      {['Office VGT', 'Central Warehouse Batulicin', 'Vendor Trakindo', 'Workshop Sentral', 'Gudang Utama Banjarmasin'].map(s => (
+                      {['Gudang Buffer Site', 'Central Warehouse Batulicin', 'Vendor Trakindo', 'Workshop Sentral', 'Gudang Utama Banjarmasin'].map(s => (
                         <button
                           key={s}
                           type="button"
@@ -1072,7 +1072,7 @@ export default function DocumentUploadModal({
                     type="text"
                     value={transportMode}
                     onChange={(e) => setTransportMode(e.target.value)}
-                    placeholder="Armada Internal VGT / JNE Cargo"
+                    placeholder="Armada Internal Site / JNE Cargo"
                     className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800"
                   />
                 </div>

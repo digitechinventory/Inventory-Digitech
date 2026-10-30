@@ -866,7 +866,7 @@ export default function AccountSettingsPage() {
                     <option value="BIB Pit Sebamban KM-24">Site Pit Sebamban KM-24 (BIB-02) — Workshop &amp; Pit Tambang</option>
                     <option value="BIB Port Batulicin Terminal">BIB Port Batulicin Terminal — Pelabuhan &amp; Stockpile Batubara</option>
                     <option value="Checkpoint KM-28 Hauling Road">Checkpoint KM-28 Hauling Road — Stasiun Timbangan &amp; Telemetri</option>
-                    <option value="Main Office VGT Lantai 2">Main Office VGT Lantai 2 — Pusat Pengendali Logistik &amp; GPS Hub</option>
+                    <option value="Main Site Office Lantai 2">Main Site Office Lantai 2 — Pusat Pengendali Logistik &amp; GPS Hub</option>
                   </select>
                 </div>
               </div>

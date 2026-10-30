@@ -112,7 +112,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'RFI',
     stage_number: 1,
     stage_name: 'Request for Information',
-    doc_number: '012/VGT/RFI/WIM/MNTOA/BIBOA/III/2026',
+    doc_number: '012/SITE/RFI/WIM/MNTOA/BIBOA/III/2026',
     title: 'RFI Pengadaan Sensor Loadcell 50T & High Speed Strip Sensor KM 14',
     created_date: '2026-03-15',
     due_date: '2026-03-25',
@@ -133,7 +133,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'PR',
     stage_number: 2,
     stage_name: 'Purchase Requisition',
-    doc_number: '008/VGT/PR/WIM/MNTOA/BIBOA/III/2026',
+    doc_number: '008/SITE/PR/WIM/MNTOA/BIBOA/III/2026',
     title: 'PR Pengajuan Pembelian 8 Unit Loadcell Intercomp & Frame LS',
     created_date: '2026-03-28',
     due_date: '2026-04-05',
@@ -196,7 +196,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'MOS',
     stage_number: 5,
     stage_name: 'Material On Site (MOS)',
-    doc_number: '001/VGT/MOS/MNTOA/BIBOA/IV/2026',
+    doc_number: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
     title: 'MOS Verifikasi Fisik & Penerimaan Material Site WIM (3-Slot Signature)',
     created_date: '2026-04-07',
     due_date: '2026-04-07',
@@ -208,7 +208,7 @@ PROJECT_DOCUMENTS = [
     items_count: 12,
     signatures_count: 3,
     required_signatures: 3,
-    file_attachment: 'MOS_001_VGT_Sah.pdf'
+    file_attachment: 'MOS_001_SITE_Sah.pdf'
   },
   {
     id: 'pdoc-wim-06',
@@ -217,7 +217,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'QC',
     stage_number: 6,
     stage_name: 'Commissioning & QC',
-    doc_number: 'QC/VGT/WIM/2026/004',
+    doc_number: 'QC/SITE/WIM/2026/004',
     title: 'Sertifikat Kalibrasi & Commissioning Timbangan Jembatan Dinamis Lane 1',
     created_date: '2026-04-10',
     due_date: '2026-04-12',
@@ -238,7 +238,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'Operational',
     stage_number: 7,
     stage_name: 'Operasional & Mutasi / Pindahan',
-    doc_number: '006/VGT/MRP/MNTOA/BIBOA/V/2026',
+    doc_number: '006/SITE/MRP/MNTOA/BIBOA/V/2026',
     title: 'Berita Acara Pemasangan & Pindahan Komponen Loadcell Lane 1 (MRP)',
     created_date: '2026-05-26',
     due_date: '2026-05-26',
@@ -303,7 +303,7 @@ PROJECT_DOCUMENTS = [
     stage_code: 'PR',
     stage_number: 2,
     stage_name: 'Purchase Requisition',
-    doc_number: 'PR/VGT/FMS/2024/019',
+    doc_number: 'PR/SITE/FMS/2024/019',
     title: 'PR Pengadaan 825 Set Perangkat FAMOUS (GPS, MDVR, DSM, ADAS, SSD, OBU, PTT)',
     created_date: '2024-06-25',
     due_date: '2024-07-05',
@@ -507,7 +507,7 @@ let FALLBACK_PROJECT_WAREHOUSES = [
     project_id: 'proj-famous',
     name: 'Gudang Elektronika & GPS Fleet',
     code: 'WH-FAM-01',
-    location: 'Main Office VGT Lantai 2',
+    location: 'Main Site Office Lantai 2',
     pic_name: 'Hendri Saputra',
     pic_contact: '0811-9988-1122 (Ch 08)',
     capacity_shelves: 200,
@@ -586,7 +586,7 @@ router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) =
         { id: 'demo-user-001', email: 'arya-user@digitech.co.id', full_name: 'arya-user', role: 'User', company: 'Digitech', department: 'Operations', is_active: true, is_approved: true },
         { id: 'demo-admin-001', email: 'arya-admin@digitech.co.id', full_name: 'arya-admin', role: 'Admin', company: 'Digitech', department: 'Inventory Control', is_active: true, is_approved: true },
         { id: 'demo-sa-001', email: 'arya-superadmin@digitech.co.id', full_name: 'arya-superadmin', role: 'Superadmin', company: 'Digitech', department: 'System Administration', is_active: true, is_approved: true },
-        { id: 'user-pending-001', email: 'budi.santoso@vgt.co.id', full_name: 'Budi Santoso', role: 'User', company: 'VGT', department: 'Maintenance Pit 2', is_active: false, is_approved: false }
+        { id: 'user-pending-001', email: 'budi.santoso@mitra.co.id', full_name: 'Budi Santoso', role: 'User', company: 'Mitra Site', department: 'Maintenance Pit 2', is_active: false, is_approved: false }
       ];
     }
 
@@ -724,7 +724,7 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
       if (proj.id === 'proj-wim' || proj.code === 'WIM') {
         const totalComponents = WIM_SUMMARY.total_components || WIM_COMPONENTS.length || 189;
         const installedCount = WIM_SUMMARY.by_status?.['Terpasang'] || 116;
-        const warehouseStock = WIM_SUMMARY.by_lane?.['Gudang / Office VGT'] || 70;
+        const warehouseStock = WIM_SUMMARY.by_lane?.['Gudang / Site Office'] || WIM_SUMMARY.by_lane?.['Gudang Buffer'] || WIM_SUMMARY.by_lane?.['Gudang'] || 70;
         const damagedCount = (WIM_SUMMARY.by_condition?.['Rusak'] || 4) + (WIM_SUMMARY.by_condition?.['Discontinue / Rusak'] || 2);
         const warrantyCount = WIM_SUMMARY.total_warranty_items || WIM_WARRANTY.length || 41;
 
@@ -2054,7 +2054,7 @@ router.post('/request', requireAuth, requireProjectAccess(req => req.body.projec
       })),
       approval_maker_name: approval_maker_name || requester_name || req.user?.full_name || 'Teknisi Lapangan',
       approval_maker_role: approval_maker_role || requester_role || 'Teknisi Lapangan',
-      approval_checker_name: approval_checker_name || 'Supervisor Logistik VGT',
+      approval_checker_name: approval_checker_name || 'Supervisor Logistik Site',
       approval_checker_role: approval_checker_role || 'Supervisor Logistik',
       approval_approver_name: approval_approver_name || 'Head of Digitech',
       approval_approver_role: approval_approver_role || 'Management / Superadmin',

@@ -8,7 +8,7 @@ const router = Router();
 
 // Fallback sites if DB query fails
 const FALLBACK_SITES = [
-  { id: 'site-vgt-office', name: 'Office VGT', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional VGT Pit 2' },
+  { id: 'site-vgt-office', name: 'Site Office', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional Site Pit 2' },
   { id: 'site-bib-ws', name: 'Workshop Main BIB', lat: -3.73100, lng: 115.60500, radius: 350, area_name: 'Workshop Sentral Tambang BIB' },
   { id: 'site-bib-02', name: 'Pit South Site BIB-02', lat: -3.7389, lng: 115.6120, radius: 200, area_name: 'Pit South Area' },
   { id: 'site-bib-port', name: 'Pelabuhan Khusus Sebamban Port', lat: -3.6950, lng: 115.6800, radius: 300, area_name: 'Terminal Batubara Sebamban' }

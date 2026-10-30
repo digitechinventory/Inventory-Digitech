@@ -134,7 +134,7 @@ router.post('/register', async (req, res, next) => {
       validationDetails.push({ field: 'password', issue: 'Kata sandi minimal harus 8 karakter.' });
     }
     if (!company) {
-      validationDetails.push({ field: 'company', issue: 'Pilihan mitra perusahaan (VGT / Digitech / BIB) wajib dipilih.' });
+      validationDetails.push({ field: 'company', issue: 'Pilihan mitra perusahaan (Mitra / Vendor / Digitech / BIB) wajib dipilih.' });
     }
     if (!department) {
       validationDetails.push({ field: 'department', issue: 'Divisi atau departemen wajib diisi.' });

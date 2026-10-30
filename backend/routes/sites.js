@@ -8,7 +8,7 @@ import { AppError } from '../middlewares/errorHandler.js';
 const router = Router();
 
 const FALLBACK_SITES = [
-  { id: 'site-vgt-office', name: 'Office VGT', code: 'VGT-OFFICE', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional VGT Pit 2', status: 'active' },
+  { id: 'site-vgt-office', name: 'Site Office', code: 'SITE-OFFICE', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional Site Pit 2', status: 'active' },
   { id: 'site-bib-ws', name: 'Workshop Main BIB', code: 'BIB-WS', lat: -3.73100, lng: 115.60500, radius: 350, area_name: 'Workshop Sentral Tambang BIB', status: 'active' },
   { id: 'site-bib-02', name: 'Pit South Site BIB-02', code: 'BIB-02', lat: -3.7389, lng: 115.6120, radius: 200, area_name: 'Pit South Area', status: 'active' },
   { id: 'site-bib-port', name: 'Pelabuhan Khusus Sebamban Port', code: 'BIB-PORT', lat: -3.6950, lng: 115.6800, radius: 300, area_name: 'Terminal Batubara Sebamban', status: 'active' }

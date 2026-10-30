@@ -330,12 +330,12 @@ export default function DocumentWaitingList({
                       {/* Template badge */}
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                         {doc.template_type === 'MDT'
-                          ? '005_VGT_MDT'
+                          ? '005_SITE_MDT'
                           : doc.template_type === 'MRP'
-                          ? '006_VGT_MRP'
+                          ? '006_SITE_MRP'
                           : doc.template_type === 'CUSTOM'
                           ? 'DOKUMEN LOKAL PC'
-                          : '001_VGT_MOS'}
+                          : '001_SITE_MOS'}
                       </span>
 
                       {/* Orientation badge */}
@@ -371,7 +371,7 @@ export default function DocumentWaitingList({
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80">
                         <span className="text-[10px] uppercase font-bold text-slate-400">Rute:</span>
-                        <span className="font-semibold text-slate-800">{doc.origin_location || 'Office VGT'}</span>
+                        <span className="font-semibold text-slate-800">{doc.origin_location || 'Gudang Site / Buffer'}</span>
                         <ArrowRight className="w-3 h-3 text-red-500 shrink-0" />
                         <span className="font-semibold text-slate-800">{doc.destination_location || doc.site_location || 'BIB Pit Sebamban KM-14'}</span>
                       </div>
