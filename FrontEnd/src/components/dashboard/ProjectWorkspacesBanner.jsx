@@ -109,7 +109,7 @@ export default function ProjectWorkspacesBanner({ userRole = 'User', compact = f
         metric2Value: famousSummary?.total_pindahan ? Number(famousSummary.total_pindahan).toLocaleString('id-ID') : '3.976',
         metric2Unit: 'part',
         metric2ValColor: 'text-purple-700',
-        stageText: '8 Tahap: Dokumen #007',
+        stageText: 'Dokumen #007 Aktif',
         ctaColor: 'text-red-600',
         ctaText: 'Buka Command Center'
       };
@@ -177,7 +177,7 @@ export default function ProjectWorkspacesBanner({ userRole = 'User', compact = f
         metric2Value: proj.stats?.warehouses_count || 2,
         metric2Unit: 'depot',
         metric2ValColor: 'text-amber-700',
-        stageText: '8 Tahap: 2 Dokumen',
+        stageText: '2 Dokumen Terverifikasi',
         ctaColor: 'text-amber-600',
         ctaText: 'Buka Workspace CCM'
       };
@@ -251,7 +251,7 @@ export default function ProjectWorkspacesBanner({ userRole = 'User', compact = f
       metric2Title: 'Terpasang:',
       metric2Value: proj.stats?.installed_count || 0,
       metric2Unit: 'unit',
-      stageText: '8 Tahap MOS Aktif',
+      stageText: 'Dokumen MOS Aktif',
       ctaText: `Buka Workspace ${proj.code}`
     };
   };

@@ -170,7 +170,7 @@ export function classifyDocumentParameters(input) {
   } else if (fullContent.includes('AFKIR') || fullContent.includes('DECOMMISSIONING') || fullContent.includes('SCRAP') || fullContent.includes('DISPOSAL')) {
     classification.stageNumber = 8;
     classification.stageCode = 'Decommissioning';
-    classification.stageName = 'Afkir & Decommissioning';
+    classification.stageName = 'Decommissioning';
     classification.signaturesRequired = 3;
   }
 

@@ -766,7 +766,7 @@ export default function ToolLoansPage() {
               >
                 <option value="Baik">Baik (Normal & Bersih)</option>
                 <option value="Rusak Ringan">Rusak Ringan / Butuh Kalibrasi</option>
-                <option value="Rusak Berat">Rusak Berat / Afkir</option>
+                <option value="Rusak Berat">Rusak Berat / Decommissioning</option>
               </select>
             </div>
 

@@ -505,8 +505,8 @@ export default function FullDocumentPreviewModal({
                   <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-wide font-sans">
                     {doc.stage_number === 7 || doc.title?.toLowerCase().includes('pindahan')
                       ? 'LEMBAR RESMI OPERASIONAL & MUTASI / PINDAHAN'
-                      : doc.stage_number === 8 || doc.title?.toLowerCase().includes('kerusakan') || doc.title?.toLowerCase().includes('afkir')
-                      ? 'BERITA ACARA LAPOR KERUSAKAN & AFKIR SENSOR'
+                      : doc.stage_number === 8 || doc.title?.toLowerCase().includes('kerusakan') || doc.title?.toLowerCase().includes('decommissioning') || doc.title?.toLowerCase().includes('afkir')
+                      ? 'BERITA ACARA LAPOR KERUSAKAN & DECOMMISSIONING SENSOR'
                       : 'BERITA ACARA SERAH TERIMA MATERIAL (BASTM)'}
                   </h2>
                   <div className="text-xs font-mono font-black text-red-700 tracking-wider">
@@ -615,7 +615,7 @@ export default function FullDocumentPreviewModal({
                 <div className="p-3 bg-red-50/40 border border-red-200 rounded-xl text-[11px] text-red-900 flex items-start gap-2.5 mb-6">
                   <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <div className="leading-relaxed font-sans">
-                    <strong>Pernyataan Kepatuhan Proyek:</strong> Seluruh komponen yang tertera di atas telah diperiksa fisik, nomor seri, dan fungsi operasionalnya. Setiap pemindahan, instalasi, atau afkir wajib disertai lembar pengesahan sah ini.
+                    <strong>Pernyataan Kepatuhan Proyek:</strong> Seluruh komponen yang tertera di atas telah diperiksa fisik, nomor seri, dan fungsi operasionalnya. Setiap pemindahan, instalasi, atau decommissioning wajib disertai lembar pengesahan sah ini.
                   </div>
                 </div>
 

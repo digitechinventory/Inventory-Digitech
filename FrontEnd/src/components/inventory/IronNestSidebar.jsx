@@ -157,7 +157,7 @@ export default function IronNestSidebar({
           id: 'grp-warehouse',
           title: 'Aset & Inventaris Site',
           items: [
-            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: 'Proyek' },
             { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
             { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
@@ -183,7 +183,7 @@ export default function IronNestSidebar({
           title: 'Operasional Gudang',
           items: [
             { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard', badge: 'Admin' },
-            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+            { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: 'Proyek' },
             { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
             { id: 'warehouses', label: 'Rak Gudang', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
@@ -214,7 +214,7 @@ export default function IronNestSidebar({
         title: 'Portal Teknisi',
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard', badge: 'Teknisi' },
-          { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: '8 Tahap' },
+          { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory', badge: 'Proyek' },
           { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents', badge: 'BASTM' },
         ]
       },

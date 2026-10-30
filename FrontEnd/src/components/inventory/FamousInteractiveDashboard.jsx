@@ -112,7 +112,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
     const isReturn = item.status && item.status.toLowerCase().includes('return');
 
     const stageCode = isPindahan ? 'Operational' : (isRusak ? 'Decommissioning' : 'MOS');
-    const stageName = isPindahan ? 'Operasional & Mutasi / Pindahan' : (isRusak ? 'Afkir & Decommissioning' : 'Material On Site (MOS)');
+    const stageName = isPindahan ? 'Operasional & Mutasi / Pindahan' : (isRusak ? 'Decommissioning' : 'Material On Site (MOS)');
     const stageNum = isPindahan ? 7 : (isRusak ? 8 : 5);
     const docNum = (item.bastm_number && item.bastm_number !== '-') ? item.bastm_number : '007/MVM-BIB/VII/2024';
 
@@ -127,7 +127,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
       title: isPindahan
         ? `Berita Acara Pindahan Komponen Perangkat ${item.category_name} (SN: ${item.serial_number})`
         : isRusak
-        ? `Berita Acara Lapor Kerusakan & Afkir Sensor ${item.category_name} (SN: ${item.serial_number})`
+        ? `Berita Acara Lapor Kerusakan & Decommissioning Sensor ${item.category_name} (SN: ${item.serial_number})`
         : `BASTM Penerimaan Material On Site ${item.category_name} (SN: ${item.serial_number})`,
       created_date: item.tanggal_onsite && item.tanggal_onsite !== '-' ? item.tanggal_onsite : '2024-07-19',
       due_date: item.tanggal_instal && item.tanggal_instal !== '-' ? item.tanggal_instal : '2024-08-01',
@@ -1110,7 +1110,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                       </div>
                     ) : (
                       <div className="mt-2 text-[11px] text-slate-600">
-                        Unit sensor ditarik ke Workshop Telematika untuk investigasi sirkuit dan penerbitan Berita Acara Kerusakan / Afkir.
+                        Unit sensor ditarik ke Workshop Telematika untuk investigasi sirkuit dan penerbitan Berita Acara Kerusakan / Decommissioning.
                       </div>
                     )}
                   </div>
@@ -1294,7 +1294,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ExternalLink className="w-4 h-4 text-slate-500" />
-                  Buka Dokumen 8-Tahap Proyek (PR/PO/MOS/Afkir)
+                  Buka Dokumen Siklus Aset Proyek (PR/PO/MOS/Decommissioning)
                 </button>
               </div>
             </div>

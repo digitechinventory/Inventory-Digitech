@@ -86,10 +86,10 @@ const STAGES = [
   {
     num: 8,
     code: 'Decommissioning',
-    title: 'Decommissioning & Afkir',
+    title: 'Decommissioning',
     roles: 'Admin & Superadmin',
     output: 'Status Decommissioned & Hapus Stok',
-    desc: 'Penonaktifan aset rusak permanen atau habis masa pakai melalui Berita Acara Pemusnahan/Afkir dengan persetujuan final Superadmin.',
+    desc: 'Penonaktifan resmi aset rusak permanen atau habis masa pakai melalui Berita Acara Decommissioning dengan persetujuan final Superadmin.',
     status: 'Final State',
     badgeCls: 'bg-slate-200 text-slate-700'
   }
@@ -103,7 +103,7 @@ export default function AssetLifecyclePage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Pemantauan 8 Tahap Siklus Hidup Aset
+          Pemantauan Siklus Hidup Aset
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
           Prinsip "No Document, No Movement": Setiap pergerakan aset wajib memiliki jejak dokumen digital legal yang tak terputus.

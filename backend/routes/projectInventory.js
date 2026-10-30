@@ -258,9 +258,9 @@ PROJECT_DOCUMENTS = [
     project_code: 'WIM',
     stage_code: 'Decommissioning',
     stage_number: 8,
-    stage_name: 'Afkir & Decommissioning',
+    stage_name: 'Decommissioning',
     doc_number: 'BAA/WIM/2026/001',
-    title: 'Berita Acara Afkir Loadcell Patah Pasca 550k Weighing Cycle',
+    title: 'Berita Acara Decommissioning Loadcell Patah Pasca 550k Weighing Cycle',
     created_date: '2026-06-01',
     due_date: '2026-06-15',
     creator_name: 'Arya Pratama',
@@ -271,7 +271,7 @@ PROJECT_DOCUMENTS = [
     items_count: 1,
     signatures_count: 3,
     required_signatures: 3,
-    file_attachment: 'BAA_Afkir_Loadcell_001.pdf'
+    file_attachment: 'BA_Decommissioning_Loadcell_001.pdf'
   },
 
   // ── FAMOUS 8-STAGE DOCUMENTS ──
@@ -428,9 +428,9 @@ PROJECT_DOCUMENTS = [
     project_code: 'FAMOUS',
     stage_code: 'Decommissioning',
     stage_number: 8,
-    stage_name: 'Afkir & Decommissioning',
+    stage_name: 'Decommissioning',
     doc_number: 'BAA/FMS/2025/002',
-    title: 'Berita Acara Afkir Kamera CCTV & MDVR Rusak Insiden Unit GECL 9008',
+    title: 'Berita Acara Decommissioning Kamera CCTV & MDVR Rusak Insiden Unit GECL 9008',
     created_date: '2025-01-15',
     due_date: '2025-01-30',
     creator_name: 'Arya Pratama',
@@ -441,7 +441,7 @@ PROJECT_DOCUMENTS = [
     items_count: 4,
     signatures_count: 3,
     required_signatures: 3,
-    file_attachment: 'BAA_Afkir_FMS_Insiden_9008.pdf'
+    file_attachment: 'BA_Decommissioning_FMS_Insiden_9008.pdf'
   }
 ];
 
@@ -1247,7 +1247,7 @@ router.get('/documents', requireAuth, requireProjectAccess(req => req.query.proj
     documents: filtered,
     total: filtered.length,
     project_id: project_id || 'all'
-  }, 'Daftar dokumen 8 tahap proyek berhasil diambil.');
+  }, 'Daftar dokumen proyek berhasil diambil.');
 });
 
 // POST /api/project-inventory/documents
@@ -1265,7 +1265,7 @@ router.post('/documents', requireAuth, (req, res) => {
     'MOS': { num: 5, name: 'Material On Site (MOS)' },
     'QC': { num: 6, name: 'Commissioning & QC' },
     'Operational': { num: 7, name: 'Operasional & Mutasi / Pindahan' },
-    'Decommissioning': { num: 8, name: 'Afkir & Decommissioning' }
+    'Decommissioning': { num: 8, name: 'Decommissioning' }
   };
 
   const stageInfo = stageMap[stage_code] || { num: 1, name: stage_code };
@@ -1893,7 +1893,7 @@ router.post('/items/:id/replace', requireAuth, adminOnly, async (req, res, next)
     const updates = {
       is_damaged: false,
       status: disposition || 'scrapped',
-      condition: disposition === 'scrapped' ? 'Afkir / Scrap' : 'Refurbished',
+      condition: disposition === 'scrapped' ? 'Decommissioned / Scrap' : 'Refurbished',
       notes: `Telah diganti pada ${new Date().toISOString().split('T')[0]}. ${notes || ''}`,
       updated_at: new Date().toISOString()
     };
@@ -1912,7 +1912,7 @@ router.post('/items/:id/replace', requireAuth, adminOnly, async (req, res, next)
       item_id: id,
       action_type: 'GANTI',
       source_location: currentUnit,
-      destination_location: disposition === 'scrapped' ? 'Gudang Afkir / Scrap' : 'Workshop Repair',
+      destination_location: disposition === 'scrapped' ? 'Area Decommissioning / Scrap' : 'Workshop Repair',
       technician_name: technician_name || 'Teknisi Pergantian',
       document_number: document_number || `REP-${Date.now().toString().slice(-4)}`,
       notes: `Pergantian part aus/rusak pada ${currentUnit}. Part lama dialokasikan ke ${disposition || 'Scrap'}. Pengganti S/N: ${new_serial_number || '-'}. ${notes || ''}`,

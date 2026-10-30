@@ -392,8 +392,8 @@ export default function UserDashboard() {
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition-colors text-left group cursor-pointer"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700">Dokumen 8 Tahap Site (MOS/QC)</div>
-                  <div className="text-[10px] text-slate-500">Arsip RFI, PR, PO, DO, MOS, QC, BAST, Afkir</div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700">Dokumen Siklus Aset Site (MOS/QC)</div>
+                  <div className="text-[10px] text-slate-500">Arsip RFI, PR, PO, DO, MOS, QC, BAST, Decommissioning</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
               </button>

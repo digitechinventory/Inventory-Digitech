@@ -547,7 +547,13 @@ export default function ProjectInventoryPage() {
 
       if (warehouseFilter !== 'all' && item.warehouse_id !== warehouseFilter) return false;
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
-      if (conditionFilter !== 'all' && item.condition !== conditionFilter) return false;
+      if (conditionFilter !== 'all') {
+        if (conditionFilter === 'Decommissioning / Scrap') {
+          if (item.condition !== 'Decommissioning / Scrap' && item.condition !== 'Decommissioned / Scrap' && item.condition !== 'Afkir / Scrap') return false;
+        } else if (item.condition !== conditionFilter) {
+          return false;
+        }
+      }
       if (qrFilter === 'without_qr' && isItemQrReady(item)) return false;
       if (qrFilter === 'with_qr' && !isItemQrReady(item)) return false;
 
@@ -1379,7 +1385,7 @@ export default function ProjectInventoryPage() {
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Mode formulir: Tabel komponen & berkas dokumen 8 tahap"
+                      title="Mode formulir: Tabel komponen & berkas dokumen siklus aset"
                     >
                       <Boxes className="w-3.5 h-3.5" />
                       <span>Mode 2: Tabel &amp; Formulir Standar</span>
@@ -1582,7 +1588,7 @@ export default function ProjectInventoryPage() {
               { id: 'warranty', label: 'Status Garansi', count: stats.activeWarranty + stats.expiringWarranty },
               { id: 'transfers', label: 'Pindahan Unit', count: stats.transferred },
               { id: 'damaged', label: 'Rusak & Target Ganti', count: stats.damaged, badgeColor: stats.damaged > 0 ? 'bg-red-600 text-white' : '' },
-              { id: 'documents', label: 'Dokumen 8 Tahap & MOS', count: projectDocs.length, badgeColor: 'bg-emerald-600 text-white' },
+              { id: 'documents', label: 'Dokumen Proyek & MOS', count: projectDocs.length, badgeColor: 'bg-emerald-600 text-white' },
               { id: 'warehouses', label: 'Gudang Project', count: warehouses.length },
               { id: 'logs', label: 'Audit & Mutasi', count: logs.length }
             ].map(tab => (
@@ -1660,7 +1666,7 @@ export default function ProjectInventoryPage() {
                 <option value="in_warehouse">Di Gudang (Ready)</option>
                 <option value="installed">Terpasang di Unit</option>
                 <option value="under_repair">Sedang Diperbaiki</option>
-                <option value="scrapped">Afkir / Scrap</option>
+                <option value="scrapped">Decommissioning / Scrap</option>
               </select>
 
               <select
@@ -1673,7 +1679,7 @@ export default function ProjectInventoryPage() {
                 <option value="Bekas Baik">Bekas Baik</option>
                 <option value="Rusak Ringan">Rusak Ringan</option>
                 <option value="Rusak Berat">Rusak Berat</option>
-                <option value="Afkir / Scrap">Afkir / Scrap</option>
+                <option value="Decommissioning / Scrap">Decommissioning / Scrap</option>
               </select>
 
               <select
@@ -1871,7 +1877,7 @@ export default function ProjectInventoryPage() {
                               ● {
                                 item.status === 'installed' ? 'Terpasang' :
                                 item.status === 'in_warehouse' ? 'Di Rak Gudang' :
-                                item.status === 'under_repair' ? 'Dalam Perbaikan' : 'Scrap/Afkir'
+                                item.status === 'under_repair' ? 'Dalam Perbaikan' : 'Decommissioned'
                               }
                             </span>
                           </div>
@@ -2086,24 +2092,24 @@ export default function ProjectInventoryPage() {
           </div>
         )}
 
-        {/* DOKUMEN 8 TAHAP & MOS VIEW */}
+        {/* DOKUMEN PROYEK & MOS VIEW */}
         {activeTab === 'documents' && (
           <div className="p-6 space-y-6">
-            {/* Header Dokumen 8 Tahap */}
+            {/* Header Dokumen Proyek */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold">
-                    8 STAGE LIFECYCLE
+                    LIFECYCLE DOKUMEN
                   </span>
                   <span className="text-xs text-slate-500 font-mono">Workspace: <strong>{activeProject.code}</strong></span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
                   <FileCheck2 className="w-5 h-5 text-emerald-600" />
-                  Siklus Hidup &amp; Arsip Dokumen 8 Tahap ({activeProject.name?.replace(/^Project\s+/i, '')})
+                  Dokumentasi Siklus Aset Proyek ({activeProject.name?.replace(/^Project\s+/i, '')})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Setiap tahapan pengadaan, penerimaan site (MOS), uji commissioning, hingga purna tugas terintegrasi dengan tanda tangan digital.
+                  Prinsip "No Document, No Movement": Setiap pengadaan, penerimaan MOS, hingga decommissioning wajib memiliki berkas digital sah.
                 </p>
               </div>
 
@@ -2129,7 +2135,7 @@ export default function ProjectInventoryPage() {
               </div>
             </div>
 
-            {/* Visual 8-Stage Lifecycle Progress Tracker */}
+            {/* Visual Lifecycle Progress Tracker */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
               {[
                 { code: 'RFI', num: 1, name: 'RFI (Info)', color: 'blue' },
@@ -2139,7 +2145,7 @@ export default function ProjectInventoryPage() {
                 { code: 'MOS', num: 5, name: 'MOS (Site Intake)', color: 'emerald', highlight: true },
                 { code: 'QC', num: 6, name: 'QC (Commissioning)', color: 'cyan' },
                 { code: 'Operational', num: 7, name: 'BAST & Pindahan', color: 'teal' },
-                { code: 'Decommissioning', num: 8, name: 'Afkir & Scrap', color: 'slate' }
+                { code: 'Decommissioning', num: 8, name: 'Decommissioning', color: 'slate' }
               ].map(st => {
                 const count = projectDocs.filter(d => d.stage_code === st.code).length;
                 const isSelected = selectedStageFilter === st.code;
@@ -4195,7 +4201,7 @@ export default function ProjectInventoryPage() {
       />
 
       {/* ===================================================================== */}
-      {/* MODAL: TERBITKAN DOKUMEN 8 TAHAP BARU */}
+      {/* MODAL: TERBITKAN DOKUMEN PROYEK BARU */}
       {/* ===================================================================== */}
       {showAddDocModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-700/30 backdrop-blur-sm animate-fade-in overflow-y-auto">
@@ -4210,7 +4216,7 @@ export default function ProjectInventoryPage() {
                     Terbitkan Dokumen Tahap ({activeProject.code})
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Daftarkan dokumen baru pada salah satu dari 8 siklus hidup proyek.
+                    Daftarkan dokumen baru pada siklus hidup aset proyek.
                   </p>
                 </div>
               </div>
@@ -4238,7 +4244,7 @@ export default function ProjectInventoryPage() {
                         'MOS': { name: 'Material On Site (MOS)', num: 5 },
                         'QC': { name: 'Commissioning & QC', num: 6 },
                         'Operational': { name: 'Operasional & Pindahan', num: 7 },
-                        'Decommissioning': { name: 'Afkir & Decommissioning', num: 8 }
+                        'Decommissioning': { name: 'Decommissioning', num: 8 }
                       };
                       const selected = stagesMap[e.target.value] || { name: e.target.value, num: 5 };
                       setDocForm({
@@ -4257,7 +4263,7 @@ export default function ProjectInventoryPage() {
                     <option value="MOS">5. Material On Site (MOS Otorisasi)</option>
                     <option value="QC">6. Commissioning &amp; QC</option>
                     <option value="Operational">7. Operasional &amp; Pindahan Unit</option>
-                    <option value="Decommissioning">8. Afkir &amp; Decommissioning</option>
+                    <option value="Decommissioning">8. Decommissioning</option>
                   </select>
                 </div>
 

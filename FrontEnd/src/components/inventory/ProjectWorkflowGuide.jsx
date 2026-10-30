@@ -97,7 +97,7 @@ export default function ProjectWorkflowGuide({
       number: 5,
       title: 'Kerusakan / RMA',
       subtitle: 'Klaim & Servis',
-      description: 'Pencatatan kerusakan fisik, penelusuran garansi vendor 12 bulan, atau afkir.',
+      description: 'Pencatatan kerusakan fisik, penelusuran garansi vendor 12 bulan, atau decommissioning.',
       icon: AlertTriangle,
       badge: 'Tahap 5',
       badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',

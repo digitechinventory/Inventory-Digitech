@@ -246,7 +246,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
   }, [selectedStageFilter, activeTab]);
 
   const STAGES_LIST = [
-    { code: 'ALL', name: 'Semua 8 Tahap' },
+    { code: 'ALL', name: 'Semua Dokumen' },
     { code: 'RFI', num: 1, name: '1. RFI' },
     { code: 'PR', num: 2, name: '2. PR' },
     { code: 'PO', num: 3, name: '3. PO' },
@@ -254,7 +254,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
     { code: 'MOS', num: 5, name: '5. MOS (Penerimaan Site)' },
     { code: 'QC', num: 6, name: '6. QC & Commissioning' },
     { code: 'Operational', num: 7, name: '7. Operasional & Pindahan' },
-    { code: 'Decommissioning', num: 8, name: '8. Afkir' },
+    { code: 'Decommissioning', num: 8, name: '8. Decommissioning' },
   ];
 
   return (
@@ -388,7 +388,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             }`}
           >
             <FileText className="w-4 h-4 text-red-600" />
-            <span>Dokumen 8 Tahap (Termasuk MOS)</span>
+            <span>Dokumen Siklus Aset &amp; MOS</span>
           </button>
         </div>
       </div>
@@ -977,7 +977,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
         </div>
       )}
 
-      {/* ── TAB 5: DOKUMEN 8 TAHAP SIKLUS ASET WIM (TERMASUK MOS) ── */}
+      {/* ── TAB 5: DOKUMEN SIKLUS ASET WIM (TERMASUK MOS) ── */}
       {activeTab === 'documents' && (
         <div className="space-y-6">
           {/* Header & Stage Pipeline */}
@@ -986,10 +986,10 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-red-600" />
-                  Alur 8 Tahap Dokumen Siklus Aset Project WIM
+                  Dokumentasi Siklus Aset Project WIM
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Prinsip "No Document, No Movement": Setiap pengadaan, penerimaan MOS, hingga afkir wajib memiliki berkas digital sah.
+                  Prinsip "No Document, No Movement": Setiap pengadaan, penerimaan MOS, hingga decommissioning wajib memiliki berkas digital sah.
                 </p>
               </div>
 
@@ -1030,7 +1030,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             {loadingDocs ? (
               <div className="col-span-2 p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
                 <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-red-600" />
-                Memuat dokumen 8 tahap WIM...
+                Memuat dokumen siklus aset WIM...
               </div>
             ) : documents.length === 0 ? (
               <div className="col-span-2 p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
@@ -1294,7 +1294,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  Buka Dokumen 8-Tahap Proyek (PR/PO/MOS/Afkir)
+                  Buka Dokumen Siklus Aset Proyek (PR/PO/MOS/Decommissioning)
                 </button>
                 <button
                   type="button"
