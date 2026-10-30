@@ -530,10 +530,10 @@ export default function FullDocumentPreviewModal({
 
                   <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1">
                     <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
-                      TAHAPAN SIKLUS PROYEK:
+                      KATEGORI DOKUMEN OPERASIONAL:
                     </span>
                     <div className="font-bold text-red-700 font-mono">
-                      Tahap #{doc.stage_number || 7} — {doc.stage_name || doc.stage_code || 'Operasional & Mutasi / Pindahan'}
+                      {doc.stage_name || doc.stage_code || 'Operasional & Mutasi Unit'}
                     </div>
                   </div>
 

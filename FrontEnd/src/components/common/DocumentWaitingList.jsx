@@ -105,7 +105,7 @@ export default function DocumentWaitingList({
           title="MENUNGGU TTD USER"
           value={String(waitingUserCount).padStart(2, '0')}
           unit="BERKAS"
-          subtitle="Tahap Slot 1 Pembuat"
+          subtitle="Slot 1 Pembuat"
           subtitleIcon={UserCheck}
           subtitleColor="text-red-700"
           icon={UserCheck}

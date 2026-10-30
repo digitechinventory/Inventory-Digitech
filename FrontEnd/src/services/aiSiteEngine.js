@@ -392,11 +392,11 @@ class InSiteSearchEngine {
         itemsIndex.push({
           id: d.id,
           type: 'DOCUMENT',
-          category: `Tahap ${d.stage_number}: ${d.stage_code}`,
+          category: `${d.stage_code} - ${d.stage_name || ''}`,
           title: d.title || d.doc_number,
           code: d.doc_number,
           subtitle: `Project: ${d.project_code || 'Site'} • PIC: ${d.creator_name || 'Admin'}`,
-          description: d.summary || `Dokumen resmi tahap ${d.stage_name || d.stage_code}`,
+          description: d.summary || `Dokumen resmi ${d.stage_name || d.stage_code}`,
           url: `/project-inventory?project=${d.project_id || 'proj-wim'}&tab=documents`,
           badge: d.stage_code,
           badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',

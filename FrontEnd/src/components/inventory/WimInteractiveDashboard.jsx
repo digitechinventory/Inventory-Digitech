@@ -247,14 +247,14 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
 
   const STAGES_LIST = [
     { code: 'ALL', name: 'Semua Dokumen' },
-    { code: 'RFI', num: 1, name: '1. RFI' },
-    { code: 'PR', num: 2, name: '2. PR' },
-    { code: 'PO', num: 3, name: '3. PO' },
-    { code: 'Delivery', num: 4, name: '4. Ekspedisi / DO' },
-    { code: 'MOS', num: 5, name: '5. MOS (Penerimaan Site)' },
-    { code: 'QC', num: 6, name: '6. QC & Commissioning' },
-    { code: 'Operational', num: 7, name: '7. Operasional & Pindahan' },
-    { code: 'Decommissioning', num: 8, name: '8. Decommissioning' },
+    { code: 'RFI', name: 'RFI' },
+    { code: 'PR', name: 'PR' },
+    { code: 'PO', name: 'PO' },
+    { code: 'Delivery', name: 'Ekspedisi / DO' },
+    { code: 'MOS', name: 'Material On-Site (MOS)' },
+    { code: 'QC', name: 'QC & Commissioning' },
+    { code: 'Operational', name: 'Operasional & Relokasi' },
+    { code: 'Decommissioning', name: 'Decommissioning' },
   ];
 
   return (
@@ -388,7 +388,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             }`}
           >
             <FileText className="w-4 h-4 text-red-600" />
-            <span>Dokumen Siklus Aset &amp; MOS</span>
+            <span>Dokumen Operasional &amp; MOS</span>
           </button>
         </div>
       </div>
@@ -977,7 +977,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
         </div>
       )}
 
-      {/* ── TAB 5: DOKUMEN SIKLUS ASET WIM (TERMASUK MOS) ── */}
+      {/* ── TAB 5: DOKUMEN OPERASIONAL WIM (TERMASUK MOS) ── */}
       {activeTab === 'documents' && (
         <div className="space-y-6">
           {/* Header & Stage Pipeline */}
@@ -986,7 +986,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-red-600" />
-                  Dokumentasi Siklus Aset Project WIM
+                  Dokumentasi Operasional Project WIM
                 </h3>
                 <p className="text-xs text-slate-500">
                   Prinsip "No Document, No Movement": Setiap pengadaan, penerimaan MOS, hingga decommissioning wajib memiliki berkas digital sah.
@@ -1030,11 +1030,11 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             {loadingDocs ? (
               <div className="col-span-2 p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
                 <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-red-600" />
-                Memuat dokumen siklus aset WIM...
+                Memuat dokumen operasional WIM...
               </div>
             ) : documents.length === 0 ? (
               <div className="col-span-2 p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
-                Tidak ada dokumen pada tahap ini.
+                Tidak ada dokumen pada kategori ini.
               </div>
             ) : (
               documents.map((doc) => (
@@ -1046,7 +1046,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 font-mono font-bold text-[10px] border border-red-200">
-                          Tahap {doc.stage_number}: {doc.stage_code}
+                          {doc.stage_code}
                         </span>
                         <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold ${
                           doc.status === 'Completed' || doc.status === 'Approved' || doc.status === 'Certified'
@@ -1294,7 +1294,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  Buka Dokumen Siklus Aset Proyek (PR/PO/MOS/Decommissioning)
+                  Buka Dokumen Operasional Proyek (PR/PO/MOS/Decommissioning)
                 </button>
                 <button
                   type="button"

@@ -504,7 +504,7 @@ export default function ProjectInventoryPage() {
         creator_name: user?.full_name || 'Admin Site',
         creator_role: role || 'Admin'
       });
-      showToast(`Dokumen tahap ${docForm.stage_code} berhasil diterbitkan!`);
+      showToast(`Dokumen ${docForm.stage_code} berhasil diterbitkan!`);
       setShowAddDocModal(false);
       setDocForm({
         stage_code: 'MOS',
@@ -1272,7 +1272,7 @@ export default function ProjectInventoryPage() {
               <div className="text-xs text-slate-700 space-y-1">
                 <p className="font-bold text-red-900">Perlindungan Hak Otoritas Proyek</p>
                 <p className="text-slate-600">
-                  Setiap workspace project memiliki hak otoritas terisolasi untuk menjaga keamanan data logistik, mutasi barang fisik, dan dokumen MOS 8-tahap.
+                  Setiap workspace project memiliki hak otoritas terisolasi untuk menjaga keamanan data logistik, mutasi barang fisik, dan dokumen operasional terverifikasi.
                 </p>
                 <p className="text-slate-500 font-mono text-[11px] pt-1">
                   Hubungi Superadmin untuk mengaktifkan otoritas akses proyek ini melalui menu <strong>Hak Otoritas Project</strong>.
@@ -1306,7 +1306,7 @@ export default function ProjectInventoryPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* ── Peta Alur Siklus Hidup Aset Proyek (Lifecycle Pipeline Stepper) ── */}
+          {/* ── Navigasi Operasional & Tata Letak Proyek ── */}
           <ProjectWorkflowGuide
             activeProject={activeProject}
             activeTab={activeTab}
@@ -2100,13 +2100,13 @@ export default function ProjectInventoryPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold">
-                    LIFECYCLE DOKUMEN
+                    DOKUMEN OPERASIONAL
                   </span>
                   <span className="text-xs text-slate-500 font-mono">Workspace: <strong>{activeProject.code}</strong></span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
                   <FileCheck2 className="w-5 h-5 text-emerald-600" />
-                  Dokumentasi Siklus Aset Proyek ({activeProject.name?.replace(/^Project\s+/i, '')})
+                  Dokumentasi Operasional Proyek ({activeProject.name?.replace(/^Project\s+/i, '')})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Prinsip "No Document, No Movement": Setiap pengadaan, penerimaan MOS, hingga decommissioning wajib memiliki berkas digital sah.
@@ -2129,23 +2129,23 @@ export default function ProjectInventoryPage() {
                     className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Terbitkan Dokumen Tahap
+                    Terbitkan Dokumen Operasional
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Visual Lifecycle Progress Tracker */}
+            {/* Kategori Dokumen Operasional */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
               {[
-                { code: 'RFI', num: 1, name: 'RFI (Info)', color: 'blue' },
-                { code: 'PR', num: 2, name: 'PR (Requisition)', color: 'indigo' },
-                { code: 'PO', num: 3, name: 'PO (Purchase)', color: 'violet' },
-                { code: 'Delivery', num: 4, name: 'DO (Ekspedisi)', color: 'amber' },
-                { code: 'MOS', num: 5, name: 'MOS (Site Intake)', color: 'emerald', highlight: true },
-                { code: 'QC', num: 6, name: 'QC (Commissioning)', color: 'cyan' },
-                { code: 'Operational', num: 7, name: 'BAST & Pindahan', color: 'teal' },
-                { code: 'Decommissioning', num: 8, name: 'Decommissioning', color: 'slate' }
+                { code: 'RFI', name: 'RFI (Info)', color: 'blue' },
+                { code: 'PR', name: 'PR (Requisition)', color: 'indigo' },
+                { code: 'PO', name: 'PO (Purchase)', color: 'violet' },
+                { code: 'Delivery', name: 'DO (Ekspedisi)', color: 'amber' },
+                { code: 'MOS', name: 'MOS (Site Intake)', color: 'emerald', highlight: true },
+                { code: 'QC', name: 'QC (Commissioning)', color: 'cyan' },
+                { code: 'Operational', name: 'BAST & Mutasi', color: 'teal' },
+                { code: 'Decommissioning', name: 'Decommissioning', color: 'slate' }
               ].map(st => {
                 const count = projectDocs.filter(d => d.stage_code === st.code).length;
                 const isSelected = selectedStageFilter === st.code;
@@ -2163,14 +2163,13 @@ export default function ProjectInventoryPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-mono font-bold text-slate-500">#{st.num}</span>
+                      <span className="font-mono font-black text-xs text-slate-900">{st.code}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
                         count > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'
                       }`}>
                         {count} doc
                       </span>
                     </div>
-                    <div className="font-mono font-black text-xs text-slate-900">{st.code}</div>
                     <div className="text-[10px] text-slate-500 truncate mt-0.5">{st.name}</div>
                   </div>
                 );
@@ -2179,7 +2178,7 @@ export default function ProjectInventoryPage() {
 
             {/* Filter Pill Badges */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="text-xs text-slate-500 font-semibold shrink-0">Filter Tahap:</span>
+              <span className="text-xs text-slate-500 font-semibold shrink-0">Kategori Dokumen:</span>
               <button
                 onClick={() => setSelectedStageFilter('ALL')}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer shrink-0 ${
@@ -2188,7 +2187,7 @@ export default function ProjectInventoryPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Semua Tahap ({projectDocs.length})
+                Semua Dokumen ({projectDocs.length})
               </button>
               {['RFI', 'PR', 'PO', 'Delivery', 'MOS', 'QC', 'Operational', 'Decommissioning'].map(s => {
                 const count = projectDocs.filter(d => d.stage_code === s).length;
@@ -2213,7 +2212,7 @@ export default function ProjectInventoryPage() {
               <table className="w-full text-xs text-left">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                    <th className="px-4 py-3">Tahapan (1-8)</th>
+                    <th className="px-4 py-3">Kategori Dokumen</th>
                     <th className="px-4 py-3">Nomor Dokumen</th>
                     <th className="px-4 py-3">Judul &amp; Ringkasan Pekerjaan</th>
                     <th className="px-4 py-3">Pembuat / Jabatan</th>
@@ -2227,7 +2226,7 @@ export default function ProjectInventoryPage() {
                   {projectDocs.filter(d => selectedStageFilter === 'ALL' || d.stage_code === selectedStageFilter).length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                        Belum ada dokumen yang terdaftar pada tahapan {selectedStageFilter} untuk workspace ini.
+                        Belum ada dokumen yang terdaftar pada kategori {selectedStageFilter} untuk workspace ini.
                       </td>
                     </tr>
                   ) : (
@@ -4213,10 +4212,10 @@ export default function ProjectInventoryPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-900">
-                    Terbitkan Dokumen Tahap ({activeProject.code})
+                    Terbitkan Dokumen Operasional ({activeProject.code})
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Daftarkan dokumen baru pada siklus hidup aset proyek.
+                    Daftarkan dokumen baru pada arsip operasional proyek.
                   </p>
                 </div>
               </div>
@@ -4232,7 +4231,7 @@ export default function ProjectInventoryPage() {
             <form onSubmit={handleCreateDocSubmit} className="mt-4 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Pilih Tahapan Proyek *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Pilih Kategori Dokumen *</label>
                   <select
                     value={docForm.stage_code}
                     onChange={(e) => {
@@ -4256,14 +4255,14 @@ export default function ProjectInventoryPage() {
                     }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl font-bold text-slate-800"
                   >
-                    <option value="RFI">1. RFI (Request For Information)</option>
-                    <option value="PR">2. PR (Purchase Requisition)</option>
-                    <option value="PO">3. PO (Purchase Order)</option>
-                    <option value="Delivery">4. Ekspedisi &amp; Surat Jalan (DO)</option>
-                    <option value="MOS">5. Material On Site (MOS Otorisasi)</option>
-                    <option value="QC">6. Commissioning &amp; QC</option>
-                    <option value="Operational">7. Operasional &amp; Pindahan Unit</option>
-                    <option value="Decommissioning">8. Decommissioning</option>
+                    <option value="RFI">RFI (Request For Information)</option>
+                    <option value="PR">PR (Purchase Requisition)</option>
+                    <option value="PO">PO (Purchase Order)</option>
+                    <option value="Delivery">Ekspedisi &amp; Surat Jalan (DO)</option>
+                    <option value="MOS">Material On Site (MOS Otorisasi)</option>
+                    <option value="QC">Commissioning &amp; QC</option>
+                    <option value="Operational">Operasional &amp; Relokasi Unit</option>
+                    <option value="Decommissioning">Decommissioning</option>
                   </select>
                 </div>
 

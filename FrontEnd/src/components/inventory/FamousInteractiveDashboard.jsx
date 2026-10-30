@@ -480,7 +480,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
               className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5 text-slate-500" />
-              <span>Dokumen 8-Tahap</span>
+              <span>Dokumen Operasional</span>
             </button>
           )}
           {onOpenMos && (
@@ -1294,7 +1294,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ExternalLink className="w-4 h-4 text-slate-500" />
-                  Buka Dokumen Siklus Aset Proyek (PR/PO/MOS/Decommissioning)
+                  Buka Dokumen Operasional Proyek (PR/PO/MOS/Decommissioning)
                 </button>
               </div>
             </div>

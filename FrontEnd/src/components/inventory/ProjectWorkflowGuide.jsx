@@ -26,9 +26,9 @@ import {
 /**
  * ProjectWorkflowGuide
  * 
- * Komponen visual interaktif untuk memperjelas tata letak dan alur siklus hidup aset proyek:
- * 1. Stepper Interaktif 6 Tahap (Pengadaan MOS -> Gudang -> Pasang Unit -> Mutasi Pindahan -> Rusak RMA -> Pengesahan BASTM)
- * 2. Modal Panduan Lengkap Arsitektur Proyek Digitech
+ * Komponen visual interaktif untuk navigasi operasional dan modul aset proyek:
+ * 1. Modul Operasional (Penerimaan MOS -> Gudang -> Pasang Unit -> Mutasi Unit -> Garansi RMA -> Pengesahan BASTM)
+ * 2. Modal Panduan Arsitektur & Wewenang Proyek DIGITECH
  */
 export default function ProjectWorkflowGuide({
   activeProject,
@@ -46,73 +46,67 @@ export default function ProjectWorkflowGuide({
   const stages = [
     {
       id: 'mos',
-      number: 1,
-      title: 'Penerimaan (MOS)',
-      subtitle: 'Material On-Site',
-      description: 'Verifikasi fisik & nomor PO material saat tiba di site dari vendor.',
+      title: 'Penerimaan Material (MOS)',
+      subtitle: 'Material On-Site Intake',
+      description: 'Pemeriksaan fisik & verifikasi PO material saat tiba di site dari vendor.',
       icon: FileText,
-      badge: 'Tahap 1',
-      badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      tag: 'Intake Site',
+      tagColor: 'bg-blue-50 text-blue-700 border-blue-200',
       actionLabel: 'Buka Dokumen MOS',
       targetTab: 'documents'
     },
     {
       id: 'warehouse',
-      number: 2,
-      title: 'Gudang Site',
+      title: 'Gudang & Buffer Stock',
       subtitle: 'Buffer Stock Ready',
       description: 'Penyimpanan di rak bin gudang proyek, cetak label QR thermal & status Siap.',
       icon: Warehouse,
-      badge: 'Tahap 2',
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      tag: 'Buffer Stock',
+      tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       actionLabel: 'Lihat Stok Rak',
       targetTab: 'warehouses'
     },
     {
       id: 'install',
-      number: 3,
-      title: 'Pasang ke Unit',
-      subtitle: 'Instalasi Armada',
-      description: 'Pemasangan sensor ke truk hauling mitra / gardu WIM dengan HM & nama teknisi.',
+      title: 'Instalasi Armada',
+      subtitle: 'Deployment Unit / Stasiun',
+      description: 'Pemasangan sensor ke armada hauling / gardu WIM dengan HM & nama teknisi.',
       icon: Truck,
-      badge: 'Tahap 3',
-      badgeColor: 'bg-red-50 text-red-700 border-red-200',
+      tag: 'Unit Active',
+      tagColor: 'bg-red-50 text-red-700 border-red-200',
       actionLabel: 'Peta Armada Unit',
       targetTab: 'installed'
     },
     {
       id: 'transfer',
-      number: 4,
       title: 'Mutasi Antar-Unit',
-      subtitle: 'Pindahan Resmi',
+      subtitle: 'Relokasi & Audit Trail',
       description: 'Pencatatan resmi relokasi sensor saat rotasi atau peremajaan unit armada mitra.',
       icon: ArrowRightLeft,
-      badge: 'Tahap 4',
-      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-      actionLabel: 'Alur Pindahan',
+      tag: 'Relokasi',
+      tagColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      actionLabel: 'Riwayat Pindahan',
       targetTab: 'transfers'
     },
     {
       id: 'rma',
-      number: 5,
-      title: 'Kerusakan / RMA',
-      subtitle: 'Klaim & Servis',
+      title: 'Garansi & Servis (RMA)',
+      subtitle: 'Vendor Claim & Repair',
       description: 'Pencatatan kerusakan fisik, penelusuran garansi vendor 12 bulan, atau decommissioning.',
       icon: AlertTriangle,
-      badge: 'Tahap 5',
-      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      tag: 'RMA / Garansi',
+      tagColor: 'bg-amber-50 text-amber-700 border-amber-200',
       actionLabel: 'Status Garansi',
       targetTab: 'damaged'
     },
     {
       id: 'bastm',
-      number: 6,
-      title: 'Pengesahan (BASTM)',
-      subtitle: 'Legalitas 3-Pihak',
+      title: 'Pengesahan Legal (BASTM)',
+      subtitle: 'Otorisasi 3-Pihak',
       description: 'Penerbitan Berita Acara Serah Terima dengan stempel dan TTD elektronik 3 pihak.',
       icon: ShieldCheck,
-      badge: 'Tahap 6',
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      tag: 'Legal Sah',
+      tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       actionLabel: 'Arsip BASTM',
       targetTab: 'documents'
     }
@@ -121,7 +115,7 @@ export default function ProjectWorkflowGuide({
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden transition-all duration-300">
       
-      {/* ── Header Strip: Alur Siklus Hidup Aset ── */}
+      {/* ── Header Strip: Manajemen Operasional Aset ── */}
       <div className="px-5 py-3 bg-gradient-to-r from-slate-50 via-white to-red-50/20 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-xs">
@@ -130,14 +124,14 @@ export default function ProjectWorkflowGuide({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                Alur Siklus Aset &amp; Tata Letak Proyek ({activeProject?.code || 'PROJECT'})
+                Navigasi Operasional &amp; Tata Letak Proyek ({activeProject?.code || 'PROJECT'})
               </h3>
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
-                SOP 6 Tahap
+                Modul Terpadu
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-              Perjalanan material proyek dari saat tiba di site, disimpan di gudang, dipasang ke armada, hingga disahkan BASTM.
+              Akses cepat ke modul penerimaan material, manajemen rak gudang, instalasi armada, mutasi, garansi, dan pengesahan BASTM.
             </p>
           </div>
         </div>
@@ -190,10 +184,10 @@ export default function ProjectWorkflowGuide({
                   className="group relative bg-white border border-slate-200/90 hover:border-red-400 rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-md cursor-pointer text-left"
                 >
                   <div>
-                    {/* Top Step Number & Icon */}
+                    {/* Top Tag & Icon */}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono font-black text-slate-400 group-hover:text-red-600 transition-colors">
-                        LANGKAH {st.number}
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${st.tagColor}`}>
+                        {st.tag}
                       </span>
                       <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-red-50 text-slate-600 group-hover:text-red-600 flex items-center justify-center transition-colors">
                         <Icon className="w-3.5 h-3.5" />
@@ -256,17 +250,17 @@ export default function ProjectWorkflowGuide({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      ARSITEKTUR &amp; ALUR KERJA
+                      ARSITEKTUR OPERASIONAL
                     </span>
                     <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                       SOP Digitech IMS
                     </span>
                   </div>
                   <h3 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                    Panduan Alur Siklus Hidup &amp; Tata Letak Proyek
+                    Struktur &amp; Tata Kelola Operasional Proyek
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Memahami struktur hierarki, alur mutasi aset, serta pengesahan berita acara di site tambang.
+                    Memahami struktur hierarki, mutasi aset, serta pengesahan berita acara di site tambang.
                   </p>
                 </div>
               </div>
@@ -283,7 +277,7 @@ export default function ProjectWorkflowGuide({
             {/* Modal Navigation Tabs */}
             <div className="flex items-center gap-2 border-b border-slate-200 py-3 shrink-0">
               {[
-                { id: 'lifecycle', label: '1. Alur Siklus 6 Tahap', icon: Workflow },
+                { id: 'lifecycle', label: '1. Modul Operasional', icon: Workflow },
                 { id: 'architecture', label: '2. Tata Letak & Hierarki', icon: Layers },
                 { id: 'authority', label: '3. Wewenang & Dokumen BASTM', icon: ShieldCheck }
               ].map(tab => {
@@ -310,15 +304,15 @@ export default function ProjectWorkflowGuide({
             {/* Modal Scrollable Body */}
             <div className="py-5 overflow-y-auto pr-1 space-y-6 text-xs text-slate-700 flex-1">
               
-              {/* TAB 1: ALUR SIKLUS 6 TAHAP */}
+              {/* TAB 1: MODUL OPERASIONAL PROYEK */}
               {activeModalTab === 'lifecycle' && (
                 <div className="space-y-4">
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
                     <h4 className="font-bold text-slate-900 text-sm mb-1">
-                      Mengapa Aset Proyek Membutuhkan Alur Siklus 6 Tahap?
+                      Arsitektur Modul Operasional Aset Proyek
                     </h4>
                     <p className="text-slate-600 leading-relaxed text-xs">
-                      Setiap perangkat keras (hardware) telematika seperti GPS Tracker, DSM Fatigue Camera, MDVR, dan sensor WIM memiliki nilai investasi tinggi dan mobilitas ekstrem di area tambang. Alur ini memastikan tidak ada barang hilang, tertukar antar-kontraktor, atau dipasang tanpa legalitas resmi.
+                      Setiap perangkat keras (hardware) telematika seperti GPS Tracker, DSM Fatigue Camera, MDVR, dan sensor WIM memiliki nilai investasi tinggi dan mobilitas ekstrem di area tambang. Arsitektur modular ini memastikan tidak ada barang hilang, tertukar antar-kontraktor, atau dipasang tanpa legalitas resmi.
                     </p>
                   </div>
 
@@ -333,10 +327,10 @@ export default function ProjectWorkflowGuide({
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
                               <span className="font-black text-slate-900 text-xs">
-                                Langkah {st.number}: {st.title} ({st.subtitle})
+                                {st.title} — {st.subtitle}
                               </span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${st.badgeColor}`}>
-                                {st.badge}
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${st.tagColor}`}>
+                                {st.tag}
                               </span>
                             </div>
                             <p className="text-slate-600 leading-relaxed text-xs">

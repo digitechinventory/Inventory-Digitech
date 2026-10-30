@@ -103,7 +103,7 @@ export default function AssetLifecyclePage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Pemantauan Siklus Hidup Aset
+          Manajemen Aset Operasional
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
           Prinsip "No Document, No Movement": Setiap pergerakan aset wajib memiliki jejak dokumen digital legal yang tak terputus.
@@ -150,8 +150,8 @@ export default function AssetLifecyclePage() {
               {selectedStage.num}
             </div>
             <div>
-              <span className="text-[10px] font-mono text-red-600 font-bold uppercase">Tahap {selectedStage.num} dari 8</span>
-              <h2 className="text-lg font-black text-slate-900">{selectedStage.title} ({selectedStage.code})</h2>
+              <span className="text-[10px] font-mono text-red-600 font-bold uppercase">Kategori: {selectedStage.code}</span>
+              <h2 className="text-lg font-black text-slate-900">{selectedStage.title}</h2>
             </div>
           </div>
 
@@ -176,7 +176,7 @@ export default function AssetLifecyclePage() {
             <div className="text-[10px] font-mono text-red-200 font-bold uppercase tracking-wider">Aturan Bisnis Kritis</div>
             <h4 className="text-sm font-bold text-white mt-1">Prasyarat Dokumen Berjenjang</h4>
             <p className="text-[11px] text-red-100 leading-relaxed mt-2">
-              Aset tidak dapat melangkah ke tahap selanjutnya tanpa kelengkapan berkas digital pada tahap sebelumnya. Tahap MOS (Tahap 5) memegang peranan krusial sebagai pintu masuk fisik barang site.
+              Setiap mutasi aset terikat dengan verifikasi berkas digital sah. Verifikasi MOS memegang peranan krusial sebagai gerbang penerimaan fisik barang di site.
             </p>
           </div>
 
