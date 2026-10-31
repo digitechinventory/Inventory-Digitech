@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { supabase, supabaseAdmin } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { cacheGet, cacheSet, cacheDel } from '../services/redis.js';

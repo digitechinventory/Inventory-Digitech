@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import localDb from '../services/localDb.js';
 import { ensureProjectDatasetsLoaded } from '../services/projectDataService.js';

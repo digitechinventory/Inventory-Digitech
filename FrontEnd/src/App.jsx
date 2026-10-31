@@ -13,7 +13,6 @@ import StartupSplashScreen from './components/common/StartupSplashScreen';
 import Dashboard from './pages/Dashboard';
 import MOSPage from './pages/MOSPage';
 import InventoryPage from './pages/InventoryPage';
-import IronNestWarehousesView from './components/inventory/IronNestWarehousesView';
 import MaterialRequestPage from './pages/MaterialRequestPage';
 import ToolLoansPage from './pages/ToolLoansPage';
 import StockOpnamePage from './pages/StockOpnamePage';
@@ -124,14 +123,7 @@ function AppRoutes() {
         <Route path="projects" element={<ProjectInventoryPage />} />
         <Route path="katalog" element={<InventoryPage />} />
         <Route path="catalog" element={<InventoryPage />} />
-        <Route
-          path="warehouses"
-          element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
-              <IronNestWarehousesView />
-            </RoleRoute>
-          }
-        />
+        <Route path="warehouses" element={<Navigate to="/inventory" replace />} />
         <Route path="tools" element={<ToolLoansPage />} />
         <Route
           path="opname"

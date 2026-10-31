@@ -159,7 +159,6 @@ export default function IronNestSidebar({
           items: [
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
             { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents' },
-            { id: 'warehouses', label: 'Gudang & Lokasi Site', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Tracking Tools', icon: Compass, path: '/tracking' },
           ]
@@ -185,7 +184,6 @@ export default function IronNestSidebar({
             { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard' },
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
             { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents' },
-            { id: 'warehouses', label: 'Gudang & Lokasi Site', icon: Store, path: '/warehouses' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
           ]

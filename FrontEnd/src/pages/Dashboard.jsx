@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 import SuperadminDashboard from './superadmin/SuperadminDashboard.jsx';
 import AdminDashboard from './admin/AdminDashboard.jsx';
 import UserDashboard from './user/UserDashboard.jsx';
-import IronNestWarehousesView from '../components/inventory/IronNestWarehousesView.jsx';
 import MobileHomeDashboard from '../components/dashboard/MobileHomeDashboard.jsx';
 
 /**
@@ -23,11 +22,6 @@ import MobileHomeDashboard from '../components/dashboard/MobileHomeDashboard.jsx
 export default function Dashboard({ mode }) {
   const { role } = useAuth();
   const normalizedRole = role || 'User';
-
-  // Explicit Mode Overrides
-  if (mode === 'warehouses') {
-    return <IronNestWarehousesView />;
-  }
 
   const renderDesktopDashboard = () => {
     if ((mode === 'superadmin' || mode === 'overview') && normalizedRole === 'Superadmin') {

@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { validateCoordinatesAgainstSites } from '../services/geofence.js';
 import { sendSuccess } from '../middleware/responseHandler.js';
