@@ -506,19 +506,19 @@ export default function AccountSettingsPage() {
         </div>
       </div>
 
-      {/* ─── Elevated Hero Profile Card with Mega Mendung & Live Authority Metrics ─── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-700 to-red-800 border border-red-500/40 p-6 sm:p-8 text-white shadow-xl">
-        <MegaMendungDefs />
-        <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+      {/* ─── Elevated Hero Profile Card (Clean White High-Contrast Theme) ─── */}
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-8 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.04),0_2px_12px_rgba(0,0,0,0.03)]">
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-red-600" />
+        <div className="absolute -right-12 -top-12 w-56 h-56 bg-blue-50/70 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Avatar & Main Identity */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="relative shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-lg shadow-blue-600/30 ring-4 ring-white/10">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 text-white flex items-center justify-center text-3xl sm:text-4xl font-black shadow-md shadow-blue-600/20 ring-4 ring-blue-50">
                 {fullName?.charAt(0)?.toUpperCase() || user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
-              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-slate-900" title="Akun Aktif & Terverifikasi">
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-white" title="Akun Aktif & Terverifikasi">
                 <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
               </span>
             </div>
@@ -527,12 +527,12 @@ export default function AccountSettingsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                   role === 'Superadmin'
-                    ? 'bg-blue-500/20 text-blue-200 border-blue-400/40 shadow-xs'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
                     : role === 'Admin'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 }`}>
-                  {role === 'Superadmin' ? <Crown className="w-3.5 h-3.5 text-blue-300" /> : role === 'Admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> : <Wrench className="w-3.5 h-3.5 text-emerald-400" />}
+                  {role === 'Superadmin' ? <Crown className="w-3.5 h-3.5 text-blue-600" /> : role === 'Admin' ? <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> : <Wrench className="w-3.5 h-3.5 text-emerald-600" />}
                   <span>
                     {role === 'Superadmin'
                       ? 'Level 3 — Root System Administrator'
@@ -541,18 +541,18 @@ export default function AccountSettingsPage() {
                       : 'Level 1 — Field Operations Technician'}
                   </span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-mono font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-mono font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Online
                 </span>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                 <span>{fullName || user?.full_name || 'Pengguna Digitech'}</span>
-                <BadgeCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <BadgeCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               </h2>
 
-              <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-300 font-medium">
+              <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-700 font-semibold">
                 <button
                   type="button"
                   onClick={() => {
@@ -560,21 +560,21 @@ export default function AccountSettingsPage() {
                     setCopiedEmail(true);
                     setTimeout(() => setCopiedEmail(false), 2000);
                   }}
-                  className="flex items-center gap-1.5 hover:text-white transition cursor-pointer font-mono bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-lg border border-white/10"
+                  className="flex items-center gap-1.5 text-slate-700 hover:text-blue-700 transition cursor-pointer font-mono bg-slate-50 hover:bg-blue-50/70 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-200"
                   title="Klik untuk salin email"
                 >
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <Mail className="w-3.5 h-3.5 text-slate-500" />
                   <span>{email || user?.email}</span>
-                  {copiedEmail ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                  {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                 </button>
 
-                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-mono">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
+                <span className="flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 font-mono">
+                  <Building className="w-3.5 h-3.5 text-slate-500" />
                   <span>{company || 'DIGITECH'}</span>
                 </span>
 
-                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 font-mono">
-                  <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                <span className="flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200 font-mono">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600" />
                   <span>{siteLocation}</span>
                 </span>
               </div>
@@ -582,70 +582,70 @@ export default function AccountSettingsPage() {
           </div>
 
           {/* Quick Action Navigation in Hero */}
-          <div className="shrink-0 flex sm:flex-col gap-2 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-white/10 lg:pl-6">
+          <div className="shrink-0 flex sm:flex-col gap-2 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6">
             <button
               type="button"
               onClick={() => setActiveTab('security')}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition cursor-pointer active:scale-95"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-slate-800 hover:text-blue-700 text-xs font-bold transition cursor-pointer active:scale-95"
             >
-              <Key className="w-3.5 h-3.5 text-blue-300" />
+              <Key className="w-3.5 h-3.5 text-blue-600" />
               <span>Ganti Password</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('sessions')}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition cursor-pointer active:scale-95"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-800 hover:text-emerald-700 text-xs font-bold transition cursor-pointer active:scale-95"
             >
-              <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+              <Monitor className="w-3.5 h-3.5 text-emerald-600" />
               <span>Cek Sesi Login</span>
             </button>
           </div>
         </div>
 
-        {/* 4 Glassmorphic Metrics Strip Inside Hero Card */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10 text-xs">
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+        {/* 4 High-Contrast Metrics Strip Inside Hero Card */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100 text-xs">
+          <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-1">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-500 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Status Akun
             </span>
-            <span className="font-bold text-emerald-300 block">Aktif &amp; Terverifikasi</span>
-            <span className="text-[10px] text-slate-400 block font-mono">Otentikasi SSO Digitech</span>
+            <span className="font-black text-emerald-700 block text-sm">Aktif &amp; Terverifikasi</span>
+            <span className="text-[11px] text-slate-500 block font-mono">Otentikasi SSO Digitech</span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
-              <Crown className="w-3 h-3 text-rose-400" />
+          <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-1">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 text-blue-600" />
               Tingkat Otoritas
             </span>
-            <span className="font-bold text-white block">Role: {role || 'User'}</span>
-            <span className="text-[10px] text-slate-400 block font-mono">
+            <span className="font-black text-slate-900 block text-sm">Role: {role || 'User'}</span>
+            <span className="text-[11px] text-slate-500 block font-mono">
               {role === 'Superadmin' ? 'Akses Penuh Sistem' : role === 'Admin' ? 'Akses Operasional & Rak' : 'Akses Lapangan & MR'}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
-              <Lock className="w-3 h-3 text-blue-400" />
+          <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-1">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-blue-600" />
               Proteksi MFA
             </span>
-            <span className="font-bold text-white block truncate">
+            <span className="font-black text-slate-900 block text-sm truncate">
               {authenticatorMfa ? 'Google Auth (Aktif)' : emailMfa ? 'Email OTP (Aktif)' : 'Password Standar'}
             </span>
-            <span className="text-[10px] text-slate-400 block font-mono">
+            <span className="text-[11px] text-slate-500 block font-mono">
               {authenticatorMfa || emailMfa ? 'Perlindungan Ekstra' : 'MFA Disarankan'}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-1">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block flex items-center gap-1">
-              <Timer className="w-3 h-3 text-emerald-400" />
+          <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-1">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Timer className="w-3.5 h-3.5 text-emerald-600" />
               Sisa Sesi Login
             </span>
-            <span className="font-bold text-emerald-300 font-mono block text-sm">
+            <span className="font-black text-emerald-700 font-mono block text-sm">
               {remainingTimeStr || '08:00:00'}
             </span>
-            <span className="text-[10px] text-slate-400 block font-mono">Kedaluwarsa Otomatis</span>
+            <span className="text-[11px] text-slate-500 block font-mono">Kedaluwarsa Otomatis</span>
           </div>
         </div>
       </div>

@@ -23,18 +23,29 @@ router.get('/', optionalAuth, async (req, res, next) => {
     const cached = await cacheGet(cacheKey).catch(() => null);
     if (cached) {
       const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
-      return sendSuccess(res, data, 'Daftar inventaris (cache).');
+      if (Array.isArray(data) && data.length > 0) {
+        return sendSuccess(res, data, 'Daftar inventaris (cache).');
+      }
     }
 
     let items = [];
     try {
       let query = supabase.from('inventory_items').select('*').order('name');
-      if (normalizedWh) query = query.eq('warehouse_id', normalizedWh);
+      if (normalizedWh && normalizedWh !== 'ALL') query = query.eq('warehouse_id', normalizedWh);
       if (category) query = query.eq('category', category);
       if (search) query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,rack.ilike.%${search}%`);
       const { data, error } = await query;
       if (!error && Array.isArray(data) && data.length > 0) {
         items = data;
+      } else if (normalizedWh) {
+        // Fallback: if warehouse_id filter matches 0 rows (e.g. UUID warehouse_id vs wh-01), return all matching items
+        let fallbackQuery = supabase.from('inventory_items').select('*').order('name');
+        if (category) fallbackQuery = fallbackQuery.eq('category', category);
+        if (search) fallbackQuery = fallbackQuery.or(`name.ilike.%${search}%,sku.ilike.%${search}%,rack.ilike.%${search}%`);
+        const { data: fbData, error: fbErr } = await fallbackQuery;
+        if (!fbErr && Array.isArray(fbData) && fbData.length > 0) {
+          items = fbData;
+        }
       }
     } catch {}
 
