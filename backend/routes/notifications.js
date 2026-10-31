@@ -1,8 +1,8 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
-import { sendSuccess } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 

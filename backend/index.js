@@ -1,4 +1,4 @@
-// Digitech IMS Server Entrypoint
+﻿// Digitech IMS Server Entrypoint
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
@@ -28,21 +28,21 @@ import notificationsRoutes from './routes/notifications.js';
 import projectInventoryRoutes from './routes/projectInventory.js';
 import printerRoutes from './routes/printer.js';
 
-import { errorHandler } from './middlewares/errorHandler.js';
-import { sendSuccess } from './middlewares/responseHandler.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { sendSuccess } from './middleware/responseHandler.js';
 import {
   globalRateLimit,
   strictRateLimit,
   xssInjectionGuard,
   additionalSecurityHeaders
-} from './middlewares/security.js';
+} from './middleware/security.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 // Listen on 127.0.0.1 (localhost only) agar tidak mengekspos web server ke Tailscale / LAN
 const HOST = process.env.HOST || '127.0.0.1';
 
-// ─── Security Layer 1: Helmet ──────────────────────────────────────────────
+// â”€â”€â”€ Security Layer 1: Helmet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   crossOriginEmbedderPolicy: false, // Diperlukan agar iframe Spline bisa akses resource
@@ -65,13 +65,13 @@ app.use(helmet({
   }
 }));
 
-// ─── Security Layer 2: Custom Headers ──────────────────────────────────────
+// â”€â”€â”€ Security Layer 2: Custom Headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(additionalSecurityHeaders);
 
-// ─── Security Layer 3: Global Rate Limit (200 req/menit per IP) ────────────
+// â”€â”€â”€ Security Layer 3: Global Rate Limit (200 req/menit per IP) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(globalRateLimit);
 
-// ─── CORS ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ CORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -93,10 +93,10 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ─── Security Layer 4: XSS & SQL Injection Guard ───────────────────────────
+// â”€â”€â”€ Security Layer 4: XSS & SQL Injection Guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use('/api', xssInjectionGuard);
 
-// ─── Routes (Dual-mounted for /api/* and /* for Vercel serverless compatibility) ─
+// â”€â”€â”€ Routes (Dual-mounted for /api/* and /* for Vercel serverless compatibility) â”€
 app.use('/api/auth', authRoutes);
 app.use('/auth', authRoutes);
 
@@ -127,7 +127,7 @@ app.use('/agendas', agendasRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/notifications', notificationsRoutes);
 
-// ─── Static Files for Uploaded Documents (PDF & Images) ─────────────────────
+// â”€â”€â”€ Static Files for Uploaded Documents (PDF & Images) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 try {
   const isServerless = Boolean(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_LAMBDA_FUNCTION_NAME);
   const uploadsDir = isServerless ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
@@ -149,7 +149,7 @@ app.use('/project-inventory', projectInventoryRoutes);
 app.use('/api/printer', printerRoutes);
 app.use('/printer', printerRoutes);
 
-// ─── Health Check ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Health Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const healthHandler = (req, res) => {
   return sendSuccess(res, {
     status: 'ok',
@@ -166,11 +166,11 @@ const healthHandler = (req, res) => {
 app.get('/api/health', healthHandler);
 app.get('/health', healthHandler);
 
-// ─── Frontend Static Files Disabled (Pure REST API Server) ───────────────────
+// â”€â”€â”€ Frontend Static Files Disabled (Pure REST API Server) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Server port 3001 hanya melayani endpoint REST API (/api/*).
 // Frontend web diakses secara terpisah via port development (5175) atau domain terdaftar.
 
-// ─── 404 Handler ───────────────────────────────────────────────────────────
+// â”€â”€â”€ 404 Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use((req, res, next) => {
   const err = new Error(`Route ${req.method} ${req.originalUrl} tidak ditemukan pada server API`);
   err.statusCode = 404;
@@ -178,10 +178,10 @@ app.use((req, res, next) => {
   next(err);
 });
 
-// ─── Global Error Handler ──────────────────────────────────────────────────
+// â”€â”€â”€ Global Error Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(errorHandler);
 
-// ─── Server Start ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Server Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const isVercel = Boolean(process.env.VERCEL || process.env.NOW_REGION);
 if (process.env.NODE_ENV !== 'test' && !isVercel) {
   const HOST = process.env.HOST || '127.0.0.1';

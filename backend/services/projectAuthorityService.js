@@ -1,67 +1,18 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import db from './localDb.js';
+import { getDatasetStore, persistDataset } from './projectDataService.js';
 
 export const ALL_PROJECT_IDS = ['proj-famous', 'proj-wim', 'proj-ccm'];
 
-const DEFAULT_AUTHORITIES = {
-  'demo-sa-001': ['proj-wim', 'proj-famous', 'proj-ccm'],
-  'demo-admin-001': ['proj-famous'],
-  'demo-user-001': ['proj-wim'],
-  'user-pending-001': []
-};
-
-function getStoragePath() {
-  const candidates = [
-    path.join(__dirname, '..', 'data', 'project_authorities.json'),
-    path.join(process.cwd(), 'backend', 'data', 'project_authorities.json'),
-    path.join(process.cwd(), 'data', 'project_authorities.json')
-  ];
-  return candidates.find(c => fs.existsSync(c)) || candidates[0];
-}
-
-let memoryAuthorities = { ...DEFAULT_AUTHORITIES };
-
-// Initialize authorities from disk if exists
-try {
-  const filePath = getStoragePath();
-  if (fs.existsSync(filePath)) {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    memoryAuthorities = { ...DEFAULT_AUTHORITIES, ...JSON.parse(raw) };
-  } else {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(DEFAULT_AUTHORITIES, null, 2), 'utf-8');
-  }
-} catch (e) {
-  console.warn('[ProjectAuthorityService] Failed reading authorities file, using memory fallback:', e.message);
-}
-
 export function getAuthoritiesMap() {
-  try {
-    const filePath = getStoragePath();
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      memoryAuthorities = { ...DEFAULT_AUTHORITIES, ...JSON.parse(raw) };
-    }
-  } catch (e) {}
-  return memoryAuthorities;
+  const store = getDatasetStore();
+  return store.project_authorities || {};
 }
 
 export function saveAuthoritiesMap(newMap) {
-  memoryAuthorities = { ...newMap };
-  try {
-    const filePath = getStoragePath();
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(memoryAuthorities, null, 2), 'utf-8');
-  } catch (e) {
-    console.warn('[ProjectAuthorityService] Failed saving authorities file:', e.message);
-  }
-  return memoryAuthorities;
+  const store = getDatasetStore();
+  store.project_authorities = { ...newMap };
+  persistDataset('project_authorities', store.project_authorities);
+  return store.project_authorities;
 }
 
 export function normalizeProjectId(rawId) {
@@ -82,7 +33,6 @@ export function registerProjectId(projectId) {
 }
 
 export function getUserAllowedProjects(userId, role) {
-  // Superadmin always has unrestricted access to all projects
   if (role === 'Superadmin') {
     return [...ALL_PROJECT_IDS];
   }
@@ -91,8 +41,6 @@ export function getUserAllowedProjects(userId, role) {
   if (Array.isArray(allowed)) {
     return allowed;
   }
-  // Default fallback if not yet configured:
-  // Admin gets FAMOUS, User gets WIM (if not specified)
   if (role === 'Admin') return ['proj-famous'];
   if (role === 'User') return ['proj-wim'];
   return [];
@@ -103,15 +51,26 @@ export function setUserAllowedProjects(userId, allowedProjects) {
   const cleaned = Array.isArray(allowedProjects)
     ? allowedProjects.map(normalizeProjectId).filter(Boolean)
     : [];
-  map[userId] = Array.from(new Set(cleaned));
+  const unique = Array.from(new Set(cleaned));
+  map[userId] = unique;
   saveAuthoritiesMap(map);
+
+  if (db.isConnected()) {
+    db.query(
+      `INSERT INTO project_authorities (user_id, allowed_projects, updated_at)
+       VALUES ($1, $2::jsonb, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET allowed_projects = EXCLUDED.allowed_projects, updated_at = NOW()`,
+      [userId, JSON.stringify(unique)]
+    ).catch(() => {});
+  }
+
   return map[userId];
 }
 
 export function checkUserProjectAccess(user, projectId) {
   if (!user) return false;
   if (user.role === 'Superadmin') return true;
-  if (!projectId) return true; // If no project specified, general access
+  if (!projectId) return true;
 
   const normId = normalizeProjectId(projectId);
   const userAllowed = getUserAllowedProjects(user.id, user.role);
@@ -120,11 +79,9 @@ export function checkUserProjectAccess(user, projectId) {
 
 /**
  * Express middleware to enforce project-specific access authorization
- * @param {Function|string} [targetProjectResolver] - Function (req) => projectId or hardcoded projectId
  */
 export function requireProjectAccess(targetProjectResolver) {
   return (req, res, next) => {
-    // 1. Authenticate user must exist
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -134,12 +91,10 @@ export function requireProjectAccess(targetProjectResolver) {
       });
     }
 
-    // 2. Superadmin always passes
     if (req.user.role === 'Superadmin') {
       return next();
     }
 
-    // 3. Resolve target project ID
     let targetProjectId = null;
     if (typeof targetProjectResolver === 'function') {
       targetProjectId = targetProjectResolver(req);

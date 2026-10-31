@@ -1,103 +1,16 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import localDb from '../services/localDb.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { sendAgendaNotificationEmail } from '../services/mailer.js';
 
 const router = Router();
+const FALLBACK_AGENDAS = [];
 
-// Fallback seed items if database is temporarily unavailable
-const FALLBACK_AGENDAS = [
-  {
-    id: 'agn-001',
-    title: 'Shift A — Pit Sebamban KM 24',
-    date: '2026-09-22',
-    start_time: '07:00',
-    end_time: '19:00',
-    category: 'Shift',
-    site_location: 'Pit South Site BIB-02',
-    pic_name: 'arya-user',
-    status: 'completed',
-    description: 'Operasional rutin penggalian dan pemuatan batubara armada siang.'
-  },
-  {
-    id: 'agn-002',
-    title: 'Penerimaan Material Alternator & Hidrolik',
-    date: '2026-09-23',
-    start_time: '09:00',
-    end_time: '12:00',
-    category: 'MOS',
-    site_location: 'Warehouse 1 (Main Pit Site BIB-02)',
-    pic_name: 'arya-admin',
-    status: 'completed',
-    description: 'Verifikasi fisik kemasan & pengujian part number vendor Trakindo.'
-  },
-  {
-    id: 'agn-003',
-    title: 'Inspeksi Kesiapan Alat Berat Overhaul Cat 777D',
-    date: '2026-09-25',
-    start_time: '08:00',
-    end_time: '16:00',
-    category: 'Maintenance',
-    site_location: 'Workshop Main BIB',
-    pic_name: 'arya-user',
-    status: 'completed',
-    description: 'Pemeriksaan filter transmisi, silinder boom, dan jalur oli utama.'
-  },
-  {
-    id: 'agn-004',
-    title: 'Shift B — Malam Pit South & Workshop',
-    date: '2026-09-27',
-    start_time: '19:00',
-    end_time: '07:00',
-    category: 'Shift',
-    site_location: 'Pit South Site BIB-02',
-    pic_name: 'arya-user',
-    status: 'active',
-    description: 'Shift operasional malam tim mekanik dan pengawasan geofence site.'
-  },
-  {
-    id: 'agn-005',
-    title: 'Tool Inspection & Kalibrasi Digital Torque Wrench',
-    date: '2026-09-28',
-    start_time: '10:00',
-    end_time: '11:30',
-    category: 'Tools',
-    site_location: 'Workshop Sentral Tambang BIB',
-    pic_name: 'arya-admin',
-    status: 'scheduled',
-    description: 'Pemeriksaan akurasi torsi dan batas aman peminjaman teknisi lapangan.'
-  },
-  {
-    id: 'agn-006',
-    title: 'Audit Fisik Rutin Stok Akhir Bulan (Stock Opname)',
-    date: '2026-09-30',
-    start_time: '08:00',
-    end_time: '17:00',
-    category: 'Opname',
-    site_location: 'Warehouse 1 (Main Pit Site BIB-02)',
-    pic_name: 'arya-superadmin',
-    status: 'scheduled',
-    description: 'Rekonsiliasi varians stok fisik rak A, B, C terhadap sistem ledger.'
-  },
-  {
-    id: 'agn-007',
-    title: 'Koordinasi Bulanan Logistik Site & Safety Briefing',
-    date: '2026-10-02',
-    start_time: '07:30',
-    end_time: '09:00',
-    category: 'Meeting',
-    site_location: 'Site Office',
-    pic_name: 'arya-superadmin',
-    status: 'scheduled',
-    description: 'Evaluasi supply chain suku cadang, re-order threshold, dan zero accident K3.'
-  }
-];
-
-// GET /api/agendas — List agendas with optional filter by month or category
+// GET /api/agendas â€” List agendas with optional filter by month or category
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { month, category, status } = req.query;
@@ -146,7 +59,7 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/agendas/:id — Detail single agenda
+// GET /api/agendas/:id â€” Detail single agenda
 router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -164,7 +77,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/agendas — Create agenda (Admin & Superadmin only)
+// POST /api/agendas â€” Create agenda (Admin & Superadmin only)
 router.post('/', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const {
@@ -246,7 +159,7 @@ router.post('/', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/agendas/:id — Update agenda (Admin & Superadmin only)
+// PUT /api/agendas/:id â€” Update agenda (Admin & Superadmin only)
 router.put('/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -310,7 +223,7 @@ router.put('/:id', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// DELETE /api/agendas/:id — Delete agenda (Admin & Superadmin only)
+// DELETE /api/agendas/:id â€” Delete agenda (Admin & Superadmin only)
 router.delete('/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;

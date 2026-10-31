@@ -1,20 +1,14 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { superadminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
+const FALLBACK_SITES = [];
 
-const FALLBACK_SITES = [
-  { id: 'site-vgt-office', name: 'Site Office', code: 'SITE-OFFICE', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional Site Pit 2', status: 'active' },
-  { id: 'site-bib-ws', name: 'Workshop Main BIB', code: 'BIB-WS', lat: -3.73100, lng: 115.60500, radius: 350, area_name: 'Workshop Sentral Tambang BIB', status: 'active' },
-  { id: 'site-bib-02', name: 'Pit South Site BIB-02', code: 'BIB-02', lat: -3.7389, lng: 115.6120, radius: 200, area_name: 'Pit South Area', status: 'active' },
-  { id: 'site-bib-port', name: 'Pelabuhan Khusus Sebamban Port', code: 'BIB-PORT', lat: -3.6950, lng: 115.6800, radius: 300, area_name: 'Terminal Batubara Sebamban', status: 'active' }
-];
-
-// GET /api/sites — all authenticated users can read
+// GET /api/sites â€” all authenticated users can read
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { data, error } = await supabase
@@ -51,7 +45,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/sites — Superadmin only
+// POST /api/sites â€” Superadmin only
 router.post('/', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { name, code, lat, lng, radius, area_name } = req.body;
@@ -83,7 +77,7 @@ router.post('/', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/sites/:id — Superadmin only
+// PUT /api/sites/:id â€” Superadmin only
 router.put('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { data, error } = await supabase
@@ -100,7 +94,7 @@ router.put('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// DELETE /api/sites/:id — Superadmin only
+// DELETE /api/sites/:id â€” Superadmin only
 router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { error } = await supabase.from('sites').delete().eq('id', req.params.id);

@@ -1,20 +1,13 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { validateCoordinatesAgainstSites } from '../services/geofence.js';
-import { sendSuccess } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
+const FALLBACK_SITES = [];
 
-// Fallback sites if DB query fails
-const FALLBACK_SITES = [
-  { id: 'site-vgt-office', name: 'Site Office', lat: -3.74211, lng: 115.58912, radius: 200, area_name: 'Kantor Operasional Site Pit 2' },
-  { id: 'site-bib-ws', name: 'Workshop Main BIB', lat: -3.73100, lng: 115.60500, radius: 350, area_name: 'Workshop Sentral Tambang BIB' },
-  { id: 'site-bib-02', name: 'Pit South Site BIB-02', lat: -3.7389, lng: 115.6120, radius: 200, area_name: 'Pit South Area' },
-  { id: 'site-bib-port', name: 'Pelabuhan Khusus Sebamban Port', lat: -3.6950, lng: 115.6800, radius: 300, area_name: 'Terminal Batubara Sebamban' }
-];
-
-// GET /api/geo/sites — List all registered sites
+// GET /api/geo/sites â€” List all registered sites
 router.get('/sites', async (req, res, next) => {
   try {
     const { data, error } = await supabase.from('sites').select('*').order('name');
@@ -25,7 +18,7 @@ router.get('/sites', async (req, res, next) => {
   }
 });
 
-// POST /api/geo/validate — Validate coordinates using Haversine
+// POST /api/geo/validate â€” Validate coordinates using Haversine
 router.post('/validate', async (req, res, next) => {
   try {
     const { latitude, longitude } = req.body;

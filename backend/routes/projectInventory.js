@@ -3,10 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { supabase } from '../services/supabase.js';
+import localDb from '../services/localDb.js';
+import {
+  ensureProjectDatasetsLoaded,
+  getDatasetStore,
+  persistDataset
+} from '../services/projectDataService.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { adminOnly, superadminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { FALLBACK_MOS, generateUniqueDocNumber } from './mos.js';
 import {
   getUserAllowedProjects,
@@ -22,535 +28,36 @@ const router = Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load Real FAMOUS Dataset (9,415 real items & 829 fleet trucks)
+// Database-backed runtime references (hydrated by ensureProjectDatasetsLoaded)
 let FAMOUS_ITEMS = [];
 let FAMOUS_FLEET_MATRIX = [];
-let FAMOUS_SUMMARY = {
-  total_items: 0,
-  total_pindahan: 0,
-  by_category: {},
-  by_status: {},
-  by_mitra: {},
-  fleet_summary: { total_units: 0, optimal_units: 0, partial_units: 0, critical_units: 0 }
-};
-
-// Load Real WIM Dataset (189 components, 268 transactions, 41 warranty items)
+let FAMOUS_SUMMARY = {};
 let WIM_COMPONENTS = [];
 let WIM_TRANSACTIONS = [];
 let WIM_WARRANTY = [];
-let WIM_SUMMARY = {
-  total_components: 0,
-  total_transactions: 0,
-  total_warranty_items: 0,
-  by_category: {},
-  by_status: {},
-  by_lane: {},
-  lanes_summary: []
-};
-
-// Project 8-Stage Documents Store
+let WIM_SUMMARY = {};
 let PROJECT_DOCUMENTS = [];
-
-function findDataFile(...subpath) {
-  const candidates = [
-    path.join(__dirname, '..', 'data', ...subpath),
-    path.join(process.cwd(), 'backend', 'data', ...subpath),
-    path.join(process.cwd(), 'data', ...subpath)
-  ];
-  return candidates.find(c => fs.existsSync(c)) || candidates[0];
-}
-
-try {
-  const famousItemsPath = findDataFile('famous', 'famous_items.json');
-  const famousFleetPath = findDataFile('famous', 'famous_fleet_matrix.json');
-  const famousSummaryPath = findDataFile('famous', 'famous_summary.json');
-
-  if (fs.existsSync(famousItemsPath)) {
-    FAMOUS_ITEMS = JSON.parse(fs.readFileSync(famousItemsPath, 'utf-8'));
-  }
-  if (fs.existsSync(famousFleetPath)) {
-    FAMOUS_FLEET_MATRIX = JSON.parse(fs.readFileSync(famousFleetPath, 'utf-8'));
-  }
-  if (fs.existsSync(famousSummaryPath)) {
-    FAMOUS_SUMMARY = JSON.parse(fs.readFileSync(famousSummaryPath, 'utf-8'));
-  }
-  console.log(`[Project Inventory] Loaded real FAMOUS dataset: ${FAMOUS_ITEMS.length} items, ${FAMOUS_FLEET_MATRIX.length} fleet units.`);
-} catch (err) {
-  console.error('[Project Inventory] Failed loading FAMOUS dataset:', err);
-}
-
-try {
-  const wimCompPath = findDataFile('wim', 'wim_components.json');
-  const wimTxPath = findDataFile('wim', 'wim_transactions.json');
-  const wimWarrPath = findDataFile('wim', 'wim_warranty.json');
-  const wimSumPath = findDataFile('wim', 'wim_summary.json');
-
-  if (fs.existsSync(wimCompPath)) {
-    WIM_COMPONENTS = JSON.parse(fs.readFileSync(wimCompPath, 'utf-8'));
-  }
-  if (fs.existsSync(wimTxPath)) {
-    WIM_TRANSACTIONS = JSON.parse(fs.readFileSync(wimTxPath, 'utf-8'));
-  }
-  if (fs.existsSync(wimWarrPath)) {
-    WIM_WARRANTY = JSON.parse(fs.readFileSync(wimWarrPath, 'utf-8'));
-  }
-  if (fs.existsSync(wimSumPath)) {
-    WIM_SUMMARY = JSON.parse(fs.readFileSync(wimSumPath, 'utf-8'));
-  }
-  console.log(`[Project Inventory] Loaded real WIM dataset: ${WIM_COMPONENTS.length} components, ${WIM_TRANSACTIONS.length} transactions, ${WIM_WARRANTY.length} warranty items.`);
-} catch (err) {
-  console.error('[Project Inventory] Failed loading WIM dataset:', err);
-}
-
-// Initialize Initial 8-Stage Documents for WIM and FAMOUS
-PROJECT_DOCUMENTS = [
-  // ── WIM 8-STAGE DOCUMENTS ──
-  {
-    id: 'pdoc-wim-01',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'RFI',
-    stage_number: 1,
-    stage_name: 'Request for Information',
-    doc_number: '012/SITE/RFI/WIM/MNTOA/BIBOA/III/2026',
-    title: 'RFI Pengadaan Sensor Loadcell 50T & High Speed Strip Sensor KM 14',
-    created_date: '2026-03-15',
-    due_date: '2026-03-25',
-    creator_name: 'Rayhans Najib Al-Faruq',
-    creator_role: 'Teknisi WIM',
-    status: 'Completed',
-    priority: 'High',
-    summary: 'Kajian teknis penggantian berkala sensor loadcell jembatan timbang Lane 1 & Lane 3 BIB Pit Sebamban KM-14.',
-    items_count: 8,
-    signatures_count: 1,
-    required_signatures: 1,
-    file_attachment: 'RFI_WIM_Loadcell_Spec_2026.pdf'
-  },
-  {
-    id: 'pdoc-wim-02',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'PR',
-    stage_number: 2,
-    stage_name: 'Purchase Requisition',
-    doc_number: '008/SITE/PR/WIM/MNTOA/BIBOA/III/2026',
-    title: 'PR Pengajuan Pembelian 8 Unit Loadcell Intercomp & Frame LS',
-    created_date: '2026-03-28',
-    due_date: '2026-04-05',
-    creator_name: 'Ahmad Fadillah',
-    creator_role: 'Admin Logistik Site',
-    status: 'Approved',
-    priority: 'Critical',
-    summary: 'Purchase Requisition untuk 8 unit Loadcell Intercomp Double Ended Shear Beam dan 4 unit AX920 Mounting Platform.',
-    items_count: 12,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'PR_WIM_Intercomp_Approval.pdf'
-  },
-  {
-    id: 'pdoc-wim-03',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'PO',
-    stage_number: 3,
-    stage_name: 'Purchase Order',
-    doc_number: 'PO-4930007520',
-    title: 'Purchase Order Vendor INTERCOMP Scale Co. (Kontrak Pengadaan)',
-    created_date: '2026-04-01',
-    due_date: '2026-04-20',
-    creator_name: 'Arya Pratama',
-    creator_role: 'Superadmin / Procurement',
-    status: 'Active',
-    priority: 'High',
-    summary: 'Kontrak PO resmi pembelian material timbangan ke vendor INTERCOMP Scale Co. senilai Rp 348.500.000.',
-    items_count: 12,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'PO_4930007520_Signed.pdf'
-  },
-  {
-    id: 'pdoc-wim-04',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'Delivery',
-    stage_number: 4,
-    stage_name: 'Ekspedisi & Surat Jalan',
-    doc_number: 'DO/INT-JKT/2026/04-18',
-    title: 'Surat Jalan Ekspedisi Darat/Laut PT Intercomp Indonesia ke Site KM-14',
-    created_date: '2026-04-05',
-    due_date: '2026-04-07',
-    creator_name: 'Ekspedisi Barito Mandiri',
-    creator_role: 'Logistik Vendor',
-    status: 'Delivered',
-    priority: 'Medium',
-    summary: 'Pengiriman 2 peti kayu berisi 8 unit sensor loadcell dan aksesori pemasangan tiba di pos gerbang Sebamban.',
-    items_count: 12,
-    signatures_count: 1,
-    required_signatures: 2,
-    file_attachment: 'DO_Ekspedisi_Intercomp_KM14.pdf'
-  },
-  {
-    id: 'pdoc-wim-05',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'MOS',
-    stage_number: 5,
-    stage_name: 'Material On Site (MOS)',
-    doc_number: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
-    title: 'MOS Verifikasi Fisik & Penerimaan Material Site WIM (3-Slot Signature)',
-    created_date: '2026-04-07',
-    due_date: '2026-04-07',
-    creator_name: 'Rayhans Najib Al-Faruq',
-    creator_role: 'Teknisi Penerima',
-    status: 'Completed',
-    priority: 'Critical',
-    summary: 'Pemeriksaan fisik kesesuaian serial number 8 loadcell Intercomp, uji visual, dan pembubuhan 3 tanda tangan digital legal.',
-    items_count: 12,
-    signatures_count: 3,
-    required_signatures: 3,
-    file_attachment: 'MOS_001_SITE_Sah.pdf'
-  },
-  {
-    id: 'pdoc-wim-06',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'QC',
-    stage_number: 6,
-    stage_name: 'Commissioning & QC',
-    doc_number: 'QC/SITE/WIM/2026/004',
-    title: 'Sertifikat Kalibrasi & Commissioning Timbangan Jembatan Dinamis Lane 1',
-    created_date: '2026-04-10',
-    due_date: '2026-04-12',
-    creator_name: 'Zainal Fahriandy',
-    creator_role: 'Commissioning Engineer',
-    status: 'Certified',
-    priority: 'High',
-    summary: 'Uji tara dinamis truk batubara 100 Ton, deviasi margin < 0.25%, penerbitan sertifikat kelaikan operasi site.',
-    items_count: 8,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'QC_Sertifikat_Kalibrasi_WIM_Lane1.pdf'
-  },
-  {
-    id: 'pdoc-wim-07',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'Operational',
-    stage_number: 7,
-    stage_name: 'Operasional & Mutasi / Pindahan',
-    doc_number: '006/SITE/MRP/MNTOA/BIBOA/V/2026',
-    title: 'Berita Acara Pemasangan & Pindahan Komponen Loadcell Lane 1 (MRP)',
-    created_date: '2026-05-26',
-    due_date: '2026-05-26',
-    creator_name: 'Zainal Fahriandy',
-    creator_role: 'Supervisor WIM',
-    status: 'In-Use',
-    priority: 'Medium',
-    summary: 'Pencatatan pemindahan dan pemasangan Loadcell Intercomp SN: 91913187, 92309683, 92285794, 91913138 ke Lane 1.',
-    items_count: 4,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'MRP_006_Pindahan_Lane1.pdf'
-  },
-  {
-    id: 'pdoc-wim-08',
-    project_id: 'proj-wim',
-    project_code: 'WIM',
-    stage_code: 'Decommissioning',
-    stage_number: 8,
-    stage_name: 'Decommissioning',
-    doc_number: 'BAA/WIM/2026/001',
-    title: 'Berita Acara Decommissioning Loadcell Patah Pasca 550k Weighing Cycle',
-    created_date: '2026-06-01',
-    due_date: '2026-06-15',
-    creator_name: 'Arya Pratama',
-    creator_role: 'Superadmin / Manajemen',
-    status: 'Approved',
-    priority: 'Low',
-    summary: 'Persetujuan pemusnahan & penghapusan aset sensor loadcell rusak permanen (SN: 91508708) dari neraca inventaris.',
-    items_count: 1,
-    signatures_count: 3,
-    required_signatures: 3,
-    file_attachment: 'BA_Decommissioning_Loadcell_001.pdf'
-  },
-
-  // ── FAMOUS 8-STAGE DOCUMENTS ──
-  {
-    id: 'pdoc-fms-01',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'RFI',
-    stage_number: 1,
-    stage_name: 'Request for Information',
-    doc_number: 'RFI/FMS-BIB/2024/005',
-    title: 'Spesifikasi AI Fatigue DSM Camera, ADAS Safety & Dual-Band GPS Hauling',
-    created_date: '2024-06-10',
-    due_date: '2024-06-20',
-    creator_name: 'Tim Telematika Fleet',
-    creator_role: 'System Engineer',
-    status: 'Completed',
-    priority: 'High',
-    summary: 'RFI evaluasi perangkat telematika armada 825 unit truk hauling mitra BIB: Howen MDVR, Careland DSM, Concox GPS.',
-    items_count: 9415,
-    signatures_count: 1,
-    required_signatures: 1,
-    file_attachment: 'RFI_Telematika_Hauling_2024.pdf'
-  },
-  {
-    id: 'pdoc-fms-02',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'PR',
-    stage_number: 2,
-    stage_name: 'Purchase Requisition',
-    doc_number: 'PR/SITE/FMS/2024/019',
-    title: 'PR Pengadaan 825 Set Perangkat FAMOUS (GPS, MDVR, DSM, ADAS, SSD, OBU, PTT)',
-    created_date: '2024-06-25',
-    due_date: '2024-07-05',
-    creator_name: 'Logistik Pusat',
-    creator_role: 'Procurement Specialist',
-    status: 'Approved',
-    priority: 'Critical',
-    summary: 'Pengajuan belanja modal instalasi telematika keselamatan kerja seluruh mitra hauling (AEK, RBT, BMT, GECL, KMB, BBS, MAV, dll).',
-    items_count: 9415,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'PR_FMS_Batch1_Signed.pdf'
-  },
-  {
-    id: 'pdoc-fms-03',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'PO',
-    stage_number: 3,
-    stage_name: 'Purchase Order',
-    doc_number: 'PO/HOWEN/2024/07-001',
-    title: 'Purchase Order Kontrak Resmi Howen Technologies & Concox Telematics',
-    created_date: '2024-07-10',
-    due_date: '2024-07-25',
-    creator_name: 'Arya Pratama',
-    creator_role: 'Superadmin',
-    status: 'Active',
-    priority: 'Critical',
-    summary: 'Purchase Order vendor internasional untuk batch pertama 1,177 unit MDVR, 1,277 unit DSM, dan 1,157 unit GPS.',
-    items_count: 9415,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'PO_Howen_Concox_2024.pdf'
-  },
-  {
-    id: 'pdoc-fms-04',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'Delivery',
-    stage_number: 4,
-    stage_name: 'Ekspedisi & Surat Jalan',
-    doc_number: 'DO/MVM-BIB/2024/007',
-    title: 'Surat Jalan Pengiriman Batch 7 (DO 829 Set Perangkat ke Workshop Pit South)',
-    created_date: '2024-07-15',
-    due_date: '2024-07-18',
-    creator_name: 'Ekspedisi Multi Trans',
-    creator_role: 'Logistik Mitra',
-    status: 'Delivered',
-    priority: 'High',
-    summary: 'Penerimaan 5 kontainer logistik telematika di workshop utama Pit South BIB.',
-    items_count: 1147,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'DO_Batch7_Workshop.pdf'
-  },
-  {
-    id: 'pdoc-fms-05',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'MOS',
-    stage_number: 5,
-    stage_name: 'Material On Site (MOS)',
-    doc_number: '007/MVM-BIB/VII/2024',
-    title: 'BASTM / MOS Penerimaan Fisik & Cek IMEI Batch 7 (1,147 Perangkat)',
-    created_date: '2024-07-19',
-    due_date: '2024-07-20',
-    creator_name: 'Zainal Fahriandy',
-    creator_role: 'Supervisor Workshop',
-    status: 'Completed',
-    priority: 'Critical',
-    summary: 'Berita Acara Serah Terima Material (BASTM) resmi verifikasi IMEI OBU, MDVR, dan GPS sebelum instalasi armada.',
-    items_count: 1147,
-    signatures_count: 3,
-    required_signatures: 3,
-    file_attachment: 'BASTM_007_MVM_BIB_VII_2024.pdf'
-  },
-  {
-    id: 'pdoc-fms-06',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'QC',
-    stage_number: 6,
-    stage_name: 'Commissioning & QC',
-    doc_number: 'QC/FMS/2024/08-012',
-    title: 'Sertifikat Uji Fungsional AI DSM Fatigue Alert & Stamping QR Unit Truk',
-    created_date: '2024-08-05',
-    due_date: '2024-08-10',
-    creator_name: 'Tim QC Pit South',
-    creator_role: 'QC Inspector',
-    status: 'Certified',
-    priority: 'High',
-    summary: 'Inspeksi sensor drowsiness, yawning alert, lane departure, dan konektivitas live video streaming 4G LTE.',
-    items_count: 825,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'QC_Certification_Fleet_825.pdf'
-  },
-  {
-    id: 'pdoc-fms-07',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'Operational',
-    stage_number: 7,
-    stage_name: 'Operasional & Mutasi / Pindahan',
-    doc_number: '010/MVM-BIB/VIII/2024',
-    title: 'Berita Acara Pindahan Komponen Antar-Armada Truk Hauling (Relokasi / Pindahan)',
-    created_date: '2024-08-03',
-    due_date: '2024-08-15',
-    creator_name: 'Teknisi Fleet Support',
-    creator_role: 'Field Technician',
-    status: 'In-Use',
-    priority: 'Medium',
-    summary: 'Pencatatan perpindahan unit sensor ex-KMB 5116, ex-BMT 3300, dan ex-AMM 9525 ke unit cadangan operasional aktif.',
-    items_count: 3976,
-    signatures_count: 2,
-    required_signatures: 2,
-    file_attachment: 'BA_Pindahan_Unit_010.pdf'
-  },
-  {
-    id: 'pdoc-fms-08',
-    project_id: 'proj-famous',
-    project_code: 'FAMOUS',
-    stage_code: 'Decommissioning',
-    stage_number: 8,
-    stage_name: 'Decommissioning',
-    doc_number: 'BAA/FMS/2025/002',
-    title: 'Berita Acara Decommissioning Kamera CCTV & MDVR Rusak Insiden Unit GECL 9008',
-    created_date: '2025-01-15',
-    due_date: '2025-01-30',
-    creator_name: 'Arya Pratama',
-    creator_role: 'Superadmin',
-    status: 'Approved',
-    priority: 'Low',
-    summary: 'Pemusnahan perangkat terbakar / hancur pasca insiden di hauling KM 22 dengan verifikasi berita acara manajemen.',
-    items_count: 4,
-    signatures_count: 3,
-    required_signatures: 3,
-    file_attachment: 'BA_Decommissioning_FMS_Insiden_9008.pdf'
-  }
-];
-
-// In-memory fallback if Supabase is offline
-let FALLBACK_PROJECTS = [
-  {
-    id: 'proj-wim',
-    code: 'WIM',
-    name: 'WIM (Weigh-In-Motion Scale System)',
-    description: 'Sistem timbangan dinamis jembatan timbang hauling batubara, sensor load cell, telemetry link, dan kamera ANPR.',
-    site_location: 'BIB Pit Sebamban KM-14 & KM-28',
-    color_theme: 'emerald',
-    status: 'active',
-    created_at: '2026-09-01T08:00:00Z'
-  },
-  {
-    id: 'proj-famous',
-    code: 'FAMOUS',
-    name: 'FAMOUS (Fleet Asset Management & Operations Unified System)',
-    description: 'Telematika alat berat tambang, GPS tracker presisi tinggi, fuel level sensors, MDVR fatigue camera, dan OBD CAN-Bus interface.',
-    site_location: 'Pit South BIB & Workshop Utama',
-    color_theme: 'blue',
-    status: 'active',
-    created_at: '2026-09-01T08:00:00Z'
-  },
-  {
-    id: 'proj-ccm',
-    code: 'CCM',
-    name: 'CCM (Coal Crushing & Materials Processing)',
-    description: 'Sistem peremukan batubara, crusher jaw & cone, vibratory screen, motor conveyor drive, sensor temperatur bearing, dan belt weigher.',
-    site_location: 'Port Terminal Sebamban & ROM Stockpile',
-    color_theme: 'amber',
-    status: 'active',
-    created_at: '2026-09-01T08:00:00Z'
-  }
-];
-
-let FALLBACK_PROJECT_WAREHOUSES = [
-  {
-    id: 'pwh-wim-01',
-    project_id: 'proj-wim',
-    name: 'Gudang Central WIM Workshop',
-    code: 'WH-WIM-01',
-    location: 'Sebamban KM 14 Workshop',
-    pic_name: 'Ahmad Fadillah',
-    pic_contact: '0812-3456-7890 (Ch 12)',
-    capacity_shelves: 150,
-    description: 'Penyimpanan cadangan sensor load cell, kabel kedap air, dan PC server bridge.'
-  },
-  {
-    id: 'pwh-wim-02',
-    project_id: 'proj-wim',
-    name: 'Pos Logistik Kontainer KM-28',
-    code: 'WH-WIM-02',
-    location: 'Checkpoint KM 28 Hauling Road',
-    pic_name: 'Budi Santoso',
-    pic_contact: '0813-8877-6655 (Ch 12)',
-    capacity_shelves: 80,
-    description: 'Depot cepat pergantian sensor jembatan timbang titik tengah.'
-  },
-  {
-    id: 'pwh-fam-01',
-    project_id: 'proj-famous',
-    name: 'Gudang Elektronika & GPS Fleet',
-    code: 'WH-FAM-01',
-    location: 'Main Site Office Lantai 2',
-    pic_name: 'Hendri Saputra',
-    pic_contact: '0811-9988-1122 (Ch 08)',
-    capacity_shelves: 200,
-    description: 'Penyimpanan modul GPS telematika, modem satelit, kartu SIM IoT, dan harness.'
-  },
-  {
-    id: 'pwh-fam-02',
-    project_id: 'proj-famous',
-    name: 'Container Tool & Spare Pit South',
-    code: 'WH-FAM-02',
-    location: 'Pit South Workshop Area',
-    pic_name: 'Rizal Fahmi',
-    pic_contact: '0852-7744-1199 (Ch 08)',
-    capacity_shelves: 100,
-    description: 'Mobile container untuk instalasi langsung pada unit alat berat breakdown.'
-  },
-  {
-    id: 'pwh-ccm-01',
-    project_id: 'proj-ccm',
-    name: 'Gudang Sparepart Crusher ROM',
-    code: 'WH-CCM-01',
-    location: 'Stockpile ROM Sebamban KM 06',
-    pic_name: 'Dedi Kurniawan',
-    pic_contact: '0821-5566-3322 (Ch 04)',
-    capacity_shelves: 120,
-    description: 'Gudang komponen berat mechanical crusher, toggle plate, wedge, dan bearing.'
-  },
-  {
-    id: 'pwh-ccm-02',
-    project_id: 'proj-ccm',
-    name: 'Workshop Port Terminal Sebamban',
-    code: 'WH-CCM-02',
-    location: 'Port Coal Terminal Sebamban',
-    pic_name: 'Faisal Akbar',
-    pic_contact: '0819-2233-4411 (Ch 04)',
-    capacity_shelves: 160,
-    description: 'Stok conveyor roller, belt weigher, motor listrik, dan pelumas heavy duty.'
-  }
-];
-
-// Cleaned: All dummy placeholder items removed!
+let FALLBACK_PROJECTS = [];
+let FALLBACK_PROJECT_WAREHOUSES = [];
 let FALLBACK_PROJECT_ITEMS = [];
 let FALLBACK_PROJECT_LOGS = [];
+
+router.use(async (req, res, next) => {
+  try {
+    const ds = await ensureProjectDatasetsLoaded();
+    FAMOUS_ITEMS = ds.famous_items || [];
+    FAMOUS_FLEET_MATRIX = ds.famous_fleet_matrix || [];
+    FAMOUS_SUMMARY = ds.famous_summary || {};
+    WIM_COMPONENTS = ds.wim_components || [];
+    WIM_TRANSACTIONS = ds.wim_transactions || [];
+    WIM_WARRANTY = ds.wim_warranty || [];
+    WIM_SUMMARY = ds.wim_summary || {};
+    PROJECT_DOCUMENTS = ds.project_documents || [];
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Helper: update warranty status based on current date
 const computeWarrantyStatus = (expiryDate) => {
@@ -567,7 +74,7 @@ const computeWarrantyStatus = (expiryDate) => {
 // 0. PROJECT AUTHORITIES & ACCESS CONTROL
 // ==========================================
 
-// GET /api/project-inventory/authorities — Superadmin only: view user project authorities
+// GET /api/project-inventory/authorities â€” Superadmin only: view user project authorities
 router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     let users = [];
@@ -581,13 +88,13 @@ router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) =
       }
     } catch (e) {}
 
-    if (users.length === 0) {
-      users = [
-        { id: 'demo-user-001', email: 'arya-user@digitech.co.id', full_name: 'arya-user', role: 'User', company: 'Digitech', department: 'Operations', is_active: true, is_approved: true },
-        { id: 'demo-admin-001', email: 'arya-admin@digitech.co.id', full_name: 'arya-admin', role: 'Admin', company: 'Digitech', department: 'Inventory Control', is_active: true, is_approved: true },
-        { id: 'demo-sa-001', email: 'arya-superadmin@digitech.co.id', full_name: 'arya-superadmin', role: 'Superadmin', company: 'Digitech', department: 'System Administration', is_active: true, is_approved: true },
-        { id: 'user-pending-001', email: 'budi.santoso@mitra.co.id', full_name: 'Budi Santoso', role: 'User', company: 'Mitra Site', department: 'Maintenance Pit 2', is_active: false, is_approved: false }
-      ];
+    if (users.length === 0 && localDb.isConnected()) {
+      try {
+        const { rows } = await localDb.query(
+          'SELECT id, email, full_name, role, department, company, is_active, is_approved FROM user_profiles ORDER BY created_at DESC'
+        );
+        users = rows || [];
+      } catch (e) {}
     }
 
     let allProjects = FALLBACK_PROJECTS;
@@ -600,6 +107,12 @@ router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) =
         allProjects = dbProjects;
       }
     } catch (e) {}
+    if (allProjects.length === 0 && localDb.isConnected()) {
+      try {
+        const { rows } = await localDb.query('SELECT * FROM project_workspaces ORDER BY created_at ASC');
+        allProjects = rows || [];
+      } catch (e) {}
+    }
 
     allProjects.forEach(p => registerProjectId(p.id));
 
@@ -631,7 +144,7 @@ router.get('/authorities', requireAuth, superadminOnly, async (req, res, next) =
   }
 });
 
-// PUT /api/project-inventory/authorities/:userId — Superadmin only: update user's allowed projects
+// PUT /api/project-inventory/authorities/:userId â€” Superadmin only: update user's allowed projects
 router.put('/authorities/:userId', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -648,7 +161,7 @@ router.put('/authorities/:userId', requireAuth, superadminOnly, async (req, res,
   }
 });
 
-// GET /api/project-inventory/my-authorities — Current user's project authorities
+// GET /api/project-inventory/my-authorities â€” Current user's project authorities
 router.get('/my-authorities', requireAuth, (req, res) => {
   const allowed = getUserAllowedProjects(req.user.id, req.user.role);
   return sendSuccess(res, {
@@ -679,6 +192,13 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
       console.warn('[Project Inventory] Supabase projects error, using fallback:', e.message);
     }
 
+    if (projects.length === 0 && localDb.isConnected()) {
+      try {
+        const { rows } = await localDb.query('SELECT * FROM project_workspaces ORDER BY created_at ASC');
+        projects = rows || [];
+      } catch (e) {}
+    }
+
     // Fetch items & warehouses counts to enrich projects summary
     let items = FALLBACK_PROJECT_ITEMS;
     let warehouses = FALLBACK_PROJECT_WAREHOUSES;
@@ -694,14 +214,14 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
     const enriched = projects.map(proj => {
       const isAuthorized = req.user ? checkUserProjectAccess(req.user, proj.id) : true;
       const isLocked = !isAuthorized;
+      const projWh = warehouses.filter(w => w.project_id === proj.id);
 
-      // If FAMOUS, use real dataset statistics!
       if (proj.id === 'proj-famous' || proj.code === 'FAMOUS') {
-        const totalItems = FAMOUS_SUMMARY.total_items || FAMOUS_ITEMS.length || 9416;
-        const installedCount = FAMOUS_SUMMARY.by_status?.['Terinstall'] || 6513;
-        const warehouseStock = FAMOUS_SUMMARY.by_status?.['Onsite'] || 2028;
-        const damagedCount = (FAMOUS_SUMMARY.by_status?.['Rusak'] || 646) + (FAMOUS_SUMMARY.by_status?.['Return'] || 193);
-        const fleetUnitsCount = FAMOUS_SUMMARY.fleet_summary?.total_units || 825;
+        const totalItems = FAMOUS_SUMMARY.total_items || FAMOUS_ITEMS.length || 0;
+        const installedCount = FAMOUS_SUMMARY.by_status?.['Terinstall'] || 0;
+        const warehouseStock = FAMOUS_SUMMARY.by_status?.['Onsite'] || 0;
+        const damagedCount = (FAMOUS_SUMMARY.by_status?.['Rusak'] || 0) + (FAMOUS_SUMMARY.by_status?.['Return'] || 0);
+        const fleetUnitsCount = FAMOUS_SUMMARY.fleet_summary?.total_units || FAMOUS_FLEET_MATRIX.length || 0;
 
         return {
           ...proj,
@@ -713,20 +233,19 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
             warehouse_stock: warehouseStock,
             damaged_count: damagedCount,
             fleet_units_count: fleetUnitsCount,
-            warehouses_count: 2,
+            warehouses_count: projWh.length,
             active_warranty: installedCount,
             expiring_warranty: 0
           }
         };
       }
 
-      // If WIM, use real dataset statistics!
       if (proj.id === 'proj-wim' || proj.code === 'WIM') {
-        const totalComponents = WIM_SUMMARY.total_components || WIM_COMPONENTS.length || 189;
-        const installedCount = WIM_SUMMARY.by_status?.['Terpasang'] || 116;
-        const warehouseStock = WIM_SUMMARY.by_lane?.['Gudang / Site Office'] || WIM_SUMMARY.by_lane?.['Gudang Buffer'] || WIM_SUMMARY.by_lane?.['Gudang'] || 70;
-        const damagedCount = (WIM_SUMMARY.by_condition?.['Rusak'] || 4) + (WIM_SUMMARY.by_condition?.['Discontinue / Rusak'] || 2);
-        const warrantyCount = WIM_SUMMARY.total_warranty_items || WIM_WARRANTY.length || 41;
+        const totalComponents = WIM_SUMMARY.total_components || WIM_COMPONENTS.length || 0;
+        const installedCount = WIM_SUMMARY.by_status?.['Terpasang'] || 0;
+        const warehouseStock = WIM_SUMMARY.by_lane?.['Gudang / Site Office'] || WIM_SUMMARY.by_lane?.['Gudang Buffer'] || WIM_SUMMARY.by_lane?.['Gudang'] || WIM_SUMMARY.by_status?.['Spare'] || 0;
+        const damagedCount = (WIM_SUMMARY.by_condition?.['Rusak'] || 0) + (WIM_SUMMARY.by_condition?.['Discontinue / Rusak'] || 0);
+        const warrantyCount = WIM_SUMMARY.total_warranty_items || WIM_WARRANTY.length || 0;
 
         return {
           ...proj,
@@ -737,16 +256,14 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
             installed_count: installedCount,
             warehouse_stock: warehouseStock,
             damaged_count: damagedCount,
-            warehouses_count: 2,
+            warehouses_count: projWh.length,
             active_warranty: warrantyCount,
-            expiring_warranty: 2
+            expiring_warranty: 0
           }
         };
       }
 
       const projItems = items.filter(i => i.project_id === proj.id);
-      const projWh = warehouses.filter(w => w.project_id === proj.id);
-
       const installedCount = projItems.filter(i => i.status === 'installed').length;
       const warehouseCount = projItems.filter(i => i.status === 'in_warehouse').length;
       const damagedCount = projItems.filter(i => i.is_damaged || i.status === 'under_repair').length;
@@ -899,7 +416,7 @@ router.get('/warehouses', requireAuth, requireProjectAccess(req => req.query.pro
   }
 });
 
-// POST /api/project-inventory/warehouses — Opsi Tambah Gudang Project
+// POST /api/project-inventory/warehouses â€” Opsi Tambah Gudang Project
 router.post('/warehouses', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { project_id, name, code, location, pic_name, pic_contact, capacity_shelves, description } = req.body;
@@ -1317,6 +834,7 @@ router.post('/documents', requireAuth, (req, res) => {
   };
 
   PROJECT_DOCUMENTS.unshift(newDoc);
+  persistDataset('project_documents', PROJECT_DOCUMENTS);
   return sendCreated(res, newDoc, 'Dokumen tahap berhasil ditambahkan ke proyek.');
 });
 
@@ -1357,6 +875,7 @@ router.post('/documents/:id/attachment', requireAuth, async (req, res) => {
   doc.file_type = file_type || (file_name?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
   if (summary) doc.summary = summary;
   doc.updated_at = new Date().toISOString();
+  persistDataset('project_documents', PROJECT_DOCUMENTS);
 
   return sendSuccess(res, doc, 'Berkas fisik berhasil disimpan dan diakses pada database.');
 });
@@ -1392,6 +911,7 @@ router.post('/documents/:id/sign', requireAuth, async (req, res) => {
     doc.status = 'Approved';
   }
   doc.updated_at = new Date().toISOString();
+  persistDataset('project_documents', PROJECT_DOCUMENTS);
 
   return sendSuccess(res, doc, 'Tanda tangan digital berhasil disahkan pada dokumen.');
 });
@@ -1488,7 +1008,7 @@ router.get('/items', requireAuth, requireProjectAccess(req => req.query.project_
   }
 });
 
-// POST /api/project-inventory/items — Masuknya Barang (Stock In / Receiving)
+// POST /api/project-inventory/items â€” Masuknya Barang (Stock In / Receiving)
 router.post('/items', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const {
@@ -1608,7 +1128,7 @@ router.post('/items', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/project-inventory/items/:id — Update general info
+// PUT /api/project-inventory/items/:id â€” Update general info
 router.put('/items/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -1942,7 +1462,7 @@ router.post('/items/:id/replace', requireAuth, adminOnly, async (req, res, next)
 // 5. AUDIT TIMELINE & MUTATION LOGS
 // ==========================================
 
-// POST /api/project-inventory/request — Permohonan Komponen / Material Lengkap (Official Material Request)
+// POST /api/project-inventory/request â€” Permohonan Komponen / Material Lengkap (Official Material Request)
 router.post('/request', requireAuth, requireProjectAccess(req => req.body.project_id), async (req, res, next) => {
   try {
     const {
@@ -2105,7 +1625,11 @@ router.get('/logs', requireAuth, requireProjectAccess(req => req.query.project_i
 
     let logs = FALLBACK_PROJECT_LOGS;
     try {
-      let query = supabase.from('project_inventory_logs').select('*').order('created_at', { ascending: false });
+      let query = supabase
+        .from('project_inventory_logs')
+        .select('*')
+        .neq('action_type', 'SYSTEM_DATASET')
+        .order('created_at', { ascending: false });
       if (project_id) query = query.eq('project_id', project_id);
       if (item_id) query = query.eq('item_id', item_id);
       const { data, error } = await query;

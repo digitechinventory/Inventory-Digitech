@@ -43,15 +43,6 @@ import QRLabelPrintModal from '../components/printer/QRLabelPrintModal.jsx';
 import PrinterSetupModal from '../components/printer/PrinterSetupModal.jsx';
 import CyberQRCodeModal from '../components/common/CyberQRCodeModal.jsx';
 import IncomingStockQRModal from '../components/inventory/IncomingStockQRModal.jsx';
-import { INVENTORY_LEDGER, WAREHOUSE_ZONES, SECTION_USAGE_STATS } from '../mockData.js';
-
-
-const WAREHOUSES = [
-  { id: 'wh-01', name: 'Area Rak 1', code: 'BIB-WH-01', location: 'Pit Sebamban KM 24' },
-  { id: 'wh-02', name: 'Area Rak 2', code: 'BIB-PORT-01', location: 'Port Batulicin' },
-  { id: 'wh-03', name: 'Area Rak 3', code: 'BIB-WH-03', location: 'Logistics Hub Angsana' },
-  { id: 'wh-04', name: 'Area Rak 4', code: 'BIB-REG-04', location: 'Transit Banjarmasin' },
-];
 
 export default function InventoryPage() {
   const navigate = useNavigate();
@@ -74,17 +65,28 @@ export default function InventoryPage() {
   const [selectedQrFilter, setSelectedQrFilter] = useState('ALL'); // 'ALL' | 'WITHOUT_QR' | 'WITH_QR'
   const [isSubmittingNewItem, setIsSubmittingNewItem] = useState(false);
 
+  // Fetch warehouses from database
+  const { data: warehousesData } = useQuery({
+    queryKey: ['inventory-warehouses'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/inventory/warehouses');
+        return Array.isArray(data?.data) ? data.data : [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 60000
+  });
+  const WAREHOUSES = warehousesData || [];
+
   // Track printed/installed QR labels in localStorage
   const [printedSkus, setPrintedSkus] = useState(() => {
     try {
       const stored = localStorage.getItem('digitech_printed_qr_skus');
-      if (stored) return JSON.parse(stored);
-      // Default initial seeds so users immediately see both tagged and untagged assets
-      const initial = ['BIB-CAT-777D-FLTR', 'BIB-OIL-TELLUS-46', 'BIB-BRG-SKF-6205'];
-      localStorage.setItem('digitech_printed_qr_skus', JSON.stringify(initial));
-      return initial;
+      return stored ? JSON.parse(stored) : [];
     } catch {
-      return ['BIB-CAT-777D-FLTR', 'BIB-OIL-TELLUS-46'];
+      return [];
     }
   });
 
@@ -121,7 +123,7 @@ export default function InventoryPage() {
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [isUpdatingItem, setIsUpdatingItem] = useState(false);
 
-  // Fetch real inventory from API (falls back gracefully to INVENTORY_LEDGER)
+  // Fetch real inventory from API
   const { data: inventoryData, isLoading, refetch } = useQuery({
     queryKey: ['inventory', selectedWarehouse, selectedCategory, search],
     queryFn: async () => {
@@ -132,15 +134,39 @@ export default function InventoryPage() {
         if (search) params.set('search', search);
         const { data } = await api.get(`/inventory?${params}`);
         const items = data?.data || data;
-        return Array.isArray(items) && items.length > 0 ? items : INVENTORY_LEDGER;
+        return Array.isArray(items) ? items : [];
       } catch {
-        return INVENTORY_LEDGER;
+        return [];
       }
     },
     staleTime: 30000
   });
 
-  const inventory = inventoryData || INVENTORY_LEDGER;
+  const inventory = inventoryData || [];
+
+  // Derive warehouse zones dynamically from database inventory items
+  const WAREHOUSE_ZONES = React.useMemo(() => {
+    const zoneDefs = [
+      { code: 'A', name: 'Fast Moving & Filters' },
+      { code: 'B', name: 'Hydraulics & Heavy Parts' },
+      { code: 'C', name: 'Lubricants & Fluids' },
+      { code: 'D', name: 'Electrical & Tools' },
+    ];
+    return zoneDefs.map((z) => {
+      const zoneItems = inventory.filter((it) =>
+        String(it.rack || it.bin_location || '').toUpperCase().includes(z.code)
+      );
+      const racks = Array.from({ length: 6 }, (_, idx) => {
+        const rackId = `R-${z.code}0${idx + 1}`;
+        const matched = zoneItems.find((it) => (it.rack || it.bin_location) === rackId) || zoneItems[idx];
+        const qty = Number(matched?.current_stock ?? matched?.stock_count ?? 0);
+        const min = Number(matched?.min_threshold ?? 10);
+        const status = matched ? (qty > min ? 'full' : 'optimal') : 'empty';
+        return { id: rackId, status };
+      });
+      return { ...z, racks };
+    });
+  }, [inventory]);
 
   // Extract categories dynamically
   const categories = ['ALL', ...new Set(inventory.map(i => i.category).filter(Boolean))];

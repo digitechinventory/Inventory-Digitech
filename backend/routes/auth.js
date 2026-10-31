@@ -1,12 +1,12 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase, supabaseAdmin } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { cacheGet, cacheSet, cacheDel } from '../services/redis.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { sendNewUserAlertToAdmin, sendTwoFactorOtpEmail } from '../services/mailer.js';
 import { sendNewUserTelegramAlert } from '../services/telegram.js';
-import { bruteForceProtection, authRateLimit } from '../middlewares/security.js';
+import { bruteForceProtection, authRateLimit } from '../middleware/security.js';
 import { getSessionDurationConfig, updateSessionDurationConfig } from '../services/systemSettings.js';
 import { verifyTotp } from '../utils/totp.js';
 import localDb from '../services/localDb.js';
@@ -14,110 +14,9 @@ import { getUserAllowedProjects } from '../services/projectAuthorityService.js';
 
 const router = Router();
 const MFA_PENDING_OTPS = {};
+const FALLBACK_USERS = {};
 
-const FALLBACK_USERS = {
-  'arya-user@digitech.co.id': {
-    id: 'demo-user-001',
-    email: 'arya-user@digitech.co.id',
-    full_name: 'arya-user',
-    role: 'User',
-    company: 'Digitech',
-    department: 'Operations',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281200000001'
-  },
-  'user@digitech.co.id': {
-    id: 'demo-user-001',
-    email: 'arya-user@digitech.co.id',
-    full_name: 'arya-user',
-    role: 'User',
-    company: 'Digitech',
-    department: 'Operations',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281200000001'
-  },
-  'arya-admin@digitech.co.id': {
-    id: 'demo-admin-001',
-    email: 'arya-admin@digitech.co.id',
-    full_name: 'arya-admin',
-    role: 'Admin',
-    company: 'Digitech',
-    department: 'Inventory Control',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281200000002'
-  },
-  'admin@digitech.co.id': {
-    id: 'demo-admin-001',
-    email: 'arya-admin@digitech.co.id',
-    full_name: 'arya-admin',
-    role: 'Admin',
-    company: 'Digitech',
-    department: 'Inventory Control',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281200000002'
-  },
-  'arya-superadmin@digitech.co.id': {
-    id: 'demo-sa-001',
-    email: 'arya-superadmin@digitech.co.id',
-    full_name: 'arya-superadmin',
-    role: 'Superadmin',
-    company: 'Digitech',
-    department: 'System Administration',
-    site_id: null,
-    is_active: true,
-    phone: '+6281200000003'
-  },
-  'superadmin@digitech.co.id': {
-    id: 'demo-sa-001',
-    email: 'arya-superadmin@digitech.co.id',
-    full_name: 'arya-superadmin',
-    role: 'Superadmin',
-    company: 'Digitech',
-    department: 'System Administration',
-    site_id: null,
-    is_active: true,
-    phone: '+6281200000003'
-  },
-  'aryatonys01@gmail.com': {
-    id: 'usr-aryatonys-01',
-    email: 'aryatonys01@gmail.com',
-    full_name: 'Arya Toni Saputra',
-    role: 'User',
-    company: 'PT Borneo Indobara',
-    department: 'Digital Sustainability Operations',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281234567890'
-  },
-  'thegodsun1212@gmail.com': {
-    id: 'adm-thegodsun-01',
-    email: 'thegodsun1212@gmail.com',
-    full_name: 'Admin Inventaris & Logistik',
-    role: 'Admin',
-    company: 'Digitech',
-    department: 'Logistics & Warehouse Operations',
-    site_id: 'site-bib-02',
-    is_active: true,
-    phone: '+6281298765432'
-  },
-  'arch.cronus.corp@gmail.com': {
-    id: 'sa-archcronus-01',
-    email: 'arch.cronus.corp@gmail.com',
-    full_name: 'Superadmin Digitech',
-    role: 'Superadmin',
-    company: 'Digitech',
-    department: 'Executive & Security System',
-    site_id: null,
-    is_active: true,
-    phone: '+6281112223334'
-  }
-};
-
-// POST /api/auth/register — PRD Section 3.2
+// POST /api/auth/register â€” PRD Section 3.2
 router.post('/register', async (req, res, next) => {
   try {
     const { full_name, email, password, phone, company, department } = req.body;
@@ -213,7 +112,7 @@ router.post('/register', async (req, res, next) => {
   }
 });
 
-// POST /api/auth/login — PRD Section 3.4 & 3.5
+// POST /api/auth/login â€” PRD Section 3.4 & 3.5
 router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -371,7 +270,7 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
     // 2. Validate is_active status (PRD Section 3.5 & SDD 2.3)
     const isActive = profile.is_active ?? profile.is_approved ?? false;
     if (!isActive) {
-      // Akun tidak aktif — tidak menambah counter brute force
+      // Akun tidak aktif â€” tidak menambah counter brute force
       throw new AppError(
         'Akun Anda sedang menunggu persetujuan dan aktivasi oleh Superadmin. Silakan hubungi pengawas site.',
         403,
@@ -380,7 +279,7 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
       );
     }
 
-    // Login kredensial berhasil — reset brute force counter
+    // Login kredensial berhasil â€” reset brute force counter
     if (req._bruteForceSuccess) req._bruteForceSuccess();
 
     // 3. Evaluasi Kebijakan 2FA / Google Authenticator & Email OTP
@@ -491,7 +390,7 @@ router.post('/login', authRateLimit, bruteForceProtection, async (req, res, next
   }
 });
 
-// POST /api/auth/verify-2fa — Verifikasi kode 2FA (Google Authenticator / Email OTP)
+// POST /api/auth/verify-2fa â€” Verifikasi kode 2FA (Google Authenticator / Email OTP)
 router.post('/verify-2fa', authRateLimit, async (req, res, next) => {
   try {
     const { mfaPendingToken, code } = req.body;
@@ -566,7 +465,7 @@ router.post('/verify-2fa', authRateLimit, async (req, res, next) => {
       throw new AppError('Kode 2FA tidak cocok atau telah kedaluwarsa. Pastikan jam pada perangkat Anda akurat.', 401, 'INVALID_2FA_CODE');
     }
 
-    // Verifikasi Berhasil — Terbitkan Token Sesi Penuh
+    // Verifikasi Berhasil â€” Terbitkan Token Sesi Penuh
     const sessionConfig = await getSessionDurationConfig();
     const sessionDurationMs = sessionConfig.durationMs || (8 * 3600 * 1000);
     const expiresAt = Date.now() + sessionDurationMs;
@@ -616,7 +515,7 @@ router.post('/verify-2fa', authRateLimit, async (req, res, next) => {
   }
 });
 
-// POST /api/auth/resend-email-otp — Mengirimkan kembali kode OTP 6-digit ke email
+// POST /api/auth/resend-email-otp â€” Mengirimkan kembali kode OTP 6-digit ke email
 router.post('/resend-email-otp', authRateLimit, async (req, res, next) => {
   try {
     const { mfaPendingToken } = req.body;
@@ -670,7 +569,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/auth/session-config — Mendapatkan pengaturan masa berlaku sesi login
+// GET /api/auth/session-config â€” Mendapatkan pengaturan masa berlaku sesi login
 router.get('/session-config', async (req, res, next) => {
   try {
     const config = await getSessionDurationConfig();
@@ -680,7 +579,7 @@ router.get('/session-config', async (req, res, next) => {
   }
 });
 
-// PUT /api/auth/session-config — Mengubah pengaturan masa berlaku sesi login & email audit sinkronisasi (Khusus Superadmin)
+// PUT /api/auth/session-config â€” Mengubah pengaturan masa berlaku sesi login & email audit sinkronisasi (Khusus Superadmin)
 router.put('/session-config', requireAuth, async (req, res, next) => {
   try {
     if (req.user?.role !== 'Superadmin') {

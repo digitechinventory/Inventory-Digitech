@@ -46,25 +46,19 @@ export default function IronNestWarehousesView() {
   const [currentFilter, setCurrentFilter] = useState('all'); // all | occupied | empty | critical
   const [currentSort, setCurrentSort] = useState('code'); // code | usage | name
 
-  // Live data
-  const [warehouses, setWarehouses] = useState([
-    { id: 'wh-01', name: 'Area Rak 1', fullName: 'Area Rak 1 (Main Pit Site BIB-02)', code: 'BIB-R1', total_shelves: 240, occupied_shelves: 134 },
-    { id: 'wh-02', name: 'Area Rak 2', fullName: 'Area Rak 2 (Central Workshop)', code: 'BIB-R2', total_shelves: 180, occupied_shelves: 95 },
-    { id: 'wh-03', name: 'Area Rak 3', fullName: 'Area Rak 3 (Sebamban Port Logistics)', code: 'BIB-R3', total_shelves: 200, occupied_shelves: 110 },
-    { id: 'wh-04', name: 'Area Rak 4', fullName: 'Area Rak 4 (Sub-Depot Angsana)', code: 'BIB-R4', total_shelves: 120, occupied_shelves: 48 },
-  ]);
-
+  // Live data from database
+  const [warehouses, setWarehouses] = useState([]);
   const [dbItems, setDbItems] = useState([]);
   const [stats, setStats] = useState({
-    locationUsedPercent: 56,
-    totalShelves: 240,
-    emptyShelves: 136,
-    fullShelves: 84,
-    newlyAdded: 20,
-    ordersReceived: 4236,
-    ordersShipped: 2778,
-    ordersReturned: 147,
-    ordersCanceled: 537
+    locationUsedPercent: 0,
+    totalShelves: 0,
+    emptyShelves: 0,
+    fullShelves: 0,
+    newlyAdded: 0,
+    ordersReceived: 0,
+    ordersShipped: 0,
+    ordersReturned: 0,
+    ordersCanceled: 0
   });
 
   // Success message toast

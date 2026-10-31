@@ -26,7 +26,7 @@ import {
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { INITIAL_SITES, calculateHaversineDistance } from '../mockData.js';
+import { calculateHaversineDistance } from '../utils/geo.js';
 
 // Fix Leaflet marker icons with clean CDN links
 delete L.Icon.Default.prototype._getIconUrl;
@@ -60,58 +60,6 @@ const assetIcon = createCustomIcon('#2563EB', 'EQ', 'Aset Unit');
 const toolIcon = createCustomIcon('#D97706', 'TL', 'Peralatan');
 const simulatedDeviceIcon = createCustomIcon('#10B981', 'GPS', 'GPS Perangkat');
 
-// Sample Operational Assets & Equipment deployed across mining sites
-const OPERATIONAL_ASSETS = [
-  {
-    id: 'ast-001',
-    name: 'Caterpillar 777D Haul Truck #HT-08',
-    category: 'Heavy Equipment',
-    status: 'Operasional',
-    lat: -3.620800,
-    lng: 115.653400,
-    siteName: 'BIB Pit Sebamban Base Workshop',
-    condition: 'Optimal (Maintenance Overhaul)',
-    assignedPIC: 'arya-user',
-    lastPing: '2 menit lalu'
-  },
-  {
-    id: 'ast-002',
-    name: 'Komatsu PC2000-8 Excavator #EX-02',
-    category: 'Excavator Fleet',
-    status: 'Operasional',
-    lat: -3.622100,
-    lng: 115.655100,
-    siteName: 'Area Tambang Pit Sebamban KM 24',
-    condition: 'Siap Pakai (Hydraulic Normal)',
-    assignedPIC: 'Mekanik Shift A',
-    lastPing: '5 menit lalu'
-  },
-  {
-    id: 'ast-003',
-    name: 'Snap-on HD Digital Torque Wrench 1000Nm',
-    category: 'Special Tool',
-    status: 'Dipinjam',
-    lat: -3.511900,
-    lng: 115.820500,
-    siteName: 'BIB Central Heavy Equipment Warehouse',
-    condition: 'Terkalibrasi',
-    assignedPIC: 'Budi Santoso',
-    lastPing: '12 menit lalu'
-  },
-  {
-    id: 'ast-004',
-    name: 'Tangki Pasokan Pelumas Tellus S2 V46',
-    category: 'Bulk Storage',
-    status: 'Tersedia',
-    lat: -3.456800,
-    lng: 115.985100,
-    siteName: 'BIB Port Batulicin Terminal',
-    condition: 'Level 82% (28 Drum)',
-    assignedPIC: 'arya-admin',
-    lastPing: '1 jam lalu'
-  }
-];
-
 // Component to capture map clicks and update coordinates
 function MapClickHandler({ onMapClick }) {
   useMapEvents({
@@ -135,23 +83,31 @@ export default function AssetTrackingPage() {
   const [showAllAssets, setShowAllAssets] = useState(true);
   const [showGeofences, setShowGeofences] = useState(true);
 
-  // Sites state initialized from localStorage or mockData, then synced from DB
-  const [sites, setSites] = useState(() => {
-    try {
-      const saved = localStorage.getItem('digitech_gis_sites');
-      return saved ? JSON.parse(saved) : INITIAL_SITES;
-    } catch {
-      return INITIAL_SITES;
-    }
-  });
+  // Sites & Operational Assets loaded from backend database
+  const [sites, setSites] = useState([]);
+  const [OPERATIONAL_ASSETS, setOperationalAssets] = useState([]);
+  const [selectedSiteId, setSelectedSiteId] = useState(null);
 
-  // Sync master sites from backend database
+  // Editable Site Coordinates and Radius
+  const [centerLat, setCenterLat] = useState(-3.6215);
+  const [centerLng, setCenterLng] = useState(115.6542);
+  const [radiusMeters, setRadiusMeters] = useState(200);
+
+  // Test simulation coordinates
+  const [testLat, setTestLat] = useState(-3.6207);
+  const [testLng, setTestLng] = useState(115.6548);
+
+  // Sync master sites & operational assets from backend database
   React.useEffect(() => {
-    async function loadSites() {
+    async function loadSitesAndAssets() {
       try {
-        const res = await api.get('/sites');
-        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          const mapped = res.data.data.map(s => ({
+        const [sitesRes, toolsRes] = await Promise.all([
+          api.get('/sites'),
+          api.get('/tools').catch(() => ({ data: { data: [] } }))
+        ]);
+        const rawSites = sitesRes.data?.data || [];
+        if (Array.isArray(rawSites) && rawSites.length > 0) {
+          const mapped = rawSites.map(s => ({
             id: s.id,
             name: s.name,
             code: s.code,
@@ -163,27 +119,52 @@ export default function AssetTrackingPage() {
             status: s.status || 'active'
           }));
           setSites(mapped);
+          const first = mapped[0];
+          setSelectedSiteId(first.id);
+          setCenterLat(first.lat);
+          setCenterLng(first.lng);
+          setRadiusMeters(first.radius || 200);
+          setTestLat(first.lat + 0.0008);
+          setTestLng(first.lng + 0.0006);
+
+          const rawTools = toolsRes.data?.data || [];
+          const mappedAssets = Array.isArray(rawTools)
+            ? rawTools.map((t, idx) => {
+                const refSite = mapped[idx % mapped.length] || first;
+                return {
+                  id: t.id || `ast-${idx + 1}`,
+                  name: t.tool_name || t.name || 'Unit Peralatan Site',
+                  category: t.tool_code || 'Operational Asset',
+                  status: t.status === 'returned' ? 'Tersedia' : 'Dipinjam',
+                  lat: Number(refSite.lat) + (idx + 1) * 0.0005,
+                  lng: Number(refSite.lng) + (idx + 1) * 0.0004,
+                  siteName: refSite.name,
+                  condition: t.condition_out || 'Optimal',
+                  assignedPIC: t.borrower_name || '-',
+                  lastPing: t.borrowed_at ? new Date(t.borrowed_at).toLocaleDateString('id-ID') : 'Aktif'
+                };
+              })
+            : [];
+          setOperationalAssets(mappedAssets);
         }
       } catch (err) {
-        console.warn('[AssetTracking] Using cached sites:', err.message);
+        console.warn('[AssetTracking] Failed to load sites from DB:', err.message);
       }
     }
-    loadSites();
+    loadSitesAndAssets();
   }, []);
 
-  const [selectedSiteId, setSelectedSiteId] = useState(sites[1]?.id || sites[0]?.id);
   const selectedSite = useMemo(() => {
-    return sites.find(s => s.id === selectedSiteId) || sites[0];
-  }, [sites, selectedSiteId]);
-
-  // Editable Site Coordinates and Radius
-  const [centerLat, setCenterLat] = useState(selectedSite.lat);
-  const [centerLng, setCenterLng] = useState(selectedSite.lng);
-  const [radiusMeters, setRadiusMeters] = useState(selectedSite.radius || 200);
-
-  // Test simulation coordinates
-  const [testLat, setTestLat] = useState(selectedSite.lat + 0.0008);
-  const [testLng, setTestLng] = useState(selectedSite.lng + 0.0006);
+    return sites.find(s => s.id === selectedSiteId) || sites[0] || {
+      id: 'default',
+      name: 'Memuat Lokasi Site...',
+      code: '-',
+      lat: centerLat,
+      lng: centerLng,
+      radius: radiusMeters,
+      areaName: '-'
+    };
+  }, [sites, selectedSiteId, centerLat, centerLng, radiusMeters]);
 
   // Click mode: 'center' | 'test'
   const [clickMode, setClickMode] = useState('center');

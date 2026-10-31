@@ -2,57 +2,15 @@ import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly, superadminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
-// Fallback opname sessions
-const FALLBACK_OPNAMES = [
-  {
-    id: 'so-001',
-    opname_number: 'SO-2026-IX-001',
-    zone: 'Zona A (Fast Moving)',
-    status: 'pending_approval',
-    auditor_name: 'arya-admin',
-    notes: 'Audit fisik triwulan III 2026',
-    created_at: '2026-09-18T10:00:00.000Z',
-    items: [
-      {
-        id: 'so-item-1',
-        item_name: 'Cat 777D Engine Oil Filter',
-        sku: 'BIB-CAT-777D-FLTR',
-        rack: 'R-A01',
-        system_qty: 4,
-        physical_qty: 3,
-        variance: -1,
-        variance_reason: 'Kemungkinan belum terpotong pada tiket MR perbaikan darurat'
-      },
-      {
-        id: 'so-item-2',
-        item_name: 'Komatsu PC2000 Hydraulic Seal Kit',
-        sku: 'BIB-KOM-PC2000-HYD',
-        rack: 'R-A02',
-        system_qty: 18,
-        physical_qty: 18,
-        variance: 0,
-        variance_reason: 'Sesuai fisik'
-      },
-      {
-        id: 'so-item-3',
-        item_name: 'Volvo FMX 440 Brake Lining Assm',
-        sku: 'BIB-VOL-FMX-BRK',
-        rack: 'R-B01',
-        system_qty: 32,
-        physical_qty: 34,
-        variance: 2,
-        variance_reason: 'Kelebihan fisik sisa retur proyek pembongkaran'
-      }
-    ]
-  }
-];
+// Runtime cache for opname sessions synced with database
+const FALLBACK_OPNAMES = [];
 
-// GET /api/opname — List opnames
+// GET /api/opname â€” List opnames
 router.get('/', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { data, error } = await supabase
@@ -96,7 +54,7 @@ router.get('/:id', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/opname/start — Start a new Stock Opname session (Admin)
+// POST /api/opname/start â€” Start a new Stock Opname session (Admin)
 router.post('/start', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { zone, notes } = req.body;
@@ -127,7 +85,7 @@ router.post('/start', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/opname/:id/submit-count — Submit Blind Count (Admin)
+// POST /api/opname/:id/submit-count â€” Submit Blind Count (Admin)
 router.post('/:id/submit-count', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { items } = req.body; // array of { sku, item_name, rack, physical_qty, variance_reason }
@@ -230,7 +188,7 @@ router.post('/:id/submit-count', requireAuth, adminOnly, async (req, res, next) 
   }
 });
 
-// PUT /api/opname/:id/approve-variance — Superadmin Variance Approval (PRD 4.3.1 & SDD 9.3)
+// PUT /api/opname/:id/approve-variance â€” Superadmin Variance Approval (PRD 4.3.1 & SDD 9.3)
 router.put('/:id/approve-variance', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { data: opname } = await supabase

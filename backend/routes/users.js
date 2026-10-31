@@ -1,11 +1,11 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import crypto from 'crypto';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly, superadminOnly } from '../middleware/rbac.js';
 import { cacheDel } from '../services/redis.js';
-import { sendSuccess } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { sendActivationEmail, sendAccountSettingsChangeEmail } from '../services/mailer.js';
 
 import { 
@@ -19,59 +19,9 @@ import {
 import { getUserAllowedProjects, setUserAllowedProjects } from '../services/projectAuthorityService.js';
 
 const router = Router();
+let FALLBACK_USERS_LIST = [];
 
-let FALLBACK_USERS_LIST = [
-  {
-    id: 'demo-user-001',
-    email: 'arya-user@digitech.co.id',
-    full_name: 'arya-user',
-    role: 'User',
-    company: 'Digitech',
-    department: 'Operations',
-    site_id: 'site-bib-02',
-    is_active: true,
-    is_approved: true,
-    created_at: '2026-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'demo-admin-001',
-    email: 'arya-admin@digitech.co.id',
-    full_name: 'arya-admin',
-    role: 'Admin',
-    company: 'Digitech',
-    department: 'Inventory Control',
-    site_id: 'site-bib-02',
-    is_active: true,
-    is_approved: true,
-    created_at: '2026-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'demo-sa-001',
-    email: 'arya-superadmin@digitech.co.id',
-    full_name: 'arya-superadmin',
-    role: 'Superadmin',
-    company: 'Digitech',
-    department: 'System Administration',
-    site_id: null,
-    is_active: true,
-    is_approved: true,
-    created_at: '2026-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'user-pending-001',
-    email: 'budi.santoso@mitra.co.id',
-    full_name: 'Budi Santoso',
-    role: 'User',
-    company: 'Mitra Site',
-    department: 'Maintenance Pit 2',
-    site_id: 'site-central-office',
-    is_active: false,
-    is_approved: false,
-    created_at: '2026-09-26T10:15:00.000Z'
-  }
-];
-
-// GET /api/users — Admin+ can view users
+// GET /api/users â€” Admin+ can view users
 router.get('/', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { status, role } = req.query;
@@ -113,7 +63,7 @@ router.get('/', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// GET /api/users/pending — Superadmin only (Antrean Aktivasi)
+// GET /api/users/pending â€” Superadmin only (Antrean Aktivasi)
 router.get('/pending', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { data, error } = await supabase
@@ -152,7 +102,7 @@ router.get('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/users/:id/approve — Superadmin only (PRD Section 3.3)
+// PUT /api/users/:id/approve â€” Superadmin only (PRD Section 3.3)
 router.put('/:id/approve', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { role } = req.body;
@@ -191,7 +141,7 @@ router.put('/:id/approve', requireAuth, superadminOnly, async (req, res, next) =
   }
 });
 
-// PUT /api/users/:id/reject — Superadmin only
+// PUT /api/users/:id/reject â€” Superadmin only
 router.put('/:id/reject', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { notes } = req.body;
@@ -211,7 +161,7 @@ router.put('/:id/reject', requireAuth, superadminOnly, async (req, res, next) =>
   }
 });
 
-// PUT /api/users/:id/role — Superadmin only
+// PUT /api/users/:id/role â€” Superadmin only
 router.put('/:id/role', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { role } = req.body;
@@ -248,7 +198,7 @@ router.put('/:id/role', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/users/:id/status — Superadmin only: Activate or Deactivate user
+// PUT /api/users/:id/status â€” Superadmin only: Activate or Deactivate user
 router.put('/:id/status', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { is_active } = req.body;
@@ -295,7 +245,7 @@ router.put('/:id/status', requireAuth, superadminOnly, async (req, res, next) =>
   }
 });
 
-// DELETE /api/users/:id — Superadmin only
+// DELETE /api/users/:id â€” Superadmin only
 router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     if (req.params.id === req.user.id) {
@@ -320,7 +270,7 @@ router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/users/:id/projects — Superadmin only: Update project authority for user
+// PUT /api/users/:id/projects â€” Superadmin only: Update project authority for user
 router.put('/:id/projects', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -343,7 +293,7 @@ router.put('/:id/projects', requireAuth, superadminOnly, async (req, res, next) 
   }
 });
 
-// GET /api/users/me — Get profile of currently authenticated user with MFA info & project authorities
+// GET /api/users/me â€” Get profile of currently authenticated user with MFA info & project authorities
 router.get('/me', requireAuth, async (req, res, next) => {
   try {
     let profile = null;
@@ -389,7 +339,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/users/profile — Update current user profile
+// PUT /api/users/profile â€” Update current user profile
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
     const { full_name, phone, department, company } = req.body;
@@ -431,7 +381,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/users/mfa/email — Enable/Disable Email MFA
+// POST /api/users/mfa/email â€” Enable/Disable Email MFA
 router.post('/mfa/email', requireAuth, async (req, res, next) => {
   try {
     const { enabled } = req.body;
@@ -468,7 +418,7 @@ router.post('/mfa/email', requireAuth, async (req, res, next) => {
 // In-memory signature cache for resilient fallback across demo users
 const USER_SIGNATURES = {};
 
-// GET /api/users/signature — Get currently logged in user's saved signature
+// GET /api/users/signature â€” Get currently logged in user's saved signature
 router.get('/signature', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -491,7 +441,7 @@ router.get('/signature', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/users/signature — Save / update user's extracted signature
+// POST /api/users/signature â€” Save / update user's extracted signature
 router.post('/signature', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -517,7 +467,7 @@ router.post('/signature', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/users/mfa/status — Cek status MFA akun saat ini
+// GET /api/users/mfa/status â€” Cek status MFA akun saat ini
 router.get('/mfa/status', requireAuth, async (req, res, next) => {
   try {
     let profile = null;
@@ -547,7 +497,7 @@ router.get('/mfa/status', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/users/mfa/generate-secret — Generate secret baru untuk scan Google Authenticator
+// POST /api/users/mfa/generate-secret â€” Generate secret baru untuk scan Google Authenticator
 router.post('/mfa/generate-secret', requireAuth, async (req, res, next) => {
   try {
     const newSecret = generateTotpSecret();
@@ -561,7 +511,7 @@ router.post('/mfa/generate-secret', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/users/mfa/authenticator — Enable/Disable Google Authenticator (TOTP)
+// POST /api/users/mfa/authenticator â€” Enable/Disable Google Authenticator (TOTP)
 router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
   try {
     const { enabled, code, secret } = req.body;
@@ -619,7 +569,7 @@ router.post('/mfa/authenticator', requireAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/users/change-password — Update password
+// PUT /api/users/change-password â€” Update password
 router.put('/change-password', requireAuth, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;

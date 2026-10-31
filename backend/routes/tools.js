@@ -1,55 +1,14 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
+const FALLBACK_TOOLS = [];
 
-const FALLBACK_TOOLS = [
-  {
-    id: 'tl-001',
-    tool_name: 'Digital Torque Wrench 1/2" Heavy Duty',
-    serial_number: 'TW-2026-089',
-    borrower_name: 'arya-user',
-    borrower_email: 'arya-user@digitech.co.id',
-    loan_date: '2026-09-20',
-    expected_return_date: '2026-09-25',
-    actual_return_date: null,
-    status: 'borrowed',
-    condition: 'Baik',
-    notes: 'Pekerjaan overhaul engine'
-  },
-  {
-    id: 'tl-002',
-    tool_name: 'Fluke 87V Industrial Multimeter',
-    serial_number: 'FLUKE-87V-4421',
-    borrower_name: 'arya-user',
-    borrower_email: 'arya-user@digitech.co.id',
-    loan_date: '2026-09-12',
-    expected_return_date: '2026-09-19',
-    actual_return_date: null,
-    status: 'overdue',
-    condition: 'Baik',
-    notes: 'Perbaikan panel sensor'
-  },
-  {
-    id: 'tl-003',
-    tool_name: 'Hydraulic Pressure Test Kit 600 Bar',
-    serial_number: 'HYD-TST-600B',
-    borrower_name: 'arya-admin',
-    borrower_email: 'arya-admin@digitech.co.id',
-    loan_date: '2026-09-15',
-    expected_return_date: '2026-09-18',
-    actual_return_date: '2026-09-18',
-    status: 'returned',
-    condition: 'Baik',
-    notes: 'Pengecekan valve manifold'
-  }
-];
-
-// GET /api/tools/loans — List tool loans
+// GET /api/tools/loans â€” List tool loans
 router.get('/loans', requireAuth, async (req, res, next) => {
   try {
     const { status } = req.query;
@@ -102,7 +61,7 @@ router.get('/stats', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/tools/loans — Borrow a tool (PRD Section 6.5)
+// POST /api/tools/loans â€” Borrow a tool (PRD Section 6.5)
 router.post('/loans', requireAuth, async (req, res, next) => {
   try {
     const { tool_name, serial_number, expected_return_date, notes } = req.body;
@@ -137,7 +96,7 @@ router.post('/loans', requireAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/tools/loans/:id/return — Return tool (Admin / User)
+// PUT /api/tools/loans/:id/return â€” Return tool (Admin / User)
 router.put('/loans/:id/return', requireAuth, async (req, res, next) => {
   try {
     const { condition, notes } = req.body;
@@ -161,7 +120,7 @@ router.put('/loans/:id/return', requireAuth, async (req, res, next) => {
   }
 });
 
-// DELETE /api/tools/loans/:id — Hapus satu catatan peminjaman
+// DELETE /api/tools/loans/:id â€” Hapus satu catatan peminjaman
 router.delete('/loans/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -176,7 +135,7 @@ router.delete('/loans/:id', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/tools/loans/bulk-delete — Hapus massal catatan peminjaman
+// POST /api/tools/loans/bulk-delete â€” Hapus massal catatan peminjaman
 router.post('/loans/bulk-delete', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
@@ -194,7 +153,7 @@ router.post('/loans/bulk-delete', requireAuth, adminOnly, async (req, res, next)
   }
 });
 
-// PATCH /api/tools/loans/:id — Edit informasi peminjaman
+// PATCH /api/tools/loans/:id â€” Edit informasi peminjaman
 router.patch('/loans/:id', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;

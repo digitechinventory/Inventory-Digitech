@@ -42,7 +42,6 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 import DocumentUploadModal from '../components/common/DocumentUploadModal.jsx';
-import { INITIAL_SITES, INVENTORY_LEDGER } from '../mockData.js';
 
 export default function ReportsPage() {
   const { role, user } = useAuth();
@@ -54,6 +53,20 @@ export default function ReportsPage() {
   const [previewDoc, setPreviewDoc] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(100);
 
+  // Fetch master sites from database
+  const { data: sitesData } = useQuery({
+    queryKey: ['reports-sites'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/sites');
+        return Array.isArray(res.data?.data) ? res.data.data : [];
+      } catch {
+        return [];
+      }
+    }
+  });
+  const INITIAL_SITES = sitesData || [];
+
   // Fetch live ledger transactions for reports calculation
   const { data: ledgerData, isLoading } = useQuery({
     queryKey: ['reports-ledger'],
@@ -61,24 +74,15 @@ export default function ReportsPage() {
       try {
         const res = await api.get('/inventory/ledger');
         const items = res.data?.data || res.data;
-        return Array.isArray(items) && items.length > 0 ? items : null;
+        return Array.isArray(items) ? items : [];
       } catch {
-        return null;
+        return [];
       }
     }
   });
 
-  // Fallback combined transactions if database ledger is empty
   const transactions = useMemo(() => {
-    if (ledgerData && ledgerData.length > 0) return ledgerData;
-    return [
-      { id: 'tx-01', item_name: 'Cat 777D Engine Oil Filter', part_number: 'BIB-CAT-777D-FLTR', bin_location: 'R-A01', qty_change: 24, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-001', category: 'Heavy Equipment Parts', performed_by: 'arya-admin', created_at: '2026-10-14T09:15:00.000Z' },
-      { id: 'tx-02', item_name: 'Komatsu PC2000 Seal Kit', part_number: 'BIB-KOM-PC2000-HYD', bin_location: 'R-A02', qty_change: -4, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-012', category: 'Hydraulics', performed_by: 'budi-teknisi', created_at: '2026-10-12T14:20:00.000Z' },
-      { id: 'tx-03', item_name: 'Volvo FMX Brake Lining Assm', part_number: 'BIB-VOL-FMX-BRK', bin_location: 'R-B01', qty_change: 18, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-09-003', category: 'Hauling Fleet', performed_by: 'arya-admin', created_at: '2026-10-10T11:00:00.000Z' },
-      { id: 'tx-04', item_name: 'Shell Tellus S2 V 68 Drum', part_number: 'BIB-LUB-SHL-T68', bin_location: 'R-C01', qty_change: -8, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-008', category: 'Lubricants & Fuel', performed_by: 'doni-lubricator', created_at: '2026-10-08T08:45:00.000Z' },
-      { id: 'tx-05', item_name: 'Bucket Tooth Tip 777D', part_number: 'BIB-GET-CAT-TIP', bin_location: 'R-B03', qty_change: 40, transaction_type: 'MOS_IN', reference_doc_id: 'MOS-2026-08-019', category: 'Ground Engaging Tools', performed_by: 'arya-admin', created_at: '2026-10-05T16:30:00.000Z' },
-      { id: 'tx-06', item_name: 'Delco Remy 24V Alternator', part_number: 'BIB-ELE-ALT-24V', bin_location: 'R-D01', qty_change: -2, transaction_type: 'MR_OUT', reference_doc_id: 'MR-2026-10-002', category: 'Electrical & Sensor', performed_by: 'dani-electrician', created_at: '2026-10-02T10:15:00.000Z' }
-    ];
+    return Array.isArray(ledgerData) ? ledgerData : [];
   }, [ledgerData]);
 
   // Aggregate metrics (Strictly operational logistics: Quantities, Movements & Accuracy)

@@ -31,28 +31,17 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
   const [inventoryList, setInventoryList] = useState([]);
   const [stream, setStream] = useState(null);
 
-  // Sample quick barcodes for warehouse testing
-  const sampleBarcodes = [
-    { sku: 'BIB-CAT-777D-FLTR', name: 'Cat 777D Oil Filter', rack: 'R-A01', stock: 4, status: 'Kritis' },
-    { sku: 'BIB-KOM-PC2000-HYD', name: 'Komatsu Seal Kit', rack: 'R-A02', stock: 2, status: 'Kritis' },
-    { sku: 'BIB-LUB-SHL-T68', name: 'Shell Tellus Oil 68', rack: 'R-C01', stock: 6, status: 'Menipis' },
-    { sku: 'BIB-VOL-FMX-BRK', name: 'Volvo Brake Lining', rack: 'R-B01', stock: 3, status: 'Menipis' },
-    { sku: 'BIB-ELE-ALT-24V', name: 'Alternator 24V 150A', rack: 'R-D01', stock: 9, status: 'Menipis' },
-    { sku: 'BIB-GET-CAT-TIP', name: 'Bucket Tooth Tip 777D', rack: 'R-B03', stock: 65, status: 'Optimal' },
-  ];
-
-  // Fetch full inventory to resolve barcodes
+  // Fetch full inventory from database to resolve barcodes
   useEffect(() => {
     if (!isOpen) return;
     const fetchInv = async () => {
       try {
         const res = await api.get('/inventory');
-        if (res.data?.data) {
+        if (Array.isArray(res.data?.data)) {
           setInventoryList(res.data.data);
         }
       } catch {
-        // Fallback to sample items if backend is offline
-        setInventoryList(sampleBarcodes);
+        setInventoryList([]);
       }
     };
     fetchInv();
@@ -138,17 +127,11 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
     if (!clean) return;
 
     // Look up in loaded inventory
-    let found = inventoryList.find(
+    const found = inventoryList.find(
       (item) =>
         (item.part_number && item.part_number.toLowerCase() === clean.toLowerCase()) ||
         (item.sku && item.sku.toLowerCase() === clean.toLowerCase())
     );
-
-    if (!found) {
-      found = sampleBarcodes.find(
-        (item) => item.sku.toLowerCase() === clean.toLowerCase()
-      );
-    }
 
     if (found) {
       setScannedResult({
@@ -302,51 +285,59 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
             </div>
           </div>
 
-          {/* 3. Sample Barcodes to Tap (Instant Demo Test) */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
-                Sampel Barcode Gudang (Klik untuk Tes):
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">
-                {sampleBarcodes.length} Presets
-              </span>
-            </div>
+          {/* 3. Database Barcodes Quick Lookup */}
+          {inventoryList.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
+                  Daftar Part Gudang Terdaftar:
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {inventoryList.length} Item Database
+                </span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {sampleBarcodes.map((item) => (
-                <button
-                  key={item.sku}
-                  onClick={() => handleResolveSku(item.sku)}
-                  className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-white transition-all text-left group active:scale-98 cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="flex items-start justify-between gap-1">
-                    <span className="text-[10px] font-mono font-bold text-red-700 truncate">
-                      {item.sku}
-                    </span>
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                        item.status === 'Optimal'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-700'
-                      }`}
+              <div className="grid grid-cols-2 gap-2">
+                {inventoryList.slice(0, 6).map((item) => {
+                  const skuVal = item.part_number || item.sku;
+                  const stockVal = item.stock_count ?? item.current_stock ?? item.stock ?? 0;
+                  const minVal = item.min_threshold ?? 5;
+                  const statusLabel = stockVal <= minVal ? 'Menipis' : 'Optimal';
+                  return (
+                    <button
+                      key={skuVal}
+                      onClick={() => handleResolveSku(skuVal)}
+                      className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-white transition-all text-left group active:scale-98 cursor-pointer flex flex-col justify-between"
                     >
-                      {item.status}
-                    </span>
-                  </div>
-                  <div className="text-xs font-semibold text-slate-800 truncate mt-1">
-                    {item.name}
-                  </div>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">
-                    <MapPin className="w-3 h-3 text-slate-400" />
-                    <span>{item.rack}</span>
-                    <span className="text-slate-300">•</span>
-                    <span>Stok: {item.stock}</span>
-                  </div>
-                </button>
-              ))}
+                      <div className="flex items-start justify-between gap-1">
+                        <span className="text-[10px] font-mono font-bold text-red-700 truncate">
+                          {skuVal}
+                        </span>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                            statusLabel === 'Optimal'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-rose-50 text-rose-700'
+                          }`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <div className="text-xs font-semibold text-slate-800 truncate mt-1">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <span>{item.bin_location || item.rack || '-'}</span>
+                        <span className="text-slate-300">•</span>
+                        <span>Stok: {stockVal}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 4. Scanned Result Card */}
           {scannedResult && (

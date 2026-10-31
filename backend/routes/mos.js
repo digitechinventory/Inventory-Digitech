@@ -3,8 +3,8 @@ import crypto from 'crypto';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { adminOnly, superadminOnly } from '../middleware/rbac.js';
-import { sendSuccess, sendCreated } from '../middlewares/responseHandler.js';
-import { AppError } from '../middlewares/errorHandler.js';
+import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
+import { AppError } from '../middleware/errorHandler.js';
 import { sendMosNotificationEmail } from '../services/mailer.js';
 import { sendMosStepTelegramAlert } from '../services/telegram.js';
 import { convertPdfToImages } from '../services/pdfService.js';
@@ -92,156 +92,8 @@ export const DOCUMENT_TEMPLATES = {
   }
 };
 
-// Fallback in-memory/static documents matching the 3 official documents
-export let FALLBACK_MOS = [
-  {
-    id: 'doc-001-mos',
-    doc_number: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
-    template_type: 'MOS',
-    title: 'MATERIAL ON SITE',
-    subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
-    site_location: 'Site Office',
-    site_id: 'site-central-office',
-    pic_receiver_name: 'Rayhans Najib Al-Faruq',
-    received_date: '2026-04-07',
-    po_do_number: '-',
-    package_condition: 'Baik',
-    orientation: 'landscape',
-    status: 'completed',
-    created_at: '2026-04-07T08:30:00.000Z',
-    items: DOCUMENT_TEMPLATES.MOS.defaultItems,
-    signatures_placed: [
-      {
-        id: 'sig-001-1',
-        page_index: 0,
-        x_percent: 12.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi Lapangan',
-        timestamp: '2026-04-07 10:15',
-        hash: 'SHA256:001-MOS-MAKER-VALIDATED'
-      },
-      {
-        id: 'sig-001-2',
-        page_index: 0,
-        x_percent: 45.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Zainal Fahriandy',
-        signer_role: 'Supervisor Logistik Site',
-        timestamp: '2026-04-07 13:20',
-        hash: 'SHA256:001-MOS-CHECKER-VALIDATED'
-      },
-      {
-        id: 'sig-001-3',
-        page_index: 0,
-        x_percent: 78.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Harris',
-        signer_role: 'Digitech Otoritas Final',
-        timestamp: '2026-04-07 16:00',
-        hash: 'SHA256:001-MOS-FINAL-VALIDATED'
-      }
-    ]
-  },
-  {
-    id: 'doc-002-mos',
-    doc_number: '002/SITE/MOS/MNTOA/BIBOA/V/2026',
-    template_type: 'MOS',
-    title: 'MATERIAL ON SITE',
-    subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
-    site_location: 'Workshop BIB KM 14',
-    site_id: 'site-bib-km14',
-    pic_receiver_name: 'Rayhans Najib Al-Faruq',
-    received_date: '2026-05-10',
-    po_do_number: 'PO-2026-MOS-088',
-    package_condition: 'Baik',
-    orientation: 'landscape',
-    status: 'waiting_user',
-    created_at: '2026-05-10T09:15:00.000Z',
-    items: DOCUMENT_TEMPLATES.MOS.defaultItems.slice(0, 4),
-    signatures_placed: []
-  },
-  {
-    id: 'doc-005-mdt',
-    doc_number: '005/SITE/MDT/MNTOA/BIBOA/V/2026',
-    template_type: 'MDT',
-    title: 'MATERIAL DISMANTLING',
-    subtitle: 'BERITA ACARA PEMBONGKARAN & PELEPASAN MATERIAL SITE',
-    site_location: 'WIM KM 13',
-    site_id: 'site-wim-km13',
-    pic_receiver_name: 'Zainal Fahriandy',
-    received_date: '2026-05-22',
-    po_do_number: '-',
-    package_condition: 'Barang dummy',
-    orientation: 'landscape',
-    status: 'waiting_superadmin',
-    created_at: '2026-05-22T09:00:00.000Z',
-    items: DOCUMENT_TEMPLATES.MDT.defaultItems,
-    signatures_placed: [
-      {
-        id: 'sig-005-1',
-        page_index: 0,
-        x_percent: 12.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi Lapangan',
-        timestamp: '2026-05-22 11:00',
-        hash: 'SHA256:005-MDT-MAKER-VALIDATED'
-      },
-      {
-        id: 'sig-005-2',
-        page_index: 0,
-        x_percent: 45.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Zainal Fahriandy',
-        signer_role: 'Supervisor Logistik Site',
-        timestamp: '2026-05-22 14:10',
-        hash: 'SHA256:005-MDT-CHECKER-VALIDATED'
-      }
-    ]
-  },
-  {
-    id: 'doc-006-mrp',
-    doc_number: '006/SITE/MRP/MNTOA/BIBOA/V/2026',
-    template_type: 'MRP',
-    title: 'MATERIAL REPLACEMENT',
-    subtitle: 'BERITA ACARA PEMASANGAN & PENGGANTIAN MATERIAL UNIT',
-    site_location: 'WIM KM 13',
-    site_id: 'site-wim-km13',
-    pic_receiver_name: 'Zainal Fahriandy',
-    received_date: '2026-05-26',
-    po_do_number: '-',
-    package_condition: 'Barang baru',
-    orientation: 'landscape',
-    status: 'waiting_admin',
-    created_at: '2026-05-26T10:00:00.000Z',
-    items: DOCUMENT_TEMPLATES.MRP.defaultItems,
-    signatures_placed: [
-      {
-        id: 'sig-006-1',
-        page_index: 0,
-        x_percent: 12.0,
-        y_percent: 85.0,
-        width_percent: 18.0,
-        height_percent: 10.0,
-        signer_name: 'Rayhans Najib A.',
-        signer_role: 'Teknisi Lapangan',
-        timestamp: '2026-05-26 11:30',
-        hash: 'SHA256:006-MRP-MAKER-VALIDATED'
-      }
-    ]
-  }
-];
+// Runtime cache for MOS/MDT/MRP documents synced with database
+export let FALLBACK_MOS = [];
 
 // Helper to generate a unique official document number
 export const generateUniqueDocNumber = (type = 'MOS') => {
@@ -349,19 +201,19 @@ const normalizeMosDoc = (d) => {
   };
 };
 
-// GET /api/mos/next-number — Generate unique, different document number
+// GET /api/mos/next-number â€” Generate unique, different document number
 router.get('/next-number', (req, res) => {
   const { type = 'MOS' } = req.query;
   const num = generateUniqueDocNumber(type);
   return sendSuccess(res, { doc_number: num }, 'Nomor dokumen otomatis berhasil di-generate.');
 });
 
-// GET /api/mos/templates — Get available official templates
+// GET /api/mos/templates â€” Get available official templates
 router.get('/templates', (req, res) => {
   return sendSuccess(res, DOCUMENT_TEMPLATES, 'Daftar template dokumen resmi berhasil dimuat.');
 });
 
-// POST /api/mos/convert-pdf — Convert PDF to high-res page images with orientation detection
+// POST /api/mos/convert-pdf â€” Convert PDF to high-res page images with orientation detection
 router.post('/convert-pdf', requireAuth, async (req, res, next) => {
   try {
     const { pdf, max_pages = 10 } = req.body;
@@ -376,7 +228,7 @@ router.post('/convert-pdf', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/mos — Role-filtered list (Waiting List & Archive)
+// GET /api/mos â€” Role-filtered list (Waiting List & Archive)
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { status, template_type } = req.query;
@@ -412,7 +264,7 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/mos/stats — Statistics
+// GET /api/mos/stats â€” Statistics
 router.get('/stats', requireAuth, async (req, res, next) => {
   try {
     const { data } = await supabase.from('mos_documents').select('status');
@@ -434,7 +286,7 @@ router.get('/stats', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/mos/:id — Document details
+// GET /api/mos/:id â€” Document details
 router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const { data, error } = await supabase
@@ -455,7 +307,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/mos — Create document (built-in template or custom uploaded document)
+// POST /api/mos â€” Create document (built-in template or custom uploaded document)
 router.post('/', requireAuth, async (req, res, next) => {
   try {
     const {
@@ -655,7 +507,7 @@ router.post('/', requireAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/mos/:id — Update existing document details (doc_number, routes, approvers, items, etc.)
+// PUT /api/mos/:id â€” Update existing document details (doc_number, routes, approvers, items, etc.)
 router.put('/:id', requireAuth, async (req, res, next) => {
   try {
     const {
@@ -832,7 +684,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/mos/:id/stamp — Stamp user's transparent signature onto document at drag-and-drop location
+// POST /api/mos/:id/stamp â€” Stamp user's transparent signature onto document at drag-and-drop location
 router.post('/:id/stamp', requireAuth, async (req, res, next) => {
   try {
     const {
@@ -1006,7 +858,7 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/mos/:id/reject — Reject document with revision notes
+// PUT /api/mos/:id/reject â€” Reject document with revision notes
 router.put('/:id/reject', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { rejection_notes } = req.body;
