@@ -236,6 +236,8 @@ export default function UsersPage() {
 
   const [authorityDrafts, setAuthorityDrafts] = useState({});
   const [savingAuthorityUserId, setSavingAuthorityUserId] = useState(null);
+  const [savingAuthorityCell, setSavingAuthorityCell] = useState(null);
+  const [authoritiesViewMode, setAuthoritiesViewMode] = useState('table'); // 'table' (default) | 'grid'
   const [authorityRoleFilter, setAuthorityRoleFilter] = useState('ALL'); // 'ALL' | 'Admin' | 'User'
   const [authorityProjectFilter, setAuthorityProjectFilter] = useState('ALL'); // 'ALL' | dynamic project IDs | 'NONE'
   const [authoritySearch, setAuthoritySearch] = useState('');
@@ -250,6 +252,65 @@ export default function UsersPage() {
       setAuthorityDrafts(drafts);
     }
   }, [authoritiesData]);
+
+  // Instant project toggle per cell directly in the table
+  const handleToggleProjectInstant = async (targetUser, projId) => {
+    if (targetUser.role === 'Superadmin') return;
+    const current = authorityDrafts[targetUser.id] || targetUser.allowed_projects || [];
+    const isAllowed = current.includes(projId);
+    const updated = isAllowed ? current.filter(p => p !== projId) : [...current, projId];
+
+    setAuthorityDrafts(prev => ({ ...prev, [targetUser.id]: updated }));
+    setSavingAuthorityCell(`${targetUser.id}-${projId}`);
+
+    const projObj = dynamicProjects.find(p => p.id === projId);
+    const projName = projObj?.code || projObj?.name || 'Proyek';
+
+    try {
+      await updateUserProjectAuthority(targetUser.id, updated);
+      addToast(`Akses ${projName} untuk ${targetUser.full_name} berhasil ${isAllowed ? 'dicabut' : 'diizinkan'}.`, 'success');
+      await refetchAuthorities();
+      refetch();
+    } catch (err) {
+      setAuthorityDrafts(prev => ({ ...prev, [targetUser.id]: current }));
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal memperbarui otoritas project.', 'error');
+    } finally {
+      setSavingAuthorityCell(null);
+    }
+  };
+
+  const handleGrantAllInstant = async (targetUser) => {
+    if (targetUser.role === 'Superadmin') return;
+    const allIds = dynamicProjects.map(p => p.id);
+    setAuthorityDrafts(prev => ({ ...prev, [targetUser.id]: allIds }));
+    setSavingAuthorityUserId(targetUser.id);
+    try {
+      await updateUserProjectAuthority(targetUser.id, allIds);
+      addToast(`Seluruh akses proyek berhasil diberikan untuk ${targetUser.full_name}.`, 'success');
+      await refetchAuthorities();
+      refetch();
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal memberikan akses proyek.', 'error');
+    } finally {
+      setSavingAuthorityUserId(null);
+    }
+  };
+
+  const handleRevokeAllInstant = async (targetUser) => {
+    if (targetUser.role === 'Superadmin') return;
+    setAuthorityDrafts(prev => ({ ...prev, [targetUser.id]: [] }));
+    setSavingAuthorityUserId(targetUser.id);
+    try {
+      await updateUserProjectAuthority(targetUser.id, []);
+      addToast(`Seluruh akses proyek dicabut untuk ${targetUser.full_name}.`, 'info');
+      await refetchAuthorities();
+      refetch();
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal mencabut akses proyek.', 'error');
+    } finally {
+      setSavingAuthorityUserId(null);
+    }
+  };
 
   const handleToggleProject = (userId, projId) => {
     setAuthorityDrafts(prev => {
@@ -296,6 +357,36 @@ export default function UsersPage() {
   const [sessionConfigMeta, setSessionConfigMeta] = useState(null);
   const [sessionSaveMsg, setSessionSaveMsg] = useState(null);
   const [remainingTimeStr, setRemainingTimeStr] = useState('');
+
+  // Superadmin Confidential Audit Sinkronisasi Email State
+  const [showEditAuditModal, setShowEditAuditModal] = useState(false);
+  const [editAuditEmail, setEditAuditEmail] = useState('');
+  const [savingAuditEmail, setSavingAuditEmail] = useState(false);
+
+  const handleSaveAuditEmail = async (e) => {
+    e?.preventDefault();
+    if (!editAuditEmail || !editAuditEmail.includes('@')) {
+      addToast('Masukkan format email audit yang valid.', 'error');
+      return;
+    }
+
+    setSavingAuditEmail(true);
+    try {
+      const res = await api.put('/auth/session-config', {
+        durationHours: sessionDuration,
+        updatedBy: editAuditEmail.trim()
+      });
+      if (res.data?.data) {
+        setSessionConfigMeta(res.data.data);
+      }
+      addToast(`Email audit sinkronisasi confidential berhasil disinkronkan ke Redis & PostgreSQL: ${editAuditEmail.trim()}`, 'success');
+      setShowEditAuditModal(false);
+    } catch (err) {
+      addToast(err.response?.data?.error?.message || err.message || 'Gagal memperbarui email audit sinkronisasi.', 'error');
+    } finally {
+      setSavingAuditEmail(false);
+    }
+  };
 
   // Live countdown timer for active user session
   useEffect(() => {
@@ -835,25 +926,21 @@ export default function UsersPage() {
         <div className="space-y-6 animate-in fade-in duration-200">
           
           {/* Executive Overview Banner */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xs relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 pointer-events-none z-0 overflow-hidden rounded-tr-3xl">
-              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-gradient-to-br from-red-100/60 via-red-50/20 to-transparent" />
-            </div>
-
-            <div className="relative z-10 space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100/70 border border-red-200 text-red-700 text-xs font-black uppercase tracking-wider">
-                <ShieldCheck className="w-4 h-4 text-red-600" />
-                <span>Otoritas Khusus Superadmin Web IMS</span>
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs">
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono font-bold uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
+                <span>Otoritas Khusus Superadmin</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <FolderGit2 className="w-6 h-6 text-red-600" />
-                <span>Pengaturan Hak Otoritas Akses Proyek</span>
-                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 ml-1">
+                <FolderGit2 className="w-5 h-5 text-red-600" />
+                <span>Matriks Hak Otoritas Akses Proyek</span>
+                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 ml-1">
                   {dynamicProjects.length} Proyek Terdaftar
                 </span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 max-w-4xl leading-relaxed">
-                Superadmin memegang kendali penuh wewenang akses setiap proyek. Akun personel dengan role <strong>Admin</strong> atau <strong>User</strong> tidak dapat membuka data, inventaris alat berat, atau telematika suatu proyek tanpa adanya izin otoritas resmi dari Superadmin.
+                Superadmin memegang kendali penuh wewenang akses database setiap proyek. Akun personel dengan role <strong>Admin</strong> atau <strong>User</strong> hanya dapat membuka inventaris pada proyek site yang telah diizinkan.
               </p>
             </div>
           </div>
@@ -957,6 +1044,36 @@ export default function UsersPage() {
                 <option value="NONE">Belum Ada Akses</option>
               </select>
 
+              {/* View Mode Switcher (List / Table vs Grid) */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setAuthoritiesViewMode('table')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    authoritiesViewMode === 'table'
+                      ? 'bg-white text-slate-900 shadow-2xs font-black'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Tampilan List / Tabel Hak Akses"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>List / Tabel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthoritiesViewMode('grid')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    authoritiesViewMode === 'grid'
+                      ? 'bg-white text-slate-900 shadow-2xs font-black'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Tampilan Kartu Personel"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Kartu</span>
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -971,7 +1088,7 @@ export default function UsersPage() {
             </div>
           </div>
 
-          {/* User Project Authority Cards Grid */}
+          {/* User Project Authority View (Table / List or Grid) */}
           {loadingAuthorities ? (
             <div className="bg-white rounded-3xl p-12 text-center text-slate-400 font-medium border border-slate-200">
               <RotateCcw className="w-8 h-8 animate-spin mx-auto text-red-600 mb-3" />
@@ -1015,6 +1132,153 @@ export default function UsersPage() {
                 );
               }
 
+              {/* 1. TABLE / LIST VIEW (Default & Professional Enterprise Layout) */}
+              if (authoritiesViewMode === 'table') {
+                return (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider font-mono">
+                            <th className="py-3.5 px-4 w-12 text-center">#</th>
+                            <th className="py-3.5 px-4 min-w-[220px]">Personel</th>
+                            <th className="py-3.5 px-3 min-w-[100px]">Role</th>
+                            <th className="py-3.5 px-3 min-w-[140px]">Departemen</th>
+                            <th className="py-3.5 px-3 min-w-[90px] text-center">Status</th>
+                            {dynamicProjects.map(proj => (
+                              <th key={proj.id} className="py-3.5 px-3 text-center min-w-[120px] border-l border-slate-200/60 bg-slate-50/50">
+                                <div className="flex flex-col items-center">
+                                  <span className="font-mono font-black text-slate-800 text-xs">{proj.code || proj.name}</span>
+                                  <span className="text-[9px] text-slate-400 font-normal truncate max-w-[110px]" title={proj.name}>
+                                    {proj.name?.replace(/^Project\s+/i, '')}
+                                  </span>
+                                </div>
+                              </th>
+                            ))}
+                            <th className="py-3.5 px-4 min-w-[150px] text-center border-l border-slate-200/60">Aksi Otoritas</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-xs">
+                          {filteredUsers.map((targetUser, idx) => {
+                            const isSa = targetUser.role === 'Superadmin';
+                            const userProjects = isSa
+                              ? allProjIds
+                              : (authorityDrafts[targetUser.id] || targetUser.allowed_projects || []);
+                            const isSavingUser = savingAuthorityUserId === targetUser.id;
+
+                            return (
+                              <tr key={targetUser.id} className="hover:bg-slate-50/70 transition-colors">
+                                <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-[11px]">
+                                  {idx + 1}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 ${
+                                      isSa ? 'bg-red-600' : targetUser.role === 'Admin' ? 'bg-amber-600' : 'bg-slate-700'
+                                    }`}>
+                                      {targetUser.full_name?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-slate-900 truncate">{targetUser.full_name}</div>
+                                      <div className="text-[11px] text-slate-400 font-mono truncate">{targetUser.email}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-3">
+                                  <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase border ${
+                                    isSa ? 'bg-red-50 text-red-700 border-red-200' :
+                                    targetUser.role === 'Admin' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                    'bg-slate-100 text-slate-700 border-slate-200'
+                                  }`}>
+                                    {targetUser.role}
+                                  </span>
+                                </td>
+                                <td className="py-3.5 px-3">
+                                  <div className="text-slate-700 font-medium truncate">{targetUser.department || 'Operasional'}</div>
+                                  <div className="text-[10px] text-slate-400 truncate">{targetUser.company || 'DIGITECH'}</div>
+                                </td>
+                                <td className="py-3.5 px-3 text-center">
+                                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                    targetUser.is_active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                                  }`}>
+                                    {targetUser.is_active !== false ? 'Aktif' : 'Non-Aktif'}
+                                  </span>
+                                </td>
+
+                                {/* Dynamic Project Columns from Database */}
+                                {dynamicProjects.map(proj => {
+                                  const isAllowed = userProjects.includes(proj.id);
+                                  const isCellSaving = savingAuthorityCell === `${targetUser.id}-${proj.id}`;
+
+                                  return (
+                                    <td key={proj.id} className="py-3.5 px-3 text-center border-l border-slate-100">
+                                      {isSa ? (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">
+                                          <Check className="w-3 h-3 text-emerald-600" />
+                                          Akses Penuh
+                                        </span>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleProjectInstant(targetUser, proj.id)}
+                                          disabled={isSavingUser || isCellSaving}
+                                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer border ${
+                                            isAllowed
+                                              ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300 shadow-2xs'
+                                              : 'bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 border-slate-200'
+                                          }`}
+                                          title={isAllowed ? `Klik untuk mencabut izin akses ${proj.code || proj.name}` : `Klik untuk memberikan izin akses ${proj.code || proj.name}`}
+                                        >
+                                          {isCellSaving ? (
+                                            <Loader2 className="w-3 h-3 animate-spin text-slate-600" />
+                                          ) : (
+                                            <span className={`w-2 h-2 rounded-full ${isAllowed ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+                                          )}
+                                          <span>{isAllowed ? 'Diizinkan' : 'Terkunci'}</span>
+                                        </button>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+
+                                {/* Aksi Cepat Column */}
+                                <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                                  {isSa ? (
+                                    <span className="text-[11px] font-mono text-slate-400 italic">Otoritas Penuh</span>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleGrantAllInstant(targetUser)}
+                                        disabled={isSavingUser}
+                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200 text-[10px] font-bold transition cursor-pointer"
+                                        title="Beri akses ke seluruh proyek"
+                                      >
+                                        Beri Semua
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRevokeAllInstant(targetUser)}
+                                        disabled={isSavingUser}
+                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 text-[10px] font-bold transition cursor-pointer"
+                                        title="Cabut seluruh akses proyek"
+                                      >
+                                        Cabut
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              }
+
+              {/* 2. CARD GRID VIEW */}
               return (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                   {filteredUsers.map((targetUser) => {
@@ -1087,15 +1351,15 @@ export default function UsersPage() {
                             </span>
                           </div>
 
-                          {/* If Superadmin: VIP Unrestricted Banner */}
+                          {/* If Superadmin: VIP Unrestricted Info */}
                           {isSa ? (
-                            <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-amber-50 border border-red-200 text-slate-800 space-y-2">
-                              <div className="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-wider">
-                                <Sparkles className="w-4 h-4 text-amber-600" />
-                                <span>Hak Otoritas Eksekutif Mutlak</span>
+                            <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 space-y-2">
+                              <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider font-mono">
+                                <ShieldCheck className="w-4 h-4 text-red-600" />
+                                <span>Hak Akses Penuh Superadmin</span>
                               </div>
                               <p className="text-xs text-slate-600 leading-relaxed">
-                                Akun ini bertindak sebagai <strong>Superadmin</strong>. Sistem secara otomatis memberikan wewenang penuh tanpa batas untuk membuka, mengedit, dan mengaudit seluruh proyek web ({dynamicProjects.map(p => p.code || p.name).join(', ')}).
+                                Akun ini bertindak sebagai <strong>Superadmin</strong> dengan hak wewenang penuh otomatis untuk seluruh proyek inventaris ({dynamicProjects.map(p => p.code || p.name).join(', ')}).
                               </p>
                               <div className="flex flex-wrap items-center gap-2 pt-1">
                                 {dynamicProjects.map((p, idx) => {
@@ -1313,19 +1577,36 @@ export default function UsersPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 relative group">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                    <KeyRound className="w-3.5 h-3.5 text-slate-700" />
                     Audit Sinkronisasi
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditAuditEmail(sessionConfigMeta?.updatedBy || user?.email || 'superadmin@digitech.co.id');
+                      setShowEditAuditModal(true);
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold transition shadow-2xs hover:shadow-xs cursor-pointer"
+                    title="Ubah email / identitas penanggung jawab audit sinkronisasi (Confidential)"
+                  >
+                    <Edit2 className="w-3 h-3 text-slate-600" />
+                    <span>Ubah Email</span>
+                  </button>
                 </div>
-                <div className="text-xs font-bold text-slate-800 truncate">
+                <div className="text-xs font-bold font-mono text-slate-900 truncate">
                   {sessionConfigMeta?.updatedBy || 'Superadmin'}
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">
-                  Tersimpan di Redis Cache &amp; PostgreSQL Server.
-                </p>
+                <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between">
+                  <span>Tersimpan di Redis Cache &amp; PostgreSQL.</span>
+                  {sessionConfigMeta?.updatedAt && (
+                    <span className="text-[9px] text-slate-400 font-mono">
+                      {new Date(sessionConfigMeta.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1584,6 +1865,100 @@ export default function UsersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: UBAH EMAIL AUDIT SINKRONISASI & IDENTITAS CONFIDENTIAL (KHUSUS SUPERADMIN) ── */}
+      {showEditAuditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/25 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header (Clean Light Theme) */}
+            <div className="p-5 bg-white border-b border-slate-100 text-slate-900 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center shadow-2xs">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold tracking-tight text-slate-900">Ubah Email Audit Sinkronisasi</h3>
+                  <p className="text-[10px] text-slate-400 font-mono font-semibold">CONFIDENTIAL SUPERADMIN CREDENTIAL</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditAuditModal(false)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleSaveAuditEmail} className="p-6 space-y-4">
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
+                <strong>Otoritas Rahasia (Confidential):</strong> Email ini dicatat sebagai identitas sah penanggung jawab audit mutasi, rekonsiliasi data, serta penandatangan kebijakan keamanan sesi pada Redis Cache dan server database PostgreSQL.
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Email Penanggung Jawab Audit
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    value={editAuditEmail}
+                    onChange={(e) => setEditAuditEmail(e.target.value)}
+                    placeholder="nama.superadmin@perusahaan.com"
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Ganti email default/fiksi dengan email resmi operasional Superadmin Anda.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Status Penyimpanan:</span>
+                  <span className="font-mono font-bold text-slate-700">Redis Cache + PostgreSQL</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Durasi Sesi Saat Ini:</span>
+                  <span className="font-mono font-bold text-slate-700">{sessionDuration} Jam</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAuditModal(false)}
+                  disabled={savingAuditEmail}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAuditEmail}
+                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {savingAuditEmail ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Simpan Email Audit</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

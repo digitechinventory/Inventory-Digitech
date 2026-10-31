@@ -174,18 +174,55 @@ router.post('/:id/submit-count', requireAuth, adminOnly, async (req, res, next) 
       console.warn('[Opname] Insert items error:', e.message);
     }
 
-    // Update opname status: if variance, status = pending_approval (Variance Approval)
-    const newStatus = hasVariance ? 'pending_approval' : 'completed';
+    // Rekonsiliasi Langsung: Sesuaikan buku besar dan stok inventaris seketika
+    const timestamp = new Date().toISOString();
+    const performer = req.user?.full_name || 'Admin Logistik';
+
+    for (const it of computedItems) {
+      if (it.variance !== 0) {
+        // Catat ke buku besar mutasi otomatis
+        try {
+          await supabase
+            .from('inventory_ledger')
+            .insert({
+              item_name: it.item_name,
+              part_number: it.sku,
+              bin_location: it.rack,
+              qty_change: it.variance,
+              transaction_type: 'OPNAME_ADJUSTMENT',
+              reference_doc_id: req.params.id,
+              notes: `Penyesuaian stok opname langsung: ${it.variance_reason || 'Selisih fisik'}`,
+              performed_by: performer,
+              created_at: timestamp
+            });
+        } catch (e) {
+          console.warn('[Opname Ledger] Insert error:', e.message);
+        }
+
+        // Sinkronisasi saldo fisik ke katalog inventaris
+        try {
+          await supabase
+            .from('inventory_items')
+            .update({ current_stock: it.physical_qty })
+            .eq('sku', it.sku);
+        } catch (e) {
+          console.warn('[Opname Stock] Update error:', e.message);
+        }
+      }
+    }
+
+    // Status opname langsung diselesaikan (Direct Reconciliation)
+    const newStatus = 'completed';
     await supabase
       .from('stock_opnames')
-      .update({ status: newStatus })
+      .update({ status: newStatus, completed_at: timestamp })
       .eq('id', req.params.id);
 
     return sendSuccess(
       res,
       { opname_id: req.params.id, status: newStatus, hasVariance, items: computedItems },
       hasVariance
-        ? 'Hasil cacah fisik tersimpan dengan selisih varians. Menunggu persetujuan Superadmin (Variance Approval).'
+        ? 'Audit stock opname selesai. Saldo inventaris & buku besar mutasi telah disesuaikan secara otomatis.'
         : 'Audit stock opname selesai tanpa selisih (100% Cocok).'
     );
   } catch (err) {

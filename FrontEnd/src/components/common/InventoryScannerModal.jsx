@@ -175,8 +175,8 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-800/50 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/25 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">
         
         {/* ─── Modal Header ─── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white">
@@ -204,8 +204,8 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
         {/* ─── Scrollable Modal Body ─── */}
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
           
-          {/* 1. Camera / Viewfinder Box */}
-          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-800 border-2 border-slate-700 shadow-inner flex items-center justify-center">
+          {/* 1. Camera / Viewfinder Box (Light Theme) */}
+          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-200 shadow-inner flex items-center justify-center">
             
             {/* Real Video Element if camera active */}
             {cameraActive ? (
@@ -217,15 +217,15 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
                 className="w-full h-full object-cover"
               />
             ) : (
-              /* Simulated High-Tech Viewfinder when camera is unavailable (desktop / test mode) */
-              <div className="w-full h-full bg-gradient-to-b from-slate-800 via-slate-700 to-slate-800 flex flex-col items-center justify-center p-6 text-center select-none">
-                <div className="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-3 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+              /* Simulated Clean Viewfinder when camera is unavailable (desktop / test mode) */
+              <div className="w-full h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 flex flex-col items-center justify-center p-6 text-center select-none">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mb-3 shadow-xs">
                   <Camera className="w-8 h-8" />
                 </div>
-                <div className="text-xs font-bold text-white tracking-wide">
+                <div className="text-xs font-bold text-slate-900 tracking-wide">
                   Viewfinder Scanner Siap
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1 max-w-xs">
+                <div className="text-[11px] text-slate-500 mt-1 max-w-xs">
                   {hasCamera
                     ? 'Menghubungkan sensor kamera perangkat...'
                     : 'Pilih sampel barcode di bawah atau ketik SKU untuk simulasi scan instan'}
@@ -235,19 +235,19 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
 
             {/* Viewfinder Target Crosshairs & Frame */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
-              <div className="relative w-56 h-40 sm:w-64 sm:h-48 rounded-xl border border-white/20">
+              <div className="relative w-56 h-40 sm:w-64 sm:h-48 rounded-xl border border-slate-300">
                 {/* 4 Red Target Corner Brackets */}
-                <span className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-red-500 rounded-tl-lg" />
-                <span className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-red-500 rounded-tr-lg" />
-                <span className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-red-500 rounded-bl-lg" />
-                <span className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-red-500 rounded-br-lg" />
+                <span className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-red-600 rounded-tl-lg" />
+                <span className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-red-600 rounded-tr-lg" />
+                <span className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-red-600 rounded-bl-lg" />
+                <span className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-red-600 rounded-br-lg" />
 
                 {/* Sweeping Laser Scanner Line */}
-                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_12px_rgba(239,68,68,1)] animate-bounce" />
+                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-600 to-transparent shadow-[0_0_12px_rgba(220,38,38,0.7)] animate-bounce" />
 
                 {/* Center Aiming Dot */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-red-500/80 shadow-[0_0_8px_rgba(239,68,68,1)]" />
+                  <div className="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
                 </div>
               </div>
             </div>
@@ -257,10 +257,10 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
               <button
                 onClick={toggleTorch}
                 title="Nyalakan Lampu Kilat / Flash"
-                className={`p-2 rounded-xl backdrop-blur-md transition cursor-pointer ${
+                className={`p-2 rounded-xl backdrop-blur-md transition cursor-pointer border ${
                   torchOn
-                    ? 'bg-amber-500 text-slate-900 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)]'
-                    : 'bg-slate-700/50 text-white/80 hover:bg-slate-700/70'
+                    ? 'bg-amber-500 text-white font-bold border-amber-600 shadow-xs'
+                    : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200 shadow-2xs'
                 }`}
               >
                 {torchOn ? <Flashlight className="w-4 h-4" /> : <FlashlightOff className="w-4 h-4" />}
@@ -268,8 +268,8 @@ export default function InventoryScannerModal({ isOpen, onClose, onSelectSku }) 
             </div>
 
             {/* Viewfinder Status Pill Bottom */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-slate-800/80 backdrop-blur-md text-[10px] font-mono font-bold text-white/90 border border-white/10 z-10 flex items-center gap-1.5 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-mono font-bold text-slate-800 border border-slate-200 z-10 flex items-center gap-1.5 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>SISTEM OPTIK AKTIF</span>
             </div>
           </div>

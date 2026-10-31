@@ -42,7 +42,6 @@ export default function AdminDashboard() {
   const [mosQueue, setMosQueue] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [overdueTools, setOverdueTools] = useState([]);
-  const [selectedZone, setSelectedZone] = useState('Zona A');
 
   const fetchData = async () => {
     try {
@@ -79,28 +78,6 @@ export default function AdminDashboard() {
   const activePickingCount = 4;
   const lowStockCount = lowStockItems.length || 2;
   const overdueCount = overdueTools.length || 1;
-
-  // 2D Rack Map Data (PRD Section 4.2.2)
-  const ZONES = {
-    'Zona A': [
-      { id: 'R-A01', item: 'Cat 777D Engine Oil Filter', stock: 4, cap: 20, pct: 20, status: 'critical', color: 'bg-red-500' },
-      { id: 'R-A02', item: 'Komatsu PC2000 Seal Kit', stock: 18, cap: 20, pct: 90, status: 'full', color: 'bg-emerald-600' },
-      { id: 'R-A03', item: 'Hydraulic Valve Spool', stock: 12, cap: 20, pct: 60, status: 'partial', color: 'bg-amber-500' },
-      { id: 'R-A04', item: 'Kosong (Siap Alokasi)', stock: 0, cap: 20, pct: 0, status: 'empty', color: 'bg-slate-200' },
-    ],
-    'Zona B': [
-      { id: 'R-B01', item: 'Volvo FMX Brake Lining', stock: 32, cap: 40, pct: 80, status: 'optimal', color: 'bg-emerald-600' },
-      { id: 'R-B02', item: 'Brake Disc Assm HD', stock: 15, cap: 30, pct: 50, status: 'partial', color: 'bg-amber-500' },
-      { id: 'R-B03', item: 'Bucket Tooth Tip 777D', stock: 65, cap: 70, pct: 92, status: 'full', color: 'bg-emerald-600' },
-      { id: 'R-B04', item: 'Kosong (Siap Alokasi)', stock: 0, cap: 30, pct: 0, status: 'empty', color: 'bg-slate-200' },
-    ],
-    'Zona C': [
-      { id: 'R-C01', item: 'Shell Tellus S2 V 68 Drum', stock: 6, cap: 25, pct: 24, status: 'critical', color: 'bg-red-500' },
-      { id: 'R-C02', item: 'Delvac 15W-40 Synthetic', stock: 18, cap: 25, pct: 72, status: 'optimal', color: 'bg-emerald-600' },
-      { id: 'R-C03', item: 'Grease Cartridge EP2', stock: 40, cap: 50, pct: 80, status: 'optimal', color: 'bg-emerald-600' },
-      { id: 'R-C04', item: 'Kosong (Siap Alokasi)', stock: 0, cap: 25, pct: 0, status: 'empty', color: 'bg-slate-200' },
-    ]
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -322,59 +299,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-      </div>
-
-      {/* Monitoring Rak Inventaris */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-600" />
-              Monitoring Rak Inventaris
-            </h3>
-            <p className="text-[11px] text-slate-500">Visualisasi kapasitas rak real-time (Hijau: Aman, Oranye: Terisi, Merah: Kritis)</p>
-          </div>
-          <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl">
-            {['Zona A', 'Zona B', 'Zona C'].map((z) => (
-              <button
-                key={z}
-                onClick={() => setSelectedZone(z)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  selectedZone === z ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {z}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {ZONES[selectedZone].map((rack) => (
-            <div
-              key={rack.id}
-              className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 hover:bg-white hover:border-amber-400 transition"
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono font-bold text-xs text-slate-900">{rack.id}</span>
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold text-white ${rack.color}`}>
-                  {rack.pct}%
-                </span>
-              </div>
-              <div className="text-xs font-semibold text-slate-800 truncate mb-2">{rack.item}</div>
-              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${rack.color}`}
-                  style={{ width: `${rack.pct}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
-                <span>Stok: {rack.stock}</span>
-                <span>Kapasitas: {rack.cap}</span>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Antrean Verifikasi Dokumen Masuk (Slot 2) (PRD 4.2.3) */}

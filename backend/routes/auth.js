@@ -680,27 +680,41 @@ router.get('/session-config', async (req, res, next) => {
   }
 });
 
-// PUT /api/auth/session-config — Mengubah pengaturan masa berlaku sesi login (Khusus Superadmin)
+// PUT /api/auth/session-config — Mengubah pengaturan masa berlaku sesi login & email audit sinkronisasi (Khusus Superadmin)
 router.put('/session-config', requireAuth, async (req, res, next) => {
   try {
     if (req.user?.role !== 'Superadmin') {
       throw new AppError(
-        'Akses ditolak: Hanya Superadmin yang memiliki otorisasi untuk mengubah kebijakan durasi masa berlaku sesi login sistem.',
+        'Akses ditolak: Hanya Superadmin yang memiliki otorisasi untuk mengubah konfigurasi rahasia sistem.',
         403,
         'FORBIDDEN_ROLE'
       );
     }
 
-    const hours = req.body?.durationHours ?? req.body?.hours;
-    if (hours === undefined || hours === null) {
-      throw new AppError('Parameter durationHours wajib disertakan.', 400, 'VALIDATION_FAILED');
+    const currentConfig = await getSessionDurationConfig();
+    const rawHours = req.body?.durationHours ?? req.body?.hours;
+    const hours = rawHours !== undefined && rawHours !== null ? rawHours : currentConfig.durationHours;
+
+    // Dukung custom email/identitas audit sinkronisasi confidential yang dimasukkan oleh Superadmin
+    let updatedBy = req.body?.updatedBy || req.body?.auditEmail;
+    if (updatedBy !== undefined && typeof updatedBy !== 'string') {
+      throw new AppError('Format email audit tidak valid.', 400, 'VALIDATION_FAILED');
+    }
+    if (typeof updatedBy === 'string') {
+      updatedBy = updatedBy.trim();
+      if (updatedBy && (updatedBy.length > 120 || !/^[A-Za-z0-9._%+@\- ]+$/.test(updatedBy))) {
+        throw new AppError('Email audit tidak valid (maks. 120 karakter, tanpa karakter khusus).', 400, 'VALIDATION_FAILED');
+      }
+    }
+    if (!updatedBy) {
+      updatedBy = currentConfig.updatedBy || req.user?.email || 'Superadmin';
     }
 
-    const updated = await updateSessionDurationConfig(hours, req.user?.email || 'Superadmin');
+    const updated = await updateSessionDurationConfig(hours, updatedBy);
     return sendSuccess(
       res,
       updated,
-      `Kebijakan masa berlaku sesi login sistem berhasil diperbarui menjadi ${updated.durationHours} jam (${updated.durationMinutes} menit). Pengguna akan otomatis dikeluarkan (auto kick-out) saat sesi berakhir.`
+      `Konfigurasi audit sinkronisasi & kebijakan sesi berhasil diperbarui (Penanggung Jawab: ${updated.updatedBy}, Durasi: ${updated.durationHours} Jam).`
     );
   } catch (err) {
     next(err);

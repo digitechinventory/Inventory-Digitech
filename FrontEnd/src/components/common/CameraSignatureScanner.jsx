@@ -211,14 +211,14 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
         </div>
 
         {/* Camera / Preview Viewport */}
-        <div className="relative flex-1 bg-slate-800 min-h-[300px] sm:min-h-[360px] flex items-center justify-center overflow-hidden">
+        <div className="relative flex-1 bg-slate-50 border-y border-slate-200 min-h-[300px] sm:min-h-[360px] flex items-center justify-center overflow-hidden">
           {cameraError ? (
-            <div className="p-6 text-center text-white space-y-2">
-              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
-              <p className="text-xs text-red-200">{cameraError}</p>
+            <div className="p-6 text-center text-slate-700 space-y-2">
+              <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
+              <p className="text-xs text-red-600 font-semibold">{cameraError}</p>
               <button
                 onClick={() => setCameraError(null)}
-                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-semibold text-white mt-2 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 mt-2 cursor-pointer"
               >
                 Coba Lagi
               </button>
@@ -235,11 +235,11 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
               />
 
               {/* Reticle / Viewfinder Frame */}
-              <div className="absolute inset-8 sm:inset-12 border-2 border-red-500/80 rounded-2xl pointer-events-none flex flex-col justify-between p-3 shadow-[0_0_0_9999px_rgba(51,65,85,0.45)]">
+              <div className="absolute inset-8 sm:inset-12 border-2 border-red-500/80 rounded-2xl pointer-events-none flex flex-col justify-between p-3 shadow-[0_0_0_9999px_rgba(241,245,249,0.5)]">
                 <div className="flex justify-between items-center text-[10px] font-mono font-bold text-white bg-red-600/90 px-2 py-0.5 rounded-md self-center">
                   <span>Arahkan Tanda Tangan Kertas ke Dalam Kotak</span>
                 </div>
-                <div className="text-[10px] text-center text-slate-200 font-mono bg-slate-800/80 px-2 py-1 rounded-md self-center backdrop-blur-xs">
+                <div className="text-[10px] text-center text-slate-700 font-mono bg-white/90 border border-slate-200 px-2 py-1 rounded-md self-center backdrop-blur-xs shadow-2xs">
                   Gunakan pencahayaan merata untuk hasil terbaik
                 </div>
               </div>

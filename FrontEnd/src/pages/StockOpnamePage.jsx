@@ -53,10 +53,10 @@ export default function StockOpnamePage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Stock Opname &amp; Variance Approval
+            Stock Opname Fisik
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Audit fisik berkala dengan mekanisme Hitung Buta (Blind Count) &amp; Otorisasi Manajemen Akhir
+            Pemeriksaan fisik periodik, verifikasi saldo riil material, dan rekonsiliasi buku besar otomatis
           </p>
         </div>
 
@@ -69,14 +69,6 @@ export default function StockOpnamePage() {
             Mulai Sesi Opname Baru
           </button>
         )}
-      </div>
-
-      {/* Info Card: Konsep Blind Count */}
-      <div className="bg-amber-50/70 border border-amber-300 rounded-2xl p-4 flex items-start gap-3">
-        <ClipboardList className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-900 leading-relaxed">
-          <strong>Prinsip Integritas Blind Count:</strong> Staf gudang menginput jumlah fisik riil di rak tanpa melihat saldo komputer di layar. Mencegah bias data dan kecurangan. Jika ditemukan selisih, sistem otomatis menerbitkan berkas <em>Variance Approval</em> untuk dievaluasi oleh Superadmin.
-        </div>
       </div>
 
       {/* Table of Sessions */}
@@ -130,7 +122,7 @@ export default function StockOpnamePage() {
                             onClick={() => setShowBlindCountModal(so)}
                             className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition"
                           >
-                            Input Blind Count
+                            Input Cacah Fisik
                           </button>
                         ) : (
                           <button
@@ -138,7 +130,7 @@ export default function StockOpnamePage() {
                             className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition flex items-center gap-1"
                           >
                             <Eye className="w-3 h-3" />
-                            Detail & Varians
+                            Detail &amp; Rekonsiliasi
                           </button>
                         )}
                       </div>
@@ -363,10 +355,10 @@ function BlindCountInputModal({ opname, onClose, onSuccess }) {
         <div style={{ background: 'linear-gradient(90deg, #F59E0B, #DC2626)', height: '4px', width: '100%', marginBottom: '14px' }} />
         <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
           <div>
-            <span className="text-[10px] font-mono text-amber-600 font-bold uppercase">Formulir Hitung Buta</span>
+            <span className="text-[10px] font-mono text-amber-600 font-bold uppercase">Formulir Verifikasi Fisik</span>
             <h3 className="text-base font-black text-slate-900">Input Hasil Cacah Fisik: {opname.opname_number}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Masukkan kuantitas fisik riil yang Anda hitung langsung pada rak (saldo komputer sengaja disembunyikan).
+              Masukkan kuantitas fisik riil hasil perhitungan di lapangan untuk rekonsiliasi otomatis buku besar.
             </p>
           </div>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-red-600">

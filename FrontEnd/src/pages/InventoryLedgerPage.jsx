@@ -199,10 +199,10 @@ export default function InventoryLedgerPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Buku Besar Mutasi Stok (Inventory Ledger)
+            Riwayat Mutasi &amp; Pergerakan Stok
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Jejak audit digital seluruh perpindahan fisik material masuk (MOS), keluar (MR), dan rekonsiliasi opname
+            Pencatatan resmi seluruh alur material: penerimaan material (MOS), instalasi armada (MR), transfer site, dan rekonsiliasi opname
           </p>
         </div>
 

@@ -369,7 +369,7 @@ export default function ReportsPage() {
           title="AKURASI OPNAME FISIK"
           value="98.6"
           unit="%"
-          subtitle="Tingkat Kesesuaian Rak Gudang"
+          subtitle="Tingkat Kesesuaian Stok Gudang"
           subtitleIcon={CheckCircle2}
           subtitleColor="text-amber-700"
           icon={CheckCircle2}

@@ -47,9 +47,9 @@ export default function MobileHomeDashboard() {
   const [mosQueue, setMosQueue] = useState([]);
   const [overdueTools, setOverdueTools] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
-  const [selectedZone, setSelectedZone] = useState('Zona A');
   const [projectTab, setProjectTab] = useState('ALL');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
 
   // Dynamic greeting based on current local time
   const getGreeting = () => {
@@ -99,28 +99,6 @@ export default function MobileHomeDashboard() {
   const lowStockCount = lowStockItems.length || 28;
   const overdueCount = overdueTools.length || 2;
 
-  // 2D Rack Map Data matching Desktop
-  const ZONES = {
-    'Zona A': [
-      { id: 'R-A01', item: 'Cat 777D Oil Filter', stock: 4, cap: 20, pct: 20, color: 'bg-red-500' },
-      { id: 'R-A02', item: 'Komatsu Seal Kit', stock: 18, cap: 20, pct: 90, color: 'bg-emerald-600' },
-      { id: 'R-A03', item: 'Hydraulic Spool', stock: 12, cap: 20, pct: 60, color: 'bg-amber-500' },
-      { id: 'R-A04', item: 'Kosong (Siap)', stock: 0, cap: 20, pct: 0, color: 'bg-slate-300' },
-    ],
-    'Zona B': [
-      { id: 'R-B01', item: 'Volvo Brake Lining', stock: 32, cap: 40, pct: 80, color: 'bg-emerald-600' },
-      { id: 'R-B02', item: 'Brake Disc HD', stock: 15, cap: 30, pct: 50, color: 'bg-amber-500' },
-      { id: 'R-B03', item: 'Tooth Tip 777D', stock: 65, cap: 70, pct: 92, color: 'bg-emerald-600' },
-      { id: 'R-B04', item: 'Kosong (Siap)', stock: 0, cap: 30, pct: 0, color: 'bg-slate-300' },
-    ],
-    'Zona C': [
-      { id: 'R-C01', item: 'Tellus S2 V 68', stock: 6, cap: 25, pct: 24, color: 'bg-red-500' },
-      { id: 'R-C02', item: 'Delvac 15W-40', stock: 18, cap: 25, pct: 72, color: 'bg-emerald-600' },
-      { id: 'R-C03', item: 'Grease Cartridge', stock: 40, cap: 50, pct: 80, color: 'bg-emerald-600' },
-      { id: 'R-C04', item: 'Kosong (Siap)', stock: 0, cap: 25, pct: 0, color: 'bg-slate-300' },
-    ]
-  };
-
   return (
     <div
       style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 16px), 52px)' }}
@@ -167,7 +145,139 @@ export default function MobileHomeDashboard() {
           </button>
         </div>
       </div>
-      
+
+      {/* ── A. Quick Mobile Inventory Search & Barcode Scan Bar ── */}
+      <div className="bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-2xs space-y-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (mobileSearchQuery.trim()) {
+              navigate(`/inventory?search=${encodeURIComponent(mobileSearchQuery.trim())}`);
+            }
+          }}
+          className="relative flex items-center"
+        >
+          <Search className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={mobileSearchQuery}
+            onChange={(e) => setMobileSearchQuery(e.target.value)}
+            placeholder="Cari part number, serial number, IMEI..."
+            className="w-full h-10 pl-9 pr-24 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <div className="absolute right-1.5 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsScannerOpen(true)}
+              className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition cursor-pointer"
+              title="Pindai Barcode / QR Kamera"
+            >
+              <ScanLine className="w-4 h-4" />
+            </button>
+            <button
+              type="submit"
+              className="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold transition shadow-xs cursor-pointer"
+            >
+              Cari
+            </button>
+          </div>
+        </form>
+
+        {/* ── B. Quick Project Fast-Switcher Pills ── */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 scrollbar-none text-[11px]">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase shrink-0">Pilih Proyek:</span>
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-famous')}
+            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold shrink-0 flex items-center gap-1 transition shadow-2xs cursor-pointer"
+          >
+            <Truck className="w-3 h-3 text-blue-600" />
+            <span>FAMOUS (825 Armada)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-wim')}
+            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold shrink-0 flex items-center gap-1 transition shadow-2xs cursor-pointer"
+          >
+            <Scale className="w-3 h-3 text-emerald-600" />
+            <span>WIM (189 Sensor)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-ccm')}
+            className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold shrink-0 flex items-center gap-1 transition shadow-2xs cursor-pointer"
+          >
+            <Cpu className="w-3 h-3 text-amber-600" />
+            <span>CCM Crusher</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── C. Field Operations Quick-Action Hub (Pusat Pintasan Dokumen Lapangan) ── */}
+      <div className="bg-white rounded-2xl p-3 border border-slate-200/90 shadow-2xs space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-600" />
+            Pintasan Dokumen &amp; Lapangan
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono">1-Tap Akses Cepat</span>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2">
+          {/* 1. Ajukan Form MOS (Penerimaan Material Baru) */}
+          <button
+            type="button"
+            onClick={() => navigate('/mos')}
+            className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+              <FileCheck2 className="w-4 h-4" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-red-700 leading-tight">Buat MOS</span>
+            <span className="text-[9px] text-slate-400 mt-0.5">Penerimaan</span>
+          </button>
+
+          {/* 2. Pasang ke Unit */}
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
+            className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+              <Truck className="w-4 h-4" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-blue-700 leading-tight">Pasang Unit</span>
+            <span className="text-[9px] text-slate-400 mt-0.5">Alokasi</span>
+          </button>
+
+          {/* 3. Pindahan Unit */}
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
+            className="p-2.5 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+              <ArrowRightLeft className="w-4 h-4" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-purple-700 leading-tight">Pindahan</span>
+            <span className="text-[9px] text-slate-400 mt-0.5">Relokasi</span>
+          </button>
+
+          {/* 4. Lapor Kerusakan */}
+          <button
+            type="button"
+            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
+            className="p-2.5 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-amber-700 leading-tight">Lapor Rusak</span>
+            <span className="text-[9px] text-slate-400 mt-0.5">Diagnosa</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── 1. The Signature 4 Parallelogram Cards (2x2 Compact Grid matching Desktop Dashboard) ── */}
       <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
         <ParallelogramCard
@@ -469,59 +579,6 @@ export default function MobileHomeDashboard() {
             <div className="font-bold text-red-800 text-[11px]">24 Part</div>
             <div className="text-[9px] text-red-600">Kritis</div>
           </div>
-        </div>
-      </div>
-
-      {/* ── 5. Monitoring Rak Inventaris (Zona A, B, C scaled for mobile) ── */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div>
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-amber-600" />
-              Monitoring Rak Inventaris
-            </h3>
-            <p className="text-[10px] text-slate-500">Kapasitas rak real-time</p>
-          </div>
-          <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg shrink-0">
-            {['Zona A', 'Zona B', 'Zona C'].map((z) => (
-              <button
-                key={z}
-                onClick={() => setSelectedZone(z)}
-                className={`px-2 py-1 rounded-md text-[10px] font-bold transition cursor-pointer ${
-                  selectedZone === z ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {z}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {ZONES[selectedZone].map((rack) => (
-            <div
-              key={rack.id}
-              className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/50 hover:bg-white transition"
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono font-bold text-[11px] text-slate-900">{rack.id}</span>
-                <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold text-white ${rack.color}`}>
-                  {rack.pct}%
-                </span>
-              </div>
-              <div className="text-[10.5px] font-semibold text-slate-800 truncate mb-1.5">{rack.item}</div>
-              <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${rack.color}`}
-                  style={{ width: `${rack.pct}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] text-slate-400 mt-1 font-mono">
-                <span>{rack.stock} unit</span>
-                <span>Kap: {rack.cap}</span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 

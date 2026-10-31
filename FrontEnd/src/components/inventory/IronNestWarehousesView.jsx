@@ -272,10 +272,10 @@ export default function IronNestWarehousesView() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Rak Gudang
+              Gudang &amp; Lokasi Site
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pemantauan status slot, alokasi penempatan suku cadang, dan kapasitas penyimpanan rak gudang site BIB.
+              Pemantauan kapasitas ruang, status gudang, dan alokasi material di seluruh site operasional.
             </p>
           </div>
 
@@ -959,8 +959,8 @@ export default function IronNestWarehousesView() {
                   <Boxes className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-base text-slate-900">Registrasi Area Rak Baru</h3>
-                  <p className="text-xs text-slate-500">DIGITECH — Penambahan Area Rak Gudang Baru</p>
+                  <h3 className="font-display font-bold text-base text-slate-900">Registrasi Gudang / Lokasi Baru</h3>
+                  <p className="text-xs text-slate-500">DIGITECH — Penambahan Lokasi Penyimpanan Site Baru</p>
                 </div>
               </div>
               <button onClick={() => setShowAddWarehouseModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600">
@@ -971,22 +971,22 @@ export default function IronNestWarehousesView() {
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowAddWarehouseModal(false);
-                showToast('Area rak baru berhasil ditambahkan ke database.');
+                showToast('Lokasi penyimpanan baru berhasil didaftarkan.');
               }}
               className="py-4 space-y-3 text-xs"
             >
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Nama Area Rak</label>
-                <input type="text" placeholder="Area Rak 5 (Pit Timur Logistics)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" required />
+                <label className="font-bold text-slate-700 block mb-1">Nama Gudang / Fasilitas</label>
+                <input type="text" placeholder="Gudang Pit Timur (Logistics Hub)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Kode Area Rak</label>
-                  <input type="text" placeholder="BIB-RAK5" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-mono" required />
+                  <label className="font-bold text-slate-700 block mb-1">Kode Gudang</label>
+                  <input type="text" placeholder="WH-PIT-01" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-mono" required />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Total Kapasitas Rak</label>
-                  <input type="number" defaultValue={240} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" />
+                  <label className="font-bold text-slate-700 block mb-1">Kapasitas Maksimal (Unit)</label>
+                  <input type="number" defaultValue={500} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" />
                 </div>
               </div>
               <div>

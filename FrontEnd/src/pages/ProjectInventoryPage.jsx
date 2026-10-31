@@ -69,7 +69,6 @@ import {
 } from '../api/projectInventoryApi';
 import FamousInteractiveDashboard from '../components/inventory/FamousInteractiveDashboard';
 import WimInteractiveDashboard from '../components/inventory/WimInteractiveDashboard';
-import ProjectWorkflowGuide from '../components/inventory/ProjectWorkflowGuide';
 import FullDocumentPreviewModal from '../components/common/FullDocumentPreviewModal';
 import IncomingStockQRModal from '../components/inventory/IncomingStockQRModal';
 import QRLabelPrintModal from '../components/printer/QRLabelPrintModal';
@@ -199,23 +198,6 @@ export default function ProjectInventoryPage() {
       setSelectedStageFilter(stageParam);
     }
   }, [searchParams]);
-
-  // Navigate directly from 6-Stage Workflow Stepper to corresponding tab/filter
-  const handleWorkflowStepNavigate = (targetTab, stageId) => {
-    setActiveTab(targetTab);
-    if (stageId === 'mos') {
-      setSelectedStageFilter('MOS');
-    } else if (stageId === 'bastm') {
-      setSelectedStageFilter('BASTM');
-    }
-    // Switch to standard view mode if needed so the target tab/table is directly visible
-    if (famousViewMode === 'command_center') {
-      setFamousViewMode('standard');
-    }
-    if (wimViewMode === 'command_center') {
-      setWimViewMode('standard');
-    }
-  };
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -1306,22 +1288,12 @@ export default function ProjectInventoryPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* ── Navigasi Operasional & Tata Letak Proyek ── */}
-          <ProjectWorkflowGuide
-            activeProject={activeProject}
-            activeTab={activeTab}
-            famousViewMode={famousViewMode}
-            wimViewMode={wimViewMode}
-            onNavigateStep={handleWorkflowStepNavigate}
-            stats={stats}
-          />
-
           {/* Main Content Card: Inventory Details for Active Workspace */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
             {/* Workspace Context Sub-Header */}
             <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-xs font-bold text-slate-700">Workspace Terpilih:</span>
+                <span className="text-xs font-bold text-slate-700">Workspace:</span>
                 <span className="text-xs font-mono font-extrabold bg-red-600 text-white px-2.5 py-0.5 rounded-md">
                   {activeProject.code}
                 </span>
@@ -1329,7 +1301,7 @@ export default function ProjectInventoryPage() {
                   {activeProject.name?.replace(/^Project\s+/i, '')}
                 </span>
 
-                {/* FAMOUS View Mode Switcher */}
+                {/* FAMOUS View Switcher */}
                 {activeProject.code === 'FAMOUS' && (
                   <div className="flex items-center gap-1 ml-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
                     <button
@@ -1340,10 +1312,10 @@ export default function ProjectInventoryPage() {
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Mode visual: Matriks Armada Truk & Radar Sensor"
+                      title="Tampilan visual Command Center armada dan sensor"
                     >
                       <Gauge className="w-3.5 h-3.5" />
-                      <span>Mode 1: Command Center Real (825 Unit)</span>
+                      <span>Command Center</span>
                     </button>
                     <button
                       type="button"
@@ -1353,15 +1325,15 @@ export default function ProjectInventoryPage() {
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Mode formulir: Tabel suku cadang, mutasi & dokumen BASTM"
+                      title="Tampilan register inventaris dan data dokumen"
                     >
                       <Boxes className="w-3.5 h-3.5" />
-                      <span>Mode 2: Tabel &amp; Formulir Standar</span>
+                      <span>Daftar Inventaris</span>
                     </button>
                   </div>
                 )}
 
-                {/* WIM View Mode Switcher */}
+                {/* WIM View Switcher */}
                 {activeProject.code === 'WIM' && (
                   <div className="flex items-center gap-1 ml-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
                     <button
@@ -1372,10 +1344,10 @@ export default function ProjectInventoryPage() {
                           ? 'bg-emerald-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Mode visual: Dashboard komponen gardu timbang WIM"
+                      title="Tampilan visual status gardu timbang WIM"
                     >
                       <Gauge className="w-3.5 h-3.5" />
-                      <span>Mode 1: Dashboard WIM (189 Komponen)</span>
+                      <span>Monitoring Sensor</span>
                     </button>
                     <button
                       type="button"
@@ -1385,10 +1357,10 @@ export default function ProjectInventoryPage() {
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Mode formulir: Tabel komponen & berkas dokumen siklus aset"
+                      title="Tampilan register inventaris dan data dokumen"
                     >
                       <Boxes className="w-3.5 h-3.5" />
-                      <span>Mode 2: Tabel &amp; Formulir Standar</span>
+                      <span>Daftar Inventaris</span>
                     </button>
                   </div>
                 )}
@@ -1876,7 +1848,7 @@ export default function ProjectInventoryPage() {
                             }`}>
                               ● {
                                 item.status === 'installed' ? 'Terpasang' :
-                                item.status === 'in_warehouse' ? 'Di Rak Gudang' :
+                                item.status === 'in_warehouse' ? 'Stok Gudang' :
                                 item.status === 'under_repair' ? 'Dalam Perbaikan' : 'Decommissioned'
                               }
                             </span>
@@ -2386,8 +2358,8 @@ export default function ProjectInventoryPage() {
                         <span className="font-mono text-slate-700">{wh.pic_contact || '-'}</span>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                        <span className="text-slate-400">Kapasitas Rak:</span>
-                        <span className="font-bold text-slate-900">{wh.capacity_shelves || 100} Rak</span>
+                        <span className="text-slate-400">Kapasitas Gudang:</span>
+                        <span className="font-bold text-slate-900">{wh.capacity_shelves || 100} Unit</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Material Tersimpan:</span>
@@ -3557,7 +3529,7 @@ export default function ProjectInventoryPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kapasitas Rak</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Kapasitas Penyimpanan (Unit)</label>
                   <input
                     type="number"
                     value={warehouseForm.capacity_shelves}
@@ -3661,7 +3633,7 @@ export default function ProjectInventoryPage() {
                     <option value="">-- Pilih Komponen dari Inventaris --</option>
                     {items.map(it => (
                       <option key={it.id} value={it.id}>
-                        {it.name} ({it.item_code} {it.serial_number ? `• SN: ${it.serial_number}` : ''}) — {it.installed_unit ? `Terpasang di ${it.installed_unit}` : 'Di Rak Gudang'}
+                        {it.name} ({it.item_code} {it.serial_number ? `• SN: ${it.serial_number}` : ''}) — {it.installed_unit ? `Terpasang di ${it.installed_unit}` : 'Stok Gudang'}
                       </option>
                     ))}
                   </select>
