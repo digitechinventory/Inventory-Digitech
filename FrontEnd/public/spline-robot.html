@@ -403,205 +403,167 @@
 		let is3DConfigured = false;
 
 		function buildNexbotLetterShapes() {
-			function addSteppedCornerTR(path) {
-				path.lineTo(460, 0);
-				path.quadraticCurveTo(500, 0, 500, -40);
-				path.lineTo(500, -60);
-				path.quadraticCurveTo(500, -100, 540, -100);
-				path.lineTo(560, -100);
-				path.quadraticCurveTo(600, -100, 600, -140);
-			}
+			// Helper: rounded/stepped futuristic cyber letter builder (clockwise in Y-down coordinates: top=0, bottom=-500)
+			// Every letter is 500 units tall (0 to -500) with 105-unit stroke thickness and Nexbot stepped corner notches.
 
-			function addSteppedCornerBR(path) {
-				path.lineTo(600, -360);
-				path.quadraticCurveTo(600, -400, 560, -400);
-				path.lineTo(540, -400);
-				path.quadraticCurveTo(500, -400, 500, -440);
-				path.lineTo(500, -460);
-				path.quadraticCurveTo(500, -500, 460, -500);
-			}
-
-			function addSteppedCornerBL(path) {
-				path.lineTo(140, -500);
-				path.quadraticCurveTo(100, -500, 100, -460);
-				path.lineTo(100, -440);
-				path.quadraticCurveTo(100, -400, 60, -400);
-				path.lineTo(40, -400);
-				path.quadraticCurveTo(0, -400, 0, -360);
-			}
-
-			function addSteppedCornerTL(path) {
-				path.lineTo(0, -140);
-				path.quadraticCurveTo(0, -100, 40, -100);
-				path.lineTo(60, -100);
-				path.quadraticCurveTo(100, -100, 100, -60);
-				path.lineTo(100, -40);
-				path.quadraticCurveTo(100, 0, 140, 0);
-			}
-
-			// D
+			// 1. Letter D (width 480)
 			const d = new THREE.Shape();
-			d.moveTo(0, -40);
-			d.quadraticCurveTo(0, 0, 40, 0);
-			addSteppedCornerTR(d);
-			addSteppedCornerBR(d);
-			d.lineTo(40, -500);
-			d.quadraticCurveTo(0, -500, 0, -460);
+			d.moveTo(0, 0);
+			d.lineTo(360, 0);
+			d.lineTo(360, -45);
+			d.lineTo(420, -45);
+			d.lineTo(420, -95);
+			d.lineTo(480, -95);
+			d.lineTo(480, -405);
+			d.lineTo(420, -405);
+			d.lineTo(420, -455);
+			d.lineTo(360, -455);
+			d.lineTo(360, -500);
+			d.lineTo(0, -500);
 			d.closePath();
+
 			const dHole = new THREE.Path();
-			dHole.moveTo(100, -140);
-			dHole.quadraticCurveTo(100, -100, 140, -100);
-			dHole.lineTo(440, -100);
-			dHole.quadraticCurveTo(480, -100, 480, -140);
-			dHole.lineTo(480, -360);
-			dHole.quadraticCurveTo(480, -400, 440, -400);
-			dHole.lineTo(140, -400);
-			dHole.quadraticCurveTo(100, -400, 100, -360);
+			dHole.moveTo(110, -105);
+			dHole.lineTo(340, -105);
+			dHole.lineTo(370, -135);
+			dHole.lineTo(370, -365);
+			dHole.lineTo(340, -395);
+			dHole.lineTo(110, -395);
 			dHole.closePath();
 			d.holes.push(dHole);
 
-			// I
+			// 2. Letter I (width 130)
 			const i = new THREE.Shape();
-			i.moveTo(20, -40);
-			i.quadraticCurveTo(20, 0, 60, 0);
-			i.lineTo(80, 0);
-			i.quadraticCurveTo(120, 0, 120, -40);
-			i.lineTo(120, -460);
-			i.quadraticCurveTo(120, -500, 80, -500);
-			i.lineTo(60, -500);
-			i.quadraticCurveTo(20, -500, 20, -460);
+			i.moveTo(0, 0);
+			i.lineTo(130, 0);
+			i.lineTo(130, -500);
+			i.lineTo(0, -500);
 			i.closePath();
 
-			// G
+			// 3. Letter G (width 480) — Single clean clockwise contour, no self-intersection
 			const g = new THREE.Shape();
-			g.moveTo(560, -100);
-			g.lineTo(460, -100);
-			g.quadraticCurveTo(440, -100, 440, -100);
-			g.lineTo(140, -100);
-			g.quadraticCurveTo(100, -100, 100, -140);
-			g.lineTo(100, -360);
-			g.quadraticCurveTo(100, -400, 140, -400);
-			g.lineTo(440, -400);
-			g.quadraticCurveTo(480, -400, 480, -360);
-			g.lineTo(480, -250);
-			g.lineTo(340, -250);
-			g.quadraticCurveTo(320, -250, 320, -230);
-			g.lineTo(320, -190);
-			g.quadraticCurveTo(320, -170, 340, -170);
-			g.lineTo(560, -170);
-			g.quadraticCurveTo(600, -170, 600, -210);
-			addSteppedCornerBR(g);
-			addSteppedCornerBL(g);
-			addSteppedCornerTL(g);
-			addSteppedCornerTR(g);
+			g.moveTo(110, 0);
+			g.lineTo(480, 0);
+			g.lineTo(480, -105);
+			g.lineTo(140, -105);
+			g.lineTo(110, -135);
+			g.lineTo(110, -365);
+			g.lineTo(140, -395);
+			g.lineTo(370, -395);
+			g.lineTo(370, -295);
+			g.lineTo(250, -295);
+			g.lineTo(250, -200);
+			g.lineTo(480, -200);
+			g.lineTo(480, -405);
+			g.lineTo(420, -405);
+			g.lineTo(420, -455);
+			g.lineTo(360, -455);
+			g.lineTo(360, -500);
+			g.lineTo(110, -500);
+			g.lineTo(110, -455);
+			g.lineTo(55, -455);
+			g.lineTo(55, -405);
+			g.lineTo(0, -405);
+			g.lineTo(0, -95);
+			g.lineTo(55, -95);
+			g.lineTo(55, -45);
+			g.lineTo(110, -45);
 			g.closePath();
 
-			// T
+			// 4. Letter T (width 460)
 			const t = new THREE.Shape();
-			t.moveTo(0, -40);
-			t.quadraticCurveTo(0, 0, 40, 0);
-			addSteppedCornerTR(t);
-			t.lineTo(600, -60);
-			t.quadraticCurveTo(600, -100, 560, -100);
-			t.lineTo(350, -100);
-			t.quadraticCurveTo(350, -140, 350, -140);
-			t.lineTo(350, -460);
-			t.quadraticCurveTo(350, -500, 310, -500);
-			t.lineTo(290, -500);
-			t.quadraticCurveTo(250, -500, 250, -460);
-			t.lineTo(250, -140);
-			t.lineTo(40, -100);
-			t.quadraticCurveTo(0, -100, 0, -60);
+			t.moveTo(0, 0);
+			t.lineTo(460, 0);
+			t.lineTo(460, -105);
+			t.lineTo(285, -105);
+			t.lineTo(285, -500);
+			t.lineTo(175, -500);
+			t.lineTo(175, -105);
+			t.lineTo(0, -105);
 			t.closePath();
 
-			// E
+			// 5. Letter E (width 460)
 			const e = new THREE.Shape();
-			e.moveTo(0, -40);
-			e.quadraticCurveTo(0, 0, 40, 0);
-			addSteppedCornerTR(e);
-			e.lineTo(600, -60);
-			e.quadraticCurveTo(600, -100, 560, -100);
-			e.lineTo(140, -100);
-			e.quadraticCurveTo(100, -100, 100, -140);
-			e.lineTo(100, -200);
-			e.lineTo(460, -200);
-			e.quadraticCurveTo(500, -200, 500, -240);
-			e.lineTo(500, -260);
-			e.quadraticCurveTo(500, -300, 460, -300);
-			e.lineTo(100, -300);
-			e.lineTo(100, -360);
-			e.quadraticCurveTo(100, -400, 140, -400);
-			e.lineTo(560, -400);
-			e.quadraticCurveTo(600, -400, 600, -440);
-			e.lineTo(600, -460);
-			e.quadraticCurveTo(600, -500, 560, -500);
-			addSteppedCornerBL(e);
-			e.lineTo(0, -460);
+			e.moveTo(0, 0);
+			e.lineTo(460, 0);
+			e.lineTo(460, -105);
+			e.lineTo(110, -105);
+			e.lineTo(110, -198);
+			e.lineTo(390, -198);
+			e.lineTo(390, -298);
+			e.lineTo(110, -298);
+			e.lineTo(110, -395);
+			e.lineTo(460, -395);
+			e.lineTo(460, -500);
+			e.lineTo(55, -500);
+			e.lineTo(55, -450);
+			e.lineTo(0, -450);
 			e.closePath();
 
-			// C
+			// 6. Letter C (width 460) — Single clean clockwise contour, no self-intersection
 			const c = new THREE.Shape();
-			c.moveTo(560, -100);
-			c.lineTo(140, -100);
-			c.quadraticCurveTo(100, -100, 100, -140);
-			c.lineTo(100, -360);
-			c.quadraticCurveTo(100, -400, 140, -400);
-			c.lineTo(560, -400);
-			c.quadraticCurveTo(600, -400, 600, -440);
-			c.lineTo(600, -460);
-			c.quadraticCurveTo(600, -500, 560, -500);
-			addSteppedCornerBL(c);
-			addSteppedCornerTL(c);
-			addSteppedCornerTR(c);
-			c.lineTo(600, -60);
-			c.quadraticCurveTo(600, -100, 560, -100);
+			c.moveTo(110, 0);
+			c.lineTo(460, 0);
+			c.lineTo(460, -105);
+			c.lineTo(140, -105);
+			c.lineTo(110, -135);
+			c.lineTo(110, -365);
+			c.lineTo(140, -395);
+			c.lineTo(460, -395);
+			c.lineTo(460, -500);
+			c.lineTo(110, -500);
+			c.lineTo(110, -455);
+			c.lineTo(55, -455);
+			c.lineTo(55, -405);
+			c.lineTo(0, -405);
+			c.lineTo(0, -95);
+			c.lineTo(55, -95);
+			c.lineTo(55, -45);
+			c.lineTo(110, -45);
 			c.closePath();
 
-			// H
+			// 7. Letter H (width 460)
 			const h = new THREE.Shape();
-			h.moveTo(0, -40);
-			h.quadraticCurveTo(0, 0, 40, 0);
-			h.lineTo(80, 0);
-			h.quadraticCurveTo(120, 0, 120, -40);
-			h.lineTo(120, -200);
-			h.lineTo(480, -200);
-			h.lineTo(480, -40);
-			h.quadraticCurveTo(480, 0, 520, 0);
-			h.lineTo(560, 0);
-			h.quadraticCurveTo(600, 0, 600, -40);
-			h.lineTo(600, -460);
-			h.quadraticCurveTo(600, -500, 560, -500);
-			h.lineTo(520, -500);
-			h.quadraticCurveTo(480, -500, 480, -460);
-			h.lineTo(480, -300);
-			h.lineTo(120, -300);
-			h.lineTo(120, -460);
-			h.quadraticCurveTo(120, -500, 80, -500);
-			h.lineTo(40, -500);
-			h.quadraticCurveTo(0, -500, 0, -460);
+			h.moveTo(0, 0);
+			h.lineTo(110, 0);
+			h.lineTo(110, -195);
+			h.lineTo(350, -195);
+			h.lineTo(350, 0);
+			h.lineTo(460, 0);
+			h.lineTo(460, -500);
+			h.lineTo(350, -500);
+			h.lineTo(350, -305);
+			h.lineTo(110, -305);
+			h.lineTo(110, -500);
+			h.lineTo(0, -500);
 			h.closePath();
 
 			return [
-				{ char: 'D', shape: d, width: 600 },
-				{ char: 'I', shape: i, width: 140 },
-				{ char: 'G', shape: g, width: 600 },
-				{ char: 'I', shape: i, width: 140 },
-				{ char: 'T', shape: t, width: 600 },
-				{ char: 'E', shape: e, width: 600 },
-				{ char: 'C', shape: c, width: 600 },
-				{ char: 'H', shape: h, width: 600 }
+				{ char: 'D', shape: d, width: 480 },
+				{ char: 'I', shape: i.clone(), width: 130 },
+				{ char: 'G', shape: g, width: 480 },
+				{ char: 'I', shape: i.clone(), width: 130 },
+				{ char: 'T', shape: t, width: 460 },
+				{ char: 'E', shape: e, width: 460 },
+				{ char: 'C', shape: c, width: 460 },
+				{ char: 'H', shape: h, width: 460 }
 			];
 		}
 
-		function setup3DDigitechText(logoGroup, shapeMat) {
-			if (logoGroup.getObjectByName('DIGITECH_3D_GROUP')) {
-				is3DConfigured = true;
-				return;
-			}
+		function setup3DDigitechText(logoGroup) {
+			if (is3DConfigured) return;
 
-			console.log('Generating authentic Nexbot-style 3D DIGITECH typography...');
+			const shapeMeshes = logoGroup.children.filter((c) =>
+				(c.name || '').toLowerCase().includes('shape') && c.geometry && c.geometry.attributes?.position
+			);
+			if (shapeMeshes.length === 0) return;
+
+			const targetMesh = shapeMeshes[0]; // Shape 0 — native Spline Mesh & Material
+			const BufferAttrClass = targetMesh.geometry.attributes.position.constructor;
+
+			console.log('Generating authentic Nexbot-style 3D DIGITECH typography into native Spline Mesh...');
 			const letters = buildNexbotLetterShapes();
-			const gap = 60;
+			const gap = 65;
 			let totalWidth = 0;
 			letters.forEach((l, idx) => {
 				totalWidth += l.width;
@@ -611,59 +573,89 @@
 			const extrudeSettings = {
 				depth: 65,
 				bevelEnabled: true,
-				bevelThickness: 12,
-				bevelSize: 8,
+				bevelThickness: 10,
+				bevelSize: 6,
 				bevelSegments: 2
 			};
 
-			let textMaterial;
-			if (shapeMat && typeof shapeMat.clone === 'function') {
-				textMaterial = shapeMat.clone();
-			} else {
-				textMaterial = new THREE.MeshStandardMaterial({
-					color: 0xf8fafc,
-					roughness: 0.18,
-					metalness: 0.85
-				});
-			}
-			textMaterial.side = THREE.DoubleSide;
-			textMaterial.emissive = new THREE.Color(0x384556);
-			textMaterial.emissiveIntensity = 0.45;
+			// Shape 0 has a baked matrix translation of x = -1919 in Spline's scene (matrixAutoUpdate = false).
+			// Compensating by +1919 in geometry space centers DIGITECH at x = 0 behind the robot!
+			const meshMatrixX = (targetMesh.matrix && targetMesh.matrix.elements) ? targetMesh.matrix.elements[12] : -1919;
+			const centerCompensateX = -meshMatrixX;
 
-			const digitechGroup = new THREE.Group();
-			digitechGroup.name = 'DIGITECH_3D_GROUP';
+			const posChunks = [];
+			const normChunks = [];
+			const uvChunks = [];
+			let totalVertices = 0;
 
-			let curX = -totalWidth / 2;
+			let curX = centerCompensateX - totalWidth / 2;
 			letters.forEach((l) => {
-				const geo = new THREE.ExtrudeGeometry(l.shape, extrudeSettings);
-				const mesh = new THREE.Mesh(geo, textMaterial);
-				mesh.name = 'DIGITECH_LETTER_' + l.char;
-				mesh.position.set(curX, 250, 0);
-				mesh.frustumCulled = false;
-				digitechGroup.add(mesh);
+				const rawGeo = new THREE.ExtrudeGeometry(l.shape, extrudeSettings);
+				rawGeo.translate(curX, 0, 0);
+				const geo = rawGeo.index ? rawGeo.toNonIndexed() : rawGeo;
+				geo.computeVertexNormals();
+
+				const pArr = geo.attributes.position.array;
+				const nArr = geo.attributes.normal.array;
+				const uArr = geo.attributes.uv ? geo.attributes.uv.array : new Float32Array((pArr.length / 3) * 2);
+
+				posChunks.push(pArr);
+				normChunks.push(nArr);
+				uvChunks.push(uArr);
+				totalVertices += pArr.length / 3;
+
 				curX += l.width + gap;
 			});
 
-			// Hide original Nexbot shapes permanently
-			logoGroup.children.forEach((child) => {
-				if (child !== digitechGroup && (child.name || '').toLowerCase().includes('shape')) {
-					child.visible = false;
-					child.renderOrder = -1;
-				}
-			});
+			const mergedPos = new Float32Array(totalVertices * 3);
+			const mergedNorm = new Float32Array(totalVertices * 3);
+			const mergedUv = new Float32Array(totalVertices * 2);
+			const mergedIdx = new Uint32Array(totalVertices);
+
+			let vOffset = 0;
+			for (let i = 0; i < posChunks.length; i++) {
+				mergedPos.set(posChunks[i], vOffset * 3);
+				mergedNorm.set(normChunks[i], vOffset * 3);
+				mergedUv.set(uvChunks[i], vOffset * 2);
+				vOffset += posChunks[i].length / 3;
+			}
+			for (let i = 0; i < totalVertices; i++) {
+				mergedIdx[i] = i;
+			}
+
+			// Mutate Shape 0's native Spline BufferGeometry in-place so Spline's renderer & NodeMaterial work 100% natively
+			const nativeGeo = targetMesh.geometry;
+			nativeGeo.attributes.position = new BufferAttrClass(mergedPos, 3);
+			nativeGeo.attributes.normal = new BufferAttrClass(mergedNorm, 3);
+			nativeGeo.attributes.uv = new BufferAttrClass(mergedUv, 2);
+			nativeGeo.index = new BufferAttrClass(mergedIdx, 1);
+			nativeGeo.groups = [];
+			if (nativeGeo.computeBoundingBox) nativeGeo.computeBoundingBox();
+			if (nativeGeo.computeBoundingSphere) nativeGeo.computeBoundingSphere();
+
+			targetMesh.position.set(0, 250, 0);
+			targetMesh.rotation.set(0, 0, 0);
+			targetMesh.scale.set(1, 1, 1);
+			targetMesh.visible = true;
+			targetMesh.frustumCulled = false;
+
+			// Hide Shape 1..Shape 6 permanently so only DIGITECH is visible
+			for (let i = 1; i < shapeMeshes.length; i++) {
+				shapeMeshes[i].visible = false;
+				shapeMeshes[i].scale.set(0, 0, 0);
+			}
 
 			logoGroup.visible = true;
-			logoGroup.add(digitechGroup);
 
-			// Continuous lock in animation loop: keep original shapes hidden & logo rotation frozen
+			// Continuous lock in animation loop: keep Shape 1..6 hidden & keep Shape 0 (DIGITECH) centered
 			const maintainDigitechLoop = () => {
 				if (logoGroup) {
 					logoGroup.rotation.set(0, 0, 0);
-					logoGroup.children.forEach((child) => {
-						if (child !== digitechGroup && (child.name || '').toLowerCase().includes('shape')) {
-							child.visible = false;
-						}
-					});
+					targetMesh.visible = true;
+					targetMesh.position.set(0, 250, 0);
+					for (let i = 1; i < shapeMeshes.length; i++) {
+						shapeMeshes[i].visible = false;
+					}
 				}
 				requestAnimationFrame(maintainDigitechLoop);
 			};
@@ -679,19 +671,14 @@
 			if (!app || !app._scene) return false;
 
 			let logoGroup = null;
-			let shapeMat = null;
-
 			app._scene.traverse((obj) => {
 				const name = (obj.name || '').toLowerCase();
 				if (name === 'logo') logoGroup = obj;
-				if (name.includes('shape') && obj.material && !shapeMat) {
-					shapeMat = obj.material;
-				}
 			});
 
-			if (!logoGroup) return false;
+			if (!logoGroup || !logoGroup.children || logoGroup.children.length === 0) return false;
 
-			setup3DDigitechText(logoGroup, shapeMat);
+			setup3DDigitechText(logoGroup);
 			return true;
 		}
 
