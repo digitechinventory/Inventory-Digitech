@@ -597,18 +597,13 @@ export default function InventoryPage() {
                               QR Ready
                             </span>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIncomingModalData({ isOpen: true, item });
-                              }}
-                              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 cursor-pointer transition animate-pulse"
-                              title="Klik untuk Registrasi & Cetak QR Code"
+                            <span
+                              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1"
+                              title="Belum teregistrasi label QR Code"
                             >
                               <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
                               Belum QR
-                            </button>
+                            </span>
                           )}
 
                           {isCritical ? (
@@ -884,50 +879,37 @@ export default function InventoryPage() {
                         </td>
 
                         {/* QR Tracking Status Cell */}
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-3 text-center">
                           {isItemQrReady(item) ? (
-                            <button
-                              type="button"
-                              onClick={() => setQrPrintItem(item)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
-                              title="QR Code Siap & Terdaftar. Klik untuk cetak ulang label."
+                            <span
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              title="QR Code Siap & Terdaftar"
                             >
                               <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                               QR Ready
-                            </button>
+                            </span>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => setQrPrintItem(item)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition cursor-pointer animate-pulse"
-                              title="Belum terpasang QR Code. Klik untuk langsung generate & cetak stiker."
+                            <span
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300"
+                              title="Belum terpasang QR Code"
                             >
                               <AlertTriangle className="w-3 h-3 text-amber-600" />
-                              Cetak QR
-                            </button>
+                              Belum QR
+                            </span>
                           )}
                         </td>
 
-                        {/* Quick Actions (Cetak QR & MR) */}
+                        {/* Quick Actions (Cetak QR) */}
                         <td className="px-4 py-3 text-center w-28" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-1">
                             <button
                               type="button"
                               onClick={() => setQrPrintItem(item)}
-                              className="px-2 py-1 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+                              className="px-2.5 py-1 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
                               title="Cetak Label Stiker QR Thermal"
                             >
                               <Printer className="w-3 h-3" />
-                              <span>QR</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => navigate('/mr')}
-                              className="px-2 py-1 bg-red-50 hover:bg-red-600 text-red-700 hover:text-white rounded-lg text-xs font-bold transition border border-red-200 hover:border-red-600 cursor-pointer"
-                              title="Buat Tiket Permintaan (MR)"
-                            >
-                              MR
+                              <span>Cetak QR</span>
                             </button>
                           </div>
                         </td>

@@ -96,9 +96,7 @@ export default function DocumentWaitingList({
           iconColor="text-slate-600"
           accentColor="border-slate-600"
           valueColor="text-slate-900"
-          badgeDotColor={statusFilter === 'ALL' ? 'bg-slate-700 ring-4 ring-slate-200' : undefined}
           padding="p-3 sm:p-3.5"
-          onClick={() => setStatusFilter('ALL')}
         />
 
         <ParallelogramCard
@@ -112,9 +110,7 @@ export default function DocumentWaitingList({
           iconColor="text-red-600"
           accentColor="border-red-600"
           valueColor="text-red-700"
-          badgeDotColor={statusFilter === 'waiting_user' ? 'bg-red-600 ring-4 ring-red-100' : undefined}
           padding="p-3 sm:p-3.5"
-          onClick={() => setStatusFilter('waiting_user')}
         />
 
         <ParallelogramCard
@@ -128,9 +124,7 @@ export default function DocumentWaitingList({
           iconColor="text-amber-600"
           accentColor="border-amber-600"
           valueColor="text-amber-700"
-          badgeDotColor={statusFilter === 'waiting_admin' ? 'bg-amber-600 ring-4 ring-amber-100' : undefined}
           padding="p-3 sm:p-3.5"
-          onClick={() => setStatusFilter('waiting_admin')}
         />
 
         <ParallelogramCard
@@ -144,34 +138,32 @@ export default function DocumentWaitingList({
           iconColor="text-emerald-600"
           accentColor="border-emerald-600"
           valueColor="text-emerald-700"
-          badgeDotColor={statusFilter === 'completed' ? 'bg-emerald-600 ring-4 ring-emerald-100' : undefined}
           padding="p-3 sm:p-3.5"
-          onClick={() => setStatusFilter('completed')}
         />
       </div>
 
-      {/* ── Signature Requirement Banner ── */}
-      <div className="bg-gradient-to-r from-red-900 to-slate-900 text-white rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      {/* ── Signature Requirement Banner (Clean Light Theme) ── */}
+      <div className="bg-white border border-slate-200/90 text-slate-900 rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3.5 flex-1 min-w-[260px]">
-          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md text-red-300 flex items-center justify-center border border-white/20 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-200 shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-sm font-bold text-white">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 Tanda Tangan Digital Transparan Anda
               </h3>
               {userSignature ? (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Terdaftar &amp; Siap
                 </span>
               ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 border border-amber-400/40">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                   Wajib Diunggah
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-300 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Setiap user wajib memiliki tanda tangan. Unggah foto atau PDF tanda tangan, background otomatis dihapus transparan.
             </p>
           </div>
@@ -179,18 +171,18 @@ export default function DocumentWaitingList({
 
         <div className="flex items-center gap-2 ml-auto justify-end shrink-0">
           {userSignature && (
-            <div className="h-9 px-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-center justify-center">
+            <div className="h-9 px-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center">
               <img
                 src={userSignature}
                 alt="My Signature"
-                className="max-h-7 max-w-[90px] object-contain filter drop-shadow-sm invert brightness-200"
+                className="max-h-7 max-w-[90px] object-contain"
               />
             </div>
           )}
 
           <button
             onClick={onOpenSignatureModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{userSignature ? 'Perbarui TTD' : 'Upload TTD Sekarang'}</span>

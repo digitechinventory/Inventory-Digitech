@@ -206,7 +206,6 @@ export default function ToolLoansPage() {
           icon={Wrench}
           iconColor="text-blue-500"
           accentColor="border-blue-600"
-          onClick={() => setStatusFilter('borrowed')}
         />
 
         <ParallelogramCard
@@ -221,7 +220,6 @@ export default function ToolLoansPage() {
           iconColor="text-red-600"
           accentColor="border-red-700"
           badgeDotColor="bg-red-600 ring-4 ring-red-100"
-          onClick={() => setStatusFilter('overdue')}
         />
 
         <ParallelogramCard
@@ -235,7 +233,6 @@ export default function ToolLoansPage() {
           icon={CheckCircle2}
           iconColor="text-emerald-600"
           accentColor="border-emerald-600"
-          onClick={() => setStatusFilter('returned')}
         />
       </div>
 

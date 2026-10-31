@@ -149,7 +149,6 @@ export default function IronNestSidebar({
           items: [
             { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview' },
             { id: 'users', label: 'Kelola User', icon: Users, path: '/users' },
-            { id: 'authorities', label: 'Hak Akses Project', icon: ShieldCheck, path: '/users?tab=authorities' },
             { id: 'opname', label: 'Stock Opname Fisik', icon: PackageCheck, path: '/opname' },
           ]
         },
@@ -158,7 +157,6 @@ export default function IronNestSidebar({
           title: 'Aset & Inventaris Site',
           items: [
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
-            { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Tracking Tools', icon: Compass, path: '/tracking' },
           ]
@@ -183,7 +181,6 @@ export default function IronNestSidebar({
           items: [
             { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard' },
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
-            { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
           ]
@@ -213,7 +210,6 @@ export default function IronNestSidebar({
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard' },
           { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
-          { id: 'documents', label: 'Riwayat Dokumen', icon: FileCheck2, path: '/project-inventory?tab=documents' },
         ]
       },
       {

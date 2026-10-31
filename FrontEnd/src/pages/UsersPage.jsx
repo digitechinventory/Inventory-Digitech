@@ -924,27 +924,6 @@ export default function UsersPage() {
       {/* ── TAB: HAK OTORITAS PROJECT WEB (WIM, FAMOUS, CCM) ── */}
       {activeTab === 'authorities' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Executive Overview Banner */}
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs">
-            <div className="space-y-2.5">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono font-bold uppercase tracking-wider">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
-                <span>Otoritas Khusus Superadmin</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <FolderGit2 className="w-5 h-5 text-red-600" />
-                <span>Matriks Hak Otoritas Akses Proyek</span>
-                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 ml-1">
-                  {dynamicProjects.length} Proyek Terdaftar
-                </span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 max-w-4xl leading-relaxed">
-                Superadmin memegang kendali penuh wewenang akses database setiap proyek. Akun personel dengan role <strong>Admin</strong> atau <strong>User</strong> hanya dapat membuka inventaris pada proyek site yang telah diizinkan.
-              </p>
-            </div>
-          </div>
-
           {/* Metric KPI Cards (Dynamic for all database projects) */}
           {(() => {
             const authUsers = authoritiesData?.users || [];
