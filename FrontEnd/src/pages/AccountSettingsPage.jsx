@@ -580,26 +580,6 @@ export default function AccountSettingsPage() {
               </div>
             </div>
           </div>
-
-          {/* Quick Action Navigation in Hero */}
-          <div className="shrink-0 flex sm:flex-col gap-2 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab('security')}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-slate-800 hover:text-blue-700 text-xs font-bold transition cursor-pointer active:scale-95"
-            >
-              <Key className="w-3.5 h-3.5 text-blue-600" />
-              <span>Ganti Password</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('sessions')}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-800 hover:text-emerald-700 text-xs font-bold transition cursor-pointer active:scale-95"
-            >
-              <Monitor className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Cek Sesi Login</span>
-            </button>
-          </div>
         </div>
 
         {/* 4 High-Contrast Metrics Strip Inside Hero Card */}
@@ -1427,15 +1407,6 @@ export default function AccountSettingsPage() {
                   Resolusi: {typeof window !== 'undefined' ? `${window.screen.width} × ${window.screen.height} px` : '1920 × 1080 px'}
                 </span>
               </div>
-
-              <button
-                type="button"
-                onClick={logout}
-                className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ml-auto"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Akhiri Sesi (Logout)</span>
-              </button>
             </div>
           </div>
 

@@ -654,11 +654,13 @@ export default function IronNestSidebar({
               className={`border-t border-slate-100/80 space-y-0.5 relative z-10 ${isCollapsed ? 'p-2 pb-12' : 'p-3 pb-12'}`}
               style={{ background: 'transparent' }}
             >
-              {/* Pengaturan accordion */}
+              {/* Pengaturan (Direct Navigation without redundant submenu) */}
               <div className="relative group">
                 <button
-                  onClick={() => !isCollapsed && setShowSettingsMenu(s => !s)}
-                  onDoubleClick={() => isCollapsed && navigate('/settings')}
+                  onClick={() => {
+                    navigate('/settings');
+                    if (isOpen) onClose();
+                  }}
                   title={isCollapsed ? 'Pengaturan' : undefined}
                   className={`w-full flex items-center rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     location.pathname === '/settings'
@@ -673,35 +675,16 @@ export default function IronNestSidebar({
                   <Settings
                     className={`w-4 h-4 shrink-0 transition-transform duration-300 ${
                       location.pathname === '/settings' ? 'text-red-600' : 'text-slate-500'
-                    } ${showSettingsMenu ? 'rotate-45' : ''}`}
+                    }`}
                   />
                   {!isCollapsed && (
-                    <>
-                      <span className="truncate flex-1 text-left">Pengaturan</span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-300 ${showSettingsMenu ? 'rotate-180' : ''}`}
-                      />
-                    </>
+                    <span className="truncate flex-1 text-left">Pengaturan</span>
                   )}
                 </button>
 
                 {isCollapsed && (
                   <div className="fixed left-[88px] px-3 py-1.5 bg-white/95 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all z-50 whitespace-nowrap backdrop-blur-md">
                     Pengaturan
-                  </div>
-                )}
-
-                {!isCollapsed && showSettingsMenu && (
-                  <div className="mt-1 ml-3 pl-3 border-l-2 border-red-100 space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <button
-                      onClick={() => { navigate('/settings'); if (isOpen) onClose(); setShowSettingsMenu(false); }}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                        location.pathname === '/settings' ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      }`}
-                    >
-                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>Pengaturan Akun</span>
-                    </button>
                   </div>
                 )}
               </div>

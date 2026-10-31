@@ -241,30 +241,11 @@ export default function ReportsPage() {
 
         <div className="flex flex-wrap items-center gap-2.5 ml-auto shrink-0">
           <button
-            onClick={() => {
-              setUploadDefaultTab('local');
-              setIsUploadModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Unggah Dokumen / Template</span>
-          </button>
-
-          <button
             onClick={handleExportExcel}
             className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Ekspor Excel (.xlsx)</span>
-          </button>
-
-          <button
-            onClick={() => handlePrintDocument(officialDocuments[0])}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Cetak Berita Acara</span>
           </button>
         </div>
       </div>
@@ -522,26 +503,26 @@ export default function ReportsPage() {
                   Format dokumen mengikuti template resmi perusahaan. Unggah dokumen atau template untuk mengaktifkan pratinjau.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setUploadDefaultTab('local');
-                    setIsUploadModalOpen(true);
-                  }}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5 text-slate-600" />
-                  Unggah Dokumen / Template
-                </button>
-                {officialDocuments.length > 0 && (
+              {officialDocuments.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('local');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-slate-600" />
+                    Unggah Dokumen / Template
+                  </button>
                   <button
                     onClick={() => setActiveReportTab('documents')}
                     className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
                   >
                     Lihat Semua ({officialDocuments.length}) <ChevronRight className="w-3.5 h-3.5" />
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {officialDocuments.length === 0 ? (
@@ -638,16 +619,18 @@ export default function ReportsPage() {
                 <span className="text-xs text-slate-500 font-mono">
                   Total {officialDocuments.length} Dokumen Tersedia
                 </span>
-                <button
-                  onClick={() => {
-                    setUploadDefaultTab('local');
-                    setIsUploadModalOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Unggah Dokumen / Template</span>
-                </button>
+                {officialDocuments.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setUploadDefaultTab('local');
+                      setIsUploadModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition cursor-pointer active:scale-95 shadow-xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Unggah Dokumen / Template</span>
+                  </button>
+                )}
               </div>
             </div>
 

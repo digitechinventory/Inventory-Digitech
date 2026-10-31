@@ -187,19 +187,6 @@ export default function MOSPage() {
               <span>Lembar Dokumen (Sheet)</span>
             </button>
           </div>
-
-          {/* Quick Action: Upload Modal */}
-          <button
-            onClick={() => {
-              setDocumentToEdit(null);
-              setUploadModalDefaultTab('local');
-              setIsUploadModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-2xl shadow-md shadow-red-600/20 transition-all cursor-pointer shrink-0"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Upload Dokumen PC</span>
-          </button>
         </div>
       </div>
 

@@ -935,52 +935,13 @@ export default function ProjectInventoryPage() {
 
         {/* Top Quick Actions — Pushed to right edge */}
         <div className="flex flex-wrap items-center justify-end gap-2 ml-auto shrink-0">
-          {isAdminOrSuperadmin && (
-            <>
-              <button
-                onClick={() => openEditProjectModal(activeProject)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
-                title="Edit workspace & lokasi"
-              >
-                <Edit className="w-3.5 h-3.5 text-blue-600" />
-                <span>Edit Workspace</span>
-              </button>
-
-              <button
-                onClick={() => setShowAddProjectModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-xs font-bold transition shadow-xs hover:shadow-md cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                <span>+ Tambah Workspace</span>
-              </button>
-
-              <button
-                onClick={() => setShowAddWarehouseModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-200 transition cursor-pointer"
-              >
-                <Warehouse className="w-3.5 h-3.5 text-red-600" />
-                <span>+ Tambah Gudang</span>
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => {
-              resetRequestForm();
-              setShowRequestModal(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold transition cursor-pointer"
-          >
-            <Send className="w-3.5 h-3.5 text-amber-700" />
-            <span>+ Request Material</span>
-          </button>
-
           <button
             onClick={handleExportCSV}
-            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
             title="Download CSV Laporan"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Unduh CSV</span>
           </button>
 
           <button
@@ -1005,16 +966,6 @@ export default function ProjectInventoryPage() {
               (Klik kartu untuk beralih atau kelola asset)
             </span>
           </div>
-
-          {isAdminOrSuperadmin && (
-            <button
-              onClick={() => setShowAddProjectModal(true)}
-              className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              Tambah Workspace Baru
-            </button>
-          )}
         </div>
 
         {/* Project Summary Cards Grid (Parallelogram / Merah Putih Design) */}
@@ -1371,15 +1322,6 @@ export default function ProjectInventoryPage() {
               <MapPin className="w-3.5 h-3.5 text-red-600" />
               {activeProject.site_location || 'Site BIB'}
             </span>
-            {isAdminOrSuperadmin && (
-              <button
-                onClick={() => openEditProjectModal(activeProject)}
-                className="text-slate-400 hover:text-blue-600 p-0.5 rounded hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Edit Lokasi & Workspace"
-              >
-                <Edit className="w-3.5 h-3.5" />
-              </button>
-            )}
             <span>•</span>
             <span>PIC: <strong>{user?.full_name || 'arya-admin'}</strong></span>
           </div>
@@ -1421,7 +1363,7 @@ export default function ProjectInventoryPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {/* 1. Barang Masuk (Admin/Superadmin Only) */}
             {isAdminOrSuperadmin && (
               <button
@@ -1518,23 +1460,7 @@ export default function ProjectInventoryPage() {
               <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Diagnosa &amp; target ganti</span>
             </button>
 
-            {/* 5. Gudang Project */}
-            <button
-              onClick={() => setActiveTab('warehouses')}
-              className={`group p-3 border rounded-xl flex flex-col items-start text-left transition-all duration-200 shadow-2xs hover:shadow-sm cursor-pointer ${
-                activeTab === 'warehouses'
-                  ? 'bg-red-50/60 border-red-400 ring-2 ring-red-500/20'
-                  : 'bg-white hover:bg-slate-50 border-slate-200'
-              }`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-2">
-                <Warehouse className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-900">Gudang Project</span>
-              <span className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">Rak &amp; kapasitas ({warehouses.length})</span>
-            </button>
-
-            {/* 6. Ajukan Permohonan / Request Material */}
+            {/* 5. Ajukan Permohonan / Request Material */}
             <button
               onClick={() => {
                 resetRequestForm();
@@ -1582,20 +1508,6 @@ export default function ProjectInventoryPage() {
               </button>
             ))}
           </div>
-
-          {/* Quick Request Button for Users inside tabs bar */}
-          {isUserReadOnly && (
-            <button
-              onClick={() => {
-                resetRequestForm();
-                setShowRequestModal(true);
-              }}
-              className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1.5 pb-2 cursor-pointer"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Ajukan Permohonan Part
-            </button>
-          )}
         </div>
 
         {/* Filter Bar (for Asset Tabs) */}
