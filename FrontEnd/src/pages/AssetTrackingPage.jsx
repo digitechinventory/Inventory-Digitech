@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -27,6 +28,12 @@ import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { calculateHaversineDistance } from '../utils/geo.js';
+import ProjectWorkspaceBanner, {
+  useProjectWorkspace,
+  LockedProjectScreen,
+  resolveRecordProjectId,
+  getProjectBadgeClasses
+} from '../components/common/ProjectWorkspaceBanner.jsx';
 
 // Fix Leaflet marker icons with clean CDN links
 delete L.Icon.Default.prototype._getIconUrl;
@@ -71,9 +78,19 @@ function MapClickHandler({ onMapClick }) {
 }
 
 export default function AssetTrackingPage() {
+  const navigate = useNavigate();
   const { role } = useAuth();
   const { addToast } = useToast();
   const isSuperadmin = role === 'Superadmin';
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    activeProject,
+    isProjectLocked,
+    isCurrentProjectLocked
+  } = useProjectWorkspace();
 
   // Map Tile Layers: HD Satellite (Esri), Hybrid, or OpenStreetMap
   const [mapLayer, setMapLayer] = useState('satellite'); // 'satellite' | 'hybrid' | 'streets'
@@ -84,8 +101,8 @@ export default function AssetTrackingPage() {
   const [showGeofences, setShowGeofences] = useState(true);
 
   // Sites & Operational Assets loaded from backend database
-  const [sites, setSites] = useState([]);
-  const [OPERATIONAL_ASSETS, setOperationalAssets] = useState([]);
+  const [allSites, setSites] = useState([]);
+  const [allOperationalAssets, setOperationalAssets] = useState([]);
   const [selectedSiteId, setSelectedSiteId] = useState(null);
 
   // Editable Site Coordinates and Radius
@@ -103,14 +120,16 @@ export default function AssetTrackingPage() {
       try {
         const [sitesRes, toolsRes] = await Promise.all([
           api.get('/sites'),
-          api.get('/tools').catch(() => ({ data: { data: [] } }))
+          api.get('/tools/loans').catch(() => ({ data: { data: [] } }))
         ]);
         const rawSites = sitesRes.data?.data || [];
         if (Array.isArray(rawSites) && rawSites.length > 0) {
-          const mapped = rawSites.map(s => ({
+          const projOrder = ['proj-famous', 'proj-wim', 'proj-ccm'];
+          const mapped = rawSites.map((s, idx) => ({
             id: s.id,
             name: s.name,
             code: s.code,
+            project_id: s.project_id || projOrder[idx % projOrder.length],
             lat: Number(s.lat),
             lng: Number(s.lng),
             radius: Number(s.radius || 200),
@@ -130,18 +149,20 @@ export default function AssetTrackingPage() {
           const rawTools = toolsRes.data?.data || [];
           const mappedAssets = Array.isArray(rawTools)
             ? rawTools.map((t, idx) => {
-                const refSite = mapped[idx % mapped.length] || first;
+                const pid = resolveRecordProjectId(t, idx);
+                const refSite = mapped.find(ms => ms.project_id === pid) || mapped[idx % mapped.length] || first;
                 return {
                   id: t.id || `ast-${idx + 1}`,
+                  project_id: pid,
                   name: t.tool_name || t.name || 'Unit Peralatan Site',
-                  category: t.tool_code || 'Operational Asset',
+                  category: t.serial_number || t.tool_code || 'Operational Asset',
                   status: t.status === 'returned' ? 'Tersedia' : 'Dipinjam',
-                  lat: Number(refSite.lat) + (idx + 1) * 0.0005,
-                  lng: Number(refSite.lng) + (idx + 1) * 0.0004,
+                  lat: Number(refSite.lat) + ((idx % 3) + 1) * 0.0005,
+                  lng: Number(refSite.lng) + ((idx % 3) + 1) * 0.0004,
                   siteName: refSite.name,
-                  condition: t.condition_out || 'Optimal',
+                  condition: t.condition || t.condition_out || 'Optimal',
                   assignedPIC: t.borrower_name || '-',
-                  lastPing: t.borrowed_at ? new Date(t.borrowed_at).toLocaleDateString('id-ID') : 'Aktif'
+                  lastPing: t.loan_date || 'Aktif'
                 };
               })
             : [];
@@ -153,6 +174,38 @@ export default function AssetTrackingPage() {
     }
     loadSitesAndAssets();
   }, []);
+
+  const projectCounts = useMemo(() => {
+    const counts = { 'proj-famous': 0, 'proj-wim': 0, 'proj-ccm': 0 };
+    allOperationalAssets.forEach((a) => {
+      counts[a.project_id] = (counts[a.project_id] || 0) + 1;
+    });
+    return counts;
+  }, [allOperationalAssets]);
+
+  const sites = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    const projSites = allSites.filter(s => s.project_id === selectedProjectId);
+    return projSites.length > 0 ? projSites : allSites.slice(0, 1);
+  }, [allSites, selectedProjectId, isCurrentProjectLocked]);
+
+  const OPERATIONAL_ASSETS = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    return allOperationalAssets.filter(a => a.project_id === selectedProjectId);
+  }, [allOperationalAssets, selectedProjectId, isCurrentProjectLocked]);
+
+  // Switch active site pin when project changes
+  React.useEffect(() => {
+    if (sites.length > 0) {
+      const target = sites[0];
+      setSelectedSiteId(target.id);
+      setCenterLat(target.lat);
+      setCenterLng(target.lng);
+      setRadiusMeters(target.radius || 200);
+      setTestLat(target.lat + 0.0008);
+      setTestLng(target.lng + 0.0006);
+    }
+  }, [selectedProjectId, allSites.length]);
 
   const selectedSite = useMemo(() => {
     return sites.find(s => s.id === selectedSiteId) || sites[0] || {
@@ -287,45 +340,85 @@ export default function AssetTrackingPage() {
       {/* ── 1. Page Header (No 'interaktif', No 'GIS' term) ── */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
+              PROJECT &bull; {activeProject.code}
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {activeProject.site_location}
+            </span>
+          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Compass className="w-6 h-6 text-red-600" />
-            Asset Tracking &amp; Wilayah Operasional
+            Asset Tracking &amp; Wilayah Operasional — {activeProject.code}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Pemantauan posisi seluruh gudang, aset alat berat, dan batas perimeter geofence wilayah kerja.
+            Pemantauan posisi gudang, perkakas, aset unit, dan batas perimeter geofence wilayah kerja Project {activeProject.code}.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 ml-auto shrink-0">
-          {/* Status Badge */}
-          <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono font-bold ${
-            isWithin ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
-            {isWithin ? <ShieldCheck className="w-4 h-4 text-emerald-600" /> : <ShieldAlert className="w-4 h-4 text-red-600" />}
-            <span>{isWithin ? `DALAM RADIUS VALID (${Math.round(distance)}m)` : `DILUAR RADIUS GEOFENCE (${Math.round(distance)}m)`}</span>
-          </div>
-
-          {isSuperadmin && (
+        {!isCurrentProjectLocked && (
+          <div className="flex flex-wrap items-center justify-end gap-2 ml-auto shrink-0">
             <button
-              onClick={() => setShowAddSiteModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              type="button"
+              onClick={() => navigate(`/tools?project=${selectedProjectId}`)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Lokasi / Gudang</span>
+              <Wrench className="w-3.5 h-3.5 text-red-600" />
+              <span>Daftar Peminjaman Alat ({activeProject.code})</span>
             </button>
-          )}
-        </div>
+
+            {/* Status Badge */}
+            <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono font-bold ${
+              isWithin ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              {isWithin ? <ShieldCheck className="w-4 h-4 text-emerald-600" /> : <ShieldAlert className="w-4 h-4 text-red-600" />}
+              <span>{isWithin ? `DALAM RADIUS VALID (${Math.round(distance)}m)` : `DILUAR RADIUS GEOFENCE (${Math.round(distance)}m)`}</span>
+            </div>
+
+            {isSuperadmin && (
+              <button
+                onClick={() => setShowAddSiteModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Lokasi / Gudang</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Success Notification Alert */}
-      {saveSuccess && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Konfigurasi Wilayah &amp; Geofence untuk <strong>{selectedSite.name}</strong> berhasil disimpan.</span>
-        </div>
-      )}
+      {/* Project Workspace Selector & Access Indicator */}
+      <ProjectWorkspaceBanner
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={setSelectedProjectId}
+        isProjectLocked={isProjectLocked}
+        projectCounts={projectCounts}
+        countUnitLabel="Aset & Alat"
+        moduleName="Tracking Tools & Wilayah Project"
+      />
 
-      {/* ── 2. Layer Filter & Satellite Switcher Strip ── */}
+      {isCurrentProjectLocked ? (
+        <LockedProjectScreen
+          activeProject={activeProject}
+          projects={projects}
+          onSelectProject={setSelectedProjectId}
+          isProjectLocked={isProjectLocked}
+          moduleName="Tracking Tools & Wilayah Project"
+        />
+      ) : (
+        <>
+          {/* Success Notification Alert */}
+          {saveSuccess && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Konfigurasi Wilayah &amp; Geofence untuk <strong>{selectedSite.name}</strong> berhasil disimpan.</span>
+            </div>
+          )}
+
+          {/* ── 2. Layer Filter & Satellite Switcher Strip ── */}
       <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs font-semibold">
         {/* Layer Switches: Satelit HD vs Hybrid vs Streets */}
         <div className="flex items-center gap-2">
@@ -771,6 +864,8 @@ export default function AssetTrackingPage() {
         </div>
 
       </div>
+      </>
+      )}
 
       {/* Modal Tambah Site / Gudang Baru */}
       {showAddSiteModal && (

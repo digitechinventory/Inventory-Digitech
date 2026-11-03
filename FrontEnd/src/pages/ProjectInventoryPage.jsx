@@ -1327,6 +1327,56 @@ export default function ProjectInventoryPage() {
           </div>
         </div>
 
+        {/* Dedicated Per-Project Operational Modules Strip */}
+        <div className="px-5 py-2.5 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+            Modul Khusus Project {activeProject.code}:
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {isAdminOrSuperadmin && (
+              <button
+                type="button"
+                onClick={() => navigate(`/opname?project=${selectedProjectId}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 text-xs font-bold transition cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
+                <span>Stock Opname ({activeProject.code})</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => navigate(`/tools?project=${selectedProjectId}`)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 text-xs font-bold transition cursor-pointer"
+            >
+              <Wrench className="w-3.5 h-3.5 text-blue-600" />
+              <span>Tracking Tools ({activeProject.code})</span>
+            </button>
+
+            {isAdminOrSuperadmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/reports?project=${selectedProjectId}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 text-xs font-bold transition cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Laporan ({activeProject.code})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/ledger?project=${selectedProjectId}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 text-xs font-bold transition cursor-pointer"
+                >
+                  <History className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Mutasi Stok ({activeProject.code})</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {activeProject.code === 'FAMOUS' && famousViewMode === 'command_center' ? (
           <div className="p-4 sm:p-6 bg-slate-50/30">
             <FamousInteractiveDashboard

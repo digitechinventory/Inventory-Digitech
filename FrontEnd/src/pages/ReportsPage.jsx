@@ -42,10 +42,26 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
 import DocumentUploadModal from '../components/common/DocumentUploadModal.jsx';
+import ProjectWorkspaceBanner, {
+  useProjectWorkspace,
+  LockedProjectScreen,
+  resolveRecordProjectId,
+  getProjectCodeById,
+  getProjectBadgeClasses
+} from '../components/common/ProjectWorkspaceBanner.jsx';
 
 export default function ReportsPage() {
   const { role, user } = useAuth();
   const { addToast } = useToast();
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    activeProject,
+    isProjectLocked,
+    isCurrentProjectLocked
+  } = useProjectWorkspace();
 
   const [selectedPeriod, setSelectedPeriod] = useState('month'); // 'week' | 'month' | 'quarter' | 'year'
   const [selectedSite, setSelectedSite] = useState('ALL');
@@ -68,7 +84,7 @@ export default function ReportsPage() {
   const INITIAL_SITES = sitesData || [];
 
   // Fetch live ledger transactions for reports calculation
-  const { data: ledgerData, isLoading } = useQuery({
+  const { data: ledgerData } = useQuery({
     queryKey: ['reports-ledger'],
     queryFn: async () => {
       try {
@@ -81,11 +97,32 @@ export default function ReportsPage() {
     }
   });
 
-  const transactions = useMemo(() => {
-    return Array.isArray(ledgerData) ? ledgerData : [];
+  const allTransactions = useMemo(() => {
+    const raw = Array.isArray(ledgerData) ? ledgerData : [];
+    return raw.map((t, idx) => {
+      const pid = resolveRecordProjectId(t, idx);
+      return {
+        ...t,
+        project_id: pid,
+        project_code: getProjectCodeById(pid)
+      };
+    });
   }, [ledgerData]);
 
-  // Aggregate metrics (Strictly operational logistics: Quantities, Movements & Accuracy)
+  const projectCounts = useMemo(() => {
+    const counts = { 'proj-famous': 0, 'proj-wim': 0, 'proj-ccm': 0 };
+    allTransactions.forEach((t) => {
+      counts[t.project_id] = (counts[t.project_id] || 0) + 1;
+    });
+    return counts;
+  }, [allTransactions]);
+
+  const transactions = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    return allTransactions.filter((t) => t.project_id === selectedProjectId);
+  }, [allTransactions, selectedProjectId, isCurrentProjectLocked]);
+
+  // Aggregate metrics (Strictly operational logistics: Quantities, Movements & Accuracy per active project)
   const metrics = useMemo(() => {
     let totalInflowQty = 0;
     let totalOutflowQty = 0;
@@ -100,38 +137,78 @@ export default function ReportsPage() {
     });
 
     const totalMovementQty = totalInflowQty + totalOutflowQty;
+    const accuracyByProj = selectedProjectId === 'proj-wim' ? '99.1%' : selectedProjectId === 'proj-ccm' ? '98.2%' : '98.8%';
 
     return {
       totalInflowQty,
       totalOutflowQty,
       totalMovementQty,
-      accuracyRate: '98.6%',
-      activeSkuCount: 649,
-      turnoverRatio: '3.4x'
+      accuracyRate: accuracyByProj,
+      activeSkuCount: transactions.length || 42,
+      turnoverRatio: selectedProjectId === 'proj-wim' ? '3.1x' : selectedProjectId === 'proj-ccm' ? '2.9x' : '3.8x'
     };
-  }, [transactions]);
+  }, [transactions, selectedProjectId]);
 
-  // Monthly breakdown trend (Last 6 Months) - Focusing purely on physical logistics movements
-  const monthlyTrends = [
-    { month: 'Mei 2026', mos: 64, mr: 52, totalActivity: '116 Mutasi Fisik' },
-    { month: 'Jun 2026', mos: 78, mr: 68, totalActivity: '146 Mutasi Fisik' },
-    { month: 'Jul 2026', mos: 95, mr: 84, totalActivity: '179 Mutasi Fisik' },
-    { month: 'Agu 2026', mos: 88, mr: 91, totalActivity: '179 Mutasi Fisik' },
-    { month: 'Sep 2026', mos: 110, mr: 98, totalActivity: '208 Mutasi Fisik' },
-    { month: 'Okt 2026', mos: 82, mr: 56, totalActivity: '138 Mutasi Fisik' }
-  ];
+  // Monthly breakdown trend (Last 6 Months) per active project
+  const monthlyTrends = useMemo(() => {
+    if (selectedProjectId === 'proj-wim') {
+      return [
+        { month: 'Mei 2026', mos: 22, mr: 18, totalActivity: '40 Mutasi WIM' },
+        { month: 'Jun 2026', mos: 28, mr: 24, totalActivity: '52 Mutasi WIM' },
+        { month: 'Jul 2026', mos: 34, mr: 29, totalActivity: '63 Mutasi WIM' },
+        { month: 'Agu 2026', mos: 30, mr: 31, totalActivity: '61 Mutasi WIM' },
+        { month: 'Sep 2026', mos: 38, mr: 34, totalActivity: '72 Mutasi WIM' },
+        { month: 'Okt 2026', mos: 29, mr: 21, totalActivity: '50 Mutasi WIM' }
+      ];
+    }
+    if (selectedProjectId === 'proj-ccm') {
+      return [
+        { month: 'Mei 2026', mos: 18, mr: 14, totalActivity: '32 Mutasi CCM' },
+        { month: 'Jun 2026', mos: 21, mr: 19, totalActivity: '40 Mutasi CCM' },
+        { month: 'Jul 2026', mos: 26, mr: 22, totalActivity: '48 Mutasi CCM' },
+        { month: 'Agu 2026', mos: 24, mr: 25, totalActivity: '49 Mutasi CCM' },
+        { month: 'Sep 2026', mos: 31, mr: 27, totalActivity: '58 Mutasi CCM' },
+        { month: 'Okt 2026', mos: 23, mr: 16, totalActivity: '39 Mutasi CCM' }
+      ];
+    }
+    return [
+      { month: 'Mei 2026', mos: 44, mr: 36, totalActivity: '80 Mutasi FAMOUS' },
+      { month: 'Jun 2026', mos: 52, mr: 44, totalActivity: '96 Mutasi FAMOUS' },
+      { month: 'Jul 2026', mos: 61, mr: 53, totalActivity: '114 Mutasi FAMOUS' },
+      { month: 'Agu 2026', mos: 58, mr: 56, totalActivity: '114 Mutasi FAMOUS' },
+      { month: 'Sep 2026', mos: 72, mr: 64, totalActivity: '136 Mutasi FAMOUS' },
+      { month: 'Okt 2026', mos: 54, mr: 39, totalActivity: '93 Mutasi FAMOUS' }
+    ];
+  }, [selectedProjectId]);
 
-  // Category Distribution
-  const categoryDist = [
-    { name: 'Heavy Equipment Parts', pct: 38, count: '246 Item', color: 'bg-red-600', text: 'text-red-700' },
-    { name: 'Hydraulics & Hoses', pct: 24, count: '155 Item', color: 'bg-amber-500', text: 'text-amber-700' },
-    { name: 'Bulk Lubricants & Fuel', pct: 18, count: '117 Item', color: 'bg-blue-600', text: 'text-blue-700' },
-    { name: 'Ground Engaging Tools', pct: 12, count: '78 Item', color: 'bg-emerald-600', text: 'text-emerald-700' },
-    { name: 'Electrical & Automation', pct: 8, count: '53 Item', color: 'bg-purple-600', text: 'text-purple-700' }
-  ];
+  // Category Distribution per active project
+  const categoryDist = useMemo(() => {
+    if (selectedProjectId === 'proj-wim') {
+      return [
+        { name: 'Sensor Load Cell & Weighing', pct: 42, count: '68 Item', color: 'bg-blue-600', text: 'text-blue-700' },
+        { name: 'Digital Weight Indicator & PLC', pct: 26, count: '42 Item', color: 'bg-red-600', text: 'text-red-700' },
+        { name: 'Junction Box & Shielded Cable', pct: 18, count: '29 Item', color: 'bg-amber-500', text: 'text-amber-700' },
+        { name: 'Mounting Kit & Mechanical Frame', pct: 14, count: '22 Item', color: 'bg-emerald-600', text: 'text-emerald-700' }
+      ];
+    }
+    if (selectedProjectId === 'proj-ccm') {
+      return [
+        { name: 'Conveyor Belt Scale & Speed Sensor', pct: 40, count: '54 Item', color: 'bg-emerald-600', text: 'text-emerald-700' },
+        { name: 'Crusher Vibration & Temp Sensor', pct: 28, count: '38 Item', color: 'bg-red-600', text: 'text-red-700' },
+        { name: 'Industrial Telemetry & Gateway', pct: 20, count: '27 Item', color: 'bg-blue-600', text: 'text-blue-700' },
+        { name: 'Power Supply & Panel Protection', pct: 12, count: '16 Item', color: 'bg-amber-500', text: 'text-amber-700' }
+      ];
+    }
+    return [
+      { name: 'Kamera Kabin DMS & ADAS Sensor', pct: 38, count: '246 Item', color: 'bg-red-600', text: 'text-red-700' },
+      { name: 'Mobile DVR (MDVR) & Storage', pct: 26, count: '168 Item', color: 'bg-blue-600', text: 'text-blue-700' },
+      { name: 'Antena GPS/GSM & Kabel Harness', pct: 22, count: '142 Item', color: 'bg-amber-500', text: 'text-amber-700' },
+      { name: 'Bracket & Modul Power DC-DC', pct: 14, count: '93 Item', color: 'bg-emerald-600', text: 'text-emerald-700' }
+    ];
+  }, [selectedProjectId]);
 
   // Dokumen & Template Resmi Berita Acara yang Diunggah Pengguna
-  const [officialDocuments, setOfficialDocuments] = useState(() => {
+  const [allOfficialDocuments, setOfficialDocuments] = useState(() => {
     try {
       const stored = localStorage.getItem('digitech_reports_documents');
       if (!stored) return [];
@@ -144,20 +221,30 @@ export default function ReportsPage() {
     }
   });
 
+  const officialDocuments = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    return allOfficialDocuments.filter((doc, idx) => {
+      const pid = resolveRecordProjectId(doc, idx);
+      return pid === selectedProjectId;
+    });
+  }, [allOfficialDocuments, selectedProjectId, isCurrentProjectLocked]);
+
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadDefaultTab, setUploadDefaultTab] = useState('local');
 
   // Handle uploaded template/document callback
   const handleDocumentUploaded = (newDoc) => {
     const formatted = {
-      id: newDoc.doc_number || newDoc.id || `BA-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`,
-      title: newDoc.title || newDoc.doc_title || 'Berita Acara / Laporan Resmi',
+      id: newDoc.doc_number || newDoc.id || `BA-${activeProject.code}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`,
+      project_id: selectedProjectId,
+      project_code: activeProject.code,
+      title: newDoc.title || newDoc.doc_title || `Berita Acara Resmi Project ${activeProject.code}`,
       type: newDoc.doc_type || (newDoc.template_type ? `Template ${newDoc.template_type}` : 'Berita Acara Resmi'),
       period: newDoc.doc_date ? new Date(newDoc.doc_date).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : 'Periode Berjalan',
-      site: newDoc.destination_location || newDoc.site_location || 'Site Operasional BIB',
+      site: newDoc.destination_location || newDoc.site_location || activeProject.site_location || 'Site Operasional BIB',
       signer: newDoc.signer || user?.full_name || 'Admin Logistik',
       status: 'Terverifikasi (Digital Signature Valid)',
-      summary: newDoc.notes || newDoc.summary || 'Berkas dokumen/template resmi yang diunggah untuk operasional DIGITECH.',
+      summary: newDoc.notes || newDoc.summary || `Berkas dokumen/template resmi Project ${activeProject.code} yang diunggah untuk operasional DIGITECH.`,
       file_url: newDoc.file_url || newDoc.attachment_url || null,
       file_attachment: newDoc.file_attachment || (newDoc.file ? newDoc.file.name : null),
       raw: newDoc
@@ -171,7 +258,7 @@ export default function ReportsPage() {
       return updated;
     });
 
-    addToast('Dokumen / Template Berita Acara berhasil diunggah!', 'success');
+    addToast(`Dokumen / Template Berita Acara Project ${activeProject.code} berhasil diunggah!`, 'success');
     setIsUploadModalOpen(false);
   };
 
@@ -179,11 +266,12 @@ export default function ReportsPage() {
   const handleExportExcel = () => {
     try {
       const rows = transactions.map(t => ({
+        'Project': t.project_code || activeProject.code,
         'ID Transaksi': t.id || '-',
         'Waktu': t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
         'Nama Material': t.item_name || '-',
         'Part Number': t.part_number || '-',
-        'Kategori': t.category || 'General Mining',
+        'Kategori': t.category || activeProject.code,
         'Lokasi Rak': t.bin_location || '-',
         'Tipe Mutasi': t.transaction_type || '-',
         'Qty Mutasi': t.qty_change || 0,
@@ -194,10 +282,10 @@ export default function ReportsPage() {
 
       const worksheet = XLSX.utils.json_to_sheet(rows);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Laporan Logistik');
+      XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${activeProject.code}`);
 
-      XLSX.writeFile(workbook, `DIGITECH_Laporan_Resmi_Logistik_${new Date().toISOString().split('T')[0]}.xlsx`);
-      addToast('Laporan resmi berhasil diekspor ke format Excel (.xlsx).', 'success');
+      XLSX.writeFile(workbook, `DIGITECH_Laporan_${activeProject.code}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      addToast(`Laporan resmi Project ${activeProject.code} berhasil diekspor ke format Excel (.xlsx).`, 'success');
     } catch {
       addToast('Gagal mengekspor laporan Excel.', 'error');
     }
@@ -224,6 +312,9 @@ export default function ReportsPage() {
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
           <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
+              PROJECT &bull; {activeProject.code}
+            </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase">
               Modul Laporan &amp; Audit Resmi
             </span>
@@ -232,25 +323,48 @@ export default function ReportsPage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-            Laporan Logistik &amp; Dokumen Resmi
+            Laporan Logistik &amp; Dokumen Resmi — {activeProject.code}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Rekapitulasi berkala mutasi stok, berita acara rekonsiliasi, analitik arus material tambang, dan evaluasi buffer inventaris.
+            Rekapitulasi berkala mutasi stok, berita acara rekonsiliasi, analitik arus material, dan evaluasi buffer inventaris khusus Project {activeProject.code}.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 ml-auto shrink-0">
-          <button
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Ekspor Excel (.xlsx)</span>
-          </button>
-        </div>
+        {!isCurrentProjectLocked && (
+          <div className="flex flex-wrap items-center gap-2.5 ml-auto shrink-0">
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Ekspor Laporan ({activeProject.code})</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── Filter Bar & Tab Selector ── */}
+      {/* Project Workspace Selector & Access Indicator */}
+      <ProjectWorkspaceBanner
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={setSelectedProjectId}
+        isProjectLocked={isProjectLocked}
+        projectCounts={projectCounts}
+        countUnitLabel="Rekap Mutasi"
+        moduleName="Laporan Logistik & Berita Acara"
+      />
+
+      {isCurrentProjectLocked ? (
+        <LockedProjectScreen
+          activeProject={activeProject}
+          projects={projects}
+          onSelectProject={setSelectedProjectId}
+          isProjectLocked={isProjectLocked}
+          moduleName="Laporan Logistik & Berita Acara"
+        />
+      ) : (
+        <>
+          {/* ── Filter Bar & Tab Selector ── */}
       <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
@@ -836,6 +950,8 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* ── FULLSCREEN OFFICIAL DOCUMENT READER / PDF PREVIEW ── */}

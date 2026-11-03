@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Wrench,
@@ -27,6 +27,13 @@ import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ParallelogramCard from '../components/common/ParallelogramCard.jsx';
+import ProjectWorkspaceBanner, {
+  useProjectWorkspace,
+  LockedProjectScreen,
+  resolveRecordProjectId,
+  getProjectCodeById,
+  getProjectBadgeClasses
+} from '../components/common/ProjectWorkspaceBanner.jsx';
 
 export default function ToolLoansPage() {
   const { user, role, isAdmin } = useAuth();
@@ -37,6 +44,15 @@ export default function ToolLoansPage() {
   const [showReturnModal, setShowReturnModal] = useState(null); // tool item to return
   const [returnCondition, setReturnCondition] = useState('Baik');
   const [returnNotes, setReturnNotes] = useState('');
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    activeProject,
+    isProjectLocked,
+    isCurrentProjectLocked
+  } = useProjectWorkspace();
 
   // Checkbox selection & 3-dots action state
   const [selectedIds, setSelectedIds] = useState([]);
@@ -54,15 +70,39 @@ export default function ToolLoansPage() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch loans
-  const { data: loansData, refetch, isLoading } = useQuery({
-    queryKey: ['tools', statusFilter],
+  const { data: loansData, refetch } = useQuery({
+    queryKey: ['tools'],
     queryFn: async () => {
-      const res = await api.get(`/tools/loans${statusFilter !== 'ALL' ? `?status=${statusFilter}` : ''}`);
+      const res = await api.get('/tools/loans');
       return res.data?.data || [];
     }
   });
 
-  const loans = loansData || [];
+  const allLoans = useMemo(() => {
+    const raw = Array.isArray(loansData) ? loansData : [];
+    return raw.map((l, idx) => {
+      const pid = resolveRecordProjectId(l, idx);
+      return {
+        ...l,
+        project_id: pid,
+        project_code: getProjectCodeById(pid)
+      };
+    });
+  }, [loansData]);
+
+  const projectCounts = useMemo(() => {
+    const counts = { 'proj-famous': 0, 'proj-wim': 0, 'proj-ccm': 0 };
+    allLoans.forEach((l) => {
+      counts[l.project_id] = (counts[l.project_id] || 0) + 1;
+    });
+    return counts;
+  }, [allLoans]);
+
+  const loans = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    return allLoans.filter((l) => l.project_id === selectedProjectId);
+  }, [allLoans, selectedProjectId, isCurrentProjectLocked]);
+
   const filtered = loans.filter(l => {
     const q = search.toLowerCase();
     const matchQ = l.tool_name?.toLowerCase().includes(q) || l.borrower_name?.toLowerCase().includes(q) || l.serial_number?.toLowerCase().includes(q);
@@ -177,329 +217,371 @@ export default function ToolLoansPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
+              PROJECT &bull; {activeProject.code}
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {activeProject.site_location}
+            </span>
+          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Tool Tracking (Peminjaman Alat Kerja)
+            Tool Tracking (Peminjaman Alat Kerja) — {activeProject.code}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Pelacakan peralatan non-habis pakai, batas waktu pengembalian &amp; deteksi overdue
+            Pelacakan peralatan non-habis pakai, batas waktu pengembalian &amp; deteksi overdue khusus Project {activeProject.code}
           </p>
         </div>
 
-        <button
-          onClick={() => setShowBorrowModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer ml-auto shrink-0 justify-end"
-        >
-          <Plus className="w-4 h-4" />
-          Pinjam Alat Baru
-        </button>
+        {!isCurrentProjectLocked && (
+          <button
+            onClick={() => setShowBorrowModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-950/30 cursor-pointer ml-auto shrink-0 justify-end"
+          >
+            <Plus className="w-4 h-4" />
+            Pinjam Alat ({activeProject.code})
+          </button>
+        )}
       </div>
 
-      {/* Metrics Row (Parallelogram Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <ParallelogramCard
-          title="SEDANG DIPINJAM"
-          value={borrowedCount}
-          unit="Unit"
-          subtitle="Dalam batas waktu aman"
-          subtitleIcon={Clock}
-          subtitleColor="text-blue-600"
-          icon={Wrench}
-          iconColor="text-blue-500"
-          accentColor="border-blue-600"
+      {/* Project Workspace Selector & Access Indicator */}
+      <ProjectWorkspaceBanner
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={(pid) => {
+          setSelectedProjectId(pid);
+          setSelectedIds([]);
+        }}
+        isProjectLocked={isProjectLocked}
+        projectCounts={projectCounts}
+        countUnitLabel="Peminjaman"
+        moduleName="Tracking Tools & Peminjaman Alat"
+      />
+
+      {isCurrentProjectLocked ? (
+        <LockedProjectScreen
+          activeProject={activeProject}
+          projects={projects}
+          onSelectProject={setSelectedProjectId}
+          isProjectLocked={isProjectLocked}
+          moduleName="Tracking Tools & Peminjaman Alat"
         />
+      ) : (
+        <>
+          {/* Metrics Row (Parallelogram Cards) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <ParallelogramCard
+              title="SEDANG DIPINJAM"
+              value={borrowedCount}
+              unit="Unit"
+              subtitle={`Dalam batas waktu aman (${activeProject.code})`}
+              subtitleIcon={Clock}
+              subtitleColor="text-blue-600"
+              icon={Wrench}
+              iconColor="text-blue-500"
+              accentColor="border-blue-600"
+            />
 
-        <ParallelogramCard
-          title="JATUH TEMPO (OVERDUE)"
-          value={overdueCount}
-          unit="Unit"
-          valueColor="text-red-700"
-          subtitle="Peringatan bot otomatis aktif"
-          subtitleIcon={AlertTriangle}
-          subtitleColor="text-red-600"
-          icon={AlertTriangle}
-          iconColor="text-red-600"
-          accentColor="border-red-700"
-          badgeDotColor="bg-red-600 ring-4 ring-red-100"
-        />
+            <ParallelogramCard
+              title="JATUH TEMPO (OVERDUE)"
+              value={overdueCount}
+              unit="Unit"
+              valueColor="text-red-700"
+              subtitle="Peringatan bot otomatis aktif"
+              subtitleIcon={AlertTriangle}
+              subtitleColor="text-red-600"
+              icon={AlertTriangle}
+              iconColor="text-red-600"
+              accentColor="border-red-700"
+              badgeDotColor="bg-red-600 ring-4 ring-red-100"
+            />
 
-        <ParallelogramCard
-          title="SELESAI DIKEMBALIKAN"
-          value={returnedCount}
-          unit="Riwayat"
-          valueColor="text-emerald-700"
-          subtitle="Kondisi fisik telah diverifikasi"
-          subtitleIcon={CheckCircle2}
-          subtitleColor="text-emerald-600"
-          icon={CheckCircle2}
-          iconColor="text-emerald-600"
-          accentColor="border-emerald-600"
-        />
-      </div>
+            <ParallelogramCard
+              title="SELESAI DIKEMBALIKAN"
+              value={returnedCount}
+              unit="Riwayat"
+              valueColor="text-emerald-700"
+              subtitle="Kondisi fisik telah diverifikasi"
+              subtitleIcon={CheckCircle2}
+              subtitleColor="text-emerald-600"
+              icon={CheckCircle2}
+              iconColor="text-emerald-600"
+              accentColor="border-emerald-600"
+            />
+          </div>
 
-      {/* Filter and Search */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama alat, no seri, nama peminjam..."
-            className="w-full bg-transparent text-xs outline-none font-semibold text-slate-800 placeholder:text-slate-400"
-          />
-        </div>
+          {/* Filter and Search */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={`Cari nama alat, no seri, nama peminjam di Project ${activeProject.code}...`}
+                className="w-full bg-transparent text-xs outline-none font-semibold text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
 
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl ml-auto shrink-0 justify-end">
-          {['ALL', 'borrowed', 'overdue', 'returned'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                statusFilter === st ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {st === 'ALL' ? 'Semua' : st === 'borrowed' ? 'Dipinjam' : st === 'overdue' ? 'Overdue' : 'Dikembalikan'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Bulk Action Bar (When loans are selected - Admin only) */}
-      {isAdmin && selectedIds.length > 0 && (
-        <div className="bg-gradient-to-r from-red-800 to-red-700 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-red-900/30 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
-              {selectedIds.length}
-            </span>
-            <div>
-              <p className="text-xs font-bold text-white">
-                {selectedIds.length} catatan peminjaman dipilih
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Pilih aksi massal untuk catatan peminjaman alat yang ditandai
-              </p>
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl ml-auto shrink-0 justify-end">
+              {['ALL', 'borrowed', 'overdue', 'returned'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
+                    statusFilter === st ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {st === 'ALL' ? 'Semua' : st === 'borrowed' ? 'Dipinjam' : st === 'overdue' ? 'Overdue' : 'Dikembalikan'}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelectedIds([])}
-              className="px-3 py-1.5 text-xs text-red-200 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
-            >
-              Batal Pilih
-            </button>
+          {/* Bulk Action Bar (When loans are selected - Admin only) */}
+          {isAdmin && selectedIds.length > 0 && (
+            <div className="bg-gradient-to-r from-red-800 to-red-700 text-white rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-xl border border-red-900/30 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
+                  {selectedIds.length}
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-white">
+                    {selectedIds.length} catatan peminjaman dipilih
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Pilih aksi massal untuk catatan peminjaman alat yang ditandai
+                  </p>
+                </div>
+              </div>
 
-            <button
-              onClick={() =>
-                setDeleteConfirm({
-                  type: 'bulk',
-                  count: selectedIds.length,
-                  ids: [...selectedIds]
-                })
-              }
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Hapus Terpilih ({selectedIds.length})
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="px-3 py-1.5 text-xs text-red-200 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer"
+                >
+                  Batal Pilih
+                </button>
 
-      {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                {/* Checkbox Header (Admin Only) */}
-                {isAdmin && (
-                  <th className="px-3.5 py-3 text-center w-10">
-                    <button
-                      type="button"
-                      onClick={handleToggleAll}
-                      className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
-                      title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
-                    >
-                      {isAllSelected ? (
-                        <CheckSquare className="w-4 h-4 text-red-600" />
-                      ) : isSomeSelected ? (
-                        <MinusSquare className="w-4 h-4 text-red-600" />
-                      ) : (
-                        <Square className="w-4 h-4 text-slate-400" />
-                      )}
-                    </button>
-                  </th>
-                )}
-                <th className="px-4 py-3 text-left">Nama Perkakas / Alat Kerja</th>
-                <th className="px-4 py-3 text-left">No. Seri</th>
-                <th className="px-4 py-3 text-left">Personel Peminjam</th>
-                <th className="px-4 py-3 text-left">Tanggal Pinjam</th>
-                <th className="px-4 py-3 text-left">Estimasi Kembali</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-center w-24">Aksi Cepat</th>
-                <th className="px-4 py-3 text-center w-14">Opsi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
-                    Tidak ada catatan peminjaman alat yang sesuai.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((item) => {
-                  const isOverdue = item.status === 'overdue' || (item.status === 'borrowed' && item.expected_return_date < today);
-                  const isSelected = selectedIds.includes(item.id);
+                <button
+                  onClick={() =>
+                    setDeleteConfirm({
+                      type: 'bulk',
+                      count: selectedIds.length,
+                      ids: [...selectedIds]
+                    })
+                  }
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus Terpilih ({selectedIds.length})
+                </button>
+              </div>
+            </div>
+          )}
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`transition ${
-                        isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      {/* Checkbox Cell (Admin Only) */}
-                      {isAdmin && (
-                        <td className="px-3.5 py-3 text-center w-10">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleRow(item.id);
-                            }}
-                            className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-red-600" />
-                            ) : (
-                              <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
-                            )}
-                          </button>
-                        </td>
-                      )}
-
-                      <td className="px-4 py-3 font-bold text-slate-900">{item.tool_name}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{item.serial_number || '-'}</td>
-                      <td className="px-4 py-3 text-slate-700 font-medium">{item.borrower_name}</td>
-                      <td className="px-4 py-3 font-mono text-slate-500">{item.loan_date}</td>
-                      <td className="px-4 py-3 font-mono font-semibold text-slate-800">{item.expected_return_date}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border ${
-                          item.status === 'returned'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : isOverdue
-                            ? 'bg-red-50 text-red-700 border-red-200'
-                            : 'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
-                          {item.status === 'returned' ? 'Kembali' : isOverdue ? 'Overdue' : 'Dipinjam'}
-                        </span>
-                      </td>
-
-                      {/* Quick Return Button */}
-                      <td className="px-4 py-3 text-center w-24">
-                        {item.status !== 'returned' ? (
-                          <button
-                            onClick={() => setShowReturnModal(item)}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
-                          >
-                            Kembalikan
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-mono">Kondisi: {item.condition || 'Baik'}</span>
-                        )}
-                      </td>
-
-                      {/* 3-Dots Action Cell */}
-                      <td className="px-4 py-3 text-center relative w-14">
+          {/* Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                    {/* Checkbox Header (Admin Only) */}
+                    {isAdmin && (
+                      <th className="px-3.5 py-3 text-center w-10">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuId(activeMenuId === item.id ? null : item.id);
-                          }}
-                          className={`p-1.5 rounded-xl border transition cursor-pointer ${
-                            activeMenuId === item.id
-                              ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-                          }`}
-                          title="Opsi Peminjaman"
+                          onClick={handleToggleAll}
+                          className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                          title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          {isAllSelected ? (
+                            <CheckSquare className="w-4 h-4 text-red-600" />
+                          ) : isSomeSelected ? (
+                            <MinusSquare className="w-4 h-4 text-red-600" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-400" />
+                          )}
                         </button>
+                      </th>
+                    )}
+                    <th className="px-4 py-3 text-left">Project</th>
+                    <th className="px-4 py-3 text-left">Nama Perkakas / Alat Kerja</th>
+                    <th className="px-4 py-3 text-left">No. Seri</th>
+                    <th className="px-4 py-3 text-left">Personel Peminjam</th>
+                    <th className="px-4 py-3 text-left">Tanggal Pinjam</th>
+                    <th className="px-4 py-3 text-left">Estimasi Kembali</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-center w-24">Aksi Cepat</th>
+                    <th className="px-4 py-3 text-center w-14">Opsi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
+                        Tidak ada catatan peminjaman alat pada Project <strong>{activeProject.code}</strong>.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((item) => {
+                      const isOverdue = item.status === 'overdue' || (item.status === 'borrowed' && item.expected_return_date < today);
+                      const isSelected = selectedIds.includes(item.id);
 
-                        {/* Dropdown Menu */}
-                        {activeMenuId === item.id && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
-                          >
+                      return (
+                        <tr
+                          key={item.id}
+                          className={`transition ${
+                            isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          {/* Checkbox Cell (Admin Only) */}
+                          {isAdmin && (
+                            <td className="px-3.5 py-3 text-center w-10">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleRow(item.id);
+                                }}
+                                className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
+                              >
+                                {isSelected ? (
+                                  <CheckSquare className="w-4 h-4 text-red-600" />
+                                ) : (
+                                  <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                                )}
+                              </button>
+                            </td>
+                          )}
+
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md border ${getProjectBadgeClasses(item.project_id)}`}>
+                              {item.project_code}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-bold text-slate-900">{item.tool_name}</td>
+                          <td className="px-4 py-3 font-mono text-slate-600">{item.serial_number || '-'}</td>
+                          <td className="px-4 py-3 text-slate-700 font-medium">{item.borrower_name}</td>
+                          <td className="px-4 py-3 font-mono text-slate-500">{item.loan_date}</td>
+                          <td className="px-4 py-3 font-mono font-semibold text-slate-800">{item.expected_return_date}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border ${
+                              item.status === 'returned'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : isOverdue
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {item.status === 'returned' ? 'Kembali' : isOverdue ? 'Overdue' : 'Dipinjam'}
+                            </span>
+                          </td>
+
+                          {/* Quick Return Button */}
+                          <td className="px-4 py-3 text-center w-24">
+                            {item.status !== 'returned' ? (
+                              <button
+                                onClick={() => setShowReturnModal(item)}
+                                className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
+                              >
+                                Kembalikan
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-mono">Kondisi: {item.condition || 'Baik'}</span>
+                            )}
+                          </td>
+
+                          {/* 3-Dots Action Cell */}
+                          <td className="px-4 py-3 text-center relative w-14">
                             <button
                               type="button"
-                              onClick={() => {
-                                setDetailLoan(item);
-                                setActiveMenuId(null);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === item.id ? null : item.id);
                               }}
-                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              className={`p-1.5 rounded-xl border transition cursor-pointer ${
+                                activeMenuId === item.id
+                                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                              }`}
+                              title="Opsi Peminjaman"
                             >
-                              <Eye className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Lihat Detail Pinjam</span>
+                              <MoreVertical className="w-4 h-4" />
                             </button>
 
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEdit(item)}
-                                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                            {/* Dropdown Menu */}
+                            {activeMenuId === item.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
                               >
-                                <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Edit Data Pinjam</span>
-                              </button>
-                            )}
-
-                            {item.status !== 'returned' && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setShowReturnModal(item);
-                                  setActiveMenuId(null);
-                                }}
-                                className="w-full px-3.5 py-2 text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
-                              >
-                                <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Kembalikan Alat</span>
-                              </button>
-                            )}
-
-                            {isAdmin && (
-                              <>
-                                <div className="border-t border-slate-100 my-1"></div>
-
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setDeleteConfirm({ type: 'single', item });
+                                    setDetailLoan(item);
                                     setActiveMenuId(null);
                                   }}
-                                  className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                  className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                  <span>Hapus Catatan</span>
+                                  <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>Lihat Detail Pinjam</span>
                                 </button>
-                              </>
+
+                                {isAdmin && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEdit(item)}
+                                    className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Edit Data Pinjam</span>
+                                  </button>
+                                )}
+
+                                {item.status !== 'returned' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShowReturnModal(item);
+                                      setActiveMenuId(null);
+                                    }}
+                                    className="w-full px-3.5 py-2 text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Kembalikan Alat</span>
+                                  </button>
+                                )}
+
+                                {isAdmin && (
+                                  <>
+                                    <div className="border-t border-slate-100 my-1"></div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeleteConfirm({ type: 'single', item });
+                                        setActiveMenuId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                      <span>Hapus Catatan</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* MODAL: DETAIL PEMINJAMAN ALAT */}
       {detailLoan && (
@@ -725,9 +807,10 @@ export default function ToolLoansPage() {
       )}
 
       {/* MODAL: PINJAM ALAT BARU */}
-      {showBorrowModal && (
+      {showBorrowModal && !isCurrentProjectLocked && (
         <BorrowToolModal
           user={user}
+          activeProject={activeProject}
           onClose={() => setShowBorrowModal(false)}
           onSuccess={() => {
             setShowBorrowModal(false);
@@ -803,7 +886,7 @@ export default function ToolLoansPage() {
   );
 }
 
-function BorrowToolModal({ user, onClose, onSuccess }) {
+function BorrowToolModal({ user, activeProject, onClose, onSuccess }) {
   const { addToast } = useToast();
   const [toolName, setToolName] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
@@ -823,9 +906,10 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
         tool_name: toolName,
         serial_number: serialNumber,
         expected_return_date: returnDate,
-        notes
+        notes: `[PROJECT:${activeProject?.code || 'FAMOUS'}] ${notes}`,
+        project_id: activeProject?.id || 'proj-famous'
       });
-      addToast('Peminjaman alat kerja berhasil dicatat.', 'success');
+      addToast(`Peminjaman alat kerja untuk Project ${activeProject?.code || 'FAMOUS'} berhasil dicatat.`, 'success');
       onSuccess();
     } catch (err) {
       addToast(err.response?.data?.error?.message || err.message || 'Gagal meminjam alat.', 'error');
@@ -838,7 +922,10 @@ function BorrowToolModal({ user, onClose, onSuccess }) {
     <div className="fixed inset-0 bg-slate-800/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md overflow-hidden p-6 pt-8 pb-8 space-y-4" style={{ clipPath: "polygon(0 14px, 100% 0, 100% calc(100% - 14px), 0 100%)", boxShadow: "0 25px 60px rgba(0,0,0,0.14), 0 8px 24px rgba(220,38,38,0.10)" }}>
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="text-base font-black text-slate-900">Form Peminjaman Alat Kerja</h3>
+          <div>
+            <span className="text-[10px] font-mono font-bold text-red-600 uppercase">Workspace Project {activeProject?.code}</span>
+            <h3 className="text-base font-black text-slate-900">Form Peminjaman Alat Kerja</h3>
+          </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-red-600">
             <X className="w-5 h-5" />
           </button>

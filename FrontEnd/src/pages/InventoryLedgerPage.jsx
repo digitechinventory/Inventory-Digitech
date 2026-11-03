@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
@@ -27,11 +27,27 @@ import * as XLSX from 'xlsx';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext';
+import ProjectWorkspaceBanner, {
+  useProjectWorkspace,
+  LockedProjectScreen,
+  resolveRecordProjectId,
+  getProjectCodeById,
+  getProjectBadgeClasses
+} from '../components/common/ProjectWorkspaceBanner.jsx';
 
 export default function InventoryLedgerPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const { isAdmin } = useAuth();
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    activeProject,
+    isProjectLocked,
+    isCurrentProjectLocked
+  } = useProjectWorkspace();
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
@@ -57,7 +73,7 @@ export default function InventoryLedgerPage() {
     performed_by: ''
   });
 
-  const { data: ledgerData, isLoading, refetch } = useQuery({
+  const { data: ledgerData } = useQuery({
     queryKey: ['ledger'],
     queryFn: async () => {
       const res = await api.get('/inventory/ledger');
@@ -65,7 +81,30 @@ export default function InventoryLedgerPage() {
     }
   });
 
-  const transactions = ledgerData || [];
+  const allTransactions = useMemo(() => {
+    const raw = Array.isArray(ledgerData) ? ledgerData : [];
+    return raw.map((t, idx) => {
+      const pid = resolveRecordProjectId(t, idx);
+      return {
+        ...t,
+        project_id: pid,
+        project_code: getProjectCodeById(pid)
+      };
+    });
+  }, [ledgerData]);
+
+  const projectCounts = useMemo(() => {
+    const counts = { 'proj-famous': 0, 'proj-wim': 0, 'proj-ccm': 0 };
+    allTransactions.forEach((t) => {
+      counts[t.project_id] = (counts[t.project_id] || 0) + 1;
+    });
+    return counts;
+  }, [allTransactions]);
+
+  const transactions = useMemo(() => {
+    if (isCurrentProjectLocked) return [];
+    return allTransactions.filter((t) => t.project_id === selectedProjectId);
+  }, [allTransactions, selectedProjectId, isCurrentProjectLocked]);
 
   const filtered = transactions.filter((t) => {
     const q = search.toLowerCase();
@@ -172,6 +211,7 @@ export default function InventoryLedgerPage() {
     }
 
     const rows = listToExport.map((t) => ({
+      'Project': t.project_code || activeProject.code,
       'Waktu Transaksi': t.created_at,
       'Nama Material': t.item_name,
       'Part Number': t.part_number || '-',
@@ -185,12 +225,12 @@ export default function InventoryLedgerPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory Ledger');
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Ledger ${activeProject.code}`);
     XLSX.writeFile(
       workbook,
-      `IMS_Ledger_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`
+      `IMS_Ledger_${activeProject.code}_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`
     );
-    addToast(`${rows.length} baris berhasil diekspor ke Excel.`, 'success');
+    addToast(`${rows.length} baris mutasi Project ${activeProject.code} berhasil diekspor ke Excel.`, 'success');
   };
 
   return (
@@ -198,281 +238,323 @@ export default function InventoryLedgerPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex-1 min-w-0 pr-0 sm:pr-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
+              PROJECT &bull; {activeProject.code}
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {activeProject.site_location}
+            </span>
+          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Riwayat Mutasi &amp; Pergerakan Stok
+            Riwayat Mutasi &amp; Pergerakan Stok — {activeProject.code}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Pencatatan resmi seluruh alur material: penerimaan material (MOS), instalasi armada (MR), transfer site, dan rekonsiliasi opname
+            Pencatatan resmi seluruh alur material: penerimaan material (MOS), instalasi armada (MR), transfer site, dan rekonsiliasi opname khusus Project {activeProject.code}
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 ml-auto shrink-0">
-          <button
-            onClick={() => exportToExcel(false)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Ekspor Excel (.xlsx)
-          </button>
-        </div>
-      </div>
-
-      {/* Filter and Search */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari material, part no, rak bin, atau no dokumen..."
-            className="w-full bg-transparent text-xs outline-none font-semibold text-slate-800 placeholder:text-slate-400"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl ml-auto shrink-0 justify-end">
-          {['ALL', 'MOS_IN', 'MR_OUT', 'OPNAME_ADJUSTMENT'].map((st) => (
+        {!isCurrentProjectLocked && (
+          <div className="flex items-center justify-end gap-2 ml-auto shrink-0">
             <button
-              key={st}
-              onClick={() => setTypeFilter(st)}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
-                typeFilter === st ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-              }`}
+              onClick={() => exportToExcel(false)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
             >
-              {st === 'ALL' ? 'Semua' : st}
+              <FileSpreadsheet className="w-4 h-4" />
+              Ekspor Excel ({activeProject.code})
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Bulk Action Bar (When rows are selected) */}
-      {selectedIds.length > 0 && (
-        <div className="bg-red-50 text-slate-800 rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-md border border-red-200 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
-              {selectedIds.length}
-            </span>
-            <div>
-              <p className="text-xs font-bold text-slate-900">
-                {selectedIds.length} baris mutasi stok dipilih
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Pilih aksi massal untuk baris-baris yang telah ditandai
-              </p>
+      {/* Project Workspace Selector & Access Indicator */}
+      <ProjectWorkspaceBanner
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onSelectProject={(pid) => {
+          setSelectedProjectId(pid);
+          setSelectedIds([]);
+        }}
+        isProjectLocked={isProjectLocked}
+        projectCounts={projectCounts}
+        countUnitLabel="Mutasi"
+        moduleName="Riwayat Mutasi Stok"
+      />
+
+      {isCurrentProjectLocked ? (
+        <LockedProjectScreen
+          activeProject={activeProject}
+          projects={projects}
+          onSelectProject={setSelectedProjectId}
+          isProjectLocked={isProjectLocked}
+          moduleName="Riwayat Mutasi Stok"
+        />
+      ) : (
+        <>
+          {/* Filter and Search */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={`Cari material, part no, rak bin, atau no dokumen di Project ${activeProject.code}...`}
+                className="w-full bg-transparent text-xs outline-none font-semibold text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl ml-auto shrink-0 justify-end">
+              {['ALL', 'MOS_IN', 'MR_OUT', 'OPNAME_ADJUSTMENT'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setTypeFilter(st)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer ${
+                    typeFilter === st ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {st === 'ALL' ? 'Semua' : st}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => exportToExcel(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer border border-slate-300 shadow-xs"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              Ekspor Terpilih
-            </button>
+          {/* Bulk Action Bar (When rows are selected) */}
+          {selectedIds.length > 0 && (
+            <div className="bg-red-50 text-slate-800 rounded-2xl p-3.5 px-5 flex flex-wrap items-center justify-between gap-4 shadow-md border border-red-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-red-600 text-white text-xs font-black shadow-sm">
+                  {selectedIds.length}
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">
+                    {selectedIds.length} baris mutasi stok dipilih
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Pilih aksi massal untuk baris-baris yang telah ditandai
+                  </p>
+                </div>
+              </div>
 
-            <button
-              onClick={() => setSelectedIds([])}
-              className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-red-100 rounded-xl transition cursor-pointer"
-            >
-              Batal Pilih
-            </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportToExcel(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition cursor-pointer border border-slate-300 shadow-xs"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  Ekspor Terpilih
+                </button>
 
-            {isAdmin && (
-              <button
-                onClick={() =>
-                  setDeleteConfirm({
-                    type: 'bulk',
-                    count: selectedIds.length,
-                    ids: [...selectedIds]
-                  })
-                }
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Hapus Terpilih ({selectedIds.length})
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-red-100 rounded-xl transition cursor-pointer"
+                >
+                  Batal Pilih
+                </button>
 
-      {/* Ledger Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                {/* Checkbox Header */}
-                <th className="px-3.5 py-3 text-center w-10">
+                {isAdmin && (
                   <button
-                    type="button"
-                    onClick={handleToggleAll}
-                    className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
-                    title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
+                    onClick={() =>
+                      setDeleteConfirm({
+                        type: 'bulk',
+                        count: selectedIds.length,
+                        ids: [...selectedIds]
+                      })
+                    }
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                   >
-                    {isAllSelected ? (
-                      <CheckSquare className="w-4 h-4 text-red-600" />
-                    ) : isSomeSelected ? (
-                      <MinusSquare className="w-4 h-4 text-red-600" />
-                    ) : (
-                      <Square className="w-4 h-4 text-slate-400" />
-                    )}
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Hapus Terpilih ({selectedIds.length})
                   </button>
-                </th>
-                <th className="px-4 py-3 text-left">Waktu Mutasi</th>
-                <th className="px-4 py-3 text-left">Nama Material</th>
-                <th className="px-4 py-3 text-left">Part Number</th>
-                <th className="px-4 py-3 text-left">Lokasi Rak</th>
-                <th className="px-4 py-3 text-center">Tipe Transaksi</th>
-                <th className="px-4 py-3 text-right">Mutasi Qty</th>
-                <th className="px-4 py-3 text-left">Dokumen Referensi</th>
-                <th className="px-4 py-3 text-left">Eksekutor</th>
-                {/* 3-Dots Action Column Header */}
-                <th className="px-4 py-3 text-center w-16">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-slate-400">
-                    Tidak ada transaksi mutasi stok yang sesuai.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((tr) => {
-                  const isPositive = tr.qty_change > 0;
-                  const isSelected = selectedIds.includes(tr.id);
+                )}
+              </div>
+            </div>
+          )}
 
-                  return (
-                    <tr
-                      key={tr.id}
-                      className={`transition ${
-                        isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      {/* Checkbox Cell */}
-                      <td className="px-3.5 py-3 text-center w-10">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleRow(tr.id);
-                          }}
-                          className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
-                        >
-                          {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-red-600" />
-                          ) : (
-                            <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
-                          )}
-                        </button>
-                      </td>
-
-                      <td className="px-4 py-3 font-mono text-slate-500 text-[11px] whitespace-nowrap">
-                        {tr.created_at ? new Date(tr.created_at).toLocaleString('id-ID') : '-'}
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-900">{tr.item_name}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600 whitespace-nowrap">{tr.part_number || '-'}</td>
-                      <td className="px-4 py-3 font-mono font-semibold text-slate-800 whitespace-nowrap">{tr.bin_location}</td>
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded font-mono text-[10px] font-bold ${
-                            tr.transaction_type === 'MOS_IN'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : tr.transaction_type === 'MR_OUT'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-purple-50 text-purple-700 border border-purple-200'
-                          }`}
-                        >
-                          {tr.transaction_type}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-right font-mono font-black whitespace-nowrap ${
-                          isPositive ? 'text-emerald-600' : 'text-red-600'
-                        }`}
+          {/* Ledger Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                    {/* Checkbox Header */}
+                    <th className="px-3.5 py-3 text-center w-10">
+                      <button
+                        type="button"
+                        onClick={handleToggleAll}
+                        className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 hover:text-slate-800 inline-flex items-center justify-center"
+                        title={isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua di halaman ini'}
                       >
-                        {isPositive ? `+${tr.qty_change}` : tr.qty_change}
+                        {isAllSelected ? (
+                          <CheckSquare className="w-4 h-4 text-red-600" />
+                        ) : isSomeSelected ? (
+                          <MinusSquare className="w-4 h-4 text-red-600" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-400" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left">Project</th>
+                    <th className="px-4 py-3 text-left">Waktu Mutasi</th>
+                    <th className="px-4 py-3 text-left">Nama Material</th>
+                    <th className="px-4 py-3 text-left">Part Number</th>
+                    <th className="px-4 py-3 text-left">Lokasi Rak</th>
+                    <th className="px-4 py-3 text-center">Tipe Transaksi</th>
+                    <th className="px-4 py-3 text-right">Mutasi Qty</th>
+                    <th className="px-4 py-3 text-left">Dokumen Referensi</th>
+                    <th className="px-4 py-3 text-left">Eksekutor</th>
+                    {/* 3-Dots Action Column Header */}
+                    <th className="px-4 py-3 text-center w-16">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="px-4 py-12 text-center text-slate-400">
+                        Tidak ada transaksi mutasi stok pada Project <strong>{activeProject.code}</strong>.
                       </td>
-                      <td className="px-4 py-3 font-mono text-slate-700 text-[11px] max-w-xs truncate">
-                        {tr.reference_doc_id || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{tr.performed_by || '-'}</td>
+                    </tr>
+                  ) : (
+                    filtered.map((tr) => {
+                      const isPositive = tr.qty_change > 0;
+                      const isSelected = selectedIds.includes(tr.id);
 
-                      {/* 3-Dots Action Cell */}
-                      <td className="px-4 py-3 text-center relative w-16">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuId(activeMenuId === tr.id ? null : tr.id);
-                          }}
-                          className={`p-1.5 rounded-xl border transition cursor-pointer ${
-                            activeMenuId === tr.id
-                              ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                      return (
+                        <tr
+                          key={tr.id}
+                          className={`transition ${
+                            isSelected ? 'bg-red-50/40 hover:bg-red-50/60' : 'hover:bg-slate-50'
                           }`}
-                          title="Opsi Transaksi"
                         >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-
-                        {/* Dropdown Menu */}
-                        {activeMenuId === tr.id && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
-                          >
+                          {/* Checkbox Cell */}
+                          <td className="px-3.5 py-3 text-center w-10">
                             <button
                               type="button"
-                              onClick={() => {
-                                setDetailItem(tr);
-                                setActiveMenuId(null);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleRow(tr.id);
                               }}
-                              className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                              className="p-1 rounded hover:bg-slate-200 transition cursor-pointer text-slate-500 inline-flex items-center justify-center"
                             >
-                              <Eye className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Lihat Jejak Audit</span>
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-red-600" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />
+                              )}
+                            </button>
+                          </td>
+
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className={`inline-flex items-center text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md border ${getProjectBadgeClasses(tr.project_id)}`}>
+                              {tr.project_code}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-slate-500 text-[11px] whitespace-nowrap">
+                            {tr.created_at ? new Date(tr.created_at).toLocaleString('id-ID') : '-'}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-slate-900">{tr.item_name}</td>
+                          <td className="px-4 py-3 font-mono text-slate-600 whitespace-nowrap">{tr.part_number || '-'}</td>
+                          <td className="px-4 py-3 font-mono font-semibold text-slate-800 whitespace-nowrap">{tr.bin_location}</td>
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded font-mono text-[10px] font-bold ${
+                                tr.transaction_type === 'MOS_IN'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : tr.transaction_type === 'MR_OUT'
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
+                              }`}
+                            >
+                              {tr.transaction_type}
+                            </span>
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-right font-mono font-black whitespace-nowrap ${
+                              isPositive ? 'text-emerald-600' : 'text-red-600'
+                            }`}
+                          >
+                            {isPositive ? `+${tr.qty_change}` : tr.qty_change}
+                          </td>
+                          <td className="px-4 py-3 font-mono text-slate-700 text-[11px] max-w-xs truncate">
+                            {tr.reference_doc_id || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{tr.performed_by || '-'}</td>
+
+                          {/* 3-Dots Action Cell */}
+                          <td className="px-4 py-3 text-center relative w-16">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === tr.id ? null : tr.id);
+                              }}
+                              className={`p-1.5 rounded-xl border transition cursor-pointer ${
+                                activeMenuId === tr.id
+                                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                              }`}
+                              title="Opsi Transaksi"
+                            >
+                              <MoreVertical className="w-4 h-4" />
                             </button>
 
-                            {isAdmin && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenEdit(tr)}
-                                  className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                                  <span>Edit Catatan & Ref</span>
-                                </button>
-
-                                <div className="border-t border-slate-100 my-1"></div>
-
+                            {/* Dropdown Menu */}
+                            {activeMenuId === tr.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-3 top-10 z-40 w-48 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 text-left text-xs animate-in fade-in zoom-in-95 duration-150"
+                              >
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setDeleteConfirm({ type: 'single', item: tr });
+                                    setDetailItem(tr);
                                     setActiveMenuId(null);
                                   }}
-                                  className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                  className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                                  <span>Hapus Baris Ini</span>
+                                  <Eye className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>Lihat Jejak Audit</span>
                                 </button>
-                              </>
+
+                                {isAdmin && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEdit(tr)}
+                                      className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium transition cursor-pointer"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                                      <span>Edit Catatan & Ref</span>
+                                    </button>
+
+                                    <div className="border-t border-slate-100 my-1"></div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeleteConfirm({ type: 'single', item: tr });
+                                        setActiveMenuId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-bold transition cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                      <span>Hapus Baris Ini</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* MODAL 1: LIHAT JEJAK AUDIT DETAIL */}
       {detailItem && (
