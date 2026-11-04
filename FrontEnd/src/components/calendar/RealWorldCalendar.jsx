@@ -354,24 +354,24 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
   }, [selectedDateStr]);
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-slate-200/90 shadow-[0_12px_40px_rgba(0,0,0,0.04)] overflow-hidden font-sans select-none">
+    <div className="w-full bg-white rounded-2xl border border-slate-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.03)] overflow-hidden font-sans select-none">
       
       {/* ── Top Header & Month Controls ── */}
-      <div className="p-4 sm:p-6 bg-gradient-to-b from-slate-50/80 to-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-600 to-red-700 text-white flex items-center justify-center shadow-md shadow-red-600/20">
-            <CalendarIcon className="w-5 h-5" />
+      <div className="px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-b from-slate-50/80 to-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-600 to-red-700 text-white flex items-center justify-center shadow-sm shadow-red-600/20">
+            <CalendarIcon className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-bold border border-red-200">
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 font-bold border border-red-200">
                 Kalender Nyata
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-[11px] text-slate-500 font-medium leading-tight">
               Jadwal shift operasional, penerimaan MOS, stock opname, dan inspeksi site
             </p>
           </div>
@@ -380,29 +380,29 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
         {/* Action Controls & Navigation */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Month Steppers */}
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer"
               title="Bulan Sebelumnya"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={handleJumpToday}
-              className="px-3 py-1 rounded-lg text-xs font-bold text-slate-700 hover:bg-red-50 hover:text-red-700 transition cursor-pointer"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-red-50 hover:text-red-700 transition cursor-pointer"
             >
               Hari Ini
             </button>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition cursor-pointer"
               title="Bulan Berikutnya"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -411,9 +411,9 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
             <button
               type="button"
               onClick={() => handleOpenAddModal(selectedDateStr)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl text-[11px] font-bold shadow-sm shadow-red-600/20 transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Tambah Agenda</span>
             </button>
           )}
@@ -422,24 +422,24 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer border border-slate-200"
               title="Tutup Modal"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
 
       {/* ── Category Filter Pills ── */}
-      <div className="px-4 sm:px-6 py-2.5 bg-slate-50/50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto text-xs font-semibold scrollbar-none">
-        <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1 flex items-center gap-1">
+      <div className="px-4 sm:px-5 py-1.5 bg-slate-50/50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px] font-semibold scrollbar-none">
+        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mr-1 flex items-center gap-1">
           <Filter className="w-3 h-3" /> Filter:
         </span>
         <button
           type="button"
           onClick={() => setCategoryFilter('ALL')}
-          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+          className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
             categoryFilter === 'ALL'
               ? 'bg-red-600 text-white font-bold shadow-xs'
               : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
@@ -455,7 +455,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
               key={key}
               type="button"
               onClick={() => setCategoryFilter(key)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
                 isSelected
                   ? `${config.bg} ${config.text} ${config.border} border font-bold ring-1 ring-red-400`
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -473,13 +473,13 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
         
         {/* Left: Real World Calendar Month Grid (8 columns on lg) */}
-        <div className="lg:col-span-8 p-3 sm:p-5">
+        <div className="lg:col-span-8 p-2.5 sm:p-3.5">
           {/* Day of Week Headers */}
-          <div className="grid grid-cols-7 mb-2">
+          <div className="grid grid-cols-7 mb-1">
             {DAYS_NAMES.map((name, idx) => (
               <div
                 key={name}
-                className={`py-2 text-center text-[11px] font-bold tracking-wider uppercase ${
+                className={`py-1 text-center text-[10px] font-bold tracking-wider uppercase ${
                   idx === 6 ? 'text-red-500' : 'text-slate-500'
                 }`}
               >
@@ -489,16 +489,19 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
           </div>
 
           {/* Grid Cells */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+          <div className="grid grid-cols-7 gap-1">
             {calendarCells.map((cell, idx) => {
               const events = agendasByDate[cell.dateStr] || [];
               const isSelected = selectedDateStr === cell.dateStr;
+              const isSixRows = calendarCells.length > 35;
 
               return (
                 <div
                   key={idx}
                   onClick={() => setSelectedDateStr(cell.dateStr)}
-                  className={`min-h-[75px] sm:min-h-[96px] p-1.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                  className={`${
+                    isSixRows ? 'min-h-[48px] sm:min-h-[54px]' : 'min-h-[56px] sm:min-h-[64px]'
+                  } p-1 sm:p-1.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                     cell.isCurrentMonth
                       ? 'bg-white hover:border-red-300 hover:shadow-xs'
                       : 'bg-slate-50/60 opacity-40 hover:opacity-70'
@@ -511,7 +514,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                   {/* Top Bar of Day Cell: Date Number & Today Indicator */}
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                      className={`text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full ${
                         cell.isToday
                           ? 'bg-red-600 text-white shadow-2xs font-black'
                           : isSelected
@@ -530,24 +533,24 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                   </div>
 
                   {/* Event Badges inside Cell */}
-                  <div className="space-y-1 mt-1 overflow-hidden">
+                  <div className="space-y-0.5 mt-0.5 overflow-hidden">
                     {events.slice(0, 2).map((ev) => {
                       const cfg = CATEGORY_CONFIG[ev.category] || CATEGORY_CONFIG.Shift;
                       return (
                         <div
                           key={ev.id}
-                          className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md truncate border ${cfg.bg} ${cfg.text} ${cfg.border} leading-tight flex items-center gap-1`}
+                          className={`text-[9px] font-bold px-1 py-0.5 rounded truncate border ${cfg.bg} ${cfg.text} ${cfg.border} leading-none flex items-center gap-1`}
                           title={`${ev.title} (${ev.start_time} - ${ev.end_time})`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+                          <span className={`w-1 h-1 rounded-full shrink-0 ${cfg.dot}`} />
                           <span className="truncate">{ev.title}</span>
                         </div>
                       );
                     })}
 
                     {events.length > 2 && (
-                      <div className="text-[9px] font-bold text-slate-500 pl-1">
-                        +{events.length - 2} agenda lagi
+                      <div className="text-[8px] font-bold text-slate-500 pl-1 leading-none">
+                        +{events.length - 2} lagi
                       </div>
                     )}
                   </div>
@@ -558,16 +561,16 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
         </div>
 
         {/* Right: Selected Date Agenda Details & Admin Actions (4 columns on lg) */}
-        <div className="lg:col-span-4 p-4 sm:p-5 bg-slate-50/40 flex flex-col justify-between">
-          <div className="space-y-4">
+        <div className="lg:col-span-4 p-3 sm:p-4 bg-slate-50/40 flex flex-col justify-between">
+          <div className="space-y-3">
             
             {/* Header of Drawer */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
               <div>
                 <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">
                   Agenda Terpilih
                 </span>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                   {selectedDateFormatted}
                 </h3>
               </div>
@@ -579,18 +582,18 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                   className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition cursor-pointer"
                   title="Tambah Agenda di Tanggal Ini"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
             {/* List of Agendas on Selected Date */}
             {selectedDateAgendas.length === 0 ? (
-              <div className="py-10 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 mx-auto flex items-center justify-center shadow-2xs">
-                  <CalendarDays className="w-6 h-6" />
+              <div className="py-6 text-center space-y-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-slate-400 mx-auto flex items-center justify-center shadow-2xs">
+                  <CalendarDays className="w-5 h-5" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <p className="text-xs font-bold text-slate-700">
                     Tidak ada agenda pada tanggal ini
                   </p>
@@ -610,7 +613,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                 )}
               </div>
             ) : (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
                 {selectedDateAgendas.map((item) => {
                   const cfg = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.Shift;
                   return (

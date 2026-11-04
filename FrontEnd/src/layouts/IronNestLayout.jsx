@@ -108,7 +108,7 @@ export default function IronNestLayout() {
           onTouchEnd={handleTouchEnd}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          className="flex-1 px-2.5 sm:px-6 lg:px-8 pb-28 lg:pb-12 pt-1 sm:pt-2 max-w-[1780px] 2xl:max-w-[1920px] w-full mx-auto"
+          className="flex-1 px-2.5 sm:px-6 lg:px-8 pb-28 lg:pb-4 pt-1 sm:pt-2 max-w-[1780px] 2xl:max-w-[1920px] w-full mx-auto"
         >
           <Outlet context={{ searchTerm }} />
         </main>
