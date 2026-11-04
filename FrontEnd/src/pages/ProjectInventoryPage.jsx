@@ -864,41 +864,6 @@ export default function ProjectInventoryPage() {
     }
   };
 
-  // Export CSV
-  const handleExportCSV = () => {
-    if (items.length === 0) {
-      showToast('Tidak ada data untuk diexport', 'error');
-      return;
-    }
-    const headers = ['Kode Barang', 'Serial Number', 'Nama Barang', 'Kategori', 'Brand', 'Status', 'Kondisi', 'Unit Terpasang', 'HM Pasang', 'Garansi Expiry', 'Status Garansi', 'Vendor Garansi', 'Jadwal Ganti', 'Kanibal Dari'];
-    const rows = items.map(i => [
-      `"${i.item_code || ''}"`,
-      `"${i.serial_number || ''}"`,
-      `"${i.name || ''}"`,
-      `"${i.category || ''}"`,
-      `"${i.brand || ''}"`,
-      `"${i.status || ''}"`,
-      `"${i.condition || ''}"`,
-      `"${i.installed_unit || 'GUDANG'}"`,
-      `"${i.unit_hm_at_install || ''}"`,
-      `"${i.warranty_expiry_date || ''}"`,
-      `"${i.warranty_status || ''}"`,
-      `"${i.warranty_provider || ''}"`,
-      `"${i.replacement_due_date || ''}"`,
-      `"${i.origin_unit || ''}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `SUMMARY_INVENTORY_${activeProject.code}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast(`Data inventaris ${activeProject.code} berhasil diekspor!`);
-  };
-
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-200">
       {/* Toast Alert */}
@@ -935,15 +900,6 @@ export default function ProjectInventoryPage() {
 
         {/* Top Quick Actions — Pushed to right edge */}
         <div className="flex flex-wrap items-center justify-end gap-2 ml-auto shrink-0">
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
-            title="Download CSV Laporan"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Unduh CSV</span>
-          </button>
-
           <button
             onClick={fetchData}
             className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition cursor-pointer"
