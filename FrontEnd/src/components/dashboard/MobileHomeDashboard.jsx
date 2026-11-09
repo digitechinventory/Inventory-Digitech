@@ -381,13 +381,13 @@ export default function MobileHomeDashboard() {
         {/* Compact Industrial Project Cards */}
         <ProjectWorkspacesBanner compact={true} activeFilter={projectTab} userRole={normalizedRole} />
 
-        {/* Project FAMOUS 9 Telemetry Radar Hardware Quick Strip (From Desktop Project Page) */}
+        {/* Project FAMOUS Hardware Quick Strip */}
         {(projectTab === 'FAMOUS' || projectTab === 'ALL') && (
           <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
               <span className="font-bold text-slate-800 flex items-center gap-1">
                 <Truck className="w-3 h-3 text-red-600" />
-                9 Kategori Telematika FAMOUS (825 Truk)
+                Kategori Hardware Telematika
               </span>
               <button
                 onClick={() => navigate('/project-inventory?project=proj-famous')}

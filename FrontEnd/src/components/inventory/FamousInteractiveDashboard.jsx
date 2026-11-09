@@ -281,7 +281,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            9 Kategori Sensor &amp; Gateway
+            Kategori Sensor &amp; Gateway
           </div>
         </div>
 
@@ -353,15 +353,15 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
         </div>
       </div>
 
-      {/* ── Interactive Category Buffer Stock Radar (9 Komponen) ── */}
+      {/* ── Interactive Category Filter Cards ── */}
       <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
               <Layers className="w-4 h-4 text-red-600" />
-              Radar Status 9 Kategori Hardware Telematika FAMOUS
+              Kategori Komponen Hardware
             </h3>
-            <p className="text-xs text-slate-500">Klik kartu untuk menyaring data inventaris sesuai komponen perangkat keras</p>
+            <p className="text-xs text-slate-500">Pilih kategori untuk memfilter data inventaris</p>
           </div>
           {selectedCategory !== 'ALL' && (
             <button
