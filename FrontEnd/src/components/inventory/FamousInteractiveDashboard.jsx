@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Truck,
@@ -36,7 +37,8 @@ import {
   ArrowRight,
   ShieldAlert,
   Wrench,
-  QrCode
+  QrCode,
+  Plus
 } from 'lucide-react';
 import {
   getFamousSummary,
@@ -71,6 +73,7 @@ const SENSOR_LABELS = {
 const MITRA_LIST = ['ALL', 'AEK', 'RBT', 'BMT', 'GECL', 'KMB', 'BBS', 'BKAE', 'MAV', 'MMS', 'RAM', 'STOCK'];
 
 export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos }) {
+  const navigate = useNavigate();
   // Main Navigation View: 'matrix' (Fleet 825 Truk) | 'hardware' (9,416 Perangkat) | 'rma' (Rusak & Retur)
   const [activeView, setActiveView] = useState('matrix');
 
@@ -751,8 +754,20 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
               </select>
             </div>
 
-            <div className="text-xs text-slate-500 font-medium">
-              Ditemukan <span className="font-bold text-slate-800">{hardwarePagination.total.toLocaleString('id-ID')}</span> item hardware
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="text-xs text-slate-500 font-medium">
+                Ditemukan <span className="font-bold text-slate-800">{hardwarePagination.total.toLocaleString('id-ID')}</span> item hardware
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/mos?project=famous&action=create_mos')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-red-600/20 transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shrink-0"
+                title="Input penerimaan perangkat telematika baru via Dokumen Berita Acara MOS"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Tambah Komponen</span>
+              </button>
             </div>
           </div>
 

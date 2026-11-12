@@ -69,7 +69,8 @@ export default function DocumentUploadModal({
   onSuccess,
   currentUser,
   editDocument = null,
-  defaultTab = 'template'
+  defaultTab = 'template',
+  initialProject = ''
 }) {
   const isEditMode = Boolean(editDocument);
   const [activeTab, setActiveTab] = useState(defaultTab); // 'template' | 'local'
@@ -240,16 +241,28 @@ export default function DocumentUploadModal({
       setSenderRole(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi Lapangan');
       setSenderPhone('0812-3456-7890');
 
-      setDestinationLocation('BIB Pit Sebamban KM-14');
-      setDestinationSpecificArea('Pitstop Area KM-14');
+      if (initialProject?.toLowerCase().includes('wim')) {
+        setDestinationLocation('BIB Site Jembatan Timbang WIM KM-13/14');
+        setDestinationSpecificArea('Platform Timbangan Lane 1 & 3 / Buffer Gudang WIM');
+        setUnitTargeted('Unit Jembatan Timbang WIM KM 13 (Lane 1 & 3)');
+        setPurpose('Verifikasi fisik dan penerimaan sparepart/komponen jembatan timbang WIM.');
+      } else if (initialProject?.toLowerCase().includes('famous')) {
+        setDestinationLocation('BIB Pit South & Workshop Telematika FAMOUS');
+        setDestinationSpecificArea('Workshop Area KM-24 / Bay Telematika');
+        setUnitTargeted('Armada Hauling Tambang (Fleet Truk FAMOUS)');
+        setPurpose('Penerimaan komponen sensor telematika dan GPS fleet hauling.');
+      } else {
+        setDestinationLocation('BIB Pit Sebamban KM-14');
+        setDestinationSpecificArea('Pitstop Area KM-14');
+        setUnitTargeted('Unit Jembatan Timbang WIM KM 13 / Fleet HD-785');
+        setPurpose('Verifikasi fisik dan penerimaan material/sparepart baru di area gudang site.');
+      }
       setDestinationReceiver('Team Mekanik Pit');
       setReceiverRole('Field Mechanical Lead');
       setReceiverPhone('0821-9876-5432');
 
       setTransportMode('Armada Logistik Site (Truck Pickup)');
       setDriverName('Bpk. Mulyadi (KT 8821 BB)');
-      setUnitTargeted('Unit Jembatan Timbang WIM KM 13 / Fleet HD-785');
-      setPurpose('Verifikasi fisik dan penerimaan material/sparepart baru di area gudang site.');
       setNotesJustification('Barang diterima sesuai spesifikasi Purchase Order. Dilakukan pengecekan fisik menyeluruh dan serial number tercatat lengkap.');
 
       setApprovalMakerName(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
@@ -267,7 +280,7 @@ export default function DocumentUploadModal({
       fetchUniqueNumber('MOS');
       loadTemplateDefaults('MOS');
     }
-  }, [isOpen, editDocument, defaultTab]);
+  }, [isOpen, editDocument, defaultTab, initialProject]);
 
   // Load template defaults
   const loadTemplateDefaults = async (tplType) => {
@@ -515,7 +528,8 @@ export default function DocumentUploadModal({
 
         orientation,
         pages: convertedPages,
-        items
+        items,
+        project_id: initialProject ? (initialProject.startsWith('proj-') ? initialProject : `proj-${initialProject.toLowerCase()}`) : (editDocument?.project_id || 'proj-wim')
       };
 
       let resultDoc = null;

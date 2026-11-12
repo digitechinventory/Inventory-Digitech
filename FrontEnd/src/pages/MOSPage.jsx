@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   FileCheck2,
@@ -34,6 +35,9 @@ import DocumentUploadModal from '../components/common/DocumentUploadModal.jsx';
 
 export default function MOSPage() {
   const { user, role } = useAuth();
+  const [searchParams] = useSearchParams();
+  const projectParam = searchParams.get('project');
+  const actionParam = searchParams.get('action');
 
   // Active view: 'waiting_list' | 'sheet'
   const [activeView, setActiveView] = useState('waiting_list');
@@ -49,6 +53,15 @@ export default function MOSPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadModalDefaultTab, setUploadModalDefaultTab] = useState('local'); // 'local' | 'template'
   const [documentToEdit, setDocumentToEdit] = useState(null); // When editing existing document
+
+  // Auto-open Document Creation Wizard if redirected from Project Inventory (+ Tambah Komponen)
+  useEffect(() => {
+    if (actionParam === 'create_mos' || actionParam === 'create') {
+      setDocumentToEdit(null);
+      setUploadModalDefaultTab('template');
+      setIsUploadModalOpen(true);
+    }
+  }, [actionParam]);
 
   // Fetch document list for Waiting List & Archive
   const { data: documentsData, refetch, isLoading } = useQuery({
@@ -239,6 +252,7 @@ export default function MOSPage() {
         currentUser={user}
         defaultTab={uploadModalDefaultTab}
         editDocument={documentToEdit}
+        initialProject={projectParam || ''}
       />
 
     </div>

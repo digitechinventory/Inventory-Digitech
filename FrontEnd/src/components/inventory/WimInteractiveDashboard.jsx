@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Scale,
@@ -27,7 +28,8 @@ import {
   ChevronDown,
   Info,
   X,
-  ShieldAlert
+  ShieldAlert,
+  Plus
 } from 'lucide-react';
 import {
   getWimSummary,
@@ -72,6 +74,7 @@ const WIM_CATEGORIES = [
 ];
 
 export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) {
+  const navigate = useNavigate();
   // Navigation tabs: 'components' | 'lanes' | 'warranty' | 'transactions' | 'documents'
   const [activeTab, setActiveTab] = useState('components');
 
@@ -459,8 +462,20 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               </select>
             </div>
 
-            <div className="text-xs text-slate-500 font-medium">
-              Ditemukan <span className="font-bold text-slate-800">{compPagination.total}</span> komponen
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="text-xs text-slate-500 font-medium">
+                Ditemukan <span className="font-bold text-slate-800">{compPagination.total}</span> komponen
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/mos?project=wim&action=create_mos')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-red-600/20 transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shrink-0"
+                title="Input penerimaan barang baru via Dokumen Berita Acara MOS"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Tambah Komponen</span>
+              </button>
             </div>
           </div>
 
