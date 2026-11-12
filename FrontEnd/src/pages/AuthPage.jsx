@@ -400,7 +400,7 @@ export default function AuthPage() {
       <div className="fixed lg:absolute inset-0 z-0 overflow-hidden pointer-events-auto">
         <iframe
           ref={iframeRef}
-          src="/spline-robot.html"
+          src="/spline-robot.html?v=3.2"
           frameBorder="0"
           title="Interactive 3D Robot Mascot"
           className="w-full h-full border-0 pointer-events-auto"
