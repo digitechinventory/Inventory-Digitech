@@ -247,10 +247,10 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                   setShowAiModal(true);
                 }}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-300 text-xs font-bold transition shadow-2xs group/lens cursor-pointer"
-                title="Buka AI Lens Scanner (Kamera & Dokumen)"
+                title="Pindai QR & Dokumen via Kamera"
               >
                 <Scan className="w-3.5 h-3.5 text-red-600 group-hover/lens:scale-110 transition-transform" />
-                <span className="text-[11px] font-semibold">Lens</span>
+                <span className="text-[11px] font-semibold">Pindai QR</span>
               </button>
             </div>
           </div>
@@ -548,10 +548,10 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                 setShowAiModal(true);
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-300 text-[11px] font-mono font-bold shadow-2xs cursor-pointer transition-all"
-              title="Buka AI Lens Scanner"
+              title="Pindai QR & Dokumen"
             >
               <Scan className="w-3 h-3 text-red-600" />
-              <span>Lens</span>
+              <span>Pindai</span>
             </button>
           </div>
         </div>

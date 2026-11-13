@@ -391,10 +391,10 @@ export default function AiSiteSearchDetectorModal({ isOpen, onClose, initialTab 
                     setActiveTab('lens');
                   }}
                   className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-200 text-xs font-mono font-bold transition shadow-2xs group cursor-pointer"
-                  title="Buka AI Lens Scanner (Kamera & Deteksi QR)"
+                  title="Pindai QR & Dokumen via Kamera"
                 >
                   <Scan className="w-3.5 h-3.5 text-red-600 group-hover:scale-110 transition-transform" />
-                  <span className="text-[11px] font-semibold hidden sm:inline">Lens</span>
+                  <span className="text-[11px] font-semibold hidden sm:inline">Pindai QR</span>
                 </button>
 
                 {/* Close Button */}
@@ -448,7 +448,7 @@ export default function AiSiteSearchDetectorModal({ isOpen, onClose, initialTab 
                     Tidak ada hasil untuk "{searchQuery}"
                   </div>
                   <div className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    Coba gunakan kata kunci lain seperti nama barang, nomor MOS, atau gunakan tombol Lens untuk scan QR code.
+                    Coba gunakan kata kunci lain seperti nama barang, nomor MOS, atau gunakan pemindai QR code.
                   </div>
                 </div>
               ) : (
@@ -531,7 +531,7 @@ export default function AiSiteSearchDetectorModal({ isOpen, onClose, initialTab 
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
                 <span className="text-xs font-bold text-slate-800 font-mono tracking-wide">
-                  AI LENS SCANNER
+                  PEMINDAI QR &amp; DOKUMEN
                 </span>
               </div>
 
@@ -590,7 +590,7 @@ export default function AiSiteSearchDetectorModal({ isOpen, onClose, initialTab 
                     <Scan className="w-6 h-6" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800 text-sm">Pindai dengan AI Lens</div>
+                    <div className="font-bold text-slate-800 text-sm">Pindai QR &amp; Barcode</div>
                     <div className="text-xs text-slate-500 mt-0.5 max-w-sm mx-auto">
                       Arahkan kamera ke label QR code pada suku cadang atau unggah foto dokumen MOS.
                     </div>

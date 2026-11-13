@@ -368,7 +368,7 @@ export default function RealWorldCalendar({ isModal = false, onClose }) {
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-bold border border-red-200">
-                Kalender Nyata
+                Kalender Operasional
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">

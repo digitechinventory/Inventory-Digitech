@@ -195,7 +195,7 @@ export default function CameraSignatureScanner({ isOpen, onClose, onCapture }) {
             </div>
             <div>
               <h3 className="font-bold text-slate-900 text-sm">
-                Scan Tanda Tangan Fisik (AI Lokal)
+                Scan Tanda Tangan Fisik
               </h3>
               <p className="text-[10px] text-slate-500 font-mono">
                 Ekstraksi tinta kertas langsung ke PNG transparan tanpa upload server

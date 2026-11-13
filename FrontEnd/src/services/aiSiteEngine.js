@@ -218,7 +218,7 @@ const DEFAULT_WIM_COMPONENTS = [
 
 const DEFAULT_FAMOUS_ITEMS = [
   { item_code: 'FMS-GPS-4G', device_type: 'GPS Tracker 4G LTE High-Precision', imei: '864201048821901', installed_unit: 'DT-BIB-04', mitra: 'PT BIB Hauling', status: 'Active' },
-  { item_code: 'FMS-DSM-CAM', device_type: 'DSM AI Fatigue & Distraction Sensor Camera', imei: '864201048821902', installed_unit: 'DT-BIB-04', mitra: 'PT BIB Hauling', status: 'Active' },
+  { item_code: 'FMS-DSM-CAM', device_type: 'DSM Fatigue & Distraction Sensor Camera', imei: '864201048821902', installed_unit: 'DT-BIB-04', mitra: 'PT BIB Hauling', status: 'Active' },
   { item_code: 'FMS-ADAS-01', device_type: 'ADAS Forward Collision Warning Dual-Lens Camera', imei: '864201048821903', installed_unit: 'DT-BIB-07', mitra: 'PT BIB Hauling', status: 'Active' },
   { item_code: 'FMS-FLS-ULTRA', device_type: 'Ultra-Sonic Real-time Fuel Level Sensor', imei: '864201048821904', installed_unit: 'DT-BIB-12', mitra: 'PT BIB Hauling', status: 'Active' },
   { item_code: 'FMS-RFID-RDR', device_type: 'Driver RFID Reader & Auto-Immobilizer', imei: '864201048821905', installed_unit: 'DT-BIB-15', mitra: 'PT BIB Hauling', status: 'Active' }
@@ -302,7 +302,7 @@ class InSiteSearchEngine {
     });
     // Seed Quick Actions
     items.push(
-      { id: 'act-cyber-qr', type: 'ACTION', category: 'Aksi Cepat', title: 'Generator Cyber QR Code (3D Holographic)', code: 'ACTION:QR_GENERATOR', subtitle: 'Generate QR code dinamis animasi 3D, unduh vector SVG & print', url: '/inventory', badge: 'Cyber QR', badgeColor: 'bg-red-50 text-red-800 border-red-200', keywords: ['qr', 'qrcode', 'generator', 'cetak', 'print'] },
+      { id: 'act-cyber-qr', type: 'ACTION', category: 'Aksi Cepat', title: 'Generator QR Code Asset & Inventory', code: 'ACTION:QR_GENERATOR', subtitle: 'Generate QR code aset, unduh vector SVG & cetak label', url: '/inventory', badge: 'QR Generator', badgeColor: 'bg-red-50 text-red-800 border-red-200', keywords: ['qr', 'qrcode', 'generator', 'cetak', 'print'] },
       { id: 'act-mos-approval', type: 'ACTION', category: 'Aksi Cepat', title: 'Verifikasi & Tanda Tangan Dokumen MOS', code: 'ACTION:MOS', subtitle: 'Buka antrean berkas MOS yang menunggu pemeriksaan fisik', url: '/opname', badge: 'Quick Action', badgeColor: 'bg-amber-50 text-amber-800 border-amber-200', keywords: ['verifikasi', 'mos', 'approval'] }
     );
     this.index = items;
@@ -432,13 +432,13 @@ class InSiteSearchEngine {
           id: 'act-cyber-qr',
           type: 'ACTION',
           category: 'Aksi Cepat',
-          title: 'Generator Cyber QR Code (3D Holographic)',
+          title: 'Generator QR Code Asset & Inventory',
           code: 'ACTION:QR_GENERATOR',
-          subtitle: 'Generate QR code dinamis animasi 3D, unduh vector SVG & print',
+          subtitle: 'Generate QR code aset, unduh vector SVG & cetak label',
           url: '/inventory',
-          badge: 'Cyber QR',
+          badge: 'QR Generator',
           badgeColor: 'bg-red-50 text-red-800 border-red-200',
-          keywords: ['qr', 'qrcode', 'generator', 'holographic', 'cetak', 'print', 'barcode']
+          keywords: ['qr', 'qrcode', 'generator', 'cetak', 'print', 'barcode']
         },
         {
           id: 'act-mos-approval',

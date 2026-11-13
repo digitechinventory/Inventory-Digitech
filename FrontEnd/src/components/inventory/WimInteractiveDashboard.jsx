@@ -341,7 +341,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
         {/* Total Komponen Fisik */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden group hover:border-emerald-500 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Total Komponen Real</span>
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Total Komponen</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
               <Scale className="w-4 h-4" />
             </div>
@@ -351,7 +351,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            28 Kategori Komponen Timbangan
+            Kategori Komponen Timbangan
           </div>
         </div>
 
@@ -411,10 +411,10 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
           <div className="space-y-0.5">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-emerald-600" />
-              Visualisasi Data Control Stock Part WIM
+              Rekapitulasi &amp; Grafik Stock Part WIM
             </h3>
             <p className="text-xs text-slate-500">
-              Grafik rekapitulasi status komponen fisik, mutasi stok baru vs bekas/dummy (28 sheet komponen), dan estimasi garansi sparepart WIM dari database.
+              Ringkasan status komponen fisik, mutasi stok per kategori, dan estimasi garansi sparepart WIM.
             </p>
           </div>
 
@@ -463,7 +463,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
-                    Distribusi Komponen Fisik WIM per Kategori (Terpasang, Dilepas &amp; Sisa Stock)
+                    Distribusi Komponen WIM per Kategori (Terpasang, Dilepas &amp; Sisa Stock)
                   </h4>
                   <p className="text-[11px] text-slate-500">
                     Klik batang grafik untuk menyaring tabel komponen di bawah berdasarkan kategori
@@ -526,7 +526,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div>
                 <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <PieChartIcon className="w-4 h-4 text-emerald-600" />
-                  Komposisi Kondisi Fisik ({summary?.total_components || 0} Unit)
+                  Status Kondisi Komponen ({summary?.total_components || 0} Unit)
                 </h4>
                 <div className="h-[155px] w-full mt-1">
                   <ResponsiveContainer width="100%" height="100%">
@@ -605,10 +605,10 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
-                    Grafik Mutasi Control Stock Part WIM (Barang Masuk, Keluar &amp; Sisa Stock)
+                    Grafik Mutasi Stock Part WIM (Masuk, Keluar &amp; Sisa Stock)
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Data riil rekapitulasi 28 lembar kerja (sheet) pada file 2. Detail_Control_Stock_Part_WIM.xlsx dari database
+                    Rekapitulasi mutasi barang masuk, keluar, dan sisa stok per kategori part WIM.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-mono">
@@ -661,7 +661,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <table className="w-full text-xs text-left">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 font-mono text-[10px] uppercase">
-                    <th className="px-3.5 py-2.5">Kategori Part WIM (28 Sheet)</th>
+                    <th className="px-3.5 py-2.5">Kategori Part WIM</th>
                     <th className="px-3 py-2.5 text-center">Baru Masuk</th>
                     <th className="px-3 py-2.5 text-center">Baru Keluar</th>
                     <th className="px-3 py-2.5 text-center">Sisa Stock Baru</th>
@@ -787,7 +787,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               </div>
 
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
-                <span>Sumber: Sheet Warranty Sparepart ({summary?.total_warranty_items || 0} Jenis Part Resmi)</span>
+                <span>Referensi Data Garansi ({summary?.total_warranty_items || 0} Jenis Part)</span>
                 <span className="font-bold text-emerald-700">Masa Garansi Standar: 1 Tahun</span>
               </div>
             </div>
@@ -884,7 +884,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 className="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer focus:outline-none"
               >
                 {WIM_CATEGORIES.map(c => (
-                  <option key={c} value={c}>{c === 'ALL' ? 'Semua 28 Kategori' : c}</option>
+                  <option key={c} value={c}>{c === 'ALL' ? 'Semua Kategori' : c}</option>
                 ))}
               </select>
 

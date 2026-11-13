@@ -76,7 +76,7 @@ const SENSOR_ICONS = {
 
 const SENSOR_LABELS = {
   gps: 'GPS Tracker',
-  dsm: 'DSM AI Camera',
+  dsm: 'DSM Camera',
   adas: 'ADAS Safety',
   mdvr: 'MDVR Recorder',
   ssd: 'SSD Storage',
@@ -280,7 +280,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
   const categoryStatsList = useMemo(() => {
     const catDefs = [
       { key: 'GPS', name: 'GPS Tracker', icon: Compass },
-      { key: 'DSM', name: 'DSM AI Fatigue Camera', icon: Eye },
+      { key: 'DSM', name: 'DSM Fatigue Camera', icon: Eye },
       { key: 'ADAS', name: 'ADAS Safety Camera', icon: ShieldCheck },
       { key: 'MDVR', name: 'MDVR Video Box', icon: Video },
       { key: 'SSD', name: 'SSD Storage Drive', icon: HardDrive },
@@ -367,12 +367,12 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
 
   return (
     <div className="space-y-6">
-      {/* ── Top Executive KPI Highlights (Real FAMOUS Data from DB) ── */}
+      {/* ── Top Executive KPI Highlights ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Hardware Items */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden group hover:border-red-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Total Hardware Real</span>
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Total Perangkat</span>
             <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
               <Boxes className="w-4 h-4" />
             </div>
@@ -382,14 +382,14 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            9 Kategori Sensor &amp; Gateway
+            Unit &amp; Gudang Site
           </div>
         </div>
 
         {/* Total Armada Truk Terpasang */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden group hover:border-blue-400 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Armada Hauling Aktif</span>
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider">Unit Armada Terdata</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
               <Truck className="w-4 h-4" />
             </div>
@@ -399,7 +399,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           </div>
           <div className="text-[11px] text-blue-600 mt-1 flex items-center gap-1 font-medium">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            {Number(summary?.fleet_summary?.optimal_units || 0).toLocaleString('id-ID')} Unit Lengkap (8/8)
+            {Number(summary?.fleet_summary?.optimal_units || 0).toLocaleString('id-ID')} Unit Terpasang Lengkap
           </div>
         </div>
 
@@ -520,20 +520,20 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
         </div>
       </div>
 
-      {/* ── Visualisasi Data Stock Komponen (9 Kategori Stock — Tanpa HRGA) ── */}
+      {/* ── Ringkasan Stok & Distribusi Perangkat ── */}
       <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
             <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-red-600" />
               {selectedCategory === 'ALL'
-                ? 'Visualisasi Stock Komponen FAMOUS (9 Kategori Stock)'
-                : `${activeCategoryPivot?.title || `DATA ${selectedCategory}`} & STOCK ${selectedCategory} — Visualisasi Datasheet`}
+                ? 'Ringkasan Stok & Distribusi Perangkat'
+                : `Rincian Stok & Distribusi Perangkat — ${selectedCategory}`}
             </h3>
             <p className="text-xs text-slate-500">
               {selectedCategory === 'ALL'
-                ? 'Rekapitulasi grafik dan pivot table dari database untuk 9 lembar Stock (GPS, DSM, ADAS, MDVR, SSD, OBU, PTT, DOME, CANBUS)'
-                : `Grafik & Pivot Table resmi dari lembar 'Stock ${selectedCategory}' (COUNTA of Status ${selectedCategory})`}
+                ? 'Rekapitulasi status pemasangan, ketersediaan stok gudang, dan alokasi perangkat per mitra operasional'
+                : `Rincian status perangkat ${selectedCategory} berdasarkan mitra operasional dan tanggal kedatangan`}
             </p>
           </div>
 
@@ -548,7 +548,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
-              Semua Stock
+              Semua Perangkat
             </button>
             {categoryStatsList.map((c) => (
               <button
@@ -571,14 +571,14 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           <div className="space-y-6">
             {/* Row 1: Category Comparison Bar Chart + Overall Status Donut Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              {/* Bar Chart: 9 Stock Categories */}
+              {/* Bar Chart */}
               <div className="lg:col-span-8 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                      Grafik Status per Kategori Stock (9 Komponen)
+                      Distribusi Status per Jenis Perangkat
                     </h4>
-                    <p className="text-[11px] text-slate-500">Klik batang grafik untuk melihat detail pivot kategori terkait</p>
+                    <p className="text-[11px] text-slate-500">Klik batang grafik untuk melihat detail kategori terkait</p>
                   </div>
                   <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700">
                     Total: {Number(summary?.total_items || 0).toLocaleString('id-ID')} Unit
@@ -616,9 +616,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 <div>
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono flex items-center gap-1.5">
                     <PieChartIcon className="w-3.5 h-3.5 text-red-600" />
-                    Proporsi Status Stock
+                    Komposisi Status Perangkat
                   </h4>
-                  <p className="text-[11px] text-slate-500">Komposisi status seluruh perangkat pada 9 sheet Stock</p>
+                  <p className="text-[11px] text-slate-500">Proporsi perangkat terpasang, stok gudang, rusak, dan retur</p>
                 </div>
 
                 <div className="h-[195px] w-full">
@@ -666,9 +666,9 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                      Distribusi Perangkat per Mitra Hauling &amp; Gudang Stock
+                      Alokasi Perangkat per Mitra &amp; Gudang
                     </h4>
-                    <p className="text-[11px] text-slate-500">Akumulasi COUNTA of Status dari 9 sheet Stock (AEK, BBS, BKAE, BMT, GECL, KMB, MAV, MMS, MVM, RAM, RBT, RETURN, RUSAK, STOCK)</p>
+                    <p className="text-[11px] text-slate-500">Rincian penempatan perangkat pada mitra operasional dan gudang site</p>
                   </div>
                 </div>
                 <div className="h-[260px] w-full">
@@ -690,18 +690,18 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 </div>
               </div>
 
-              {/* Pivot Table Summary of All 9 Stock Categories */}
+              {/* Rekapitulasi Stok per Jenis Perangkat */}
               <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
                 <div className="flex items-center justify-between mb-2.5">
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                    Tabel Pivot Stock (9 Kategori)
+                    Rekapitulasi Stok per Jenis Perangkat
                   </h4>
                   <span className="text-[10px] font-mono text-slate-500">Klik baris untuk detail</span>
                 </div>
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
-                      <th className="py-2 px-2">Sheet Stock</th>
+                      <th className="py-2 px-2">Perangkat</th>
                       <th className="py-2 px-2 text-right text-blue-700">Onsite</th>
                       <th className="py-2 px-2 text-right text-emerald-700">Terinstall</th>
                       <th className="py-2 px-2 text-right text-rose-700">Rusak</th>
@@ -716,7 +716,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                         onClick={() => setSelectedCategory(row.key)}
                         className="hover:bg-white cursor-pointer transition-colors"
                       >
-                        <td className="py-1.5 px-2 font-bold text-slate-800">Stock {row.key}</td>
+                        <td className="py-1.5 px-2 font-bold text-slate-800">{row.key}</td>
                         <td className="py-1.5 px-2 text-right text-blue-700 font-semibold">{row.stock.toLocaleString('id-ID')}</td>
                         <td className="py-1.5 px-2 text-right text-emerald-700 font-semibold">{row.installed.toLocaleString('id-ID')}</td>
                         <td className="py-1.5 px-2 text-right text-rose-600">{row.rusak.toLocaleString('id-ID')}</td>
@@ -730,12 +730,12 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
         ) : (
-          /* Single Category Stock View (Both Pivot 1: DATA <KATEGORI> & Pivot 2: STOCK <KATEGORI> from Google Sheets) */
+          /* Single Category View */
           <div className="space-y-4">
-            {/* Sub-toggle between Grafik 1 (DATA <KATEGORI> per Mitra) & Grafik 2 (STOCK <KATEGORI> per Tanggal Onsite) */}
+            {/* Sub-toggle between Mitra Operasional & Tanggal Kedatangan */}
             <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-3.5 py-2.5 rounded-2xl border border-slate-200/80">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-mono font-bold text-slate-700 uppercase">Mode Grafik Datasheet:</span>
+                <span className="font-mono font-bold text-slate-700 uppercase">Tampilan Data:</span>
                 <button
                   type="button"
                   onClick={() => setSingleCatChartMode('mitra')}
@@ -745,7 +745,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                       : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
                   }`}
                 >
-                  Grafik 1: DATA {selectedCategory} (Per Mitra Hauling)
+                  Per Mitra Operasional
                 </button>
                 <button
                   type="button"
@@ -756,7 +756,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                       : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
                   }`}
                 >
-                  Grafik 2: STOCK {selectedCategory} (Per Tanggal Onsite/Instal)
+                  Per Tanggal Kedatangan
                 </button>
               </div>
 
@@ -778,10 +778,10 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
                   <div className="mb-3">
                     <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
-                      {activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Grafik per Mitra Hauling (Kolom O:V)
+                      Distribusi Status per Mitra Operasional
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      Visualisasi Pivot Table 1 dari lembar &apos;Stock {selectedCategory}&apos; (COUNTA of Status {selectedCategory})
+                      Sebaran status perangkat {selectedCategory} di tiap mitra operasional dan gudang
                     </p>
                   </div>
 
@@ -819,12 +819,12 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   </div>
                 </div>
 
-                {/* Pivot Table 1 for the Selected Stock Sheet */}
+                {/* Tabel Rincian per Mitra */}
                 <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
                   <div className="flex items-center justify-between mb-2.5">
                     <div>
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                        COUNTA of Status {selectedCategory} (Mitra Hauling)
+                        Tabel Rincian per Mitra
                       </h4>
                       <p className="text-[10px] text-slate-500">Klik baris mitra untuk memfilter tabel perangkat di bawah</p>
                     </div>
@@ -892,15 +892,15 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                 </div>
               </div>
             ) : (
-              /* Pivot Table 2 & Chart 2: STOCK <KATEGORI> by Tanggal Onsite (Kolom Z:AI in Datasheet) */
+              /* Chart & Table by Tanggal Onsite */
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                 <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
                   <div className="mb-3">
                     <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
-                      STOCK {selectedCategory} — Grafik per Tanggal Onsite / Instal (Kolom Z:AI)
+                      Distribusi Perangkat per Tanggal Kedatangan
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      Visualisasi Pivot Table 2 dari lembar &apos;Stock {selectedCategory}&apos; berdasarkan Tanggal Kedatangan Onsite
+                      Rekapitulasi jumlah perangkat berdasarkan tanggal tiba di site
                     </p>
                   </div>
 
@@ -937,7 +937,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                   <div className="flex items-center justify-between mb-2.5">
                     <div>
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                        Pivot Tanggal Onsite ({selectedCategory})
+                        Rekap Tanggal Kedatangan ({selectedCategory})
                       </h4>
                       <p className="text-[10px] text-slate-500">Rekapitulasi batch kedatangan &amp; status perangkat</p>
                     </div>
@@ -988,7 +988,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <Truck className="w-4 h-4 text-blue-600" />
-            <span>Peta Status Armada Truk ({Number(summary?.fleet_summary?.total_units || 0).toLocaleString('id-ID')} Unit)</span>
+            <span>Daftar Armada ({Number(summary?.fleet_summary?.total_units || 0).toLocaleString('id-ID')} Unit)</span>
           </button>
 
           <button
@@ -1000,7 +1000,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <Boxes className="w-4 h-4 text-red-600" />
-            <span>Master Hardware Real ({Number(summary?.total_items || 0).toLocaleString('id-ID')} Item)</span>
+            <span>Daftar Perangkat ({Number(summary?.total_items || 0).toLocaleString('id-ID')} Unit)</span>
           </button>
 
           <button

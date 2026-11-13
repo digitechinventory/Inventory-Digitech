@@ -289,11 +289,11 @@ export default function DocumentSignatureBox({
               <button
                 type="button"
                 onClick={() => setIsCameraScannerOpen(true)}
-                title="Scan tanda tangan kertas fisik via kamera webcam/ponsel dengan AI lokal"
+                title="Scan tanda tangan fisik via kamera"
                 className="flex items-center justify-center gap-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 active:scale-96 text-emerald-800 rounded-lg text-[10px] font-bold border border-emerald-200 transition-all cursor-pointer shadow-2xs"
               >
                 <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Scan Kamera AI</span>
+                <span>Scan Kamera</span>
               </button>
 
               {/* Quick Certified Sign Button */}

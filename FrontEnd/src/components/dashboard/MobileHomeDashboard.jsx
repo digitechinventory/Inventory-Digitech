@@ -429,7 +429,7 @@ export default function MobileHomeDashboard() {
               </h3>
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              Grafik garis interaktif pergerakan stok 6 periode
+              Tren pergerakan stok 6 periode
             </p>
           </div>
           <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">

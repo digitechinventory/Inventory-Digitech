@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -74,6 +74,15 @@ function MapClickHandler({ onMapClick }) {
       onMapClick(e.latlng.lat, e.latlng.lng);
     }
   });
+  return null;
+}
+
+// Keep map centered on site change without resetting zoom on map clicks
+function MapViewportUpdater({ centerLat, centerLng, siteId }) {
+  const map = useMap();
+  React.useEffect(() => {
+    map.setView([centerLat, centerLng], map.getZoom(), { animate: true });
+  }, [siteId, map]);
   return null;
 }
 
@@ -432,7 +441,7 @@ export default function AssetTrackingPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            Satelit HD (Esri)
+            Citra Satelit
           </button>
           <button
             type="button"
@@ -454,7 +463,7 @@ export default function AssetTrackingPage() {
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
             }`}
           >
-            Peta Jalan (OSM)
+            Peta Jalan
           </button>
         </div>
 
@@ -724,40 +733,39 @@ export default function AssetTrackingPage() {
             <MapContainer
               center={[centerLat, centerLng]}
               zoom={15}
+              maxZoom={21}
               style={{ height: '100%', minHeight: '560px', width: '100%' }}
-              key={`${selectedSite.id}-${centerLat}-${centerLng}-${mapLayer}`}
+              key={`${selectedSite.id}-${mapLayer}`}
             >
               {/* TileLayer Selection */}
               {mapLayer === 'satellite' && (
                 <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  attribution="&copy; Esri &mdash; High-Resolution Satellite Imagery"
-                  maxZoom={19}
+                  url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                  attribution="&copy; Google Satellite Imagery"
+                  maxNativeZoom={19}
+                  maxZoom={21}
                 />
               )}
 
               {mapLayer === 'hybrid' && (
-                <>
-                  <TileLayer
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution="&copy; Esri World Imagery"
-                    maxZoom={19}
-                  />
-                  <TileLayer
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-                    attribution="&copy; Esri Labels"
-                    maxZoom={19}
-                  />
-                </>
+                <TileLayer
+                  url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                  attribution="&copy; Google Hybrid Satellite"
+                  maxNativeZoom={19}
+                  maxZoom={21}
+                />
               )}
 
               {mapLayer === 'streets' && (
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="&copy; OpenStreetMap contributors"
-                  maxZoom={19}
+                  maxNativeZoom={19}
+                  maxZoom={21}
                 />
               )}
+
+              <MapViewportUpdater centerLat={centerLat} centerLng={centerLng} siteId={selectedSite.id} />
 
               {/* Map Click Listener */}
               <MapClickHandler onMapClick={handleMapClick} />

@@ -1263,10 +1263,10 @@ export default function ProjectInventoryPage() {
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                       }`}
-                      title="Tampilan visual Command Center armada dan sensor"
+                      title="Ringkasan operasional armada dan perangkat"
                     >
                       <Gauge className="w-3.5 h-3.5" />
-                      <span>Command Center</span>
+                      <span>Ringkasan Project</span>
                     </button>
                     <button
                       type="button"
@@ -1533,10 +1533,10 @@ export default function ProjectInventoryPage() {
             <div>
               <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-red-600" />
-                Visualisasi Data &amp; Status Inventaris ({activeProject.code})
+                Statistik &amp; Status Inventaris ({activeProject.code})
               </h4>
               <p className="text-xs text-slate-500">
-                Grafik distribusi kategori perangkat, status pemasangan lapangan, stok gudang, dan cakupan garansi aktif pada project {activeProject.code}.
+                Distribusi kategori perangkat, status pemasangan lapangan, stok gudang, dan cakupan garansi aktif pada project {activeProject.code}.
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono">

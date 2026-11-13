@@ -452,7 +452,7 @@ function BlindCountInputModal({ opname, activeProject, onClose, onSuccess }) {
       ];
     }
     return [
-      { sku: 'FAM-MDVR-8CH-01', item_name: 'Mobile DVR 8-Channel AI Telemetry', rack: 'R-A01', physical_qty: 14, system_qty: 14, variance_reason: '' },
+      { sku: 'FAM-MDVR-8CH-01', item_name: 'Mobile DVR 8-Channel Telemetry', rack: 'R-A01', physical_qty: 14, system_qty: 14, variance_reason: '' },
       { sku: 'FAM-CAM-DMS-IR', item_name: 'Infrared Driver Monitoring Camera (DMS)', rack: 'R-A02', physical_qty: 21, system_qty: 21, variance_reason: '' },
       { sku: 'FAM-ADAS-CAM-03', item_name: 'Forward Collision ADAS Cabin Sensor', rack: 'R-A03', physical_qty: 16, system_qty: 16, variance_reason: '' }
     ];

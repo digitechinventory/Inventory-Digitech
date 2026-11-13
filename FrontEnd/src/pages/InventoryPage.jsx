@@ -1016,7 +1016,7 @@ export default function InventoryPage() {
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <h3 className="text-base font-bold text-slate-900">Matriks Rak ({WAREHOUSES.find(w => w.id === selectedWarehouse)?.name || selectedWarehouse})</h3>
-              <p className="text-xs text-slate-500">Visualisasi kapasitas lorong &amp; bin location penempatan suku cadang</p>
+              <p className="text-xs text-slate-500">Pemetaan kapasitas lorong &amp; bin location penempatan suku cadang</p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
               <span className="flex items-center gap-1.5">

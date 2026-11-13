@@ -97,7 +97,7 @@ export default function ProjectWorkspacesBanner({ userRole = 'User', compact = f
         title: 'Fleet Asset Management (FAMOUS)',
         description: proj.description || 'Telematika alat berat hauling batubara, GPS tracker presisi tinggi, DSM fatigue sensor, dan relokasi unit.',
         metric1Bg: 'bg-red-50/50 border-red-100/60',
-        metric1Title: 'Hardware Real:',
+        metric1Title: 'Total Perangkat:',
         metric1TitleColor: 'text-red-600',
         metric1Value: famousSummary?.total_items ? Number(famousSummary.total_items).toLocaleString('id-ID') : '9.416',
         metric1Unit: 'unit',
@@ -111,7 +111,7 @@ export default function ProjectWorkspacesBanner({ userRole = 'User', compact = f
         metric2ValColor: 'text-purple-700',
         stageText: '8 Tahap: Dokumen #007',
         ctaColor: 'text-red-600',
-        ctaText: 'Buka Command Center'
+        ctaText: 'Buka Dashboard FAMOUS'
       };
     }
 

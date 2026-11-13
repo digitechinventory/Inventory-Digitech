@@ -145,7 +145,7 @@ export default function IronNestSidebar({
       return [
         {
           id: 'grp-executive',
-          title: 'Otoritas & Eksekutif',
+          title: 'Manajemen Utama',
           items: [
             { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview' },
             { id: 'users', label: 'Kelola User', icon: Users, path: '/users' },
@@ -434,48 +434,46 @@ export default function IronNestSidebar({
                 <>
                   <NavLink
                     to="/dashboard"
-                    className="flex items-center gap-3 group min-w-0"
+                    className="flex items-center gap-2.5 group min-w-0 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl shadow-sm border border-white/90 ring-1 ring-slate-900/5 relative z-20"
                   >
-                    {/* Logo with white background pill so it's always visible */}
+                    {/* Logo with crisp borderless container */}
                     <div
                       style={{
-                        background: 'white',
+                        background: '#FFFFFF',
                         borderRadius: '10px',
-                        padding: '4px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                        padding: '3px',
+                        boxShadow: '0 2px 6px rgba(15,23,42,0.08)',
                         flexShrink: 0,
-                        position: 'relative',
-                        zIndex: 20,
                       }}
                     >
                       <img
                         src="/digitech-emblem.png"
                         alt="Digitech"
-                        style={{ height: '36px', width: '36px', objectFit: 'contain', display: 'block' }}
+                        style={{ height: '32px', width: '32px', objectFit: 'contain', display: 'block' }}
                         className="transition-transform group-hover:scale-105"
                       />
                     </div>
                     {/* Brand text */}
-                    <div className="flex flex-col justify-center min-w-0 relative z-20">
+                    <div className="flex flex-col justify-center min-w-0">
                       <span
                         style={{ lineHeight: 1.1 }}
-                        className="text-sm font-black tracking-widest text-slate-900 group-hover:text-red-700 transition-colors uppercase drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]"
+                        className="text-[14px] font-black tracking-wider text-slate-950 group-hover:text-red-700 transition-colors uppercase"
                       >
                         DIGITECH
                       </span>
                       <span
-                        style={{ lineHeight: 1.2, marginTop: '3px' }}
-                        className="text-[9px] font-bold text-red-700 tracking-tight whitespace-nowrap leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)]"
+                        style={{ lineHeight: 1.2, marginTop: '2px' }}
+                        className="text-[9.5px] font-extrabold text-red-600 tracking-tight whitespace-nowrap leading-tight"
                       >
                         Inventory Management System
                       </span>
                     </div>
                   </NavLink>
 
-                  <div className="flex items-center gap-1 shrink-0 ml-1">
+                  <div className="flex items-center gap-1 shrink-0 ml-1 relative z-20">
                     <button
                       onClick={onToggleCollapse}
-                      className="hidden lg:flex p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-all cursor-pointer"
+                      className="hidden lg:flex p-1.5 rounded-xl bg-white/95 text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition-all cursor-pointer"
                       title="Ciutkan Menu"
                       aria-label="Collapse sidebar"
                     >
@@ -483,7 +481,7 @@ export default function IronNestSidebar({
                     </button>
                     <button
                       onClick={onClose}
-                      className="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                      className="lg:hidden p-1.5 rounded-xl bg-white/95 text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition cursor-pointer"
                       aria-label="Close sidebar"
                     >
                       <X className="w-4 h-4" />
