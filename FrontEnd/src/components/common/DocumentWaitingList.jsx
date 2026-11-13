@@ -42,6 +42,7 @@ export default function DocumentWaitingList({
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'my_pending' | 'waiting_admin' | 'waiting_superadmin' | 'completed'
   const [typeFilter, setTypeFilter] = useState('ALL'); // 'ALL' | 'MOS' | 'MDT' | 'MRP' | 'CUSTOM'
+  const currentRole = (currentUser?.role || 'User').toLowerCase();
 
   // Filter documents
   const filteredDocs = documents.filter((doc) => {
@@ -207,23 +208,32 @@ export default function DocumentWaitingList({
             />
           </div>
 
-          {/* Action Buttons: Local Upload & Template — Pushed to right edge */}
+          {/* Action Buttons: Local Upload & Template (Restricted from Superadmin executive role) */}
           <div className="flex items-center gap-2 ml-auto justify-end shrink-0">
-            <button
-              onClick={() => onOpenUploadModal?.('local')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
-            >
-              <Upload className="w-4 h-4 text-red-600" />
-              <span>Upload Dokumen Lokal (PC)</span>
-            </button>
+            {currentRole !== 'superadmin' ? (
+              <>
+                <button
+                  onClick={() => onOpenUploadModal?.('local')}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
+                >
+                  <Upload className="w-4 h-4 text-red-600" />
+                  <span>Upload Dokumen Lokal (PC)</span>
+                </button>
 
-            <button
-              onClick={() => onOpenUploadModal?.('template')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all cursor-pointer shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Buat dari Template</span>
-            </button>
+                <button
+                  onClick={() => onOpenUploadModal?.('template')}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-600/20 transition-all cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Buat dari Template</span>
+                </button>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50 text-red-700 border border-red-200 text-xs font-bold">
+                <ShieldCheck className="w-4 h-4" />
+                Mode Otorisasi &amp; Approval Final
+              </span>
+            )}
           </div>
 
         </div>
@@ -391,8 +401,10 @@ export default function DocumentWaitingList({
                   {/* Right: Signature Progress & CTA */}
                   <div className="flex items-center gap-3 sm:border-l sm:border-slate-100 sm:pl-5 shrink-0">
                     
-                    {/* Edit Document Info Button */}
-                    {onEditDocument && (
+                    {/* Edit Document Info Button (User locked out once submitted past waiting_user) */}
+                    {onEditDocument &&
+                      doc.status !== 'completed' &&
+                      (currentRole !== 'user' || !doc.status || ['draft', 'waiting_user', 'waiting_sign'].includes(doc.status)) && (
                       <button
                         type="button"
                         onClick={(e) => {

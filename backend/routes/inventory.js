@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase.js';
 import localDb from '../services/localDb.js';
 import { ensureProjectDatasetsLoaded } from '../services/projectDataService.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
-import { adminOnly } from '../middleware/rbac.js';
+import { adminOnly, requireRole } from '../middleware/rbac.js';
 import { cacheGet, cacheSet, cacheDel } from '../services/redis.js';
 import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -151,8 +151,8 @@ router.get('/stats', optionalAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/inventory/ledger â€” Buku Besar Mutasi Stok
-router.get('/ledger', requireAuth, async (req, res, next) => {
+// GET /api/inventory/ledger — Buku Besar Mutasi Stok (Admin & Superadmin Only)
+router.get('/ledger', requireAuth, adminOnly, async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('inventory_ledger')
@@ -235,8 +235,40 @@ router.patch('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/inventory/mr â€” Material Request submission
-router.post('/mr', requireAuth, async (req, res, next) => {
+// GET /api/inventory/mr — Daftar Riwayat Material Request (Khusus User & Admin, bukan Buku Besar penuh)
+router.get('/mr', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
+  try {
+    const isUserRole = (req.user?.role || '').toLowerCase() === 'user';
+    const actorName = req.user?.full_name || req.user?.name || req.user?.email || '';
+
+    const { data, error } = await supabase
+      .from('inventory_ledger')
+      .select('*')
+      .or('transaction_type.eq.MR_OUT,reference_doc_id.ilike.MR-%')
+      .order('created_at', { ascending: false });
+
+    let rows = !error && Array.isArray(data) ? data : [];
+    if (rows.length === 0 && localDb.isConnected()) {
+      const dbRes = await localDb
+        .query("SELECT * FROM inventory_ledger WHERE transaction_type = 'MR_OUT' OR reference_doc_id ILIKE 'MR-%' ORDER BY created_at DESC")
+        .catch(() => ({ rows: [] }));
+      rows = dbRes.rows || [];
+    }
+
+    if (isUserRole && actorName) {
+      rows = rows.filter(
+        (r) => !r.performed_by || r.performed_by.toLowerCase() === actorName.toLowerCase() || r.user_id === req.user.id
+      );
+    }
+
+    return sendSuccess(res, rows, 'Riwayat permintaan material (Material Request).');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/inventory/mr — Material Request submission (User & Admin Operasional)
+router.post('/mr', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
   try {
     const { item_name, sku, qty, rack, purpose } = req.body;
     if (!item_name || !qty) {

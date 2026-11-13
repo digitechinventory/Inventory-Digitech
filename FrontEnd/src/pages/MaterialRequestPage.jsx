@@ -80,11 +80,11 @@ export default function MaterialRequestPage() {
     }
   });
 
-  // Fetch recent ledger for history tab
+  // Fetch Material Request history (scoped by role)
   const { data: ledgerItems } = useQuery({
-    queryKey: ['inventory-ledger'],
+    queryKey: ['material-requests-history'],
     queryFn: async () => {
-      const res = await api.get('/inventory/ledger');
+      const res = await api.get('/inventory/mr');
       return res.data?.data || [];
     }
   });

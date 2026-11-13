@@ -560,6 +560,14 @@ router.put('/:id', requireAuth, async (req, res, next) => {
       throw new AppError('Dokumen tidak ditemukan.', 404, 'RESOURCE_NOT_FOUND');
     }
 
+    const editorRole = (req.user?.role || '').toLowerCase();
+    if (doc.status === 'completed') {
+      throw new AppError('Dokumen yang sudah disetujui final (completed) tidak dapat diubah lagi.', 403, 'DOCUMENT_LOCKED');
+    }
+    if (editorRole === 'user' && ['waiting_admin', 'waiting_superadmin', 'completed'].includes(doc.status)) {
+      throw new AppError('Dokumen yang sudah diajukan ke tahap verifikasi/otorisasi tidak dapat diubah oleh User.', 403, 'FORBIDDEN');
+    }
+
     // Update fields
     if (doc_number) {
       doc.doc_number = doc_number;
@@ -777,14 +785,18 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
 
     const updatedStamps = [...existingStamps, newStamp];
 
-    // Determine state transition based on stamp count or user role
+    // Determine state transition strictly by signer role (prevents custom PDF coordinate bypass)
+    if (doc.status === 'completed' && userRole !== 'superadmin') {
+      throw new AppError('Dokumen yang sudah disetujui final tidak dapat ditambahkan tanda tangan lagi.', 403, 'DOCUMENT_LOCKED');
+    }
+
     let nextStatus = doc.status;
-    if (updatedStamps.length >= 3 || targetSlot === 'approver') {
+    if (userRole === 'superadmin') {
       nextStatus = 'completed';
-    } else if (targetSlot === 'checker') {
-      nextStatus = 'waiting_superadmin';
+    } else if (userRole === 'admin') {
+      nextStatus = doc.status === 'completed' ? 'completed' : 'waiting_superadmin';
     } else {
-      nextStatus = 'waiting_admin';
+      nextStatus = ['waiting_superadmin', 'completed'].includes(doc.status) ? doc.status : 'waiting_admin';
     }
 
     doc.signatures_placed = updatedStamps;

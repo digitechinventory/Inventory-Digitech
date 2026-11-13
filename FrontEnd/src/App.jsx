@@ -114,9 +114,16 @@ function AppRoutes() {
           }
         />
 
-        {/* Modules */}
+        {/* Modules (Strict RBAC Role Separation) */}
         <Route path="mos" element={<MOSPage />} />
-        <Route path="mr" element={<MaterialRequestPage />} />
+        <Route
+          path="mr"
+          element={
+            <RoleRoute allowedRoles={['User', 'Admin']}>
+              <MaterialRequestPage />
+            </RoleRoute>
+          }
+        />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="project-inventory" element={<ProjectInventoryPage />} />
         <Route path="inventory-khusus" element={<ProjectInventoryPage />} />
@@ -124,7 +131,14 @@ function AppRoutes() {
         <Route path="katalog" element={<InventoryPage />} />
         <Route path="catalog" element={<InventoryPage />} />
         <Route path="warehouses" element={<Navigate to="/inventory" replace />} />
-        <Route path="tools" element={<ToolLoansPage />} />
+        <Route
+          path="tools"
+          element={
+            <RoleRoute allowedRoles={['User', 'Admin']}>
+              <ToolLoansPage />
+            </RoleRoute>
+          }
+        />
         <Route
           path="opname"
           element={
@@ -168,9 +182,30 @@ function AppRoutes() {
         <Route path="settings" element={<AccountSettingsPage />} />
         <Route path="account" element={<AccountSettingsPage />} />
         <Route path="profile" element={<AccountSettingsPage />} />
-        <Route path="tracking" element={<AssetTrackingPage />} />
-        <Route path="asset-tracking" element={<AssetTrackingPage />} />
-        <Route path="gis" element={<AssetTrackingPage />} />
+        <Route
+          path="tracking"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <AssetTrackingPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="asset-tracking"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <AssetTrackingPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="gis"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <AssetTrackingPage />
+            </RoleRoute>
+          }
+        />
         <Route path="agenda" element={<AgendaCalendarPage />} />
         <Route path="calendar" element={<AgendaCalendarPage />} />
       </Route>

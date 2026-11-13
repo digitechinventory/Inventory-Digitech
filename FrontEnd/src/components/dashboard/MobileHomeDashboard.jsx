@@ -18,7 +18,10 @@ import {
   ShieldCheck,
   ArrowRightLeft,
   Warehouse,
-  Bell
+  Bell,
+  Users,
+  ClipboardCheck,
+  Compass
 } from 'lucide-react';
 import {
   AreaChart,
@@ -218,74 +221,128 @@ export default function MobileHomeDashboard() {
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-mono font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-600" />
-            Pintasan Dokumen &amp; Lapangan
+            {normalizedRole === 'Superadmin' ? 'Pintasan Otoritas Eksekutif' : 'Pintasan Dokumen & Lapangan'}
           </span>
           <span className="text-[10px] text-slate-400 font-mono">1-Tap Akses Cepat</span>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
-          {/* 1. Ajukan Form MOS (Penerimaan Material Baru) */}
-          <button
-            type="button"
-            onClick={() => navigate('/mos')}
-            className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
-              <FileCheck2 className="w-4 h-4" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-red-700 leading-tight">Buat MOS</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Penerimaan</span>
-          </button>
+        {normalizedRole === 'Superadmin' ? (
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/mos')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-red-700 leading-tight">Otorisasi MOS</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Approval Final</span>
+            </button>
 
-          {/* 2. Pasang ke Unit */}
-          <button
-            type="button"
-            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
-            className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
-              <Truck className="w-4 h-4" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-blue-700 leading-tight">Pasang Unit</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Alokasi</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate('/opname')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <ClipboardCheck className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-blue-700 leading-tight">Opname Final</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Rekonsiliasi</span>
+            </button>
 
-          {/* 3. Pindahan Unit */}
-          <button
-            type="button"
-            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
-            className="p-2.5 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
-              <ArrowRightLeft className="w-4 h-4" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-purple-700 leading-tight">Pindahan</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Relokasi</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate('/users')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-purple-700 leading-tight">Kelola User</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Hak Akses</span>
+            </button>
 
-          {/* 4. Lapor Kerusakan */}
-          <button
-            type="button"
-            onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
-            className="p-2.5 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-amber-700 leading-tight">Lapor Rusak</span>
-            <span className="text-[9px] text-slate-400 mt-0.5">Diagnosa</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => navigate('/tracking')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <Compass className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-emerald-700 leading-tight">Geofence Site</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Kontrol GIS</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-2">
+            {/* 1. Ajukan Form MOS (Penerimaan Material Baru) */}
+            <button
+              type="button"
+              onClick={() => navigate('/mos')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-red-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <FileCheck2 className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-red-700 leading-tight">Buat MOS</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Penerimaan</span>
+            </button>
+
+            {/* 2. Pasang ke Unit / Material Request */}
+            <button
+              type="button"
+              onClick={() => navigate('/mr')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <Truck className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-blue-700 leading-tight">
+                {normalizedRole === 'Admin' ? 'Picking List' : 'Ambil Part'}
+              </span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Material Req</span>
+            </button>
+
+            {/* 3. Pindahan Unit */}
+            <button
+              type="button"
+              onClick={() => navigate('/project-inventory?project=proj-famous&tab=inventory')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <ArrowRightLeft className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-purple-700 leading-tight">Site Proyek</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Stok Unit</span>
+            </button>
+
+            {/* 4. Lapor Kerusakan / Pinjam Tools */}
+            <button
+              type="button"
+              onClick={() => navigate('/tools')}
+              className="p-2.5 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 bg-slate-50/50 transition-all flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white flex items-center justify-center transition-colors mb-1.5 shadow-2xs">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <span className="text-[10.5px] font-bold text-slate-900 group-hover:text-amber-700 leading-tight">Pinjam Tool</span>
+              <span className="text-[9px] text-slate-400 mt-0.5">Checklist</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── 1. The Signature 4 Parallelogram Cards (2x2 Compact Grid matching Desktop Dashboard) ── */}
       <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
         <ParallelogramCard
           compact={true}
-          title="MOS MENUNGGU"
+          title={normalizedRole === 'Superadmin' ? 'OTORISASI MOS' : 'MOS MENUNGGU'}
           value={String(pendingInspectionCount).padStart(2, '0')}
           unit="BERKAS"
-          subtitle="Cek Fisik & TTD"
+          subtitle={normalizedRole === 'Superadmin' ? 'Approval Final' : 'Cek Fisik & TTD'}
           subtitleIcon={FileCheck2}
           subtitleColor="text-amber-700"
           icon={FileCheck2}
@@ -297,22 +354,22 @@ export default function MobileHomeDashboard() {
 
         <ParallelogramCard
           compact={true}
-          title="PICKING LIST"
+          title={normalizedRole === 'Superadmin' ? 'APPROVAL OPNAME' : 'PICKING LIST'}
           value={String(activePickingCount).padStart(2, '0')}
-          unit="ORDER"
-          subtitle="Sesuai MR"
-          subtitleIcon={PackageCheck}
+          unit={normalizedRole === 'Superadmin' ? 'AUDIT' : 'ORDER'}
+          subtitle={normalizedRole === 'Superadmin' ? 'Validasi Selisih' : 'Sesuai MR'}
+          subtitleIcon={normalizedRole === 'Superadmin' ? ClipboardCheck : PackageCheck}
           subtitleColor="text-blue-700"
-          icon={PackageCheck}
+          icon={normalizedRole === 'Superadmin' ? ClipboardCheck : PackageCheck}
           iconColor="text-blue-600"
           accentColor="border-blue-600"
           valueColor="text-blue-600"
-          onClick={() => navigate('/mr')}
+          onClick={() => navigate(normalizedRole === 'Superadmin' ? '/opname' : '/mr')}
         />
 
         <ParallelogramCard
           compact={true}
-          title="KRITIS REORDER"
+          title={normalizedRole === 'Superadmin' ? 'AUDIT & REORDER' : 'KRITIS REORDER'}
           value={String(lowStockCount).padStart(2, '0')}
           unit="PART"
           subtitle="Buffer Minimum"
@@ -322,22 +379,22 @@ export default function MobileHomeDashboard() {
           iconColor="text-red-600"
           accentColor="border-red-600"
           valueColor="text-red-600"
-          onClick={() => navigate('/inventory?status=low_stock')}
+          onClick={() => navigate(normalizedRole === 'Superadmin' ? '/reports' : '/inventory?status=low_stock')}
         />
 
         <ParallelogramCard
           compact={true}
-          title="TOOL DIPINJAM"
+          title={normalizedRole === 'Superadmin' ? 'GEOFENCE SITE' : 'TOOL DIPINJAM'}
           value={String(overdueCount).padStart(2, '0')}
-          unit="UNIT"
-          subtitle="1 Tool Overdue"
-          subtitleIcon={Clock}
+          unit={normalizedRole === 'Superadmin' ? 'SITE' : 'UNIT'}
+          subtitle={normalizedRole === 'Superadmin' ? 'Kontrol Wilayah' : 'Monitor Peminjaman'}
+          subtitleIcon={normalizedRole === 'Superadmin' ? Compass : Clock}
           subtitleColor="text-purple-700"
-          icon={Clock}
+          icon={normalizedRole === 'Superadmin' ? Compass : Clock}
           iconColor="text-purple-600"
           accentColor="border-purple-600"
           valueColor="text-purple-600"
-          onClick={() => navigate('/tools')}
+          onClick={() => navigate(normalizedRole === 'Superadmin' ? '/tracking' : '/tools')}
         />
       </div>
 
