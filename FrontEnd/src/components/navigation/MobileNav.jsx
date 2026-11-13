@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Home,
   Store,
@@ -20,6 +21,7 @@ import {
   Printer,
   Settings
 } from 'lucide-react';
+import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import LogoutConfirmModal from '../common/LogoutConfirmModal';
 
@@ -28,6 +30,23 @@ export default function MobileNav() {
   const navigate = useNavigate();
   const { user, role, logout } = useAuth();
 
+  const { data: mosDocs = [] } = useQuery({
+    queryKey: ['approval-documents'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/mos');
+        return res.data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000
+  });
+
+  const pendingDocsCount = Array.isArray(mosDocs)
+    ? mosDocs.filter((d) => d.status !== 'completed').length
+    : 0;
+
   const navRef = useRef(null);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -35,12 +54,12 @@ export default function MobileNav() {
 
   const normalizedRole = role || 'User';
 
-  // Role-based 5-slot navigation items
+  // Role-based 5-slot navigation items (Approval Dokumen always reachable on every role)
   const getNavItems = () => {
     if (normalizedRole === 'Superadmin') {
       return [
         { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
-        { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
+        { id: 'mos', label: 'Approval', icon: FileCheck2, path: '/mos', countBadge: pendingDocsCount },
         { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
         { id: 'users', label: 'Pengguna', icon: Users, path: '/users' },
         { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
@@ -50,7 +69,7 @@ export default function MobileNav() {
     if (normalizedRole === 'Admin') {
       return [
         { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
-        { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
+        { id: 'mos', label: 'Approval', icon: FileCheck2, path: '/mos', countBadge: pendingDocsCount },
         { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
         { id: 'opname', label: 'Opname', icon: ClipboardCheck, path: '/opname' },
         { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
@@ -60,7 +79,7 @@ export default function MobileNav() {
     // Default: User (Teknisi Lapangan)
     return [
       { id: 'home', label: 'Beranda', icon: Home, path: '/dashboard' },
-      { id: 'inventory', label: 'Katalog', icon: Store, path: '/inventory' },
+      { id: 'mos', label: 'Approval', icon: FileCheck2, path: '/mos', countBadge: pendingDocsCount },
       { id: 'projects', label: 'Proyek', icon: FolderGit2, path: '/project-inventory' },
       { id: 'mr', label: 'Ambil', icon: PackagePlus, path: '/mr' },
       { id: 'account', label: 'Akun', icon: UserIcon, isAction: true },
@@ -321,8 +340,8 @@ export default function MobileNav() {
                 className="relative z-10 flex-1 h-full rounded-full flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-transform active:scale-95"
                 aria-label={item.label}
               >
-                {/* Icon with Apple Spring Pop on Active */}
-                <div className="transition-transform duration-200">
+                {/* Icon with Apple Spring Pop on Active & Live Pending Badge */}
+                <div className="relative transition-transform duration-200">
                   <Icon
                     className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all duration-200 ${isSelected
                       ? 'text-red-600 scale-105'
@@ -330,6 +349,11 @@ export default function MobileNav() {
                       }`}
                     strokeWidth={isSelected ? 2.3 : 1.85}
                   />
+                  {item.countBadge > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[15px] h-[15px] px-1 rounded-full bg-red-600 text-white text-[8px] font-mono font-bold flex items-center justify-center shadow-2xs ring-1 ring-white">
+                      {item.countBadge > 99 ? '99+' : item.countBadge}
+                    </span>
+                  )}
                 </div>
 
                 {/* Label */}
@@ -412,13 +436,40 @@ export default function MobileNav() {
               </div>
             </div>
 
-            {/* ── Pengaturan Section ── */}
+            {/* ── Menu Cepat & Pengaturan Section ── */}
             <div className="mb-3">
               <div className="flex items-center gap-1.5 mb-1.5 px-1">
                 <Settings className="w-3 h-3 text-red-500" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Pengaturan</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Akses Menu &amp; Pengaturan</span>
               </div>
               <div className="space-y-1.5 pl-1 border-l-2 border-red-100">
+                <button
+                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/mos'); }}
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FileCheck2 className="w-4 h-4 text-red-600" />
+                    <span>Waiting List &amp; Approval Dokumen</span>
+                    {pendingDocsCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[9px] font-mono font-bold">
+                        {pendingDocsCount} Pending
+                      </span>
+                    )}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
+                <button
+                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/inventory'); }}
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Store className="w-4 h-4 text-blue-600" />
+                    Katalog Material
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
                 <button
                   onClick={() => { setIsAccountDrawerOpen(false); navigate('/project-inventory?tab=documents'); }}
                   className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"

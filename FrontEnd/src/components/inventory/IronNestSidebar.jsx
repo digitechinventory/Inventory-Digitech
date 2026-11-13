@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   LayoutGrid,
   Store,
   PackageCheck,
+  PackagePlus,
   Truck,
   Boxes,
   CircleDollarSign,
@@ -26,6 +28,7 @@ import {
   ShieldCheck,
   FileCheck2
 } from 'lucide-react';
+import api from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import LogoutConfirmModal from '../common/LogoutConfirmModal.jsx';
 
@@ -138,6 +141,25 @@ export default function IronNestSidebar({
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Live pending document count shared with MOSPage ('approval-documents')
+  const { data: mosDocs = [] } = useQuery({
+    queryKey: ['approval-documents'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/mos');
+        return res.data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000
+  });
+
+  const pendingDocsCount = Array.isArray(mosDocs)
+    ? mosDocs.filter((d) => d.status !== 'completed').length
+    : 0;
+  const pendingBadge = pendingDocsCount > 0 ? `${pendingDocsCount} Pending` : undefined;
+
   const getNavGroupsForRole = (currentRole) => {
     const normalizedRole = currentRole || 'User';
 
@@ -148,6 +170,8 @@ export default function IronNestSidebar({
           title: 'Manajemen Utama',
           items: [
             { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview' },
+            { id: 'mos', label: 'Approval Dokumen', icon: FileCheck2, path: '/mos', badge: pendingBadge, isAlertBadge: true },
+            { id: 'mr', label: 'Permintaan Material', icon: PackagePlus, path: '/mr' },
             { id: 'users', label: 'Kelola User', icon: Users, path: '/users' },
             { id: 'opname', label: 'Stock Opname Fisik', icon: PackageCheck, path: '/opname' },
           ]
@@ -189,6 +213,8 @@ export default function IronNestSidebar({
           id: 'grp-warehouse',
           title: 'Pencatatan & Verifikasi',
           items: [
+            { id: 'mos', label: 'Approval Dokumen', icon: FileCheck2, path: '/mos', badge: pendingBadge, isAlertBadge: true },
+            { id: 'mr', label: 'Permintaan Material', icon: PackagePlus, path: '/mr' },
             { id: 'opname', label: 'Stock Opname Fisik', icon: PackageCheck, path: '/opname' },
           ]
         },
@@ -209,6 +235,7 @@ export default function IronNestSidebar({
         title: 'Portal Teknisi',
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard' },
+          { id: 'mos', label: 'Approval Dokumen', icon: FileCheck2, path: '/mos', badge: pendingBadge, isAlertBadge: true },
           { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
         ]
       },
@@ -217,6 +244,7 @@ export default function IronNestSidebar({
         title: 'Material & Tools',
         items: [
           { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
+          { id: 'mr', label: 'Permintaan Material', icon: PackagePlus, path: '/mr' },
           { id: 'tracking', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
         ]
       },
@@ -601,13 +629,18 @@ export default function IronNestSidebar({
                             )}
 
                             {/* Micro-animated Icon on hover */}
-                            <Icon
-                              className={`w-4 h-4 shrink-0 transition-all duration-300 ${
-                                isActive
-                                  ? 'text-white scale-105'
-                                  : 'text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6'
-                              }`}
-                            />
+                            <div className="relative shrink-0">
+                              <Icon
+                                className={`w-4 h-4 transition-all duration-300 ${
+                                  isActive
+                                    ? 'text-white scale-105'
+                                    : 'text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6'
+                                }`}
+                              />
+                              {isCollapsed && item.badge && (
+                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white" />
+                              )}
+                            </div>
 
                             {!isCollapsed && (
                               <span className="truncate flex-1 tracking-tight transition-colors duration-200">
@@ -617,9 +650,11 @@ export default function IronNestSidebar({
 
                             {!isCollapsed && item.badge && (
                               <span
-                                className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md transition-all duration-200 ${
+                                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full transition-all duration-200 shrink-0 ${
                                   isActive
                                     ? 'bg-white/20 text-white border border-white/30'
+                                    : item.isAlertBadge
+                                    ? 'bg-red-50 text-red-700 border border-red-200 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600'
                                     : 'bg-slate-100 text-slate-500 border border-slate-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200 group-hover:scale-105'
                                 }`}
                               >
