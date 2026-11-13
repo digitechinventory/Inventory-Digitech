@@ -561,8 +561,8 @@ export default function UsersPage() {
     <div className="space-y-6 pb-16 font-sans select-none animate-in fade-in duration-200">
       
       {/* ── Header ── */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-[10px] font-mono font-bold mb-1">
             <ShieldCheck className="w-3.5 h-3.5 text-red-600" />
             <span>Khusus Superadmin Otoritas Sistem</span>

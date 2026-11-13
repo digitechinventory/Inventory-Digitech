@@ -658,9 +658,9 @@ export default function ReportsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-7 space-y-6 font-sans">
       {/* ── Top Header Banner ── */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
-          <div className="flex items-center gap-2">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(220,38,38,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
               PROJECT &bull; {activeProject.code}
             </span>

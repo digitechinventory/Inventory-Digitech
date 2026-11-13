@@ -483,10 +483,10 @@ export default function AccountSettingsPage() {
     <div className="space-y-6 pb-16 font-sans animate-in fade-in duration-200">
       
       {/* ─── Top Header Banner ─── */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(59,130,246,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-[0_12px_36px_rgba(59,130,246,0.04),0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-500/10 via-blue-500/5 to-transparent pointer-events-none rounded-r-3xl" />
 
-        <div className="relative z-10 flex-1 min-w-0 pr-0 sm:pr-4">
+        <div className="relative z-10 min-w-0">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-mono font-bold mb-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span>Profil Resmi &amp; Keamanan Terpusat</span>

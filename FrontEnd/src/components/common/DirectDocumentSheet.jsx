@@ -72,11 +72,11 @@ export default function DirectDocumentSheet({
     <div className="w-full max-w-4xl mx-auto space-y-4 font-sans select-none">
 
       {/* ── Official A4 Document Sheet (Crisp Pure White Paper Layout) ── */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-9 text-slate-800 space-y-6 print:shadow-none print:border-none print:p-0">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-8 text-slate-800 space-y-5 sm:space-y-6 print:shadow-none print:border-none print:p-0">
         
         {/* ── 1. Official Corporate Letterhead (KOP SURAT) ── */}
         <div className="border-b-2 border-red-700/80 pb-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
             
             {/* Left: Digitech Logo & Identity */}
             <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function DirectDocumentSheet({
                 }}
               />
               <div>
-                <div className="text-lg font-black tracking-wider text-slate-900 leading-none">
+                <div className="text-base sm:text-lg font-black tracking-wider text-slate-900 leading-none">
                   DIGITECH
                 </div>
                 <div className="text-[11px] font-bold text-red-600 mt-0.5">
@@ -100,8 +100,8 @@ export default function DirectDocumentSheet({
             </div>
 
             {/* Right: Partner / Site Branding */}
-            <div className="text-right">
-              <div className="text-[11px] font-bold text-red-700 uppercase tracking-wider">
+            <div className="sm:text-right pl-13 sm:pl-0">
+              <div className="text-[10px] sm:text-[11px] font-bold text-red-700 uppercase tracking-wider">
                 DIVISI LOGISTIK &amp; DISTRIBUSI
               </div>
               <div className="text-[10px] text-slate-500 font-mono">
@@ -111,12 +111,12 @@ export default function DirectDocumentSheet({
           </div>
 
           {/* Document Title Header */}
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight">
+          <div className="mt-3.5 sm:mt-4 pt-3 border-t border-slate-100 text-center">
+            <h2 className="text-sm sm:text-lg font-black text-slate-900 uppercase tracking-tight leading-snug">
               {title}
             </h2>
             <div
-              className="text-[10px] text-slate-500 font-semibold tracking-wide mt-0.5"
+              className="text-[10px] text-slate-500 font-semibold tracking-wide mt-1"
               dangerouslySetInnerHTML={{ __html: subtitle }}
             />
           </div>
@@ -180,7 +180,7 @@ export default function DirectDocumentSheet({
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[540px] text-left text-xs">
               <thead className="bg-slate-50/90 text-slate-700 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="py-2.5 px-3 w-10 text-center">No</th>
@@ -313,13 +313,13 @@ export default function DirectDocumentSheet({
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-red-600" />
-              <span>Kolom Tanda Tangan &amp; Otorisasi Digital Dokumen</span>
+              <ShieldCheck className="w-4 h-4 text-red-600 shrink-0" />
+              <span>Kolom Tanda Tangan &amp; Otorisasi Dokumen</span>
             </h3>
             <span className="text-[10px] text-slate-500 font-mono">
-              Bisa di-Copy / di-Paste langsung
+              Ketuk kolom di bawah untuk menandatangani
             </span>
           </div>
 
@@ -381,6 +381,24 @@ export default function DirectDocumentSheet({
           </div>
         </div>
 
+      </div>
+
+      {/* ── Bottom Action Toolbar (Print / Submit) ── */}
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2.5 bg-white px-4 py-3 sm:px-5 rounded-2xl border border-slate-200/90 shadow-xs print:hidden">
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          <span>Cetak / Simpan PDF</span>
+        </button>
+
+        {actionButtons && (
+          <div className="flex items-center justify-end gap-2 [&>button]:w-full sm:[&>button]:w-auto [&>button]:justify-center [&>button]:py-2">
+            {actionButtons}
+          </div>
+        )}
       </div>
 
     </div>

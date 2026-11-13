@@ -260,8 +260,8 @@ export default function InventoryLedgerPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-7 space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex-1 min-w-0 pr-0 sm:pr-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-md border ${getProjectBadgeClasses(selectedProjectId)}`}>
               PROJECT &bull; {activeProject.code}
@@ -279,7 +279,7 @@ export default function InventoryLedgerPage() {
         </div>
 
         {!isCurrentProjectLocked && (
-          <div className="flex items-center justify-end gap-2 ml-auto shrink-0">
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto md:ml-auto shrink-0">
             <button
               onClick={() => exportToExcel(false)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
