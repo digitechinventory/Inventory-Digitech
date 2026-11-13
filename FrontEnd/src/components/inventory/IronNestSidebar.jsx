@@ -277,19 +277,9 @@ export default function IronNestSidebar({
 
   return (
     <>
-      {/* ── Mobile Backdrop ─────────────────────────────────────────── */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-slate-800/30 z-40 lg:hidden backdrop-blur-sm transition-opacity"
-          onClick={onClose}
-        />
-      )}
-
-      {/* ── Floating Sidebar Wrapper ─────────────────────────────────── */}
+      {/* ── Floating Sidebar Wrapper (Desktop Only — Mobile uses Liquid Glass Bottom Navbar) ── */}
       <aside
-        className={`fixed top-4 bottom-4 left-3 z-50 transition-all duration-300 ease-in-out select-none ${
-          isOpen ? 'translate-x-0' : 'hidden lg:block -translate-x-full lg:translate-x-0'
-        } ${sidebarWidth}`}
+        className={`hidden lg:block fixed top-4 bottom-4 left-3 z-50 transition-all duration-300 ease-in-out select-none ${sidebarWidth}`}
       >
         {/* ── Layer 2: Shadow / Accent Parallelogram (behind main body) ── */}
         <div

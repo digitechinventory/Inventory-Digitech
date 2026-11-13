@@ -6,7 +6,6 @@ import {
   Bell,
   Calendar,
   ChevronDown,
-  Menu,
   LogOut,
   Settings,
   X,
@@ -202,23 +201,22 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
     <header className={`w-full bg-white/90 backdrop-blur-xl mobile-safe-header-top py-2 sm:py-2.5 lg:py-3.5 px-3 sm:px-6 lg:px-8 flex-col lg:flex-row items-center justify-between gap-2 sm:gap-2.5 lg:gap-4 sticky top-0 z-30 border-y border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] ${isDashboard ? 'hidden lg:flex' : 'flex'}`}>
       {/* Top Row: Navigation Controls & Action Buttons (Aligned on one row across all viewports) */}
       <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
-        {/* Left: Mobile hamburger + Emblem (Mobile) / Frosted Search Bar (Desktop: Unchanged) */}
+        {/* Left: Digitech Brand (Mobile, sidebar drawer hidden in favor of Liquid Glass bottom nav) / Frosted Search Bar (Desktop) */}
         <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl">
           <button
-            onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shadow-xs hover:shadow-md cursor-pointer shrink-0"
-            aria-label="Open sidebar"
+            type="button"
+            onClick={() => navigate(role === 'Superadmin' ? '/overview' : '/dashboard')}
+            className="lg:hidden flex items-center gap-2 shrink-0 cursor-pointer active:scale-95 transition-transform"
           >
-            <Menu className="w-5 h-5" />
-          </button>
-
-          <div className="lg:hidden flex items-center shrink-0">
             <img
               src="/digitech-emblem.png"
               alt="Digitech"
               className="w-7 h-7 object-contain"
             />
-          </div>
+            <span className="text-sm font-black tracking-tight text-slate-900">
+              DIGITECH
+            </span>
+          </button>
 
           {/* Elevated "Timbul" Frosted Search Bar (Desktop: Triggers Spotlight Search / AI Lens) */}
           <div className="hidden lg:block relative w-full group animate-searchbar-in transition-transform duration-200 active:scale-[0.99]">
