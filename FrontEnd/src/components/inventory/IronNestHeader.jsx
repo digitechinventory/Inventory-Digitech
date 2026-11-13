@@ -480,29 +480,43 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
             <ChevronDown className="hidden sm:inline w-3.5 h-3.5 text-slate-400" />
           </button>
 
-          {/* Profile Dropdown */}
+          {/* Profile Dropdown (Crimson 3D Morph) */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="p-2 border-b border-slate-100">
-                <div className="font-semibold text-sm text-slate-900">{user?.full_name || 'Pengguna'}</div>
-                <div className="text-xs text-slate-500 truncate">{user?.email || 'user@digitech.co.id'}</div>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase">
+            <div className="absolute right-0 mt-2.5 w-68 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-[0_18px_42px_-12px_rgba(220,38,38,0.28),0_8px_20px_-6px_rgba(15,23,42,0.14)] border border-red-200/80 overflow-hidden z-50 animate-profile-3d-card">
+              {/* Crimson Accent Top Card */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-red-700 via-red-600 to-rose-700 p-3.5 text-white">
+                <div className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-crimson-sweep" />
+                <div className="pointer-events-none absolute -top-6 -right-6 w-20 h-20 rounded-full bg-rose-300/30 blur-xl animate-crimson-aura" />
+                <div className="relative z-10 flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-white text-red-700 font-black text-sm flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{(user?.full_name || 'D').charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm text-white truncate">{user?.full_name || 'Pengguna'}</div>
+                    <div className="text-[11px] text-red-100 truncate">{user?.email || 'user@digitech.co.id'}</div>
+                  </div>
+                </div>
+                <div className="relative z-10 mt-2.5 flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/15 border border-white/25 text-white uppercase">
                     {role || 'Superadmin'}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 truncate">{user?.company || 'DIGITECH'}</span>
+                  <span className="text-[10px] font-bold text-red-100 truncate">{user?.company || 'DIGITECH'}</span>
                 </div>
               </div>
 
-              <div className="pt-2 space-y-1">
+              <div className="p-2.5 space-y-1 bg-gradient-to-b from-red-50/30 to-white">
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
                     navigate('/settings');
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-red-50/80 hover:text-red-700 hover:translate-x-0.5 transition-all cursor-pointer"
                 >
-                  <Settings className="w-3.5 h-3.5 text-slate-500" />
+                  <Settings className="w-3.5 h-3.5 text-red-500" />
                   <span>Pengaturan Akun &amp; Keamanan</span>
                 </button>
 
@@ -511,7 +525,7 @@ export default function IronNestHeader({ onToggleSidebar, onSearch, searchTerm =
                     setShowProfileMenu(false);
                     setShowLogoutConfirm(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-600 hover:text-white transition-all cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Keluar dari Akun</span>

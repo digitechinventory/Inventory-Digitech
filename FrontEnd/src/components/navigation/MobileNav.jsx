@@ -372,138 +372,172 @@ export default function MobileNav() {
       </nav>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. MOBILE ACCOUNT PROFILE DRAWER (Slide up when tapping Akun)
+          2. MOBILE ACCOUNT PROFILE DRAWER (Crimson 3D Morph)
       ───────────────────────────────────────────────────────────── */}
       {isAccountDrawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end select-none">
-          {/* Backdrop Blur */}
+          {/* Crimson-tinted Backdrop Blur */}
           <div
             onClick={() => setIsAccountDrawerOpen(false)}
-            className="absolute inset-0 bg-slate-800/50 backdrop-blur-sm animate-in fade-in duration-200"
+            className="absolute inset-0 bg-gradient-to-t from-red-950/45 via-slate-900/50 to-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
           />
 
-          {/* Drawer Container */}
-          <div className="relative z-10 w-full max-w-[480px] mx-auto bg-white rounded-t-[32px] p-6 pb-12 shadow-[0_-15px_40px_rgba(0,0,0,0.2)] border-t border-slate-200/80 animate-in slide-in-from-bottom duration-300">
-            {/* Grab Handle */}
-            <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-5" />
+          {/* 3D Morph Drawer Container */}
+          <div className="relative z-10 w-full max-w-[480px] mx-auto bg-white rounded-t-[32px] overflow-hidden border-t border-red-200/80 animate-profile-3d-drawer">
+            {/* Top Crimson Mega Mendung Identity Header */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-red-700 via-red-600 to-rose-700 px-6 pt-3.5 pb-5 text-white">
+              {/* Sweeping 3D Shimmer Light */}
+              <div className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-crimson-sweep" />
 
-            {/* Header: User Info & Close Button */}
-            <div className="flex items-start justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-600 text-white flex items-center justify-center font-black text-xl shadow-[0_4px_16px_rgba(220,38,38,0.35)]">
-                  {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-slate-900 leading-tight">
-                    {user?.full_name || 'Masamune'}
-                  </h3>
-                  <p className="text-xs text-slate-600 font-medium mt-0.5">
-                    {user?.email || 'user@digitech.co.id'}
-                  </p>
-                  <div className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold">
-                    <ShieldCheck className="w-3 h-3 text-red-600" />
-                    <span>{normalizedRole}</span>
+              {/* Decorative Mega Mendung & Radial Glow */}
+              <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-rose-400/30 blur-2xl animate-crimson-aura" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 220 90"
+                className="pointer-events-none absolute right-0 top-0 h-full w-44 opacity-25"
+                fill="none"
+              >
+                <path
+                  d="M225,-5 L95,-5 C106,12 100,26 122,34 C142,42 138,58 164,66 C185,72 198,86 225,92 Z"
+                  fill="#FFFFFF"
+                />
+                <path
+                  d="M225,-5 L130,-5 C138,10 135,20 152,27 C168,33 165,46 186,52 C201,57 212,68 225,74 Z"
+                  fill="#FECACA"
+                />
+              </svg>
+
+              {/* Grab Handle */}
+              <div className="w-12 h-1.5 rounded-full bg-white/45 mx-auto mb-4 relative z-10" />
+
+              {/* Header: User Info & Close Button */}
+              <div className="flex items-start justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="absolute -inset-1 rounded-2xl bg-white/30 blur-xs animate-crimson-aura" />
+                    <div className="relative w-13 h-13 rounded-2xl bg-white text-red-700 flex items-center justify-center font-black text-xl shadow-[0_6px_18px_rgba(127,29,29,0.4)] ring-2 ring-white/80 overflow-hidden">
+                      {user?.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{user?.full_name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-black text-white leading-tight truncate">
+                      {user?.full_name || 'Pengguna'}
+                    </h3>
+                    <p className="text-xs text-red-100 font-medium mt-0.5 truncate">
+                      {user?.email || 'user@digitech.co.id'}
+                    </p>
+                    <div className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-xs border border-white/30 text-white text-[10px] font-bold">
+                      <ShieldCheck className="w-3 h-3 text-red-100" />
+                      <span>{normalizedRole}</span>
+                    </div>
                   </div>
                 </div>
+
+                <button
+                  onClick={() => setIsAccountDrawerOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Body Container */}
+            <div className="p-6 pt-5 pb-12 bg-gradient-to-b from-red-50/35 via-white to-white">
+              {/* User Meta Details Cards */}
+              <div className="space-y-2 mb-5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-red-100/90 shadow-2xs text-xs">
+                  <span className="flex items-center gap-2 text-slate-600 font-medium">
+                    <Building2 className="w-4 h-4 text-red-500" /> Perusahaan / Divisi
+                  </span>
+                  <span className="font-bold text-slate-900">
+                    {user?.company || 'DIGITECH'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-red-100/90 shadow-2xs text-xs">
+                  <span className="flex items-center gap-2 text-slate-600 font-medium">
+                    <MapPin className="w-4 h-4 text-red-500" /> Site Operasional
+                  </span>
+                  <span className="font-bold text-slate-900">
+                    {user?.site_id || 'Pit South Site BIB-02'}
+                  </span>
+                </div>
               </div>
 
+              {/* ── Menu Cepat & Pengaturan Section ── */}
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-2 px-1">
+                  <Settings className="w-3 h-3 text-red-600" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Akses Menu &amp; Pengaturan</span>
+                </div>
+                <div className="space-y-1.5 pl-2 border-l-2 border-red-400/70">
+                  <button
+                    onClick={() => { setIsAccountDrawerOpen(false); navigate('/mos'); }}
+                    className="w-full py-2.5 rounded-2xl bg-white hover:bg-red-50/70 border border-slate-200/90 hover:border-red-300 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs hover:translate-x-1 transition-all cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <FileCheck2 className="w-4 h-4 text-red-600" />
+                      <span>Waiting List &amp; Approval Dokumen</span>
+                      {pendingDocsCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-mono font-bold shadow-2xs">
+                          {pendingDocsCount} Pending
+                        </span>
+                      )}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-red-400" />
+                  </button>
+
+                  <button
+                    onClick={() => { setIsAccountDrawerOpen(false); navigate('/inventory'); }}
+                    className="w-full py-2.5 rounded-2xl bg-white hover:bg-red-50/70 border border-slate-200/90 hover:border-red-300 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs hover:translate-x-1 transition-all cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Store className="w-4 h-4 text-red-600" />
+                      Katalog Material
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-red-400" />
+                  </button>
+
+                  <button
+                    onClick={() => { setIsAccountDrawerOpen(false); navigate('/project-inventory?tab=documents'); }}
+                    className="w-full py-2.5 rounded-2xl bg-white hover:bg-red-50/70 border border-slate-200/90 hover:border-red-300 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs hover:translate-x-1 transition-all cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                      Riwayat Dokumen &amp; BASTM
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-red-400" />
+                  </button>
+
+                  <button
+                    onClick={() => { setIsAccountDrawerOpen(false); navigate('/settings'); }}
+                    className="w-full py-2.5 rounded-2xl bg-white hover:bg-red-50/70 border border-slate-200/90 hover:border-red-300 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs hover:translate-x-1 transition-all cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <UserIcon className="w-4 h-4 text-red-600" />
+                      Pengaturan Akun &amp; Keamanan
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Logout Action Button */}
               <button
-                onClick={() => setIsAccountDrawerOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                onClick={() => {
+                  setShowLogoutConfirm(true);
+                }}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-700 via-red-600 to-rose-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_10px_26px_rgba(220,38,38,0.38)] active:scale-98 transition-all cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <LogOut className="w-4 h-4" />
+                <span>Keluar dari Akun (Logout)</span>
               </button>
             </div>
-
-            {/* User Meta Details Cards */}
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                <span className="flex items-center gap-2 text-slate-600 font-medium">
-                  <Building2 className="w-4 h-4 text-slate-400" /> Perusahaan / Divisi
-                </span>
-                <span className="font-bold text-slate-900">
-                  {user?.company || 'DIGITECH'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                <span className="flex items-center gap-2 text-slate-600 font-medium">
-                  <MapPin className="w-4 h-4 text-slate-400" /> Site Operasional
-                </span>
-                <span className="font-bold text-slate-900">
-                  {user?.site_id || 'Pit South Site BIB-02'}
-                </span>
-              </div>
-            </div>
-
-            {/* ── Menu Cepat & Pengaturan Section ── */}
-            <div className="mb-3">
-              <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                <Settings className="w-3 h-3 text-red-500" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Akses Menu &amp; Pengaturan</span>
-              </div>
-              <div className="space-y-1.5 pl-1 border-l-2 border-red-100">
-                <button
-                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/mos'); }}
-                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <FileCheck2 className="w-4 h-4 text-red-600" />
-                    <span>Waiting List &amp; Approval Dokumen</span>
-                    {pendingDocsCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[9px] font-mono font-bold">
-                        {pendingDocsCount} Pending
-                      </span>
-                    )}
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/inventory'); }}
-                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Store className="w-4 h-4 text-blue-600" />
-                    Katalog Material
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/project-inventory?tab=documents'); }}
-                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <FileCheck2 className="w-4 h-4 text-emerald-600" />
-                    Riwayat Dokumen &amp; BASTM
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                <button
-                  onClick={() => { setIsAccountDrawerOpen(false); navigate('/settings'); }}
-                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center justify-between px-4 shadow-2xs transition-all cursor-pointer"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <UserIcon className="w-4 h-4 text-red-600" />
-                    Pengaturan Akun &amp; Keamanan
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-              </div>
-            </div>
-
-            {/* Logout Action Button */}
-            <button
-              onClick={() => {
-                setShowLogoutConfirm(true);
-              }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(220,38,38,0.3)] active:scale-98 transition-all cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Keluar dari Akun (Logout)</span>
-            </button>
           </div>
         </div>
       )}
