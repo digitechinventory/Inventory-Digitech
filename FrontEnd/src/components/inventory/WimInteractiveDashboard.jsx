@@ -29,8 +29,23 @@ import {
   Info,
   X,
   ShieldAlert,
-  Plus
+  Plus,
+  BarChart3,
+  PieChart as PieChartIcon
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import {
   getWimSummary,
   getWimComponents,
@@ -73,10 +88,70 @@ const WIM_CATEGORIES = [
   'History Static LS'
 ];
 
+// Data Rekapitulasi 28 Sheet Control Stock Part WIM (2. Detail_Control_Stock_Part_WIM.xlsx)
+const WIM_CONTROL_STOCK_DATA = [
+  { category: 'Load Cell', baru_in: 38, baru_out: 40, sisa_baru: 4, status_baru: 'Ready', bekas_in: 14, bekas_out: 8, sisa_bekas: 6, status_bekas: 'Ready', terpasang: 10, dilepas: 18, spare: 0 },
+  { category: 'Saddle', baru_in: 24, baru_out: 26, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 19, bekas_out: 4, sisa_bekas: 15, status_bekas: 'Ready', terpasang: 8, dilepas: 15, spare: 0 },
+  { category: 'Strip Sensor High Speed', baru_in: 28, baru_out: 24, sisa_baru: 4, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 24, dilepas: 0, spare: 4 },
+  { category: 'Dudukan Load Cell', baru_in: 16, baru_out: 13, sisa_baru: 3, status_baru: 'Ready', bekas_in: 9, bekas_out: 4, sisa_bekas: 5, status_bekas: 'Ready', terpasang: 12, dilepas: 8, spare: 3 },
+  { category: 'Mounting Platform LS', baru_in: 20, baru_out: 12, sisa_baru: 8, status_baru: 'Ready', bekas_in: 4, bekas_out: 0, sisa_bekas: 4, status_bekas: 'Ready', terpasang: 8, dilepas: 4, spare: 8 },
+  { category: 'Light Curtain', baru_in: 12, baru_out: 12, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 10, dilepas: 6, spare: 0 },
+  { category: 'Mini PC', baru_in: 8, baru_out: 7, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 6, dilepas: 1, spare: 1 },
+  { category: 'RFID Reader', baru_in: 7, baru_out: 7, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 2, spare: 0 },
+  { category: 'Loop Detector', baru_in: 7, baru_out: 5, sisa_baru: 2, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 0, spare: 2 },
+  { category: 'CCTV', baru_in: 6, baru_out: 5, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 0, spare: 1 },
+  { category: 'Batterai Lithium', baru_in: 5, baru_out: 5, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 2, bekas_out: 2, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 2, spare: 0 },
+  { category: 'Switch', baru_in: 5, baru_out: 4, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 1, spare: 1 },
+  { category: 'Inverter', baru_in: 5, baru_out: 4, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 1, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 1, spare: 1 },
+  { category: 'Frame Low Speed', baru_in: 4, baru_out: 3, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 2, dilepas: 1, spare: 1 },
+  { category: 'Platform Low Speed', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 2, dilepas: 1, spare: 0 },
+  { category: 'PLC', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
+  { category: 'WIM Logix HS', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
+  { category: 'WIM Logix LS', baru_in: 3, baru_out: 2, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 2, dilepas: 0, spare: 1 },
+  { category: 'Stabilizer', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
+  { category: 'Resin Kit', baru_in: 3, baru_out: 0, sisa_baru: 3, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 3 },
+  { category: 'PSU', baru_in: 2, baru_out: 2, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 2, dilepas: 0, spare: 0 },
+  { category: 'Baut Load Cell', baru_in: 81, baru_out: 41, sisa_baru: 40, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Ring Adjuster', baru_in: 44, baru_out: 24, sisa_baru: 20, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Mur Adjuster', baru_in: 40, baru_out: 36, sisa_baru: 4, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Rubber Adjuster', baru_in: 20, baru_out: 12, sisa_baru: 8, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Bolt Adjuster Platform', baru_in: 16, baru_out: 8, sisa_baru: 8, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Longrat Adjuster', baru_in: 12, baru_out: 6, sisa_baru: 6, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
+  { category: 'Junction Box', baru_in: 3, baru_out: 2, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 }
+];
+
+const WIM_CONDITION_DATA = [
+  { name: 'Baru', value: 140, color: '#10b981' },
+  { name: 'Aus', value: 19, color: '#f59e0b' },
+  { name: 'Rusak', value: 13, color: '#ef4444' },
+  { name: 'Bekas', value: 7, color: '#3b82f6' },
+  { name: 'Dummy', value: 6, color: '#8b5cf6' },
+  { name: 'Belum dipakai', value: 3, color: '#06b6d4' },
+  { name: 'Patah', value: 1, color: '#f43f5e' }
+];
+
+const WIM_LANE_DATA = [
+  { name: 'Gudang / Office VGT', value: 70, color: '#f59e0b' },
+  { name: 'Lane 3 (KM-14)', value: 51, color: '#3b82f6' },
+  { name: 'Lane 1 (KM-14)', value: 47, color: '#10b981' },
+  { name: 'Office HO / Lainnya', value: 21, color: '#64748b' }
+];
+
+const WIM_WARRANTY_SECTOR_DATA = [
+  { sector: 'Sensor Low Speed (LS)', short: 'Sensor LS', jenis_item: 17, estimasi_2thn: 459, lead_1bln: 12, lead_3bln: 5 },
+  { sector: 'PC & Server', short: 'PC & Server', jenis_item: 11, estimasi_2thn: 100, lead_1bln: 11, lead_3bln: 0 },
+  { sector: 'Sensor High Speed (HS)', short: 'Sensor HS', jenis_item: 5, estimasi_2thn: 60, lead_1bln: 2, lead_3bln: 3 },
+  { sector: 'Sensor Light Curtain (LC)', short: 'Light Curtain', jenis_item: 3, estimasi_2thn: 8, lead_1bln: 2, lead_3bln: 1 },
+  { sector: 'RFID Reader', short: 'RFID Reader', jenis_item: 2, estimasi_2thn: 804, lead_1bln: 2, lead_3bln: 0 },
+  { sector: 'CCTV', short: 'CCTV', jenis_item: 2, estimasi_2thn: 12, lead_1bln: 2, lead_3bln: 0 }
+];
+
 export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) {
   const navigate = useNavigate();
   // Navigation tabs: 'components' | 'lanes' | 'warranty' | 'transactions' | 'documents'
   const [activeTab, setActiveTab] = useState('components');
+  // Chart View Mode: 'distribusi' | 'mutasi' | 'garansi'
+  const [wimChartView, setWimChartView] = useState('distribusi');
 
   // Summary State
   const [summary, setSummary] = useState(null);
@@ -174,7 +249,24 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
         search: warrantySearch,
         section: selectedSection
       });
-      setWarrantyItems(res.warranty_items || []);
+      const rawItems = res.warranty_items || [];
+      const normalized = rawItems
+        .filter((it) => it && it.item_name !== 'Nama Item' && it.part_number !== 'Part Number')
+        .map((it) => {
+          // Normalize if legacy shifted columns exist
+          if (it.section === 'General' && typeof it.qty_estimated_2yr === 'string' && isNaN(Number(it.qty_estimated_2yr))) {
+            return {
+              ...it,
+              part_number: it.item_name,
+              item_name: it.qty_estimated_2yr,
+              qty_estimated_2yr: Number(it.lead_time) || 2,
+              lead_time: String(it.warranty_period || '1 Bulan'),
+              warranty_period: '1 Tahun'
+            };
+          }
+          return it;
+        });
+      setWarrantyItems(normalized);
     } catch (err) {
       console.error('Error fetching WIM warranty:', err);
     } finally {
@@ -329,6 +421,395 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             Lead time 1 s/d 3 bulan
           </div>
         </div>
+      </div>
+
+      {/* ── Visualisasi Interaktif Control Stock Part WIM (28 Kategori & Garansi) ── */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="space-y-0.5">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-emerald-600" />
+              Visualisasi Data Control Stock Part WIM
+            </h3>
+            <p className="text-xs text-slate-500">
+              Grafik rekapitulasi status komponen fisik, mutasi stok baru vs bekas/dummy (28 sheet komponen), dan estimasi garansi sparepart WIM.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setWimChartView('distribusi')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                wimChartView === 'distribusi'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              Distribusi Status &amp; Kondisi
+            </button>
+            <button
+              type="button"
+              onClick={() => setWimChartView('mutasi')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                wimChartView === 'mutasi'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              Control Stock (Baru vs Bekas)
+            </button>
+            <button
+              type="button"
+              onClick={() => setWimChartView('garansi')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                wimChartView === 'garansi'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              Garansi &amp; Estimasi 2 Tahun
+            </button>
+          </div>
+        </div>
+
+        {/* View 1: Distribusi Status Komponen Fisik + Kondisi + Lokasi Lane */}
+        {wimChartView === 'distribusi' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Bar Chart Status per Kategori */}
+            <div className="lg:col-span-2 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                    Distribusi Komponen Fisik WIM per Kategori (Terpasang, Dilepas &amp; Sisa Stock)
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Klik batang grafik untuk menyaring tabel komponen di bawah berdasarkan kategori
+                  </p>
+                </div>
+                {selectedCategory !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory('ALL')}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold cursor-pointer hover:bg-emerald-100"
+                  >
+                    Filter Aktif: {selectedCategory} &times;
+                  </button>
+                )}
+              </div>
+
+              <div className="h-[310px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={WIM_CONTROL_STOCK_DATA.slice(0, 18)}
+                    margin={{ top: 10, right: 12, left: -10, bottom: 55 }}
+                    onClick={(state) => {
+                      if (state && state.activeLabel) {
+                        setSelectedCategory(state.activeLabel);
+                        setActiveTab('components');
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis
+                      dataKey="category"
+                      angle={-32}
+                      textAnchor="end"
+                      interval={0}
+                      height={65}
+                      tick={{ fontSize: 10, fontWeight: 700, fill: '#334155' }}
+                    />
+                    <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                    <Bar dataKey="terpasang" name="Terpasang di Lane" fill="#10b981" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                    <Bar dataKey="dilepas" name="Dilepas (Dismantle)" fill="#f59e0b" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                    <Bar dataKey="sisa_baru" name="Sisa Stock Baru" fill="#3b82f6" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                    <Bar dataKey="sisa_bekas" name="Sisa Stock Bekas/Dummy" fill="#8b5cf6" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Side Breakdown: Kondisi Fisik & Sebaran Lokasi */}
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between space-y-4">
+              <div>
+                <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <PieChartIcon className="w-4 h-4 text-emerald-600" />
+                  Komposisi Kondisi Fisik (189 Unit)
+                </h4>
+                <div className="h-[155px] w-full mt-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={WIM_CONDITION_DATA}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={36}
+                        outerRadius={60}
+                        paddingAngle={2}
+                      >
+                        {WIM_CONDITION_DATA.map((entry, index) => (
+                          <Cell key={`cond-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [`${value} unit`, 'Jumlah']}
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '11px',
+                          fontWeight: 700
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5">
+                  {WIM_CONDITION_DATA.slice(0, 6).map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-2.5 py-1 bg-white rounded-lg border border-slate-200/80 text-[11px]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="font-semibold text-slate-700 truncate">{item.name}</span>
+                      </div>
+                      <span className="font-mono font-bold text-slate-900">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200/80 space-y-2">
+                <div className="text-[11px] font-mono font-bold text-slate-700 uppercase">
+                  Sebaran Posisi &amp; Lane WIM
+                </div>
+                <div className="space-y-1.5">
+                  {WIM_LANE_DATA.map((lane, idx) => {
+                    const pct = Math.round((lane.value / 189) * 100);
+                    return (
+                      <div key={idx} className="space-y-0.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-slate-700">{lane.name}</span>
+                          <span className="font-mono font-bold text-slate-900">{lane.value} unit ({pct}%)</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: lane.color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View 2: Mutasi Control Stock (Baru vs Bekas/Dummy) dari 28 Sheet */}
+        {wimChartView === 'mutasi' && (
+          <div className="space-y-4">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                    Grafik Mutasi Control Stock Part WIM (Barang Masuk, Keluar &amp; Sisa Stock)
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Data riil rekapitulasi 28 lembar kerja (sheet) pada file 2. Detail_Control_Stock_Part_WIM.xlsx
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono">
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                    Ready: {WIM_CONTROL_STOCK_DATA.filter(d => d.status_baru === 'Ready').length} Kategori
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-bold">
+                    Out of Stock: {WIM_CONTROL_STOCK_DATA.filter(d => d.status_baru === 'Out of Stock').length} Kategori
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={WIM_CONTROL_STOCK_DATA}
+                    margin={{ top: 10, right: 12, left: -10, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis
+                      dataKey="category"
+                      angle={-35}
+                      textAnchor="end"
+                      interval={0}
+                      height={70}
+                      tick={{ fontSize: 9.5, fontWeight: 700, fill: '#334155' }}
+                    />
+                    <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                    <Bar dataKey="baru_in" name="Stock Baru Masuk (In)" fill="#0ea5e9" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="baru_out" name="Stock Baru Keluar (Out)" fill="#f97316" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="sisa_baru" name="Sisa Stock Baru" fill="#10b981" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="sisa_bekas" name="Sisa Stock Bekas/Dummy" fill="#8b5cf6" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Tabel Rekapitulasi Control Stock 28 Kategori */}
+            <div className="overflow-x-auto border border-slate-200 rounded-2xl max-h-[280px] overflow-y-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 font-mono text-[10px] uppercase">
+                    <th className="px-3.5 py-2.5">Kategori Part WIM (28 Sheet)</th>
+                    <th className="px-3 py-2.5 text-center">Baru Masuk</th>
+                    <th className="px-3 py-2.5 text-center">Baru Keluar</th>
+                    <th className="px-3 py-2.5 text-center">Sisa Stock Baru</th>
+                    <th className="px-3 py-2.5 text-center">Status Stock Baru</th>
+                    <th className="px-3 py-2.5 text-center">Sisa Bekas / Dummy</th>
+                    <th className="px-3 py-2.5 text-center">Terpasang</th>
+                    <th className="px-3 py-2.5 text-center">Dilepas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {WIM_CONTROL_STOCK_DATA.map((row) => (
+                    <tr
+                      key={row.category}
+                      onClick={() => {
+                        setSelectedCategory(row.category);
+                        setActiveTab('components');
+                      }}
+                      className="hover:bg-emerald-50/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-3.5 py-2 font-bold text-slate-900">{row.category}</td>
+                      <td className="px-3 py-2 text-center font-mono text-sky-700 font-semibold">{row.baru_in}</td>
+                      <td className="px-3 py-2 text-center font-mono text-orange-700 font-semibold">{row.baru_out}</td>
+                      <td className="px-3 py-2 text-center font-mono font-extrabold text-emerald-700 bg-emerald-50/40">{row.sisa_baru}</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                          row.status_baru === 'Ready'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {row.status_baru}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-center font-mono font-bold text-purple-700">{row.sisa_bekas}</td>
+                      <td className="px-3 py-2 text-center font-mono font-bold text-blue-700">{row.terpasang}</td>
+                      <td className="px-3 py-2 text-center font-mono font-bold text-amber-700">{row.dilepas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* View 3: Visualisasi Garansi & Estimasi 2 Tahun (Sheet Warranty Sparepart) */}
+        {wimChartView === 'garansi' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+              <div>
+                <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                  Jumlah Item Garansi &amp; Waktu Tunggu (Lead Time) per Sektor WIM
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Perbandingan item dengan waktu tunggu pengadaan 1 Bulan vs 3 Bulan (Garansi 1 Tahun)
+                </p>
+              </div>
+              <div className="h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={WIM_WARRANTY_SECTOR_DATA}
+                    margin={{ top: 10, right: 12, left: -10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="short" tick={{ fontSize: 10.5, fontWeight: 700, fill: '#334155' }} />
+                    <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700 }} />
+                    <Bar dataKey="jenis_item" name="Total Jenis Sparepart" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="lead_1bln" name="Lead Time 1 Bulan" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="lead_3bln" name="Lead Time 3 Bulan" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3 flex flex-col justify-between">
+              <div>
+                <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                  Rekapitulasi Estimasi Kebutuhan Sparepart 2 Tahun per Sektor
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Klik baris sektor untuk langsung membuka tab Garansi &amp; Lead Time sesuai sektor
+                </p>
+              </div>
+
+              <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 font-mono text-[10px] uppercase">
+                      <th className="px-3.5 py-2.5">Sektor Perangkat WIM</th>
+                      <th className="px-3 py-2.5 text-center">Jenis Item</th>
+                      <th className="px-3 py-2.5 text-center">Estimasi 2 Thn</th>
+                      <th className="px-3 py-2.5 text-center">Lead Time 1 Bln</th>
+                      <th className="px-3 py-2.5 text-center">Lead Time 3 Bln</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {WIM_WARRANTY_SECTOR_DATA.map((sec) => (
+                      <tr
+                        key={sec.sector}
+                        onClick={() => {
+                          setSelectedSection(sec.sector.replace(' (LS)', '').replace(' (HS)', '').replace(' (LC)', ''));
+                          setActiveTab('warranty');
+                        }}
+                        className="hover:bg-purple-50/50 transition-colors cursor-pointer"
+                      >
+                        <td className="px-3.5 py-2.5 font-bold text-slate-800">{sec.sector}</td>
+                        <td className="px-3 py-2.5 text-center font-mono font-bold text-purple-700">{sec.jenis_item} item</td>
+                        <td className="px-3 py-2.5 text-center font-mono font-extrabold text-slate-900">{sec.estimasi_2thn} pcs</td>
+                        <td className="px-3 py-2.5 text-center font-mono text-emerald-700 font-semibold">{sec.lead_1bln}</td>
+                        <td className="px-3 py-2.5 text-center font-mono text-amber-700 font-semibold">{sec.lead_3bln}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+                <span>Sumber: Sheet Warranty Sparepart (40 Jenis Part Resmi)</span>
+                <span className="font-bold text-emerald-700">Masa Garansi Standar: 1 Tahun</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Navigation Tabs ── */}

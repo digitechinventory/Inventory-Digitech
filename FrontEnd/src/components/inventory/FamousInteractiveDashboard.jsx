@@ -38,14 +38,186 @@ import {
   ShieldAlert,
   Wrench,
   QrCode,
-  Plus
+  Plus,
+  BarChart3,
+  PieChart as PieChartIcon
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import {
   getFamousSummary,
   getFamousFleetMatrix,
   getFamousItems
 } from '../../api/projectInventoryApi';
 import FullDocumentPreviewModal from '../common/FullDocumentPreviewModal';
+
+// Exact Pivot & Chart Data from the 9 Stock Sheets (Excluding HRGA)
+const FAMOUS_STOCK_PIVOTS = {
+  GPS: {
+    key: 'GPS', title: 'DATA GPS', total: 1155, terinstall: 818, onsite: 220, rusak: 107, return_rma: 0, belum_bastm: 10, pindahan: 624,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 220, rusak: 0, return_rma: 0, belum_bastm: 10, total: 230 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 107, return_rma: 0, belum_bastm: 0, total: 107 }
+    ]
+  },
+  DSM: {
+    key: 'DSM', title: 'DATA DSM', total: 1275, terinstall: 816, onsite: 203, rusak: 74, return_rma: 182, belum_bastm: 0, pindahan: 746,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 87, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 87 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 59, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 59 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 202, rusak: 0, return_rma: 0, belum_bastm: 0, total: 202 },
+      { mitra: 'RETURN', terinstall: 0, onsite: 1, rusak: 0, return_rma: 182, belum_bastm: 0, total: 183 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 74, return_rma: 0, belum_bastm: 0, total: 74 }
+    ]
+  },
+  ADAS: {
+    key: 'ADAS', title: 'DATA ADAS', total: 1175, terinstall: 818, onsite: 293, rusak: 64, return_rma: 0, belum_bastm: 0, pindahan: 559,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 293, rusak: 0, return_rma: 0, belum_bastm: 0, total: 293 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 64, return_rma: 0, belum_bastm: 0, total: 64 }
+    ]
+  },
+  MDVR: {
+    key: 'MDVR', title: 'DATA MDVR', total: 1175, terinstall: 818, onsite: 233, rusak: 113, return_rma: 11, belum_bastm: 0, pindahan: 18,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 233, rusak: 0, return_rma: 0, belum_bastm: 0, total: 233 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 113, return_rma: 0, belum_bastm: 0, total: 113 },
+      { mitra: 'RETURN', terinstall: 0, onsite: 0, rusak: 0, return_rma: 11, belum_bastm: 0, total: 11 }
+    ]
+  },
+  SSD: {
+    key: 'SSD', title: 'DATA SSD', total: 1179, terinstall: 818, onsite: 327, rusak: 30, return_rma: 0, belum_bastm: 4, pindahan: 533,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 327, rusak: 0, return_rma: 0, belum_bastm: 4, total: 331 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 30, return_rma: 0, belum_bastm: 0, total: 30 }
+    ]
+  },
+  OBU: {
+    key: 'OBU', title: 'DATA OBU', total: 1145, terinstall: 816, onsite: 245, rusak: 84, return_rma: 0, belum_bastm: 0, pindahan: 339,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 152, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 152 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
+      { mitra: 'MVM', terinstall: 2, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 2 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 245, rusak: 0, return_rma: 0, belum_bastm: 0, total: 245 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 84, return_rma: 0, belum_bastm: 0, total: 84 }
+    ]
+  },
+  PTT: {
+    key: 'PTT', title: 'DATA PTT', total: 1191, terinstall: 804, onsite: 257, rusak: 115, return_rma: 0, belum_bastm: 15, pindahan: 697,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 151, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 90 },
+      { mitra: 'GECL', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 90 },
+      { mitra: 'KMB', terinstall: 87, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 88 },
+      { mitra: 'BBS', terinstall: 66, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 67 },
+      { mitra: 'MAV', terinstall: 59, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 60 },
+      { mitra: 'BKAE', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 48 },
+      { mitra: 'MMS', terinstall: 45, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 46 },
+      { mitra: 'RAM', terinstall: 26, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 27 },
+      { mitra: 'MVM', terinstall: 1, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 1 },
+      { mitra: 'BUS', terinstall: 1, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 1 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 257, rusak: 0, return_rma: 0, belum_bastm: 2, total: 259 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 115, return_rma: 0, belum_bastm: 0, total: 115 }
+    ]
+  },
+  DOME: {
+    key: 'DOME', title: 'DATA DOME', total: 1020, terinstall: 818, onsite: 143, rusak: 59, return_rma: 0, belum_bastm: 0, pindahan: 460,
+    by_mitra: [
+      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
+      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
+      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
+      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
+      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
+      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
+      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
+      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
+      { mitra: 'RAM', terinstall: 28, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 28 },
+      { mitra: 'MVM', terinstall: 2, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 2 },
+      { mitra: 'STOCK', terinstall: 0, onsite: 143, rusak: 0, return_rma: 0, belum_bastm: 0, total: 143 },
+      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 59, return_rma: 0, belum_bastm: 0, total: 59 }
+    ]
+  },
+  CANBUS: {
+    key: 'CANBUS', title: 'DATA CANBUS', total: 105, terinstall: 5, onsite: 100, rusak: 0, return_rma: 0, belum_bastm: 0, pindahan: 0,
+    by_mitra: [
+      { mitra: 'STOCK', terinstall: 5, onsite: 100, rusak: 0, return_rma: 0, belum_bastm: 0, total: 105 }
+    ]
+  }
+};
 
 const SENSOR_ICONS = {
   gps: Compass,
@@ -250,22 +422,64 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
     return () => clearTimeout(timer);
   }, [hardwareSearch]);
 
-  // Sensor Category metadata list
+  // Sensor Category metadata list (Strictly Stock Sheets Only — Excluding HRGA)
+  const stockPivots = useMemo(() => {
+    return summary?.stock_pivots || FAMOUS_STOCK_PIVOTS;
+  }, [summary]);
+
   const categoryStatsList = useMemo(() => {
-    if (!summary?.by_category) return [];
     const specs = [
-      { key: 'GPS', name: 'GPS Tracker', icon: Compass, total: summary.by_category['GPS'] || 1155, installed: 818, stock: 220, repair: 107 },
-      { key: 'DSM', name: 'DSM AI Fatigue Camera', icon: Eye, total: summary.by_category['DSM'] || 1275, installed: 816, stock: 203, repair: 256 },
-      { key: 'ADAS', name: 'ADAS Safety Camera', icon: ShieldCheck, total: summary.by_category['ADAS'] || 1175, installed: 818, stock: 293, repair: 64 },
-      { key: 'MDVR', name: 'MDVR Video Box', icon: Video, total: summary.by_category['MDVR'] || 1175, installed: 818, stock: 233, repair: 124 },
-      { key: 'SSD', name: 'SSD Storage Drive', icon: HardDrive, total: summary.by_category['SSD'] || 1175, installed: 818, stock: 327, repair: 30 },
-      { key: 'OBU', name: 'OBU Cabin Display', icon: Tv, total: summary.by_category['OBU'] || 1145, installed: 816, stock: 245, repair: 84 },
-      { key: 'PTT', name: 'PTT Radio Comm', icon: Radio, total: summary.by_category['PTT'] || 1191, installed: 804, stock: 257, repair: 130 },
-      { key: 'DOME', name: 'Dome CCTV Security', icon: Video, total: summary.by_category['DOME'] || 1020, installed: 818, stock: 143, repair: 59 },
-      { key: 'CANBUS', name: 'CAN-Bus Telemetry', icon: Cpu, total: summary.by_category['CANBUS'] || 105, installed: 5, stock: 100, repair: 0 }
+      { key: 'GPS', name: 'GPS Tracker', icon: Compass, total: stockPivots.GPS?.total || 1155, installed: stockPivots.GPS?.terinstall || 818, stock: stockPivots.GPS?.onsite || 220, repair: (stockPivots.GPS?.rusak || 107) + (stockPivots.GPS?.return_rma || 0), rusak: stockPivots.GPS?.rusak || 107, return_rma: stockPivots.GPS?.return_rma || 0, belum_bastm: stockPivots.GPS?.belum_bastm || 10, pindahan: stockPivots.GPS?.pindahan || 624 },
+      { key: 'DSM', name: 'DSM AI Fatigue Camera', icon: Eye, total: stockPivots.DSM?.total || 1275, installed: stockPivots.DSM?.terinstall || 816, stock: stockPivots.DSM?.onsite || 203, repair: (stockPivots.DSM?.rusak || 74) + (stockPivots.DSM?.return_rma || 182), rusak: stockPivots.DSM?.rusak || 74, return_rma: stockPivots.DSM?.return_rma || 182, belum_bastm: stockPivots.DSM?.belum_bastm || 0, pindahan: stockPivots.DSM?.pindahan || 746 },
+      { key: 'ADAS', name: 'ADAS Safety Camera', icon: ShieldCheck, total: stockPivots.ADAS?.total || 1175, installed: stockPivots.ADAS?.terinstall || 818, stock: stockPivots.ADAS?.onsite || 293, repair: (stockPivots.ADAS?.rusak || 64) + (stockPivots.ADAS?.return_rma || 0), rusak: stockPivots.ADAS?.rusak || 64, return_rma: stockPivots.ADAS?.return_rma || 0, belum_bastm: stockPivots.ADAS?.belum_bastm || 0, pindahan: stockPivots.ADAS?.pindahan || 559 },
+      { key: 'MDVR', name: 'MDVR Video Box', icon: Video, total: stockPivots.MDVR?.total || 1175, installed: stockPivots.MDVR?.terinstall || 818, stock: stockPivots.MDVR?.onsite || 233, repair: (stockPivots.MDVR?.rusak || 113) + (stockPivots.MDVR?.return_rma || 11), rusak: stockPivots.MDVR?.rusak || 113, return_rma: stockPivots.MDVR?.return_rma || 11, belum_bastm: stockPivots.MDVR?.belum_bastm || 0, pindahan: stockPivots.MDVR?.pindahan || 18 },
+      { key: 'SSD', name: 'SSD Storage Drive', icon: HardDrive, total: stockPivots.SSD?.total || 1179, installed: stockPivots.SSD?.terinstall || 818, stock: stockPivots.SSD?.onsite || 327, repair: (stockPivots.SSD?.rusak || 30) + (stockPivots.SSD?.return_rma || 0), rusak: stockPivots.SSD?.rusak || 30, return_rma: stockPivots.SSD?.return_rma || 0, belum_bastm: stockPivots.SSD?.belum_bastm || 4, pindahan: stockPivots.SSD?.pindahan || 533 },
+      { key: 'OBU', name: 'OBU Cabin Display', icon: Tv, total: stockPivots.OBU?.total || 1145, installed: stockPivots.OBU?.terinstall || 816, stock: stockPivots.OBU?.onsite || 245, repair: (stockPivots.OBU?.rusak || 84) + (stockPivots.OBU?.return_rma || 0), rusak: stockPivots.OBU?.rusak || 84, return_rma: stockPivots.OBU?.return_rma || 0, belum_bastm: stockPivots.OBU?.belum_bastm || 0, pindahan: stockPivots.OBU?.pindahan || 339 },
+      { key: 'PTT', name: 'PTT Radio Comm', icon: Radio, total: stockPivots.PTT?.total || 1191, installed: stockPivots.PTT?.terinstall || 804, stock: stockPivots.PTT?.onsite || 257, repair: (stockPivots.PTT?.rusak || 115) + (stockPivots.PTT?.return_rma || 0), rusak: stockPivots.PTT?.rusak || 115, return_rma: stockPivots.PTT?.return_rma || 0, belum_bastm: stockPivots.PTT?.belum_bastm || 15, pindahan: stockPivots.PTT?.pindahan || 697 },
+      { key: 'DOME', name: 'Dome CCTV Security', icon: Video, total: stockPivots.DOME?.total || 1020, installed: stockPivots.DOME?.terinstall || 818, stock: stockPivots.DOME?.onsite || 143, repair: (stockPivots.DOME?.rusak || 59) + (stockPivots.DOME?.return_rma || 0), rusak: stockPivots.DOME?.rusak || 59, return_rma: stockPivots.DOME?.return_rma || 0, belum_bastm: stockPivots.DOME?.belum_bastm || 0, pindahan: stockPivots.DOME?.pindahan || 460 },
+      { key: 'CANBUS', name: 'CAN-Bus Telemetry', icon: Cpu, total: stockPivots.CANBUS?.total || 105, installed: stockPivots.CANBUS?.terinstall || 5, stock: stockPivots.CANBUS?.onsite || 100, repair: 0, rusak: 0, return_rma: 0, belum_bastm: 0, pindahan: 0 }
     ];
     return specs;
-  }, [summary]);
+  }, [stockPivots]);
+
+  // Combined Mitra Breakdown across all 9 Stock Categories
+  const combinedMitraChartData = useMemo(() => {
+    const mitraMap = {};
+    const order = ['AEK', 'RBT', 'BMT', 'GECL', 'KMB', 'BBS', 'MAV', 'BKAE', 'MMS', 'RAM', 'MVM', 'STOCK', 'RUSAK', 'RETURN'];
+    order.forEach(m => {
+      mitraMap[m] = { mitra: m, Terinstall: 0, Onsite: 0, Rusak: 0, Return: 0, Total: 0 };
+    });
+    Object.values(stockPivots).forEach((catPivot) => {
+      (catPivot.by_mitra || []).forEach((row) => {
+        const m = row.mitra;
+        if (!mitraMap[m]) {
+          mitraMap[m] = { mitra: m, Terinstall: 0, Onsite: 0, Rusak: 0, Return: 0, Total: 0 };
+        }
+        mitraMap[m].Terinstall += (row.terinstall || 0) + (row.belum_bastm && m !== 'STOCK' ? row.belum_bastm : 0);
+        mitraMap[m].Onsite += (row.onsite || 0) + (m === 'STOCK' ? (row.belum_bastm || 0) : 0);
+        mitraMap[m].Rusak += (row.rusak || 0);
+        mitraMap[m].Return += (row.return_rma || 0);
+        mitraMap[m].Total += (row.total || 0);
+      });
+    });
+    return Object.values(mitraMap).filter(r => r.Total > 0);
+  }, [stockPivots]);
+
+  // Overall Status Pie Data (9 Stock Sheets)
+  const overallPieData = useMemo(() => {
+    const totTerinstall = categoryStatsList.reduce((acc, c) => acc + c.installed, 0);
+    const totOnsite = categoryStatsList.reduce((acc, c) => acc + c.stock, 0);
+    const totRusak = categoryStatsList.reduce((acc, c) => acc + c.rusak, 0);
+    const totReturn = categoryStatsList.reduce((acc, c) => acc + c.return_rma, 0);
+    return [
+      { name: 'Terinstall', value: totTerinstall, color: '#10b981' },
+      { name: 'Onsite (Stock)', value: totOnsite, color: '#3b82f6' },
+      { name: 'Rusak', value: totRusak, color: '#ef4444' },
+      { name: 'Return', value: totReturn, color: '#f59e0b' }
+    ];
+  }, [categoryStatsList]);
+
+  const activeCategoryPivot = selectedCategory !== 'ALL' ? stockPivots[selectedCategory] : null;
 
   return (
     <div className="space-y-6">
@@ -420,6 +634,350 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             );
           })}
         </div>
+      </div>
+
+      {/* ── Visualisasi Data Stock Komponen (9 Kategori Stock — Tanpa HRGA) ── */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-red-600" />
+              {selectedCategory === 'ALL'
+                ? 'Visualisasi Stock Komponen FAMOUS (9 Kategori Stock)'
+                : `${activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Distribusi Status & Mitra Hauling`}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {selectedCategory === 'ALL'
+                ? 'Rekapitulasi grafik dan pivot table khusus lembar Stock (GPS, DSM, ADAS, MDVR, SSD, OBU, PTT, DOME, CANBUS)'
+                : `Grafik perbandingan status komponen ${selectedCategory} per mitra hauling beserta tabel pivot resmi`}
+            </p>
+          </div>
+
+          {/* Quick Category Pills for Chart Switching */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                selectedCategory === 'ALL'
+                  ? 'bg-red-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              Semua Stock
+            </button>
+            {categoryStatsList.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => setSelectedCategory(c.key)}
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                  selectedCategory === c.key
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                }`}
+              >
+                {c.key}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {selectedCategory === 'ALL' ? (
+          <div className="space-y-6">
+            {/* Row 1: Category Comparison Bar Chart + Overall Status Donut Chart */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {/* Bar Chart: 9 Stock Categories */}
+              <div className="lg:col-span-8 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                      Grafik Status per Kategori Stock (9 Komponen)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">Klik batang grafik untuk melihat detail pivot kategori terkait</p>
+                  </div>
+                  <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700">
+                    Total: 9.415 Unit
+                  </span>
+                </div>
+                <div className="h-[280px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={categoryStatsList}
+                      margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
+                      onClick={(state) => {
+                        if (state?.activeLabel) {
+                          setSelectedCategory(state.activeLabel);
+                        }
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                      <XAxis dataKey="key" tick={{ fontSize: 11, fontWeight: 700, fill: '#334155' }} />
+                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '8px' }} />
+                      <Bar dataKey="installed" name="Terinstall" fill="#10b981" radius={[4, 4, 0, 0]} cursor="pointer" />
+                      <Bar dataKey="stock" name="Onsite (Stock)" fill="#3b82f6" radius={[4, 4, 0, 0]} cursor="pointer" />
+                      <Bar dataKey="rusak" name="Rusak" fill="#ef4444" radius={[4, 4, 0, 0]} cursor="pointer" />
+                      <Bar dataKey="return_rma" name="Return" fill="#f59e0b" radius={[4, 4, 0, 0]} cursor="pointer" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Donut Chart: Overall Stock Status */}
+              <div className="lg:col-span-4 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                    <PieChartIcon className="w-3.5 h-3.5 text-red-600" />
+                    Proporsi Status Stock
+                  </h4>
+                  <p className="text-[11px] text-slate-500">Komposisi status seluruh perangkat pada 9 sheet Stock</p>
+                </div>
+
+                <div className="h-[195px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={overallPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={52}
+                        outerRadius={78}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {overallPieData.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(val) => [`${Number(val).toLocaleString('id-ID')} unit`, 'Jumlah']}
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80">
+                  {overallPieData.map((d) => (
+                    <div key={d.name} className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/70 text-xs">
+                      <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                        {d.name}
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">{d.value.toLocaleString('id-ID')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Mitra Hauling Chart + Summary Pivot Table */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {/* Mitra Hauling Distribution Bar Chart */}
+              <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                      Distribusi Perangkat per Mitra Hauling &amp; Gudang Stock
+                    </h4>
+                    <p className="text-[11px] text-slate-500">Akumulasi COUNTA of Status dari 9 sheet Stock (AEK, RBT, BMT, GECL, KMB, BBS, MAV, BKAE, MMS, RAM, STOCK, RUSAK, RETURN)</p>
+                  </div>
+                </div>
+                <div className="h-[260px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={combinedMitraChartData} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                      <XAxis dataKey="mitra" tick={{ fontSize: 10, fontWeight: 700, fill: '#334155' }} interval={0} />
+                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                      <Bar dataKey="Terinstall" name="Terinstall di Mitra" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="Onsite" name="Onsite (Stock)" stackId="a" fill="#3b82f6" />
+                      <Bar dataKey="Rusak" name="Rusak" stackId="a" fill="#ef4444" />
+                      <Bar dataKey="Return" name="Return" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Pivot Table Summary of All 9 Stock Categories */}
+              <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                    Tabel Pivot Stock (9 Kategori)
+                  </h4>
+                  <span className="text-[10px] font-mono text-slate-500">Klik baris untuk detail</span>
+                </div>
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
+                      <th className="py-2 px-2">Sheet Stock</th>
+                      <th className="py-2 px-2 text-right text-blue-700">Onsite</th>
+                      <th className="py-2 px-2 text-right text-emerald-700">Terinstall</th>
+                      <th className="py-2 px-2 text-right text-rose-700">Rusak</th>
+                      <th className="py-2 px-2 text-right text-amber-700">Return</th>
+                      <th className="py-2 px-2 text-right font-bold text-slate-800">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/60 font-mono text-[11px]">
+                    {categoryStatsList.map((row) => (
+                      <tr
+                        key={row.key}
+                        onClick={() => setSelectedCategory(row.key)}
+                        className="hover:bg-white cursor-pointer transition-colors"
+                      >
+                        <td className="py-1.5 px-2 font-bold text-slate-800">Stock {row.key}</td>
+                        <td className="py-1.5 px-2 text-right text-blue-700 font-semibold">{(row.stock + (row.key === 'GPS' ? 10 : row.key === 'SSD' ? 4 : row.key === 'PTT' ? 2 : 0)).toLocaleString('id-ID')}</td>
+                        <td className="py-1.5 px-2 text-right text-emerald-700 font-semibold">{(row.installed + (row.key === 'PTT' ? 13 : 0)).toLocaleString('id-ID')}</td>
+                        <td className="py-1.5 px-2 text-right text-rose-600">{row.rusak}</td>
+                        <td className="py-1.5 px-2 text-right text-amber-600">{row.return_rma}</td>
+                        <td className="py-1.5 px-2 text-right font-black text-slate-900">{row.total.toLocaleString('id-ID')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Single Category Stock View (Exact replica of DATA <KATEGORI> chart & Pivot Table in Google Sheets) */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                    {activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Grafik per Mitra Hauling
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Visualisasi dari lembar &apos;Stock {selectedCategory}&apos; (COUNTA of Status {selectedCategory})
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                    Terinstall: {activeCategoryPivot?.terinstall || 0}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">
+                    Onsite: {activeCategoryPivot?.onsite || 0}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">
+                    Rusak/Return: {(activeCategoryPivot?.rusak || 0) + (activeCategoryPivot?.return_rma || 0)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={activeCategoryPivot?.by_mitra || []}
+                    margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
+                    onClick={(state) => {
+                      if (state?.activeLabel) {
+                        setSelectedMitra(state.activeLabel);
+                        setActiveView('hardware');
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="mitra" tick={{ fontSize: 10, fontWeight: 700, fill: '#334155' }} interval={0} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                    <Bar dataKey="onsite" name="Onsite" fill="#3b82f6" radius={[3, 3, 0, 0]} cursor="pointer" />
+                    <Bar dataKey="terinstall" name="Terinstall" fill="#10b981" radius={[3, 3, 0, 0]} cursor="pointer" />
+                    <Bar dataKey="rusak" name="Rusak" fill="#ef4444" radius={[3, 3, 0, 0]} cursor="pointer" />
+                    {activeCategoryPivot?.return_rma > 0 && (
+                      <Bar dataKey="return_rma" name="Return" fill="#f59e0b" radius={[3, 3, 0, 0]} cursor="pointer" />
+                    )}
+                    {activeCategoryPivot?.belum_bastm > 0 && (
+                      <Bar dataKey="belum_bastm" name="Belum Tercatat BASTM" fill="#64748b" radius={[3, 3, 0, 0]} cursor="pointer" />
+                    )}
+                    <Bar dataKey="total" name="Grand Total" fill="#dc2626" radius={[3, 3, 0, 0]} cursor="pointer" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Pivot Table for the Selected Stock Sheet */}
+            <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
+              <div className="flex items-center justify-between mb-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                    COUNTA of Status {selectedCategory}
+                  </h4>
+                  <p className="text-[10px] text-slate-500">Klik baris mitra untuk memfilter tabel perangkat di bawah</p>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
+                  Total: {activeCategoryPivot?.total?.toLocaleString('id-ID')}
+                </span>
+              </div>
+
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
+                    <th className="py-1.5 px-2">Mitra Hauling</th>
+                    <th className="py-1.5 px-2 text-right text-blue-700">Onsite</th>
+                    <th className="py-1.5 px-2 text-right text-rose-700">Rusak</th>
+                    {activeCategoryPivot?.return_rma > 0 && (
+                      <th className="py-1.5 px-2 text-right text-amber-700">Return</th>
+                    )}
+                    {activeCategoryPivot?.belum_bastm > 0 && (
+                      <th className="py-1.5 px-2 text-right text-slate-600">Non-BASTM</th>
+                    )}
+                    <th className="py-1.5 px-2 text-right text-emerald-700">Terinstall</th>
+                    <th className="py-1.5 px-2 text-right font-bold text-slate-900">Grand Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200/60 font-mono text-[11px]">
+                  {(activeCategoryPivot?.by_mitra || []).map((r) => (
+                    <tr
+                      key={r.mitra}
+                      onClick={() => {
+                        setSelectedMitra(r.mitra);
+                        setActiveView('hardware');
+                      }}
+                      className={`hover:bg-white cursor-pointer transition-colors ${
+                        selectedMitra === r.mitra ? 'bg-red-50/70 font-bold' : ''
+                      }`}
+                    >
+                      <td className="py-1.5 px-2 font-bold text-slate-800">{r.mitra}</td>
+                      <td className="py-1.5 px-2 text-right text-blue-700">{r.onsite || ''}</td>
+                      <td className="py-1.5 px-2 text-right text-rose-600">{r.rusak || ''}</td>
+                      {activeCategoryPivot?.return_rma > 0 && (
+                        <td className="py-1.5 px-2 text-right text-amber-600">{r.return_rma || ''}</td>
+                      )}
+                      {activeCategoryPivot?.belum_bastm > 0 && (
+                        <td className="py-1.5 px-2 text-right text-slate-600">{r.belum_bastm || ''}</td>
+                      )}
+                      <td className="py-1.5 px-2 text-right text-emerald-700">{r.terinstall || ''}</td>
+                      <td className="py-1.5 px-2 text-right font-bold text-slate-900">{r.total}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-slate-200/70 font-black text-slate-900 border-t-2 border-slate-300">
+                    <td className="py-2 px-2">Grand Total</td>
+                    <td className="py-2 px-2 text-right text-blue-800">{activeCategoryPivot?.onsite || 0}</td>
+                    <td className="py-2 px-2 text-right text-rose-700">{activeCategoryPivot?.rusak || 0}</td>
+                    {activeCategoryPivot?.return_rma > 0 && (
+                      <td className="py-2 px-2 text-right text-amber-800">{activeCategoryPivot?.return_rma || 0}</td>
+                    )}
+                    {activeCategoryPivot?.belum_bastm > 0 && (
+                      <td className="py-2 px-2 text-right text-slate-800">{activeCategoryPivot?.belum_bastm || 0}</td>
+                    )}
+                    <td className="py-2 px-2 text-right text-emerald-800">{activeCategoryPivot?.terinstall || 0}</td>
+                    <td className="py-2 px-2 text-right text-red-700">{activeCategoryPivot?.total || 0}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
 

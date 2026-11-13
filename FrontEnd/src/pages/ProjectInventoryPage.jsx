@@ -43,8 +43,23 @@ import {
   FileCheck2,
   UserCheck,
   ArrowRight,
-  Printer
+  Printer,
+  BarChart3,
+  PieChart as PieChartIcon
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend
+} from 'recharts';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -573,6 +588,35 @@ export default function ProjectInventoryPage() {
       transferred
     };
   }, [items]);
+
+  // Chart data for active project (CCM & custom workspaces)
+  const projectChartData = useMemo(() => {
+    const catMap = {};
+    items.forEach((item) => {
+      const cat = item.category || 'Komponen Umum';
+      if (!catMap[cat]) {
+        catMap[cat] = { category: cat, terpasang: 0, gudang: 0, rusak: 0, garansi: 0, total: 0 };
+      }
+      catMap[cat].total += Number(item.quantity) || 1;
+      if (item.status === 'installed') catMap[cat].terpasang += 1;
+      if (item.status === 'in_warehouse') catMap[cat].gudang += 1;
+      if (item.is_damaged || item.status === 'under_repair') catMap[cat].rusak += 1;
+      if (item.warranty_status === 'active' || item.warranty_status === 'expiring_soon') catMap[cat].garansi += 1;
+    });
+
+    const byCategory = Object.values(catMap);
+    const statusPie = [
+      { name: 'Terpasang di Unit', value: stats.installed, color: '#2563eb' },
+      { name: 'Stok Gudang (Ready)', value: stats.inWarehouse, color: '#10b981' },
+      { name: 'Garansi Aktif', value: stats.activeWarranty + stats.expiringWarranty, color: '#8b5cf6' },
+      { name: 'Rusak / Perbaikan', value: stats.damaged, color: '#ef4444' }
+    ].filter((d) => d.value > 0);
+
+    return {
+      byCategory,
+      statusPie: statusPie.length > 0 ? statusPie : [{ name: 'Belum Ada Asset', value: 1, color: '#cbd5e1' }]
+    };
+  }, [items, stats]);
 
   // User Material Request Handler (Comprehensive Document Submittal)
   const handleRequestSubmit = async (e) => {
@@ -1480,6 +1524,134 @@ export default function ProjectInventoryPage() {
               <span className="text-xs font-bold text-white">Ajukan Request</span>
               <span className="text-[10px] text-red-100 line-clamp-1 mt-0.5">Suku cadang material</span>
             </button>
+          </div>
+        </div>
+
+        {/* Visualisasi Data Inventaris Project (CCM & Seluruh Workspace Project) */}
+        <div className="px-5 py-5 bg-slate-50/50 border-b border-slate-200/90 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-red-600" />
+                Visualisasi Data &amp; Status Inventaris ({activeProject.code})
+              </h4>
+              <p className="text-xs text-slate-500">
+                Grafik distribusi kategori perangkat, status pemasangan lapangan, stok gudang, dan cakupan garansi aktif pada project {activeProject.code}.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold">
+                Total Item: {stats.total}
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-bold">
+                Terpasang: {stats.installed}
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                Stok Gudang: {stats.inWarehouse}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Grafik Batang per Kategori Komponen */}
+            <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider">
+                  Distribusi Kategori Asset Project {activeProject.code}
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {projectChartData.byCategory.length} Kategori Terdata
+                </span>
+              </div>
+              <div className="h-[230px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={projectChartData.byCategory}
+                    margin={{ top: 10, right: 12, left: -12, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis
+                      dataKey="category"
+                      tick={{ fontSize: 10.5, fontWeight: 700, fill: '#334155' }}
+                    />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700 }} />
+                    <Bar dataKey="terpasang" name="Terpasang di Unit" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="gudang" name="Stok Gudang (Ready)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="garansi" name="Garansi Aktif" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="rusak" name="Rusak / Ganti" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Grafik Donut Proporsi Status & Ringkasan Kategori */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between space-y-3">
+              <div>
+                <span className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <PieChartIcon className="w-4 h-4 text-red-600" />
+                  Proporsi Status &amp; Garansi ({activeProject.code})
+                </span>
+                <div className="h-[150px] w-full mt-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={projectChartData.statusPie}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={35}
+                        outerRadius={58}
+                        paddingAngle={3}
+                      >
+                        {projectChartData.statusPie.map((entry, idx) => (
+                          <Cell key={`ccm-pie-${idx}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [`${value} unit`, 'Jumlah']}
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          fontSize: '11px',
+                          fontWeight: 700
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">
+                <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-slate-600">Terpasang</span>
+                  <span className="font-mono font-bold text-blue-700">{stats.installed}</span>
+                </div>
+                <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-slate-600">Gudang</span>
+                  <span className="font-mono font-bold text-emerald-700">{stats.inWarehouse}</span>
+                </div>
+                <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-slate-600">Garansi</span>
+                  <span className="font-mono font-bold text-purple-700">{stats.activeWarranty + stats.expiringWarranty}</span>
+                </div>
+                <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-slate-600">Rusak/Ganti</span>
+                  <span className="font-mono font-bold text-red-600">{stats.damaged}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
