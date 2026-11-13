@@ -36,7 +36,7 @@ import {
   FileUp,
   Trash2
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportStyledExcel } from '../utils/excelExport.js';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -262,68 +262,60 @@ export default function ReportsPage() {
     setIsUploadModalOpen(false);
   };
 
-  // Export to Excel handler (Structured Corporate Worksheet)
-  const handleExportExcel = () => {
+  // Export to Excel handler (Styled Corporate Blue Workbook with Digitech Logo)
+  const handleExportExcel = async () => {
     try {
       const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-      const sheetData = [
-        ['DIGITECH — INVENTORY MANAGEMENT SYSTEM'],
-        [`LAPORAN LOGISTIK & REKAPITULASI MUTASI MATERIAL — PROJECT ${activeProject.code}`],
-        [`Lokasi Site: ${activeProject.site_location || 'Site Operasional BIB'} | Tanggal Ekspor: ${printDate} | Dicetak Oleh: ${user?.full_name || 'Admin Logistik'}`],
-        [`Ringkasan: Total Penerimaan (MOS): ${metrics.totalInflowQty} Unit | Total Pengeluaran (MR): ${metrics.totalOutflowQty} Unit | Akurasi Opname: ${metrics.accuracyRate} | Total Mutasi: ${metrics.totalMovementQty} Item`],
-        [],
-        ['RINGKASAN ARUS MATERIAL BULANAN'],
-        ['Periode', 'Penerimaan (MOS)', 'Pengeluaran (MR)', 'Selisih Bersih', 'Aktivitas'],
-        ...monthlyTrends.map((m) => [m.month, m.mos, m.mr, m.mos - m.mr, m.totalActivity]),
-        [],
-        ['RINCIAN TRANSAKSI & MUTASI MATERIAL'],
-        ['No', 'Project', 'ID Transaksi', 'Waktu', 'Nama Material', 'Part Number', 'Kategori', 'Lokasi Rak', 'Tipe Mutasi', 'Qty Mutasi', 'No. Dokumen Ref', 'Petugas'],
-        ...(transactions.length > 0
-          ? transactions.map((t, idx) => [
-              idx + 1,
-              t.project_code || activeProject.code,
-              t.id || '-',
-              t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
-              t.item_name || '-',
-              t.part_number || '-',
-              t.category || activeProject.code,
-              t.bin_location || '-',
-              t.transaction_type || '-',
-              t.qty_change || 0,
-              t.reference_doc_id || '-',
-              t.performed_by || '-'
-            ])
-          : [['-', activeProject.code, '-', '-', 'Belum ada transaksi mutasi tercatat pada periode ini', '-', '-', '-', '-', 0, '-', '-']])
-      ];
-
-      const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-      worksheet['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } },
-        { s: { r: 5 + monthlyTrends.length + 3, c: 0 }, e: { r: 5 + monthlyTrends.length + 3, c: 11 } }
-      ];
-      worksheet['!cols'] = [
-        { wch: 6 },
-        { wch: 12 },
-        { wch: 16 },
-        { wch: 22 },
-        { wch: 32 },
-        { wch: 18 },
-        { wch: 18 },
-        { wch: 16 },
-        { wch: 14 },
-        { wch: 12 },
-        { wch: 22 },
-        { wch: 20 }
-      ];
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${activeProject.code}`);
-
-      XLSX.writeFile(workbook, `DIGITECH_Laporan_${activeProject.code}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      await exportStyledExcel({
+        filename: `DIGITECH_Laporan_${activeProject.code}_${new Date().toISOString().split('T')[0]}.xlsx`,
+        sheetName: `Laporan ${activeProject.code}`,
+        title: `LAPORAN LOGISTIK & REKAPITULASI MUTASI MATERIAL — PROJECT ${activeProject.code}`,
+        subtitle: `Lokasi Site: ${activeProject.site_location || 'Site Operasional BIB'} | Tanggal Ekspor: ${printDate} | Dicetak Oleh: ${user?.full_name || 'Admin Logistik'}`,
+        summaryText: `Ringkasan Eksekutif: Total Penerimaan (MOS): ${metrics.totalInflowQty} Unit | Total Pengeluaran (MR): ${metrics.totalOutflowQty} Unit | Akurasi Opname: ${metrics.accuracyRate} | Total Mutasi: ${metrics.totalMovementQty} Item`,
+        columns: [
+          { width: 6 },
+          { width: 12 },
+          { width: 16 },
+          { width: 22 },
+          { width: 32 },
+          { width: 18 },
+          { width: 18 },
+          { width: 16 },
+          { width: 14 },
+          { width: 12 },
+          { width: 22 },
+          { width: 20 }
+        ],
+        sections: [
+          {
+            title: `RINGKASAN ARUS MATERIAL BULANAN (${activeProject.code})`,
+            headers: ['Periode', 'Penerimaan (MOS)', 'Pengeluaran (MR)', 'Selisih Bersih', 'Ringkasan Aktivitas'],
+            alignments: ['left', 'right', 'right', 'right', 'left'],
+            rows: monthlyTrends.map((m) => [m.month, m.mos, m.mr, m.mos - m.mr, m.totalActivity])
+          },
+          {
+            title: `RINCIAN TRANSAKSI & MUTASI MATERIAL (${activeProject.code})`,
+            headers: ['No', 'Project', 'ID Transaksi', 'Waktu', 'Nama Material', 'Part Number', 'Kategori', 'Lokasi Rak', 'Tipe Mutasi', 'Qty Mutasi', 'No. Dokumen Ref', 'Petugas'],
+            alignments: ['center', 'center', 'left', 'left', 'left', 'left', 'left', 'center', 'center', 'right', 'left', 'left'],
+            rows: transactions.length > 0
+              ? transactions.map((t, idx) => [
+                  idx + 1,
+                  t.project_code || activeProject.code,
+                  t.id || '-',
+                  t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
+                  t.item_name || '-',
+                  t.part_number || '-',
+                  t.category || activeProject.code,
+                  t.bin_location || '-',
+                  t.transaction_type || '-',
+                  t.qty_change || 0,
+                  t.reference_doc_id || '-',
+                  t.performed_by || '-'
+                ])
+              : [['-', activeProject.code, '-', '-', 'Belum ada transaksi mutasi tercatat pada periode ini', '-', '-', '-', '-', 0, '-', '-']]
+          }
+        ]
+      });
       addToast(`Laporan Project ${activeProject.code} berhasil diekspor ke format Excel (.xlsx).`, 'success');
     } catch {
       addToast('Gagal mengekspor laporan Excel.', 'error');

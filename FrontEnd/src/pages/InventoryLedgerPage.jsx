@@ -23,7 +23,7 @@ import {
   ArrowDownLeft,
   RotateCcw
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportStyledExcel } from '../utils/excelExport.js';
 import api from '../api/client.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext';
@@ -199,8 +199,8 @@ export default function InventoryLedgerPage() {
     }
   };
 
-  // Excel Export (Structured Corporate Worksheet)
-  const exportToExcel = (onlySelected = false) => {
+  // Excel Export (Styled Corporate Blue Workbook with Digitech Logo)
+  const exportToExcel = async (onlySelected = false) => {
     const listToExport = onlySelected
       ? filtered.filter((t) => selectedIds.includes(t.id))
       : filtered;
@@ -210,55 +210,51 @@ export default function InventoryLedgerPage() {
       return;
     }
 
-    const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-    const sheetData = [
-      ['DIGITECH — INVENTORY MANAGEMENT SYSTEM'],
-      [`BUKU BESAR & RIWAYAT MUTASI STOK — PROJECT ${activeProject?.code || 'ALL'}`],
-      [`Tanggal Ekspor: ${printDate} | Total Baris Transaksi: ${listToExport.length}`],
-      [],
-      ['No', 'Project', 'Waktu Transaksi', 'Nama Material', 'Part Number', 'Lokasi Rak', 'Tipe Transaksi', 'Kuantitas Mutasi', 'No. Dokumen Referensi', 'Keterangan / Notes', 'Petugas'],
-      ...listToExport.map((t, idx) => [
-        idx + 1,
-        t.project_code || activeProject?.code || '-',
-        t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
-        t.item_name || '-',
-        t.part_number || '-',
-        t.bin_location || '-',
-        t.transaction_type || '-',
-        t.qty_change ?? 0,
-        t.reference_doc_id || '-',
-        t.notes || '-',
-        t.performed_by || '-'
-      ])
-    ];
-
-    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
-    ];
-    worksheet['!cols'] = [
-      { wch: 6 },
-      { wch: 12 },
-      { wch: 22 },
-      { wch: 32 },
-      { wch: 18 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 24 },
-      { wch: 30 },
-      { wch: 20 }
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Ledger ${activeProject?.code || 'ALL'}`);
-    XLSX.writeFile(
-      workbook,
-      `DIGITECH_Ledger_${activeProject?.code || 'ALL'}_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`
-    );
-    addToast(`${listToExport.length} baris mutasi Project ${activeProject?.code || 'ALL'} berhasil diekspor ke Excel.`, 'success');
+    try {
+      const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      await exportStyledExcel({
+        filename: `DIGITECH_Ledger_${activeProject?.code || 'ALL'}_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`,
+        sheetName: `Ledger ${activeProject?.code || 'ALL'}`,
+        title: `BUKU BESAR & RIWAYAT MUTASI STOK — PROJECT ${activeProject?.code || 'ALL'}`,
+        subtitle: `Tanggal Ekspor: ${printDate} | Total Baris Transaksi: ${listToExport.length}`,
+        columns: [
+          { width: 6 },
+          { width: 12 },
+          { width: 22 },
+          { width: 32 },
+          { width: 18 },
+          { width: 16 },
+          { width: 16 },
+          { width: 16 },
+          { width: 24 },
+          { width: 30 },
+          { width: 20 }
+        ],
+        sections: [
+          {
+            title: `DATA MUTASI MATERIAL (${listToExport.length} BARIS)`,
+            headers: ['No', 'Project', 'Waktu Transaksi', 'Nama Material', 'Part Number', 'Lokasi Rak', 'Tipe Transaksi', 'Kuantitas Mutasi', 'No. Dokumen Referensi', 'Keterangan / Notes', 'Petugas'],
+            alignments: ['center', 'center', 'left', 'left', 'left', 'center', 'center', 'right', 'left', 'left', 'left'],
+            rows: listToExport.map((t, idx) => [
+              idx + 1,
+              t.project_code || activeProject?.code || '-',
+              t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
+              t.item_name || '-',
+              t.part_number || '-',
+              t.bin_location || '-',
+              t.transaction_type || '-',
+              t.qty_change ?? 0,
+              t.reference_doc_id || '-',
+              t.notes || '-',
+              t.performed_by || '-'
+            ])
+          }
+        ]
+      });
+      addToast(`${listToExport.length} baris mutasi Project ${activeProject?.code || 'ALL'} berhasil diekspor ke Excel.`, 'success');
+    } catch {
+      addToast('Gagal mengekspor data ke Excel.', 'error');
+    }
   };
 
   return (
