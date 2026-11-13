@@ -78,17 +78,25 @@ export default function DirectDocumentSheet({
         <div className="border-b-2 border-red-700/80 pb-4">
           <div className="flex items-center justify-between gap-4">
             
-            {/* Left: Digitech Logo */}
-            <div className="flex items-center">
+            {/* Left: Digitech Logo & Identity */}
+            <div className="flex items-center gap-3">
               <img
-                src="/digitech-logo-light.png"
+                src="/digitech-emblem.png"
                 alt="DIGITECH"
-                className="h-9 sm:h-11 w-auto object-contain"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = '/digitech-emblem.png';
+                  e.target.src = '/favicon.png';
                 }}
               />
+              <div>
+                <div className="text-lg font-black tracking-wider text-slate-900 leading-none">
+                  DIGITECH
+                </div>
+                <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                  Inventory Management System
+                </div>
+              </div>
             </div>
 
             {/* Right: Partner / Site Branding */}
@@ -299,7 +307,7 @@ export default function DirectDocumentSheet({
               </span>
             </div>
             <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
-              <span>SHA-256 Validated</span>
+              <span>Otorisasi Dokumen</span>
               <span>•</span>
               <span className="text-slate-400">ID: {docNumber}</span>
             </div>
@@ -363,13 +371,13 @@ export default function DirectDocumentSheet({
           </div>
         </div>
 
-        {/* ── 6. Official Footer Legal Note ── */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400 font-mono">
+        {/* ── 6. Official Document Footer ── */}
+        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500 font-mono">
           <div>
-            DIGITECH &bull; Dokumen Elektronik Sah Berdasarkan UU ITE No. 11/2008
+            PT Digitech &mdash; Inventory Management System
           </div>
           <div>
-            Sertifikasi SHA-256 Validated
+            Formulir Resmi Permintaan &amp; Pengeluaran Material
           </div>
         </div>
 

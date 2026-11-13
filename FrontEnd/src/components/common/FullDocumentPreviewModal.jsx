@@ -450,14 +450,8 @@ export default function FullDocumentPreviewModal({
             <div
               className="w-[820px] max-w-[95vw] min-h-[1160px] bg-white text-slate-900 shadow-[0_4px_30px_rgba(0,0,0,0.65),0_1px_4px_rgba(0,0,0,0.35)] mx-auto p-8 sm:p-12 md:p-14 flex flex-col justify-between border border-slate-300/40 relative font-sans print:shadow-none print:border-none print:p-0 print:w-full print:min-h-0"
             >
-              {/* Top Accent Design Band (Matching Image 3 Case Study Style) */}
-              <div className="w-full bg-[#8B1A1A] text-white px-4 py-1.5 flex items-center justify-between text-[10px] font-mono tracking-widest font-bold uppercase mb-6 rounded-xs">
-                <span>DIGITECH • OFFICIAL AUDIT REPORT</span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  AUTHENTICATED
-                </span>
-              </div>
+              {/* Top Crimson Corporate Rule */}
+              <div className="w-full h-1.5 bg-red-700 mb-6 rounded-xs" />
 
               <div>
                 {/* ── KOP SURAT RESMI DIGITECH ─────────────────────────── */}
@@ -467,34 +461,31 @@ export default function FullDocumentPreviewModal({
                       <img
                         src="/digitech-emblem.png"
                         alt="Digitech"
-                        className="w-13 h-13 sm:w-14 sm:h-14 object-contain shrink-0 drop-shadow-2xs"
+                        className="w-13 h-13 sm:w-14 sm:h-14 object-contain shrink-0"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = '/favicon.png';
                         }}
                       />
                       <div>
-                        <h1 className="text-2xl font-black text-red-700 tracking-wider font-sans leading-none">
+                        <h1 className="text-2xl font-black text-slate-900 tracking-wider font-sans leading-none">
                           DIGITECH
                         </h1>
-                        <div className="text-[11px] font-bold text-slate-800 tracking-wide uppercase mt-1">
-                          Mining Automation, Weigh-In-Motion &amp; Telematics Division
+                        <div className="text-xs font-bold text-red-600 mt-1">
+                          Inventory Management System
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
-                          Operational Site: KM 14 Pit Sebamban • Head Office: Jakarta Selatan, Indonesia
+                          Mining Automation, Weigh-In-Motion &amp; Telematics Division
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <div className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-wider">
-                        DIGITECH IMS
+                    <div className="text-right shrink-0 font-mono">
+                      <div className="text-xs font-bold text-slate-900">
+                        No. Dokumen: {doc.doc_number || '007/MVM-BIB/VII/2024'}
                       </div>
-                      <div className="text-xs font-black font-mono text-slate-800">
-                        ISO 9001:2015 Compliant
-                      </div>
-                      <div className="text-[9px] font-mono text-emerald-700 font-bold tracking-widest uppercase">
-                        DIGITAL AUDIT SYSTEM
+                      <div className="text-[11px] text-slate-600 mt-0.5">
+                        Tanggal: {doc.created_date || '2026-04-07'}
                       </div>
                     </div>
                   </div>
@@ -627,70 +618,48 @@ export default function FullDocumentPreviewModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                     {/* Kolom 1: Pemohon / Teknisi */}
-                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px]">
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[145px]">
                       <div className="text-[10px] font-mono font-bold uppercase text-slate-500 border-b border-slate-200 pb-1">
                         Pihak I (Pelaksana Lapangan)
                       </div>
-                      <div className="flex-1 flex items-center justify-center my-1.5">
-                        <div className="h-14 flex items-center justify-center">
-                          <svg viewBox="0 0 120 40" className="w-28 h-9 text-red-700" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10 28 C 25 10, 35 35, 45 15 C 55 -5, 60 38, 75 22 C 85 10, 95 30, 110 20 M30 25 L90 24" />
-                          </svg>
-                        </div>
+                      <div className="flex-1 flex items-end justify-center my-1.5">
+                        <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan &amp; nama jelas</span>
                       </div>
                       <div className="border-t border-slate-200 pt-1.5">
-                        <div className="font-bold text-xs text-slate-900">{doc.creator_name || 'Rayhans Najib Al-Faruq'}</div>
+                        <div className="font-bold text-xs text-slate-900">{doc.creator_name || 'Pelaksana Lapangan'}</div>
                         <div className="text-[10px] text-slate-500">{doc.creator_role || 'Teknisi WIM & Telematika'}</div>
                       </div>
                     </div>
 
                     {/* Kolom 2: Supervisor Site */}
-                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px]">
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[145px]">
                       <div className="text-[10px] font-mono font-bold uppercase text-slate-500 border-b border-slate-200 pb-1">
                         Pihak II (Supervisor Site)
                       </div>
-                      <div className="flex-1 flex items-center justify-center my-1.5">
-                        <div className="h-14 flex items-center justify-center">
-                          <svg viewBox="0 0 120 40" className="w-28 h-9 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M15 15 C 30 35, 45 5, 60 25 C 75 8, 90 32, 105 18 M20 28 L95 28" />
-                          </svg>
-                        </div>
+                      <div className="flex-1 flex items-end justify-center my-1.5">
+                        <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan &amp; nama jelas</span>
                       </div>
                       <div className="border-t border-slate-200 pt-1.5">
-                        <div className="font-bold text-xs text-slate-900">Zainal Fahriandy</div>
+                        <div className="font-bold text-xs text-slate-900">{doc.approval_checker_name || 'Supervisor Site'}</div>
                         <div className="text-[10px] text-slate-500">Supervisor Workshop &amp; Telematika</div>
                       </div>
                     </div>
 
-                    {/* Kolom 3: Otorisasi Sah Manajemen Digitech / BIB */}
-                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] relative">
+                    {/* Kolom 3: Otorisasi Manajemen */}
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex flex-col justify-between min-h-[145px] relative">
                       <div className="text-[10px] font-mono font-bold uppercase text-slate-500 border-b border-slate-200 pb-1">
-                        Pihak III (Otorisasi Sah BIB)
+                        Pihak III (Penanggung Jawab Site)
                       </div>
-                      <div className="flex-1 flex items-center justify-center my-1.5 relative">
-                        {/* Stempel Basah Digitech Audit */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-85">
-                          <div className="w-20 h-20 rounded-full border-2 border-dashed border-red-600/60 flex items-center justify-center -rotate-12">
-                            <div className="text-[8px] font-mono font-black text-red-600 text-center leading-tight">
-                              DIGITECH<br />VERIFIED<br />AUDIT TRAIL
-                            </div>
-                          </div>
-                        </div>
-
+                      <div className="flex-1 flex items-center justify-center my-1.5">
                         {doc.signatures_count >= (doc.required_signatures || 2) || doc.status === 'Approved' || doc.status === 'Completed' ? (
-                          <div className="flex flex-col items-center justify-center relative z-10">
-                            <svg viewBox="0 0 120 40" className="w-28 h-9 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 22 C 28 8, 42 36, 58 12 C 72 -2, 85 36, 102 16 M25 24 L85 24" />
-                            </svg>
-                            <div className="text-[9px] font-mono font-bold text-emerald-700 mt-0.5">
-                              TERVERIFIKASI
-                            </div>
+                          <div className="px-3 py-1 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-mono font-bold text-emerald-700">
+                            DISETUJUI
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setIsSignModalOpen(true)}
-                            className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1.5 relative z-10"
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1.5"
                           >
                             <PenTool className="w-3.5 h-3.5" />
                             <span>Tanda Tangani</span>
@@ -698,38 +667,21 @@ export default function FullDocumentPreviewModal({
                         )}
                       </div>
                       <div className="border-t border-slate-200 pt-1.5">
-                        <div className="font-bold text-xs text-slate-900">Harris / Manajemen</div>
-                        <div className="text-[10px] text-slate-500">Head of Mining Division Digitech</div>
+                        <div className="font-bold text-xs text-slate-900">{doc.approval_approver_name || 'Manajemen Operasional'}</div>
+                        <div className="text-[10px] text-slate-500">Manajemen Operasional Digitech</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── SECURITY AUDIT TRAIL & VERIFICATION QR FOOTER ─────── */}
-              <div className="border-t border-slate-200 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono text-slate-500 mt-6">
-                <div className="flex items-center gap-2.5">
-                  {/* Inline Authentic QR Stamp */}
-                  <div className="w-10 h-10 p-1 bg-white border border-slate-300 rounded shadow-2xs flex items-center justify-center">
-                    <QrCode className="w-8 h-8 text-slate-900" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800">
-                      ID Berkas: {doc.doc_number || '007/MVM-BIB/VII/2024'}
-                    </div>
-                    <div className="text-slate-400">
-                      SHA256: 8f2a4c9b10e...3d7e (Sah Digital)
-                    </div>
-                  </div>
+              {/* ── DOCUMENT FOOTER ─────── */}
+              <div className="border-t border-slate-200 pt-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-slate-500 mt-6">
+                <div>
+                  PT Digitech &bull; Inventory Management System
                 </div>
-
                 <div className="text-right">
-                  <div className="font-bold text-slate-700">
-                    Halaman 1 dari 1
-                  </div>
-                  <div className="text-slate-400">
-                    Sistem Manajemen Inventaris Digitech (IMS v0.1)
-                  </div>
+                  No. Dokumen: {doc.doc_number || '007/MVM-BIB/VII/2024'} &bull; Halaman 1 dari 1
                 </div>
               </div>
             </div>

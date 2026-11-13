@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,10 +15,10 @@ if (!process.env.SMTP_HOST) {
 
 /**
  * Transaksional Email Service (Nodemailer)
- * Digitech Inventory Management System (DIMS)
+ * Digitech Inventory Management System
  */
 
-const LOGO_PATH = path.join(__dirname, '../assets/dims-logo.png');
+const LOGO_PATH = path.join(__dirname, '../assets/digitech-emblem.png');
 
 let transporter = null;
 
@@ -41,43 +42,83 @@ const getTransporter = () => {
 };
 
 /**
- * Header Email Terpadu DIMS
- * Menggunakan logo tunggal DIMS (yang sudah memuat emblem D) tanpa tumpukan logo redundant.
+ * Header Email Resmi PT Digitech
+ * Kop surat elektronik dengan emblem resmi Digitech + Inventory Management System.
  */
-const getEmailHeader = (subtitle = 'Inventory Management System') => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0f172a; border-radius: 12px; padding: 22px 20px; text-align: center; margin-bottom: 24px;">
+const getEmailHeader = (subtitle = 'Pemberitahuan Sistem') => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 2px solid #b91c1c; padding-bottom: 16px; margin-bottom: 24px;">
     <tr>
-      <td align="center">
-        <img src="cid:dimsLogo" alt="DIMS" width="135" style="display: block; margin: 0 auto; max-width: 135px; height: auto; border: 0; outline: none; text-decoration: none;" />
-        <p style="margin: 8px 0 0 0; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #94a3b8; font-weight: 600; font-family: Arial, sans-serif;">
-          ${subtitle}
-        </p>
+      <td align="left" valign="middle">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle" style="padding-right: 12px;">
+              <img src="cid:digitechLogo" alt="Digitech" width="42" height="42" style="display: block; width: 42px; height: 42px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #ffffff;" />
+            </td>
+            <td valign="middle">
+              <div style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: 0.06em; line-height: 1.1; font-family: Arial, sans-serif;">
+                DIGITECH
+              </div>
+              <div style="font-size: 11px; font-weight: 700; color: #dc2626; margin-top: 3px; font-family: Arial, sans-serif;">
+                Inventory Management System
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td align="right" valign="middle" style="font-size: 11px; font-weight: 600; color: #64748b; font-family: Arial, sans-serif;">
+        ${subtitle}
       </td>
     </tr>
   </table>
 `;
 
 /**
- * Footer Email Terpadu DIMS
+ * Footer Email Resmi PT Digitech
  */
-const getEmailFooter = (extra = 'Pesan otomatis dikirim oleh sistem portal Digitech IMS.') => `
-  <div style="border-top: 1px solid #e2e8f0; margin-top: 24px; padding-top: 16px; font-size: 11px; color: #94a3b8; text-align: center; font-family: Arial, sans-serif; line-height: 1.6;">
-    &copy; ${new Date().getFullYear()} Digitech. Hak cipta dilindungi undang-undang.<br/>
-    <span style="color: #64748b; font-size: 10px;">${extra}</span>
+const getEmailFooter = (extra = 'Dokumen & pemberitahuan elektronik resmi operasional gudang dan site.') => `
+  <div style="border-top: 1px solid #e2e8f0; margin-top: 28px; padding-top: 16px; font-size: 11px; color: #64748b; text-align: center; font-family: Arial, sans-serif; line-height: 1.6;">
+    <strong style="color: #0f172a;">PT Digitech &bull; Inventory Management System</strong><br/>
+    <span>${extra}</span><br/>
+    <span style="color: #94a3b8; font-size: 10px;">&copy; ${new Date().getFullYear()} PT Digitech. Hak cipta dilindungi.</span>
   </div>
 `;
 
+const wrapEmailShell = (innerHtml) => `
+  <div style="background-color: #f8fafc; padding: 24px 12px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 28px 28px 22px 28px; border: 1px solid #e2e8f0; border-radius: 10px; background-color: #ffffff; color: #1e293b;">
+      ${innerHtml}
+    </div>
+  </div>
+`;
+
+const buildKvTable = (rows) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 6px;">
+    ${rows.map(([label, value], idx) => `
+      <tr style="background-color: ${idx % 2 === 0 ? '#f8fafc' : '#ffffff'};">
+        <td style="padding: 9px 12px; font-size: 12px; font-weight: 700; color: #475569; width: 38%; border-bottom: ${idx < rows.length - 1 ? '1px solid #e2e8f0' : 'none'}; font-family: Arial, sans-serif;">
+          ${label}
+        </td>
+        <td style="padding: 9px 12px; font-size: 13px; color: #0f172a; border-bottom: ${idx < rows.length - 1 ? '1px solid #e2e8f0' : 'none'}; font-family: Arial, sans-serif;">
+          ${value}
+        </td>
+      </tr>
+    `).join('')}
+  </table>
+`;
+
 export const sendEmail = async ({ to, subject, html, text, attachments }) => {
-  const from = process.env.SMTP_FROM || '"Digitech IMS" <digitechinventory@gmail.com>';
+  const from = process.env.SMTP_FROM || '"Digitech Inventory Management System" <digitechinventory@gmail.com>';
   const mailClient = getTransporter();
 
-  const finalAttachments = attachments || [
-    {
-      filename: 'dims-logo.png',
-      path: LOGO_PATH,
-      cid: 'dimsLogo'
-    }
-  ];
+  const baseAttachments = fs.existsSync(LOGO_PATH) ? [{
+    filename: 'digitech-emblem.png',
+    path: LOGO_PATH,
+    cid: 'digitechLogo'
+  }] : [];
+
+  const finalAttachments = Array.isArray(attachments) && attachments.length > 0
+    ? [...baseAttachments, ...attachments.filter(a => a.cid !== 'digitechLogo')]
+    : baseAttachments;
 
   if (!mailClient) {
     console.log(`\n[MAILER - SIMULATED LOG (SMTP belum dikonfigurasi)]`);
@@ -109,184 +150,195 @@ export const sendEmail = async ({ to, subject, html, text, attachments }) => {
  * Template Email: Konfirmasi Aktivasi Akun Pengguna
  */
 export const sendActivationEmail = async (email, fullName, role, company) => {
-  const subject = '[Digitech IMS] Akun Portal Anda Telah Diaktifkan';
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-      ${getEmailHeader('Inventory Management System')}
-      <div style="padding: 4px 0 16px 0;">
-        <h3 style="color: #1e293b; margin: 0 0 12px 0;">Halo, ${fullName}!</h3>
-        <p style="color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
-          Akun Anda telah disetujui dan <strong>diaktifkan</strong> oleh Superadmin Digitech. Anda sekarang dapat masuk ke portal operasional.
-        </p>
-        <div style="background: #f8fafc; border-left: 4px solid #10b981; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Mitra / Perusahaan:</strong> ${company || 'Digitech'}</p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Role Akses:</strong> <span style="color: #b91c1c; font-weight: bold;">${role?.toUpperCase()}</span></p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Status:</strong> Aktif (Siap Digunakan)</p>
-        </div>
-        <p style="color: #475569; line-height: 1.6; margin: 0;">
-          Silakan akses portal Digitech IMS melalui peramban web Anda dan masuk menggunakan email dan password terdaftar.
-        </p>
-      </div>
-      ${getEmailFooter()}
-    </div>
-  `;
-  const text = `Halo ${fullName}, akun IMS Anda telah disetujui dan aktif dengan role ${role}. Silakan masuk ke portal.`;
+  const subject = '[Digitech IMS] Aktivasi Akun Portal Operasional';
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Aktivasi Akun Pengguna')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Yth. ${fullName},
+    </p>
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Pengajuan akun Anda pada sistem <strong>Digitech Inventory Management System</strong> telah disetujui oleh administrator dan saat ini berstatus aktif.
+    </p>
+    ${buildKvTable([
+      ['Perusahaan / Mitra', company || 'PT Digitech'],
+      ['Peran Akses', `<strong style="color: #b91c1c;">${role || 'User'}</strong>`],
+      ['Status Akun', '<strong style="color: #15803d;">Aktif</strong>']
+    ])}
+    <p style="margin: 14px 0 0 0; font-size: 13px; color: #475569; line-height: 1.6;">
+      Silakan masuk ke portal menggunakan alamat email dan kata sandi yang telah Anda daftarkan.
+    </p>
+    ${getEmailFooter()}
+  `);
+  const text = `Yth. ${fullName}, akun Digitech IMS Anda telah aktif dengan peran ${role}. Silakan masuk ke portal.`;
   return sendEmail({ to: email, subject, html, text });
 };
 
 /**
- * Template Email: Alert Pendaftaran Baru ke Superadmin
+ * Template Email: Pemberitahuan Pendaftaran Pengguna Baru ke Admin
  */
 export const sendNewUserAlertToAdmin = async (adminEmail, newUser) => {
-  const subject = `[Pendaftaran Baru] Menunggu Aktivasi: ${newUser.full_name} (${newUser.company})`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-      ${getEmailHeader('Otorisasi Pengguna Baru')}
-      <div style="padding: 4px 0 16px 0;">
-        <h3 style="color: #0f172a; margin: 0 0 12px 0;">Pengajuan Akun Pengguna Baru</h3>
-        <p style="color: #475569; margin: 0 0 16px 0;">Terdapat pengguna baru yang mendaftar ke portal IMS dan memerlukan verifikasi:</p>
-        <ul style="color: #334155; line-height: 1.8; background: #f8fafc; padding: 14px 20px 14px 34px; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <li><strong>Nama:</strong> ${newUser.full_name}</li>
-          <li><strong>Email:</strong> ${newUser.email}</li>
-          <li><strong>Perusahaan / Mitra:</strong> ${newUser.company}</li>
-          <li><strong>Departemen:</strong> ${newUser.department}</li>
-          <li><strong>No. Telp / WA:</strong> ${newUser.phone || '-'}</li>
-        </ul>
-        <p style="color: #475569; margin: 16px 0 0 0;">Silakan buka menu <strong>Manajemen Pengguna &gt; Antrean Aktivasi</strong> untuk menyetujui atau menolak akun ini.</p>
-      </div>
-      ${getEmailFooter('Verifikasi administrator portal Digitech IMS.')}
-    </div>
-  `;
-  return sendEmail({ to: adminEmail, subject, html, text: `Pendaftar baru: ${newUser.full_name} (${newUser.email}) menunggu aktivasi.` });
+  const subject = `[Digitech IMS] Permintaan Aktivasi Akun: ${newUser.full_name} (${newUser.company})`;
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Permintaan Aktivasi Akun')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Yth. Administrator Sistem,
+    </p>
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Terdapat pengajuan pendaftaran akun baru pada portal Digitech IMS yang memerlukan pemeriksaan dan persetujuan Anda:
+    </p>
+    ${buildKvTable([
+      ['Nama Lengkap', newUser.full_name],
+      ['Alamat Email', newUser.email],
+      ['Perusahaan / Mitra', newUser.company || '-'],
+      ['Departemen', newUser.department || '-'],
+      ['No. Telepon / WA', newUser.phone || '-']
+    ])}
+    <p style="margin: 14px 0 0 0; font-size: 13px; color: #475569; line-height: 1.6;">
+      Silakan buka menu <strong>Kelola User &gt; Antrean Aktivasi</strong> pada portal untuk menindaklanjuti pengajuan ini.
+    </p>
+    ${getEmailFooter('Notifikasi administrator portal Digitech Inventory Management System.')}
+  `);
+  return sendEmail({
+    to: adminEmail,
+    subject,
+    html,
+    text: `Permintaan aktivasi akun baru: ${newUser.full_name} (${newUser.email}) - ${newUser.company || '-'}.`
+  });
 };
 
 /**
- * Template Email: Update Status MOS & Dokumen Approval (Completed / Rejected / Step Signed)
+ * Template Email: Pembaruan Status Dokumen Material On Site (MOS)
  */
 export const sendMosNotificationEmail = async (email, docNumber, status, actionBy, notes = '') => {
   const isCompleted = status === 'completed';
-  const subject = isCompleted 
-    ? `[Disahkan] Dokumen MOS ${docNumber} Telah Selesai (Completed)` 
-    : `[Status MOS] Dokumen MOS ${docNumber}: Status ${status.toUpperCase()}`;
+  const statusLabel = isCompleted ? 'Selesai / Disahkan' : status;
+  const subject = isCompleted
+    ? `[Digitech IMS] Dokumen ${docNumber} Telah Disahkan`
+    : `[Digitech IMS] Pembaruan Status Dokumen ${docNumber}`;
 
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-      ${getEmailHeader('Status Otorisasi Dokumen')}
-      <div style="padding: 4px 0 16px 0;">
-        <h3 style="color: ${isCompleted ? '#15803d' : '#b91c1c'}; margin: 0 0 12px 0;">
-          ${isCompleted ? 'Persetujuan Final Dokumen MOS Selesai' : 'Pemberitahuan Status Dokumen MOS'}
-        </h3>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin: 14px 0;">
-          <p style="color: #475569; margin: 4px 0;">Nomor Dokumen: <strong>${docNumber}</strong></p>
-          <p style="color: #475569; margin: 4px 0;">Diproses Oleh: <strong>${actionBy}</strong></p>
-          <p style="color: #475569; margin: 4px 0;">Status Terbaru: <span style="font-weight: bold; color: ${isCompleted ? '#15803d' : '#b91c1c'};">${status.toUpperCase()}</span></p>
-        </div>
-        ${notes ? `<div style="background: #fef2f2; border-left: 3px solid #ef4444; padding: 10px; margin: 12px 0;"><p style="margin: 0; color: #991b1b; font-size: 13px;"><strong>Catatan:</strong> ${notes}</p></div>` : ''}
-        <p style="color: #64748b; font-size: 12px; margin-top: 16px;">Dokumen ini diproses secara elektronik sesuai hierarki otorisasi 3-slot IMS Digitech.</p>
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Status Dokumen Material')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Pembaruan Status Dokumen Operasional
+    </p>
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Berikut adalah rincian pembaruan status pemrosesan dokumen pada portal Digitech IMS:
+    </p>
+    ${buildKvTable([
+      ['Nomor Dokumen', `<strong>${docNumber}</strong>`],
+      ['Diproses Oleh', actionBy || '-'],
+      ['Status Dokumen', `<strong style="color: ${isCompleted ? '#15803d' : '#b91c1c'};">${statusLabel}</strong>`]
+    ])}
+    ${notes ? `
+      <div style="background-color: #fef2f2; border-left: 3px solid #b91c1c; padding: 10px 14px; margin: 14px 0; font-size: 13px; color: #7f1d1d;">
+        <strong>Catatan:</strong> ${notes}
       </div>
-      ${getEmailFooter('Dokumen diproses secara elektronik sesuai hierarki otorisasi 3-slot IMS Digitech.')}
-    </div>
-  `;
-  return sendEmail({ to: email, subject, html, text: `Status MOS ${docNumber}: ${status}. Catatan: ${notes}` });
+    ` : ''}
+    <p style="margin: 14px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.6;">
+      Detail lengkap serta salinan lembar dokumen dapat diakses melalui menu Dokumen &amp; Laporan di portal.
+    </p>
+    ${getEmailFooter()}
+  `);
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text: `Pembaruan status dokumen ${docNumber}: ${statusLabel}. Diproses oleh: ${actionBy}.${notes ? ` Catatan: ${notes}` : ''}`
+  });
 };
 
 /**
  * Template Email: Pemberitahuan Perubahan Pengaturan Akun & Keamanan
  */
 export const sendAccountSettingsChangeEmail = async (email, fullName, changeType, details = '') => {
-  const subject = `[Keamanan Akun] Perubahan Pengaturan Akun Digitech IMS: ${changeType}`;
+  const subject = `[Digitech IMS] Pemberitahuan Perubahan Pengaturan Akun`;
   const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar' });
 
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-      ${getEmailHeader('Notifikasi Keamanan Akun')}
-      <div style="padding: 4px 0 16px 0;">
-        <h3 style="color: #1e293b; margin: 0 0 12px 0;">Halo, ${fullName}!</h3>
-        <p style="color: #475569; line-height: 1.6; margin: 0 0 16px 0;">
-          Kami mengonfirmasi bahwa terdapat perubahan pada pengaturan akun Anda di portal operasional <strong>Digitech IMS</strong>:
-        </p>
-        <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Aktivitas:</strong> <span style="color: #b91c1c; font-weight: bold;">${changeType}</span></p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Waktu (WITA):</strong> ${timestamp} WITA</p>
-          ${details ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Detail:</strong> ${details}</p>` : ''}
-        </div>
-        <p style="color: #64748b; font-size: 12px; line-height: 1.6; margin: 0;">
-          Bila Anda tidak merasa melakukan perubahan ini, segera hubungi Superadmin IMS Digitech atau lakukan reset kata sandi akun Anda segera.
-        </p>
-      </div>
-      ${getEmailFooter('Digitech.')}
-    </div>
-  `;
-  const text = `Halo ${fullName}, terdapat perubahan pengaturan akun Anda (${changeType}) pada ${timestamp} WITA.`;
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Keamanan Akun')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Yth. ${fullName},
+    </p>
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Sistem mencatat adanya perubahan pada pengaturan akun Anda di portal Digitech Inventory Management System:
+    </p>
+    ${buildKvTable([
+      ['Jenis Aktivitas', `<strong style="color: #b91c1c;">${changeType}</strong>`],
+      ['Waktu (WITA)', `${timestamp} WITA`],
+      ...(details ? [['Keterangan', details]] : [])
+    ])}
+    <p style="margin: 14px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.6;">
+      Apabila Anda tidak merasa melakukan perubahan ini, segera hubungi administrator sistem atau perbarui kata sandi akun Anda.
+    </p>
+    ${getEmailFooter()}
+  `);
+  const text = `Yth. ${fullName}, terdapat perubahan pengaturan akun (${changeType}) pada ${timestamp} WITA.`;
   return sendEmail({ to: email, subject, html, text });
 };
 
 /**
- * Template Email: Pemberitahuan Agenda & Jadwal Site Baru / Diperbarui
+ * Template Email: Pemberitahuan Agenda & Jadwal Operasional Site
  */
 export const sendAgendaNotificationEmail = async (email, { title, date, time, site, pic, category, description, actionType = 'dijadwalkan' }) => {
-  const subject = `[Agenda Site] ${title} (${date})`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-      ${getEmailHeader('Agenda Operasional Site')}
-      <div style="padding: 4px 0 16px 0;">
-        <p style="color: #475569; line-height: 1.6; margin: 0 0 14px 0;">
-          Agenda operasional berikut telah <strong>${actionType}</strong> di kalender site:
-        </p>
-        <div style="background: #f8fafc; border-left: 4px solid #dc2626; padding: 14px 16px; margin: 16px 0; border-radius: 4px;">
-          <h3 style="margin: 0 0 8px 0; color: #1e293b;">${title}</h3>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Tanggal:</strong> ${date}</p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Waktu:</strong> ${time || '08:00 - Selesai'}</p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Lokasi / Site:</strong> ${site || 'Area Tambang Sebamban'}</p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>Kategori:</strong> <span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: bold;">${category || 'Operasional'}</span></p>
-          <p style="margin: 4px 0; font-size: 13px;"><strong>PIC Penanggung Jawab:</strong> ${pic || 'Tim Operasional'}</p>
-          ${description ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px;"><em>${description}</em></p>` : ''}
-        </div>
-        <p style="color: #64748b; font-size: 12px; margin: 0;">
-          Silakan buka menu <strong>Agenda &amp; Kalender Site</strong> pada portal untuk detail dan konfirmasi kehadiran.
-        </p>
+  const subject = `[Digitech IMS] Agenda Site: ${title} (${date})`;
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Agenda Operasional Site')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Pemberitahuan Jadwal Operasional
+    </p>
+    <p style="margin: 0 0 14px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Agenda kegiatan berikut telah <strong>${actionType}</strong> pada kalender operasional site:
+    </p>
+    ${buildKvTable([
+      ['Nama Agenda', `<strong>${title}</strong>`],
+      ['Tanggal', date],
+      ['Waktu', time || '08:00 - Selesai'],
+      ['Lokasi / Site', site || 'Site Operasional'],
+      ['Kategori', category || 'Operasional'],
+      ['Penanggung Jawab', pic || 'Tim Operasional']
+    ])}
+    ${description ? `
+      <div style="background-color: #f8fafc; border-left: 3px solid #64748b; padding: 10px 14px; margin: 14px 0; font-size: 12px; color: #334155; line-height: 1.6;">
+        <strong>Catatan Kegiatan:</strong><br/>${description}
       </div>
-      ${getEmailFooter('Digitech.')}
-    </div>
-  `;
-  const text = `Agenda Site: ${title} pada tanggal ${date} (${time}) di ${site}. PIC: ${pic}.`;
+    ` : ''}
+    <p style="margin: 14px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.6;">
+      Silakan buka menu <strong>Agenda Kerja</strong> pada portal untuk melihat rincian jadwal.
+    </p>
+    ${getEmailFooter()}
+  `);
+  const text = `Agenda Site: ${title} pada tanggal ${date} (${time || '08:00 - Selesai'}) di ${site || 'Site Operasional'}. PIC: ${pic || 'Tim Operasional'}.`;
   return sendEmail({ to: email, subject, html, text });
 };
 
 /**
- * Template Email: Kode OTP Verifikasi Dua Langkah (2FA Login)
+ * Template Email: Kode Verifikasi Dua Langkah (2FA)
  */
 export const sendTwoFactorOtpEmail = async (email, fullName, otpCode) => {
-  const subject = `[Verifikasi 2FA] Kode Keamanan Login Digitech IMS: ${otpCode}`;
+  const subject = `[Digitech IMS] Kode Verifikasi Masuk: ${otpCode}`;
   const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar' });
 
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
-      ${getEmailHeader('Verifikasi Dua Langkah (2FA)')}
-      <div style="padding: 12px 0 20px 0; text-align: center;">
-        <h3 style="color: #1e293b; margin-top: 0;">Halo, ${fullName || 'Pengguna'}!</h3>
-        <p style="color: #475569; font-size: 14px; line-height: 1.6; max-width: 460px; margin: 0 auto;">
-          Gunakan 6-digit kode verifikasi di bawah ini untuk menyelesaikan otorisasi masuk ke portal <strong>Digitech IMS</strong>:
-        </p>
-
-        <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; margin: 24px auto; max-width: 320px;">
-          <div style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #dc2626; font-family: monospace;">
-            ${otpCode}
-          </div>
-          <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b; font-weight: 600;">
-            Berlaku selama 5 menit &bull; Sekali Pakai (One-Time Passcode)
-          </p>
-        </div>
-
-        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 20px 0; text-align: left; border-radius: 4px;">
-          <p style="margin: 0; color: #991b1b; font-size: 12px; line-height: 1.5;">
-            <strong>Penting:</strong> Jangan berikan kode ini kepada siapa pun termasuk staf operasional Digitech. Jika Anda tidak mencoba masuk pada ${timestamp} WITA, segera amankan akun Anda.
-          </p>
-        </div>
+  const html = wrapEmailShell(`
+    ${getEmailHeader('Verifikasi Masuk (2FA)')}
+    <p style="margin: 0 0 12px 0; font-size: 14px; color: #0f172a; font-weight: 700;">
+      Yth. ${fullName || 'Pengguna'},
+    </p>
+    <p style="margin: 0 0 16px 0; font-size: 13px; color: #334155; line-height: 1.6;">
+      Gunakan 6 digit kode verifikasi berikut untuk menyelesaikan proses masuk ke portal Digitech Inventory Management System:
+    </p>
+    <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; margin: 18px auto; text-align: center; max-width: 300px;">
+      <div style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #b91c1c; font-family: monospace;">
+        ${otpCode}
       </div>
-      ${getEmailFooter('Email otomatis pengamanan akun portal Digitech IMS.')}
+      <div style="margin-top: 8px; font-size: 11px; color: #64748b;">
+        Berlaku selama 5 menit untuk satu kali penggunaan
+      </div>
     </div>
-  `;
-  const text = `Kode verifikasi 2FA Anda adalah: ${otpCode}. Berlaku 5 menit. Jangan bagikan kepada siapa pun.`;
+    <div style="background-color: #fef2f2; border-left: 3px solid #b91c1c; padding: 10px 14px; margin: 16px 0 0 0; font-size: 12px; color: #7f1d1d; line-height: 1.5;">
+      <strong>Perhatian:</strong> Jangan bagikan kode ini kepada pihak mana pun. Jika Anda tidak melakukan permintaan masuk pada ${timestamp} WITA, segera ubah kata sandi akun Anda.
+    </div>
+    ${getEmailFooter()}
+  `);
+  const text = `Kode verifikasi 2FA Digitech IMS Anda: ${otpCode}. Berlaku selama 5 menit.`;
   return sendEmail({ to: email, subject, html, text });
 };

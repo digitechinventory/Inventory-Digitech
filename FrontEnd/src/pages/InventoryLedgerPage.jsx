@@ -199,7 +199,7 @@ export default function InventoryLedgerPage() {
     }
   };
 
-  // Excel Export
+  // Excel Export (Structured Corporate Worksheet)
   const exportToExcel = (onlySelected = false) => {
     const listToExport = onlySelected
       ? filtered.filter((t) => selectedIds.includes(t.id))
@@ -210,27 +210,55 @@ export default function InventoryLedgerPage() {
       return;
     }
 
-    const rows = listToExport.map((t) => ({
-      'Project': t.project_code || activeProject.code,
-      'Waktu Transaksi': t.created_at,
-      'Nama Material': t.item_name,
-      'Part Number': t.part_number || '-',
-      'Lokasi Rak': t.bin_location,
-      'Tipe Transaksi': t.transaction_type,
-      'Kuantitas Mutasi': t.qty_change,
-      'No. Dokumen Referensi': t.reference_doc_id || '-',
-      'Keterangan / Notes': t.notes || '-',
-      'Eksekutor': t.performed_by || '-'
-    }));
+    const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const sheetData = [
+      ['DIGITECH — INVENTORY MANAGEMENT SYSTEM'],
+      [`BUKU BESAR & RIWAYAT MUTASI STOK — PROJECT ${activeProject?.code || 'ALL'}`],
+      [`Tanggal Ekspor: ${printDate} | Total Baris Transaksi: ${listToExport.length}`],
+      [],
+      ['No', 'Project', 'Waktu Transaksi', 'Nama Material', 'Part Number', 'Lokasi Rak', 'Tipe Transaksi', 'Kuantitas Mutasi', 'No. Dokumen Referensi', 'Keterangan / Notes', 'Petugas'],
+      ...listToExport.map((t, idx) => [
+        idx + 1,
+        t.project_code || activeProject?.code || '-',
+        t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
+        t.item_name || '-',
+        t.part_number || '-',
+        t.bin_location || '-',
+        t.transaction_type || '-',
+        t.qty_change ?? 0,
+        t.reference_doc_id || '-',
+        t.notes || '-',
+        t.performed_by || '-'
+      ])
+    ];
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    worksheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
+    ];
+    worksheet['!cols'] = [
+      { wch: 6 },
+      { wch: 12 },
+      { wch: 22 },
+      { wch: 32 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 24 },
+      { wch: 30 },
+      { wch: 20 }
+    ];
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Ledger ${activeProject.code}`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Ledger ${activeProject?.code || 'ALL'}`);
     XLSX.writeFile(
       workbook,
-      `IMS_Ledger_${activeProject.code}_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`
+      `DIGITECH_Ledger_${activeProject?.code || 'ALL'}_${onlySelected ? 'Selected_' : ''}${new Date().toISOString().split('T')[0]}.xlsx`
     );
-    addToast(`${rows.length} baris mutasi Project ${activeProject.code} berhasil diekspor ke Excel.`, 'success');
+    addToast(`${listToExport.length} baris mutasi Project ${activeProject?.code || 'ALL'} berhasil diekspor ke Excel.`, 'success');
   };
 
   return (

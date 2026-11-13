@@ -295,7 +295,7 @@ export default function InteractiveDocumentSheet({
             signer_name: currentUser?.full_name || 'Approver Lapangan',
             signer_role: currentUser?.role || 'Staff Lapangan',
             timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '),
-            hash: 'SHA256:MANUAL-STAMP-VALIDATED'
+            hash: null
           }
         ]);
       }
@@ -504,7 +504,7 @@ export default function InteractiveDocumentSheet({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             <span className="font-semibold">
-              Tanda tangan digital transparan berhasil dibubuhkan di posisi dokumen! Validasi SHA-256 tersimpan.
+              Tanda tangan berhasil dibubuhkan dan disimpan pada dokumen.
             </span>
           </div>
         </div>
@@ -575,15 +575,44 @@ export default function InteractiveDocumentSheet({
           {!isCustom && activePageIndex === 0 && (
             <div className="p-8 sm:p-10 space-y-4">
               
-              {/* Top Banner Header: Deep Navy Blue (#16325C) with White Bold Title */}
-              <div className="bg-[#16325C] text-white py-3.5 px-6 rounded-md text-center shadow-sm">
-                <h1 className="text-xl sm:text-2xl font-black uppercase tracking-wider">
-                  {tplType === 'MDT'
-                    ? 'MATERIAL DISMANTLING'
-                    : tplType === 'MRP'
-                    ? 'MATERIAL REPLACEMENT'
-                    : 'MATERIAL ON SITE'}
-                </h1>
+              {/* Official Digitech Corporate Letterhead + Document Title */}
+              <div className="border-b-2 border-red-700 pb-3.5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="/digitech-emblem.png"
+                      alt="Digitech"
+                      className="w-11 h-11 object-contain shrink-0"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/favicon.png';
+                      }}
+                    />
+                    <div>
+                      <div className="text-lg font-black text-slate-900 tracking-wider leading-none">
+                        DIGITECH
+                      </div>
+                      <div className="text-[11px] font-bold text-red-600 mt-0.5">
+                        Inventory Management System
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        Divisi Logistik &amp; Operasional Site
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="bg-slate-900 text-white px-4 py-1.5 rounded text-sm sm:text-base font-black uppercase tracking-wider inline-block">
+                      {tplType === 'MDT'
+                        ? 'MATERIAL DISMANTLING'
+                        : tplType === 'MRP'
+                        ? 'MATERIAL REPLACEMENT'
+                        : 'MATERIAL ON SITE'}
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-600 mt-1">
+                      No. Dokumen: <strong className="text-red-700">{doc.doc_number}</strong>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Sub-header Metadata Grid (Matching Official PDF Table with Route Details) */}
@@ -802,10 +831,34 @@ export default function InteractiveDocumentSheet({
           {/* ════════ CASE C: PAGE 2 (REAL DYNAMIC PHOTO ATTACHMENT IF AVAILABLE) ════════ */}
           {!isCustom && activePageIndex === 1 && hasPhotoAttachment && (
             <div className="p-8 sm:p-10 space-y-6">
-              <div className="bg-[#16325C] text-white py-3 px-6 rounded-md text-center shadow-sm">
-                <h2 className="text-lg font-bold uppercase tracking-wider">
-                  DOKUMENTASI FOTO ATTACHMENT ({doc.doc_number})
-                </h2>
+              <div className="border-b-2 border-red-700 pb-3.5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/digitech-emblem.png"
+                    alt="Digitech"
+                    className="w-10 h-10 object-contain shrink-0"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/favicon.png';
+                    }}
+                  />
+                  <div>
+                    <div className="text-base font-black text-slate-900 tracking-wider leading-none">
+                      DIGITECH
+                    </div>
+                    <div className="text-[10px] font-bold text-red-600 mt-0.5">
+                      Inventory Management System
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-900">
+                    LAMPIRAN DOKUMENTASI FOTO
+                  </h2>
+                  <div className="text-[11px] font-mono text-red-700 font-bold">
+                    {doc.doc_number}
+                  </div>
+                </div>
               </div>
 
               <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">

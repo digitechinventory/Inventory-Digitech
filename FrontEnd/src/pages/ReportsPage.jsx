@@ -262,33 +262,325 @@ export default function ReportsPage() {
     setIsUploadModalOpen(false);
   };
 
-  // Export to Excel handler
+  // Export to Excel handler (Structured Corporate Worksheet)
   const handleExportExcel = () => {
     try {
-      const rows = transactions.map(t => ({
-        'Project': t.project_code || activeProject.code,
-        'ID Transaksi': t.id || '-',
-        'Waktu': t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
-        'Nama Material': t.item_name || '-',
-        'Part Number': t.part_number || '-',
-        'Kategori': t.category || activeProject.code,
-        'Lokasi Rak': t.bin_location || '-',
-        'Tipe Mutasi': t.transaction_type || '-',
-        'Qty Mutasi': t.qty_change || 0,
-        'Status Fisik': 'Kondisi Baik & Terverifikasi',
-        'No. Dokumen Ref': t.reference_doc_id || '-',
-        'Petugas': t.performed_by || '-'
-      }));
+      const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      const sheetData = [
+        ['DIGITECH — INVENTORY MANAGEMENT SYSTEM'],
+        [`LAPORAN LOGISTIK & REKAPITULASI MUTASI MATERIAL — PROJECT ${activeProject.code}`],
+        [`Lokasi Site: ${activeProject.site_location || 'Site Operasional BIB'} | Tanggal Ekspor: ${printDate} | Dicetak Oleh: ${user?.full_name || 'Admin Logistik'}`],
+        [`Ringkasan: Total Penerimaan (MOS): ${metrics.totalInflowQty} Unit | Total Pengeluaran (MR): ${metrics.totalOutflowQty} Unit | Akurasi Opname: ${metrics.accuracyRate} | Total Mutasi: ${metrics.totalMovementQty} Item`],
+        [],
+        ['RINGKASAN ARUS MATERIAL BULANAN'],
+        ['Periode', 'Penerimaan (MOS)', 'Pengeluaran (MR)', 'Selisih Bersih', 'Aktivitas'],
+        ...monthlyTrends.map((m) => [m.month, m.mos, m.mr, m.mos - m.mr, m.totalActivity]),
+        [],
+        ['RINCIAN TRANSAKSI & MUTASI MATERIAL'],
+        ['No', 'Project', 'ID Transaksi', 'Waktu', 'Nama Material', 'Part Number', 'Kategori', 'Lokasi Rak', 'Tipe Mutasi', 'Qty Mutasi', 'No. Dokumen Ref', 'Petugas'],
+        ...(transactions.length > 0
+          ? transactions.map((t, idx) => [
+              idx + 1,
+              t.project_code || activeProject.code,
+              t.id || '-',
+              t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-',
+              t.item_name || '-',
+              t.part_number || '-',
+              t.category || activeProject.code,
+              t.bin_location || '-',
+              t.transaction_type || '-',
+              t.qty_change || 0,
+              t.reference_doc_id || '-',
+              t.performed_by || '-'
+            ])
+          : [['-', activeProject.code, '-', '-', 'Belum ada transaksi mutasi tercatat pada periode ini', '-', '-', '-', '-', 0, '-', '-']])
+      ];
 
-      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+      worksheet['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } },
+        { s: { r: 5 + monthlyTrends.length + 3, c: 0 }, e: { r: 5 + monthlyTrends.length + 3, c: 11 } }
+      ];
+      worksheet['!cols'] = [
+        { wch: 6 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 32 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 22 },
+        { wch: 20 }
+      ];
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan ${activeProject.code}`);
 
       XLSX.writeFile(workbook, `DIGITECH_Laporan_${activeProject.code}_${new Date().toISOString().split('T')[0]}.xlsx`);
-      addToast(`Laporan resmi Project ${activeProject.code} berhasil diekspor ke format Excel (.xlsx).`, 'success');
+      addToast(`Laporan Project ${activeProject.code} berhasil diekspor ke format Excel (.xlsx).`, 'success');
     } catch {
       addToast('Gagal mengekspor laporan Excel.', 'error');
     }
+  };
+
+  // Dedicated branded A4 Print / PDF Report builder
+  const buildPrintableReportHtml = ({
+    docTitle,
+    docNumber,
+    docPeriod,
+    docSite,
+    docSummary,
+    itemsHtml,
+    makerName,
+    checkerName,
+    approverName
+  }) => {
+    const logoUrl = `${window.location.origin}/digitech-emblem.png`;
+    const printDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const esc = (val) => String(val ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>${esc(docTitle)} - DIGITECH IMS</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; margin: 0; padding: 0; font-size: 11px; line-height: 1.5; background: #fff; }
+    .kop { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #b91c1c; padding-bottom: 12px; margin-bottom: 16px; }
+    .kop-left { display: flex; align-items: center; gap: 12px; }
+    .kop-logo { width: 46px; height: 46px; object-fit: contain; }
+    .brand-title { font-size: 20px; font-weight: 800; letter-spacing: 0.06em; color: #0f172a; margin: 0; line-height: 1.1; }
+    .brand-sub { font-size: 11px; font-weight: 700; color: #dc2626; margin-top: 2px; }
+    .brand-addr { font-size: 9.5px; color: #475569; margin-top: 2px; }
+    .kop-right { text-align: right; font-size: 10px; color: #334155; }
+    .kop-right strong { color: #0f172a; display: block; font-size: 11px; }
+    .doc-heading { text-align: center; margin: 14px 0; }
+    .doc-heading h2 { margin: 0; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+    .doc-heading p { margin: 4px 0 0 0; font-size: 11px; color: #475569; }
+    .meta-grid { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .meta-grid td { border: 1px solid #cbd5e1; padding: 6px 10px; font-size: 10.5px; }
+    .meta-label { font-weight: 700; color: #475569; background: #f8fafc; width: 18%; }
+    .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a; margin: 14px 0 6px 0; border-left: 3px solid #b91c1c; padding-left: 8px; }
+    table.data { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 10px; }
+    table.data th { background: #1e293b; color: #fff; padding: 7px 8px; text-align: left; font-weight: 700; border: 1px solid #1e293b; }
+    table.data td { padding: 6px 8px; border: 1px solid #cbd5e1; vertical-align: top; }
+    table.data tr:nth-child(even) td { background: #f8fafc; }
+    .summary-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px 12px; font-size: 10.5px; color: #334155; margin-bottom: 16px; }
+    .sig-grid { width: 100%; border-collapse: collapse; margin-top: 22px; page-break-inside: avoid; }
+    .sig-grid td { width: 33.33%; text-align: center; vertical-align: top; padding: 8px 12px; font-size: 10.5px; }
+    .sig-space { height: 56px; border-bottom: 1px solid #334155; margin: 8px 14px 6px 14px; }
+    .footer { border-top: 1px solid #cbd5e1; margin-top: 20px; padding-top: 8px; display: flex; justify-content: space-between; font-size: 9.5px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="kop">
+    <div class="kop-left">
+      <img src="${logoUrl}" alt="Digitech" class="kop-logo" />
+      <div>
+        <div class="brand-title">DIGITECH</div>
+        <div class="brand-sub">Inventory Management System</div>
+        <div class="brand-addr">Divisi Logistik, Telematika &amp; Operasional Site &bull; ${esc(docSite)}</div>
+      </div>
+    </div>
+    <div class="kop-right">
+      <strong>No. Dokumen: ${esc(docNumber)}</strong>
+      <div>Periode: ${esc(docPeriod)}</div>
+      <div>Tanggal Cetak: ${esc(printDate)}</div>
+    </div>
+  </div>
+
+  <div class="doc-heading">
+    <h2>${esc(docTitle)}</h2>
+    <p>Project ${esc(activeProject.code)} &mdash; ${esc(activeProject.name || 'Operasional Site')}</p>
+  </div>
+
+  <table class="meta-grid">
+    <tr>
+      <td class="meta-label">Lokasi / Site</td>
+      <td>${esc(docSite)}</td>
+      <td class="meta-label">Periode Laporan</td>
+      <td>${esc(docPeriod)}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Total Penerimaan (MOS)</td>
+      <td><strong>${metrics.totalInflowQty} Unit</strong></td>
+      <td class="meta-label">Total Pengeluaran (MR)</td>
+      <td><strong>${metrics.totalOutflowQty} Unit</strong></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Total Item Mutasi</td>
+      <td><strong>${metrics.totalMovementQty} Item</strong></td>
+      <td class="meta-label">Akurasi Stock Opname</td>
+      <td><strong>${esc(metrics.accuracyRate)}</strong></td>
+    </tr>
+  </table>
+
+  ${itemsHtml}
+
+  <div class="summary-box">
+    <strong>Ringkasan Evaluasi Operasional:</strong><br/>
+    ${esc(docSummary)}
+  </div>
+
+  <table class="sig-grid">
+    <tr>
+      <td>
+        <div>Disiapkan Oleh,</div>
+        <div style="color:#64748b;font-size:9.5px;">Pelaksana Logistik</div>
+        <div class="sig-space"></div>
+        <div><strong>${esc(makerName)}</strong></div>
+      </td>
+      <td>
+        <div>Diperiksa Oleh,</div>
+        <div style="color:#64748b;font-size:9.5px;">Supervisor Logistik Site</div>
+        <div class="sig-space"></div>
+        <div><strong>${esc(checkerName)}</strong></div>
+      </td>
+      <td>
+        <div>Disetujui Oleh,</div>
+        <div style="color:#64748b;font-size:9.5px;">Manajemen Operasional</div>
+        <div class="sig-space"></div>
+        <div><strong>${esc(approverName)}</strong></div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <div>PT Digitech &bull; Inventory Management System</div>
+    <div>No. Dokumen: ${esc(docNumber)} &bull; Dicetak pada ${esc(printDate)}</div>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 250);
+    };
+  </script>
+</body>
+</html>`;
+  };
+
+  const handleExportPrintableReport = () => {
+    const printWin = window.open('', '_blank', 'width=960,height=800');
+    if (!printWin) {
+      addToast('Popup diblokir browser. Izinkan popup untuk mencetak atau menyimpan laporan PDF.', 'warning');
+      return;
+    }
+
+    const esc = (val) => String(val ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const monthlySection = `
+      <div class="section-title">Rekapitulasi Arus Material Bulanan (${esc(activeProject.code)})</div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Periode</th>
+            <th style="text-align:right;">Penerimaan (MOS)</th>
+            <th style="text-align:right;">Pengeluaran (MR)</th>
+            <th style="text-align:right;">Selisih Bersih</th>
+            <th>Ringkasan Aktivitas</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${monthlyTrends.map((m) => `
+            <tr>
+              <td><strong>${esc(m.month)}</strong></td>
+              <td style="text-align:right;">${m.mos}</td>
+              <td style="text-align:right;">${m.mr}</td>
+              <td style="text-align:right;">${m.mos - m.mr}</td>
+              <td>${esc(m.totalActivity)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    const categorySection = `
+      <div class="section-title">Distribusi Inventaris Berdasarkan Kategori</div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Kategori Komponen</th>
+            <th style="text-align:right;">Komposisi (%)</th>
+            <th style="text-align:right;">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${categoryDist.map((c) => `
+            <tr>
+              <td>${esc(c.name)}</td>
+              <td style="text-align:right;">${c.pct}%</td>
+              <td style="text-align:right;"><strong>${esc(c.count)}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    const ledgerRows = transactions.slice(0, 40);
+    const ledgerSection = `
+      <div class="section-title">Rincian Transaksi Mutasi Stok (${ledgerRows.length} Data Terbaru)</div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th style="width:28px;text-align:center;">No</th>
+            <th>Waktu</th>
+            <th>Nama Material</th>
+            <th>No. Dokumen Ref</th>
+            <th>Lokasi Rak</th>
+            <th style="text-align:center;">Tipe</th>
+            <th style="text-align:right;">Qty</th>
+            <th>Petugas</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${ledgerRows.length > 0 ? ledgerRows.map((t, idx) => `
+            <tr>
+              <td style="text-align:center;">${idx + 1}</td>
+              <td>${t.created_at ? esc(new Date(t.created_at).toLocaleDateString('id-ID')) : '-'}</td>
+              <td><strong>${esc(t.item_name || '-')}</strong></td>
+              <td>${esc(t.reference_doc_id || '-')}</td>
+              <td>${esc(t.bin_location || '-')}</td>
+              <td style="text-align:center;">${esc(t.transaction_type || '-')}</td>
+              <td style="text-align:right;"><strong>${t.qty_change || 0}</strong></td>
+              <td>${esc(t.performed_by || '-')}</td>
+            </tr>
+          `).join('') : `
+            <tr><td colspan="8" style="text-align:center;color:#64748b;">Belum ada mutasi transaksi tercatat pada periode ini.</td></tr>
+          `}
+        </tbody>
+      </table>
+    `;
+
+    const html = buildPrintableReportHtml({
+      docTitle: `Laporan Logistik & Mutasi Material — ${activeProject.code}`,
+      docNumber: `RPT/${activeProject.code}/${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
+      docPeriod: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+      docSite: activeProject.site_location || 'Site Operasional BIB',
+      docSummary: `Laporan rekapitulasi arus penerimaan (MOS), pengeluaran material (MR), serta ringkasan stok aktif untuk Project ${activeProject.code}.`,
+      itemsHtml: monthlySection + categorySection + ledgerSection,
+      makerName: user?.full_name || 'Pelaksana Logistik',
+      checkerName: 'Supervisor Logistik Site',
+      approverName: 'Manajemen Operasional'
+    });
+
+    printWin.document.open();
+    printWin.document.write(html);
+    printWin.document.close();
   };
 
   // Trigger print / preview
@@ -303,7 +595,72 @@ export default function ReportsPage() {
   };
 
   const handleExecuteBrowserPrint = () => {
-    window.print();
+    if (!previewDoc) {
+      window.print();
+      return;
+    }
+
+    const printWin = window.open('', '_blank', 'width=960,height=800');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    const esc = (val) => String(val ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const items = Array.isArray(previewDoc.raw?.items) ? previewDoc.raw.items : [];
+    const itemsHtml = `
+      <div class="section-title">Daftar Rincian Material</div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th style="width:28px;text-align:center;">No</th>
+            <th>Nama Material / Komponen</th>
+            <th>Spesifikasi / Part No / SN</th>
+            <th style="text-align:center;">Lokasi Rak</th>
+            <th style="text-align:right;">Qty</th>
+            <th style="text-align:center;">Satuan</th>
+            <th style="text-align:center;">Kondisi</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.length > 0 ? items.map((item, idx) => `
+            <tr>
+              <td style="text-align:center;">${String(idx + 1).padStart(2, '0')}</td>
+              <td><strong>${esc(item.name || '-')}</strong></td>
+              <td>${esc(item.spec || item.sn || item.part_number || '-')}</td>
+              <td style="text-align:center;">${esc(item.bin_location || '-')}</td>
+              <td style="text-align:right;"><strong>${item.qty_received || item.qty || 1}</strong></td>
+              <td style="text-align:center;">${esc(item.unit || 'PCS')}</td>
+              <td style="text-align:center;">${esc(item.condition || 'Baik')}</td>
+              <td>${esc(item.notes || '-')}</td>
+            </tr>
+          `).join('') : `
+            <tr><td colspan="8" style="text-align:center;color:#64748b;">Rincian item mengikuti dokumen resmi yang terlampir.</td></tr>
+          `}
+        </tbody>
+      </table>
+    `;
+
+    const html = buildPrintableReportHtml({
+      docTitle: previewDoc.title || `Dokumen Berita Acara — ${activeProject.code}`,
+      docNumber: previewDoc.id || `DOC/${activeProject.code}`,
+      docPeriod: previewDoc.period || '-',
+      docSite: previewDoc.site || activeProject.site_location || 'Site Operasional',
+      docSummary: previewDoc.summary || `Rekapitulasi transaksi dan evaluasi inventaris Project ${activeProject.code}.`,
+      itemsHtml,
+      makerName: previewDoc.raw?.approval_maker_name || previewDoc.author || user?.full_name || 'Pelaksana Logistik',
+      checkerName: previewDoc.raw?.approval_checker_name || 'Supervisor Logistik Site',
+      approverName: previewDoc.raw?.approval_approver_name || 'Manajemen Operasional'
+    });
+
+    printWin.document.open();
+    printWin.document.write(html);
+    printWin.document.close();
   };
 
   return (
@@ -333,11 +690,18 @@ export default function ReportsPage() {
         {!isCurrentProjectLocked && (
           <div className="flex flex-wrap items-center gap-2.5 ml-auto shrink-0">
             <button
+              onClick={handleExportPrintableReport}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Cetak / PDF Laporan</span>
+            </button>
+            <button
               onClick={handleExportExcel}
               className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Ekspor Laporan ({activeProject.code})</span>
+              <span>Ekspor Excel ({activeProject.code})</span>
             </button>
           </div>
         )}
@@ -969,9 +1333,6 @@ export default function ReportsPage() {
                   <h3 className="font-black text-sm text-slate-900 truncate">
                     {previewDoc.title}
                   </h3>
-                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[10px] font-bold">
-                    DIGITECH VERIFIED
-                  </span>
                 </div>
                 <p className="text-[11px] font-mono text-slate-500 truncate">
                   Nomor: <span className="font-bold text-red-700">{previewDoc.id}</span> • {previewDoc.site}
@@ -1060,53 +1421,46 @@ export default function ReportsPage() {
               }}
               className="w-full max-w-4xl bg-white rounded-xs shadow-2xl shadow-slate-300/80 border border-slate-300/80 p-8 sm:p-14 space-y-6 text-slate-800 transition-transform duration-100 my-4 select-text print:m-0 print:p-0 print:border-none print:shadow-none"
             >
-              {/* 1. Official Corporate Letterhead (KOP SURAT RESMI DIGITECH) */}
+              {/* 1. Kop Surat Resmi Digitech */}
               <div className="border-b-2 border-red-700 pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
                     <img
                       src="/digitech-emblem.png"
                       alt="Digitech"
-                      className="w-14 h-14 object-contain shrink-0 drop-shadow-2xs"
+                      className="w-12 h-12 object-contain shrink-0"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = '/favicon.png';
                       }}
                     />
                     <div>
-                      <h1 className="text-2xl sm:text-3xl font-black text-red-700 tracking-wider">
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-wider leading-none">
                         DIGITECH
                       </h1>
-                      <div className="text-[11px] font-bold text-slate-800 tracking-wide uppercase mt-0.5">
-                        Divisi Sistem Logistik, Telematika &amp; Otomasi Operasional Tambang
+                      <div className="text-xs font-bold text-red-600 mt-0.5">
+                        Inventory Management System
                       </div>
                       <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                        Site Operasional Pit Sebamban KM-24 &amp; KM-14 • Area Konsesi Batulicin, Kalimantan Selatan (WITA)
+                        Divisi Logistik, Telematika &amp; Operasional Site
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right hidden sm:block shrink-0">
-                    <div className="text-[10px] font-mono text-slate-400">DIGITECH</div>
-                    <div className="text-xs font-mono font-bold text-slate-800">ISO 9001:2015 AUDITED</div>
-                    <span className="inline-block mt-0.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[9px] font-black">
-                      BERKAS OTORISASI SAH
-                    </span>
+                  <div className="text-right hidden sm:block shrink-0 font-mono text-[11px] text-slate-600">
+                    <div className="font-bold text-slate-900">No. Dokumen: {previewDoc.id}</div>
+                    <div>Periode: {previewDoc.period}</div>
+                    <div>Tanggal: {previewDoc.date || new Date().toLocaleDateString('id-ID')}</div>
                   </div>
-                </div>
-
-                {/* Double Official Line */}
-                <div className="mt-3 border-t-2 border-red-700 pt-0.5">
-                  <div className="border-t border-red-400" />
                 </div>
               </div>
 
               {/* 2. Judul & Nomor Registrasi Dokumen Berita Acara */}
               <div className="text-center space-y-1.5 py-1">
-                <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 uppercase tracking-widest">
+                <div className="text-[10px] font-mono font-bold text-red-700 uppercase tracking-widest">
                   DOKUMEN RESMI BERITA ACARA
-                </span>
-                <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-wide mt-2">
+                </div>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 uppercase tracking-wide mt-1">
                   {previewDoc.title}
                 </h2>
                 <div className="font-mono text-xs font-bold text-slate-700">
@@ -1114,9 +1468,9 @@ export default function ReportsPage() {
                 </div>
               </div>
 
-              {/* 3. Formal Legal Preamble (Kalimat Pembuka Resmi) */}
+              {/* 3. Pernyataan Pembuka */}
               <div className="text-xs leading-relaxed text-slate-700 text-justify">
-                Pada hari ini, <strong className="text-slate-900">Kamis tanggal Dua Puluh Tiga bulan Oktober tahun Dua Ribu Dua Puluh Enam (23-10-2026)</strong>, telah dilaksanakan kegiatan pemeriksaan fisik material, rekonsiliasi data mutasi keluar-masuk, serta audit kesesuaian saldo inventaris sistem terintegrasi <strong className="text-red-700 font-black">DIGITECH</strong> dengan kondisi aktual di lapangan, bertempat di:
+                Berikut adalah rincian pemeriksaan fisik material, rekonsiliasi data mutasi keluar-masuk, serta evaluasi kesesuaian saldo inventaris sistem <strong className="text-slate-900">DIGITECH</strong> dengan kondisi aktual di lapangan pada Project <strong className="text-slate-900">{activeProject.code}</strong> ({previewDoc.site || activeProject.site_location || 'Site Operasional'}):
               </div>
 
               {/* 4. Parameter & Identitas Audit (Grid Resmi) */}
@@ -1227,68 +1581,58 @@ export default function ReportsPage() {
                 Demikian Berita Acara ini dibuat dengan sebenarnya dan disahkan oleh pihak-pihak yang berwenang di lingkungan kerja <strong className="text-slate-900 font-black">DIGITECH</strong> untuk dipergunakan sebagaimana mestinya dan memiliki kekuatan pembuktian audit yang sah.
               </div>
 
-              {/* 8. Tiga Otorisasi Tanda Tangan Resmi dengan Stempel Digital */}
+              {/* 8. Kolom Pengesahan & Tanda Tangan Resmi */}
               <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs">
                 {/* Otorisator 1 */}
                 <div className="space-y-2">
-                  <p className="text-slate-500 text-[11px] font-medium">Dibuat Oleh (Pelaksana Audit):</p>
-                  <div className="h-16 flex items-center justify-center relative">
-                    {/* Official Verified Stamp Graphic */}
-                    <div className="border-2 border-emerald-600 rounded-lg px-3 py-1 rotate-[-4deg] text-emerald-700 bg-emerald-50/70 shadow-2xs">
-                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH VERIFIED</div>
-                      <div className="text-[7px] font-mono">SITE BIB SEBAMBAN</div>
-                    </div>
+                  <p className="text-slate-600 text-[11px] font-medium">Disiapkan Oleh:</p>
+                  <div className="h-16 flex items-end justify-center">
+                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
-                      {user?.full_name || 'arya-superadmin'}
+                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                      {previewDoc.raw?.approval_maker_name || previewDoc.author || user?.full_name || 'Pelaksana Logistik'}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Staff Logistik &amp; Material Controller</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Staff Logistik &amp; Material Controller</p>
                   </div>
                 </div>
 
                 {/* Otorisator 2 */}
                 <div className="space-y-2">
-                  <p className="text-slate-500 text-[11px] font-medium">Diperiksa Oleh (Supervisor):</p>
-                  <div className="h-16 flex items-center justify-center relative">
-                    <div className="border-2 border-emerald-600 rounded-lg px-3 py-1 rotate-[3deg] text-emerald-700 bg-emerald-50/70 shadow-2xs">
-                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH APPROVED</div>
-                      <div className="text-[7px] font-mono">WAREHOUSE SUPERVISOR</div>
-                    </div>
+                  <p className="text-slate-600 text-[11px] font-medium">Diperiksa Oleh:</p>
+                  <div className="h-16 flex items-end justify-center">
+                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
-                      {previewDoc.raw?.approval_checker_name || 'Surya Hendrawan, S.T.'}
+                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                      {previewDoc.raw?.approval_checker_name || 'Supervisor Logistik Site'}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{previewDoc.raw?.approval_checker_role || 'Supervisor Logistik & Workshop'}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_checker_role || 'Supervisor Logistik & Workshop'}</p>
                   </div>
                 </div>
 
                 {/* Otorisator 3 */}
                 <div className="space-y-2">
-                  <p className="text-slate-500 text-[11px] font-medium">Disetujui Oleh (Kepala Operasi):</p>
-                  <div className="h-16 flex items-center justify-center relative">
-                    <div className="border-2 border-red-700 rounded-lg px-3 py-1 rotate-[-2deg] text-red-700 bg-red-50/70 shadow-2xs">
-                      <div className="text-[9px] font-black uppercase font-mono tracking-wider">DIGITECH MANAGEMENT</div>
-                      <div className="text-[7px] font-mono">HEAD OF SITE OPERATIONS</div>
-                    </div>
+                  <p className="text-slate-600 text-[11px] font-medium">Disetujui Oleh:</p>
+                  <div className="h-16 flex items-end justify-center">
+                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
                   </div>
                   <div>
-                    <p className="font-black text-slate-900 border-b border-slate-400 pb-1 font-mono">
-                      {previewDoc.raw?.approval_approver_name || 'Ir. Bambang Prakoso'}
+                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                      {previewDoc.raw?.approval_approver_name || 'Manajemen Operasional'}
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{previewDoc.raw?.approval_approver_role || 'Head of Mining Site Operations'}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_approver_role || 'Kepala Operasional Site'}</p>
                   </div>
                 </div>
               </div>
 
               {/* 9. Official A4 Paper Footer */}
-              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] font-mono text-slate-400 gap-2">
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] font-mono text-slate-500 gap-2">
                 <div>
-                  Dokumen Resmi Sistem Terintegrasi <strong className="text-slate-700">DIGITECH</strong>
+                  PT Digitech &bull; Inventory Management System
                 </div>
                 <div className="text-center sm:text-right">
-                  Halaman 1 dari 1 • Kriptografi SHA-256 Integritas Data
+                  No. Dokumen: {previewDoc.id} &bull; Halaman 1 dari 1
                 </div>
               </div>
             </div>

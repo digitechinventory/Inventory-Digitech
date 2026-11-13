@@ -61,7 +61,7 @@ export default function MaterialRequestPage() {
       signer_name: user?.full_name || 'arya-user',
       signer_title: 'Teknisi Lapangan',
       timestamp: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      hash: 'SHA256:7B9C-MR-APPROVED-INITIAL',
+      hash: null,
       signature_image: null
     },
     slot2: null,
@@ -91,7 +91,7 @@ export default function MaterialRequestPage() {
 
   const handleSignSlot = (slotKey, data) => {
     const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
-    const hash = `SHA256:SIG-${Date.now().toString(16).toUpperCase()}-${slotKey.toUpperCase()}`;
+    const hash = null;
 
     setSignatures(prev => ({
       ...prev,

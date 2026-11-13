@@ -64,7 +64,7 @@ export default function DocumentSignatureBox({
         }
       } else {
         await navigator.clipboard.writeText(
-          `[DIGITAL SIGNATURE CERTIFICATE]\nSigner: ${signerName}\nRole: ${signerRole || roleTitle}\nTime: ${timestamp || new Date().toISOString()}\nHash: ${hash || 'SHA256:VERIFIED-AUTH'}`
+          `[OTORISASI DOKUMEN DIGITECH]\nPenandatangan: ${signerName}\nPeran: ${signerRole || roleTitle}\nWaktu: ${timestamp || new Date().toISOString()}\nStatus: Terverifikasi`
         );
       }
       setCopied(true);
@@ -179,7 +179,7 @@ export default function DocumentSignatureBox({
     // Stamp text
     ctx.font = '600 9px monospace';
     ctx.fillStyle = '#64748b';
-    ctx.fillText(`VERIFIED DIGITAL SIGNATURE • ${new Date().toLocaleDateString('id-ID')}`, 140, 75);
+    ctx.fillText(`DIGITECH IMS • ${new Date().toLocaleDateString('id-ID')}`, 140, 75);
 
     const dataUrl = canvas.toDataURL('image/png');
     if (onSign) {
@@ -250,11 +250,6 @@ export default function DocumentSignatureBox({
             <div className="text-[9px] font-mono text-slate-400 mt-1 truncate max-w-full">
               {timestamp || new Date().toISOString().slice(0, 16).replace('T', ' ')}
             </div>
-            {hash && (
-              <div className="text-[8px] font-mono text-emerald-700 truncate max-w-[200px]">
-                {hash}
-              </div>
-            )}
           </div>
         ) : canSign ? (
           <div className="w-full space-y-2">

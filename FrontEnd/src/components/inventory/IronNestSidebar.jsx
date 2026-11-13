@@ -434,7 +434,7 @@ export default function IronNestSidebar({
                 <>
                   <NavLink
                     to="/dashboard"
-                    className="flex items-center gap-2.5 group min-w-0 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl shadow-sm border border-white/90 ring-1 ring-slate-900/5 relative z-20"
+                    className="flex items-center gap-2.5 group min-w-0 bg-white/95 backdrop-blur-md pl-2.5 pr-4 py-1.5 rounded-2xl shadow-sm border border-white/90 ring-1 ring-slate-900/5 relative z-20"
                   >
                     {/* Logo with crisp borderless container */}
                     <div
@@ -463,7 +463,7 @@ export default function IronNestSidebar({
                       </span>
                       <span
                         style={{ lineHeight: 1.2, marginTop: '2px' }}
-                        className="text-[9.5px] font-extrabold text-red-600 tracking-tight whitespace-nowrap leading-tight"
+                        className="text-[9px] font-extrabold text-red-600 tracking-tight whitespace-nowrap leading-tight"
                       >
                         Inventory Management System
                       </span>
