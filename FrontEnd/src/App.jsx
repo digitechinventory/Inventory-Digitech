@@ -124,13 +124,34 @@ function AppRoutes() {
             </RoleRoute>
           }
         />
-        <Route path="inventory" element={<InventoryPage />} />
+        <Route
+          path="inventory"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <InventoryPage />
+            </RoleRoute>
+          }
+        />
         <Route path="project-inventory" element={<ProjectInventoryPage />} />
         <Route path="inventory-khusus" element={<ProjectInventoryPage />} />
         <Route path="projects" element={<ProjectInventoryPage />} />
-        <Route path="katalog" element={<InventoryPage />} />
-        <Route path="catalog" element={<InventoryPage />} />
-        <Route path="warehouses" element={<Navigate to="/inventory" replace />} />
+        <Route
+          path="katalog"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <InventoryPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="catalog"
+          element={
+            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+              <InventoryPage />
+            </RoleRoute>
+          }
+        />
+        <Route path="warehouses" element={<Navigate to="/project-inventory" replace />} />
         <Route
           path="tools"
           element={
@@ -158,7 +179,7 @@ function AppRoutes() {
         <Route
           path="ledger"
           element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+            <RoleRoute allowedRoles={['Superadmin']}>
               <InventoryLedgerPage />
             </RoleRoute>
           }
@@ -166,7 +187,7 @@ function AppRoutes() {
         <Route
           path="reports"
           element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+            <RoleRoute allowedRoles={['Superadmin']}>
               <ReportsPage />
             </RoleRoute>
           }
@@ -185,7 +206,7 @@ function AppRoutes() {
         <Route
           path="tracking"
           element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+            <RoleRoute allowedRoles={['Superadmin']}>
               <AssetTrackingPage />
             </RoleRoute>
           }
@@ -193,7 +214,7 @@ function AppRoutes() {
         <Route
           path="asset-tracking"
           element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+            <RoleRoute allowedRoles={['Superadmin']}>
               <AssetTrackingPage />
             </RoleRoute>
           }
@@ -201,13 +222,27 @@ function AppRoutes() {
         <Route
           path="gis"
           element={
-            <RoleRoute allowedRoles={['Admin', 'Superadmin']}>
+            <RoleRoute allowedRoles={['Superadmin']}>
               <AssetTrackingPage />
             </RoleRoute>
           }
         />
-        <Route path="agenda" element={<AgendaCalendarPage />} />
-        <Route path="calendar" element={<AgendaCalendarPage />} />
+        <Route
+          path="agenda"
+          element={
+            <RoleRoute allowedRoles={['Superadmin']}>
+              <AgendaCalendarPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="calendar"
+          element={
+            <RoleRoute allowedRoles={['Superadmin']}>
+              <AgendaCalendarPage />
+            </RoleRoute>
+          }
+        />
       </Route>
 
       {/* Fallback */}

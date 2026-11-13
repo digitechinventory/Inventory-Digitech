@@ -96,7 +96,7 @@ export default function MobileNav() {
 
   const navItems = getNavItems();
 
-  // Complete role-scoped menu items accessible inside the Liquid Glass drawer (replaces duplicate mobile sidebar)
+  // Complete role-scoped menu items accessible inside the Liquid Glass drawer (Superadmin 12 > Admin 8 > User 6)
   const getRoleDrawerMenus = () => {
     if (normalizedRole === 'Superadmin') {
       return [
@@ -104,6 +104,7 @@ export default function MobileNav() {
         { label: 'Otorisasi MOS', path: '/mos', icon: FileCheck2, color: 'text-red-600', badge: pendingDocsCount },
         { label: 'Kelola User', path: '/users', icon: Users, color: 'text-indigo-600' },
         { label: 'Approval Opname', path: '/opname', icon: ClipboardCheck, color: 'text-amber-600' },
+        { label: 'Katalog Material', path: '/inventory', icon: Store, color: 'text-sky-600' },
         { label: 'Project Site', path: '/project-inventory', icon: FolderGit2, color: 'text-blue-600' },
         { label: 'Siklus Hidup Aset', path: '/lifecycle', icon: Truck, color: 'text-purple-600' },
         { label: 'Kontrol Geofence', path: '/tracking', icon: Compass, color: 'text-emerald-600' },
@@ -123,10 +124,6 @@ export default function MobileNav() {
         { label: 'Picking List / MR', path: '/mr', icon: PackagePlus, color: 'text-sky-600' },
         { label: 'Peminjaman Tools', path: '/tools', icon: Wrench, color: 'text-purple-600' },
         { label: 'Stock Opname', path: '/opname', icon: ClipboardCheck, color: 'text-amber-600' },
-        { label: 'Tracking Tools GPS', path: '/tracking', icon: Compass, color: 'text-emerald-600' },
-        { label: 'Laporan Logistik', path: '/reports', icon: FileSpreadsheet, color: 'text-emerald-700' },
-        { label: 'Riwayat Mutasi', path: '/ledger', icon: History, color: 'text-slate-700' },
-        { label: 'Agenda Kerja', path: '/agenda', icon: Calendar, color: 'text-rose-600' },
         { label: 'Pengaturan Akun', path: '/settings', icon: UserIcon, color: 'text-slate-700' },
       ];
     }
@@ -137,8 +134,6 @@ export default function MobileNav() {
       { label: 'Status Dokumen', path: '/mos', icon: FileCheck2, color: 'text-red-600', badge: pendingDocsCount },
       { label: 'Project Site', path: '/project-inventory', icon: FolderGit2, color: 'text-indigo-600' },
       { label: 'Pinjam Tools', path: '/tools', icon: Wrench, color: 'text-purple-600' },
-      { label: 'Katalog Material', path: '/inventory', icon: Store, color: 'text-sky-600' },
-      { label: 'Agenda Kerja', path: '/agenda', icon: Calendar, color: 'text-rose-600' },
       { label: 'Pengaturan Akun', path: '/settings', icon: UserIcon, color: 'text-slate-700' },
     ];
   };

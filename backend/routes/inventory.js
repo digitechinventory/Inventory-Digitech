@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase.js';
 import localDb from '../services/localDb.js';
 import { ensureProjectDatasetsLoaded } from '../services/projectDataService.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
-import { adminOnly, requireRole } from '../middleware/rbac.js';
+import { adminOnly, superadminOnly, requireRole } from '../middleware/rbac.js';
 import { cacheGet, cacheSet, cacheDel } from '../services/redis.js';
 import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -151,8 +151,8 @@ router.get('/stats', optionalAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/inventory/ledger — Buku Besar Mutasi Stok (Admin & Superadmin Only)
-router.get('/ledger', requireAuth, adminOnly, async (req, res, next) => {
+// GET /api/inventory/ledger — Buku Besar Mutasi Stok (Superadmin Audit Only)
+router.get('/ledger', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('inventory_ledger')
@@ -176,7 +176,7 @@ router.get('/ledger', requireAuth, adminOnly, async (req, res, next) => {
 });
 
 // POST /api/inventory/ledger/bulk-delete
-router.post('/ledger/bulk-delete', requireAuth, adminOnly, async (req, res, next) => {
+router.post('/ledger/bulk-delete', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -197,7 +197,7 @@ router.post('/ledger/bulk-delete', requireAuth, adminOnly, async (req, res, next
 });
 
 // DELETE /api/inventory/ledger/:id
-router.delete('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
+router.delete('/ledger/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     try {
@@ -214,7 +214,7 @@ router.delete('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
 });
 
 // PATCH /api/inventory/ledger/:id
-router.patch('/ledger/:id', requireAuth, adminOnly, async (req, res, next) => {
+router.patch('/ledger/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { reference_doc_id, notes, bin_location, performed_by } = req.body;

@@ -155,7 +155,8 @@ export default function MobileHomeDashboard() {
           onSubmit={(e) => {
             e.preventDefault();
             if (mobileSearchQuery.trim()) {
-              navigate(`/inventory?search=${encodeURIComponent(mobileSearchQuery.trim())}`);
+              const searchDest = normalizedRole === 'User' ? '/project-inventory' : '/inventory';
+              navigate(`${searchDest}?search=${encodeURIComponent(mobileSearchQuery.trim())}`);
             }
           }}
           className="relative flex items-center"
@@ -379,7 +380,15 @@ export default function MobileHomeDashboard() {
           iconColor="text-red-600"
           accentColor="border-red-600"
           valueColor="text-red-600"
-          onClick={() => navigate(normalizedRole === 'Superadmin' ? '/reports' : '/inventory?status=low_stock')}
+          onClick={() =>
+            navigate(
+              normalizedRole === 'Superadmin'
+                ? '/reports'
+                : normalizedRole === 'Admin'
+                  ? '/inventory?status=low_stock'
+                  : '/project-inventory?tab=inventory'
+            )
+          }
         />
 
         <ParallelogramCard

@@ -179,6 +179,7 @@ export default function IronNestSidebar({
           id: 'grp-warehouse',
           title: 'Aset & Kontrol Site',
           items: [
+            { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
             { id: 'lifecycle', label: 'Siklus Hidup Aset', icon: Truck, path: '/lifecycle' },
             { id: 'tracking', label: 'Kontrol Geofence & GIS', icon: Compass, path: '/tracking' },
@@ -205,7 +206,6 @@ export default function IronNestSidebar({
             { id: 'adminDashboard', label: 'Panel Logistik', icon: LayoutGrid, path: '/dashboard' },
             { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
             { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
-            { id: 'tools', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
           ]
         },
         {
@@ -214,17 +214,8 @@ export default function IronNestSidebar({
           items: [
             { id: 'mos', label: 'Verifikasi Dokumen', icon: FileCheck2, path: '/mos', badge: pendingBadge, isAlertBadge: true },
             { id: 'mr', label: 'Picking List / MR', icon: PackagePlus, path: '/mr' },
+            { id: 'tools', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
             { id: 'opname', label: 'Stock Opname Fisik', icon: PackageCheck, path: '/opname' },
-          ]
-        },
-        {
-          id: 'grp-ops',
-          title: 'Monitoring & Laporan',
-          items: [
-            { id: 'tracking', label: 'Tracking Tools GPS', icon: Compass, path: '/tracking' },
-            { id: 'reports', label: 'Laporan Logistik', icon: FileSpreadsheet, path: '/reports' },
-            { id: 'finance', label: 'Riwayat Mutasi', icon: History, path: '/ledger' },
-            { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda' },
           ]
         },
       ];
@@ -236,26 +227,18 @@ export default function IronNestSidebar({
         title: 'Portal Teknisi',
         items: [
           { id: 'dashboard', label: 'Portal Teknisi', icon: LayoutGrid, path: '/dashboard' },
-          { id: 'mr', label: 'Permintaan Material', icon: PackagePlus, path: '/mr' },
-          { id: 'tools', label: 'Peminjaman Tools', icon: Compass, path: '/tools' },
+          { id: 'mr', label: 'Ambil Material (MR)', icon: PackagePlus, path: '/mr' },
+          { id: 'tools', label: 'Pinjam Tools', icon: Compass, path: '/tools' },
         ]
       },
       {
         id: 'grp-warehouse',
-        title: 'Dokumen & Katalog',
+        title: 'Dokumen & Site',
         items: [
           { id: 'mos', label: 'Status Dokumen Saya', icon: FileCheck2, path: '/mos', badge: pendingBadge, isAlertBadge: true },
           { id: 'projectInventory', label: 'Project Site', icon: FolderGit2, path: '/project-inventory' },
-          { id: 'inventory', label: 'Katalog Material', icon: Boxes, path: '/inventory' },
         ]
       },
-      {
-        id: 'grp-ops',
-        title: 'Jadwal Lapangan',
-        items: [
-          { id: 'agenda', label: 'Agenda Kerja', icon: Calendar, path: '/agenda' },
-        ]
-      }
     ];
   };
 

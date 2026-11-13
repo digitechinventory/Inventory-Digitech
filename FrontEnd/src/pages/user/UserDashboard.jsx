@@ -399,12 +399,12 @@ export default function UserDashboard() {
               </button>
 
               <button
-                onClick={() => navigate('/inventory')}
+                onClick={() => navigate('/project-inventory?tab=inventory')}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition-colors text-left group cursor-pointer"
               >
                 <div>
-                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Cari Stok &amp; Rak Bin</div>
-                  <div className="text-[10px] text-slate-500">Cek ketersediaan suku cadang gudang</div>
+                  <div className="text-xs font-bold text-slate-800 group-hover:text-red-700">Cari Stok &amp; Rak Site</div>
+                  <div className="text-[10px] text-slate-500">Cek ketersediaan komponen di site proyek</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
               </button>
