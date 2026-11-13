@@ -88,64 +88,6 @@ const WIM_CATEGORIES = [
   'History Static LS'
 ];
 
-// Data Rekapitulasi 28 Sheet Control Stock Part WIM (2. Detail_Control_Stock_Part_WIM.xlsx)
-const WIM_CONTROL_STOCK_DATA = [
-  { category: 'Load Cell', baru_in: 38, baru_out: 40, sisa_baru: 4, status_baru: 'Ready', bekas_in: 14, bekas_out: 8, sisa_bekas: 6, status_bekas: 'Ready', terpasang: 10, dilepas: 18, spare: 0 },
-  { category: 'Saddle', baru_in: 24, baru_out: 26, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 19, bekas_out: 4, sisa_bekas: 15, status_bekas: 'Ready', terpasang: 8, dilepas: 15, spare: 0 },
-  { category: 'Strip Sensor High Speed', baru_in: 28, baru_out: 24, sisa_baru: 4, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 24, dilepas: 0, spare: 4 },
-  { category: 'Dudukan Load Cell', baru_in: 16, baru_out: 13, sisa_baru: 3, status_baru: 'Ready', bekas_in: 9, bekas_out: 4, sisa_bekas: 5, status_bekas: 'Ready', terpasang: 12, dilepas: 8, spare: 3 },
-  { category: 'Mounting Platform LS', baru_in: 20, baru_out: 12, sisa_baru: 8, status_baru: 'Ready', bekas_in: 4, bekas_out: 0, sisa_bekas: 4, status_bekas: 'Ready', terpasang: 8, dilepas: 4, spare: 8 },
-  { category: 'Light Curtain', baru_in: 12, baru_out: 12, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 10, dilepas: 6, spare: 0 },
-  { category: 'Mini PC', baru_in: 8, baru_out: 7, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 6, dilepas: 1, spare: 1 },
-  { category: 'RFID Reader', baru_in: 7, baru_out: 7, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 2, spare: 0 },
-  { category: 'Loop Detector', baru_in: 7, baru_out: 5, sisa_baru: 2, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 0, spare: 2 },
-  { category: 'CCTV', baru_in: 6, baru_out: 5, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 5, dilepas: 0, spare: 1 },
-  { category: 'Batterai Lithium', baru_in: 5, baru_out: 5, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 2, bekas_out: 2, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 2, spare: 0 },
-  { category: 'Switch', baru_in: 5, baru_out: 4, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 1, spare: 1 },
-  { category: 'Inverter', baru_in: 5, baru_out: 4, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 1, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 1, spare: 1 },
-  { category: 'Frame Low Speed', baru_in: 4, baru_out: 3, sisa_baru: 1, status_baru: 'Ready', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 2, dilepas: 1, spare: 1 },
-  { category: 'Platform Low Speed', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 1, bekas_out: 0, sisa_bekas: 1, status_bekas: 'Ready', terpasang: 2, dilepas: 1, spare: 0 },
-  { category: 'PLC', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
-  { category: 'WIM Logix HS', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
-  { category: 'WIM Logix LS', baru_in: 3, baru_out: 2, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 2, dilepas: 0, spare: 1 },
-  { category: 'Stabilizer', baru_in: 3, baru_out: 3, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 3, dilepas: 0, spare: 0 },
-  { category: 'Resin Kit', baru_in: 3, baru_out: 0, sisa_baru: 3, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 3 },
-  { category: 'PSU', baru_in: 2, baru_out: 2, sisa_baru: 0, status_baru: 'Out of Stock', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 2, dilepas: 0, spare: 0 },
-  { category: 'Baut Load Cell', baru_in: 81, baru_out: 41, sisa_baru: 40, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Ring Adjuster', baru_in: 44, baru_out: 24, sisa_baru: 20, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Mur Adjuster', baru_in: 40, baru_out: 36, sisa_baru: 4, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Rubber Adjuster', baru_in: 20, baru_out: 12, sisa_baru: 8, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Bolt Adjuster Platform', baru_in: 16, baru_out: 8, sisa_baru: 8, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Longrat Adjuster', baru_in: 12, baru_out: 6, sisa_baru: 6, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 },
-  { category: 'Junction Box', baru_in: 3, baru_out: 2, sisa_baru: 1, status_baru: 'Ready', bekas_in: 0, bekas_out: 0, sisa_bekas: 0, status_bekas: 'Out of Stock', terpasang: 0, dilepas: 0, spare: 0 }
-];
-
-const WIM_CONDITION_DATA = [
-  { name: 'Baru', value: 140, color: '#10b981' },
-  { name: 'Aus', value: 19, color: '#f59e0b' },
-  { name: 'Rusak', value: 13, color: '#ef4444' },
-  { name: 'Bekas', value: 7, color: '#3b82f6' },
-  { name: 'Dummy', value: 6, color: '#8b5cf6' },
-  { name: 'Belum dipakai', value: 3, color: '#06b6d4' },
-  { name: 'Patah', value: 1, color: '#f43f5e' }
-];
-
-const WIM_LANE_DATA = [
-  { name: 'Gudang / Office VGT', value: 70, color: '#f59e0b' },
-  { name: 'Lane 3 (KM-14)', value: 51, color: '#3b82f6' },
-  { name: 'Lane 1 (KM-14)', value: 47, color: '#10b981' },
-  { name: 'Office HO / Lainnya', value: 21, color: '#64748b' }
-];
-
-const WIM_WARRANTY_SECTOR_DATA = [
-  { sector: 'Sensor Low Speed (LS)', short: 'Sensor LS', jenis_item: 17, estimasi_2thn: 459, lead_1bln: 12, lead_3bln: 5 },
-  { sector: 'PC & Server', short: 'PC & Server', jenis_item: 11, estimasi_2thn: 100, lead_1bln: 11, lead_3bln: 0 },
-  { sector: 'Sensor High Speed (HS)', short: 'Sensor HS', jenis_item: 5, estimasi_2thn: 60, lead_1bln: 2, lead_3bln: 3 },
-  { sector: 'Sensor Light Curtain (LC)', short: 'Light Curtain', jenis_item: 3, estimasi_2thn: 8, lead_1bln: 2, lead_3bln: 1 },
-  { sector: 'RFID Reader', short: 'RFID Reader', jenis_item: 2, estimasi_2thn: 804, lead_1bln: 2, lead_3bln: 0 },
-  { sector: 'CCTV', short: 'CCTV', jenis_item: 2, estimasi_2thn: 12, lead_1bln: 2, lead_3bln: 0 }
-];
-
 export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) {
   const navigate = useNavigate();
   // Navigation tabs: 'components' | 'lanes' | 'warranty' | 'transactions' | 'documents'
@@ -352,9 +294,49 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
     { code: 'Decommissioning', name: 'Decommissioning' },
   ];
 
+  // 100% Database-driven visualization datasets from /api/project-inventory/wim/summary
+  const controlStockData = useMemo(() => {
+    return Array.isArray(summary?.sheets_control_stock) ? summary.sheets_control_stock : [];
+  }, [summary]);
+
+  const conditionData = useMemo(() => {
+    const condMap = summary?.by_condition || {};
+    const colorMap = {
+      Baru: '#10b981',
+      Aus: '#f59e0b',
+      Rusak: '#ef4444',
+      Bekas: '#3b82f6',
+      Dummy: '#8b5cf6',
+      'Belum dipakai': '#06b6d4',
+      Patah: '#f43f5e'
+    };
+    return Object.entries(condMap)
+      .map(([name, value]) => ({
+        name,
+        value: Number(value) || 0,
+        color: colorMap[name] || '#64748b'
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [summary]);
+
+  const laneData = useMemo(() => {
+    const ln = summary?.by_lane || {};
+    const rows = [
+      { name: 'Gudang / Office VGT', value: Number(ln['Gudang / Site Office'] || ln['Gudang Buffer'] || ln['Gudang'] || 0), color: '#f59e0b' },
+      { name: 'Lane 3 (KM-14)', value: Number(ln['Lane 3'] || 0), color: '#3b82f6' },
+      { name: 'Lane 1 (KM-14)', value: Number(ln['Lane 1'] || 0), color: '#10b981' },
+      { name: 'Office HO / Lainnya', value: Number(ln['Office HO / Lainnya'] || 0), color: '#64748b' }
+    ];
+    return rows.filter(r => r.value > 0);
+  }, [summary]);
+
+  const warrantySectorData = useMemo(() => {
+    return Array.isArray(summary?.warranty_by_sector) ? summary.warranty_by_sector : [];
+  }, [summary]);
+
   return (
     <div className="space-y-6">
-      {/* ── Top Executive KPI Cards (Real WIM Dataset) ── */}
+      {/* ── Top Executive KPI Cards (Real WIM Dataset from DB) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Komponen Fisik */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden group hover:border-emerald-500 transition-all">
@@ -365,7 +347,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2">
-            {summary?.total_components ? Number(summary.total_components).toLocaleString('id-ID') : '189'}
+            {Number(summary?.total_components || 0).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -382,10 +364,10 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-blue-700 mt-2">
-            {summary?.by_status?.['Terpasang'] || 116} <span className="text-sm font-normal text-slate-400">unit</span>
+            {summary?.by_status?.['Terpasang'] || 0} <span className="text-sm font-normal text-slate-400">unit</span>
           </div>
           <div className="text-[11px] text-blue-600 mt-1 flex items-center gap-1 font-medium">
-            <span className="font-bold">Lane 1:</span> {summary?.by_lane?.['Lane 1'] || 47} | <span className="font-bold">Lane 3:</span> {summary?.by_lane?.['Lane 3'] || 51}
+            <span className="font-bold">Lane 1:</span> {summary?.by_lane?.['Lane 1'] || 0} | <span className="font-bold">Lane 3:</span> {summary?.by_lane?.['Lane 3'] || 0}
           </div>
         </div>
 
@@ -398,7 +380,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 mt-2">
-            {summary?.by_lane?.['Gudang / Site Office'] || summary?.by_lane?.['Gudang Buffer'] || summary?.by_lane?.['Gudang'] || 70} <span className="text-sm font-normal text-slate-400">unit</span>
+            {summary?.by_lane?.['Gudang / Site Office'] || summary?.by_lane?.['Gudang Buffer'] || summary?.by_lane?.['Gudang'] || 0} <span className="text-sm font-normal text-slate-400">unit</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-1 font-medium">
             Gudang Buffer &amp; Workshop KM 14
@@ -414,7 +396,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-purple-700 mt-2">
-            {summary?.total_warranty_items || 41} <span className="text-sm font-normal text-slate-400">part</span>
+            {summary?.total_warranty_items || 0} <span className="text-sm font-normal text-slate-400">part</span>
           </div>
           <div className="text-[11px] text-purple-600 mt-1 font-medium flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
@@ -432,7 +414,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               Visualisasi Data Control Stock Part WIM
             </h3>
             <p className="text-xs text-slate-500">
-              Grafik rekapitulasi status komponen fisik, mutasi stok baru vs bekas/dummy (28 sheet komponen), dan estimasi garansi sparepart WIM.
+              Grafik rekapitulasi status komponen fisik, mutasi stok baru vs bekas/dummy (28 sheet komponen), dan estimasi garansi sparepart WIM dari database.
             </p>
           </div>
 
@@ -501,7 +483,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div className="h-[310px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={WIM_CONTROL_STOCK_DATA.slice(0, 18)}
+                    data={controlStockData.slice(0, 18)}
                     margin={{ top: 10, right: 12, left: -10, bottom: 55 }}
                     onClick={(state) => {
                       if (state && state.activeLabel) {
@@ -544,13 +526,13 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div>
                 <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <PieChartIcon className="w-4 h-4 text-emerald-600" />
-                  Komposisi Kondisi Fisik (189 Unit)
+                  Komposisi Kondisi Fisik ({summary?.total_components || 0} Unit)
                 </h4>
                 <div className="h-[155px] w-full mt-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={WIM_CONDITION_DATA}
+                        data={conditionData}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -559,7 +541,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                         outerRadius={60}
                         paddingAngle={2}
                       >
-                        {WIM_CONDITION_DATA.map((entry, index) => (
+                        {conditionData.map((entry, index) => (
                           <Cell key={`cond-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -578,7 +560,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                 </div>
 
                 <div className="grid grid-cols-2 gap-1.5">
-                  {WIM_CONDITION_DATA.slice(0, 6).map((item, idx) => (
+                  {conditionData.slice(0, 6).map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between px-2.5 py-1 bg-white rounded-lg border border-slate-200/80 text-[11px]">
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -595,8 +577,9 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                   Sebaran Posisi &amp; Lane WIM
                 </div>
                 <div className="space-y-1.5">
-                  {WIM_LANE_DATA.map((lane, idx) => {
-                    const pct = Math.round((lane.value / 189) * 100);
+                  {laneData.map((lane, idx) => {
+                    const totComp = Number(summary?.total_components) || 1;
+                    const pct = Math.round((lane.value / totComp) * 100);
                     return (
                       <div key={idx} className="space-y-0.5">
                         <div className="flex items-center justify-between text-[11px]">
@@ -625,15 +608,15 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                     Grafik Mutasi Control Stock Part WIM (Barang Masuk, Keluar &amp; Sisa Stock)
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    Data riil rekapitulasi 28 lembar kerja (sheet) pada file 2. Detail_Control_Stock_Part_WIM.xlsx
+                    Data riil rekapitulasi 28 lembar kerja (sheet) pada file 2. Detail_Control_Stock_Part_WIM.xlsx dari database
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-mono">
                   <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-                    Ready: {WIM_CONTROL_STOCK_DATA.filter(d => d.status_baru === 'Ready').length} Kategori
+                    Ready: {controlStockData.filter(d => d.status_baru === 'Ready').length} Kategori
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-bold">
-                    Out of Stock: {WIM_CONTROL_STOCK_DATA.filter(d => d.status_baru === 'Out of Stock').length} Kategori
+                    Out of Stock: {controlStockData.filter(d => d.status_baru === 'Out of Stock').length} Kategori
                   </span>
                 </div>
               </div>
@@ -641,7 +624,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={WIM_CONTROL_STOCK_DATA}
+                    data={controlStockData}
                     margin={{ top: 10, right: 12, left: -10, bottom: 60 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -689,7 +672,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {WIM_CONTROL_STOCK_DATA.map((row) => (
+                  {controlStockData.map((row) => (
                     <tr
                       key={row.category}
                       onClick={() => {
@@ -737,7 +720,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={WIM_WARRANTY_SECTOR_DATA}
+                    data={warrantySectorData}
                     margin={{ top: 10, right: 12, left: -10, bottom: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -783,7 +766,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {WIM_WARRANTY_SECTOR_DATA.map((sec) => (
+                    {warrantySectorData.map((sec) => (
                       <tr
                         key={sec.sector}
                         onClick={() => {
@@ -804,7 +787,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
               </div>
 
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
-                <span>Sumber: Sheet Warranty Sparepart (40 Jenis Part Resmi)</span>
+                <span>Sumber: Sheet Warranty Sparepart ({summary?.total_warranty_items || 0} Jenis Part Resmi)</span>
                 <span className="font-bold text-emerald-700">Masa Garansi Standar: 1 Tahun</span>
               </div>
             </div>
@@ -824,7 +807,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             }`}
           >
             <Boxes className="w-4 h-4 text-emerald-600" />
-            <span>Katalog Komponen Fisik ({summary?.total_components || 189})</span>
+            <span>Katalog Komponen Fisik ({summary?.total_components || 0})</span>
           </button>
 
           <button
@@ -848,7 +831,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-purple-600" />
-            <span>Garansi &amp; Lead Time ({summary?.total_warranty_items || 41})</span>
+            <span>Garansi &amp; Lead Time ({summary?.total_warranty_items || 0})</span>
           </button>
 
           <button
@@ -860,7 +843,7 @@ export default function WimInteractiveDashboard({ onOpenDocuments, onOpenMos }) 
             }`}
           >
             <RotateCcw className="w-4 h-4 text-amber-600" />
-            <span>Log Mutasi Stok ({summary?.total_transactions || 268})</span>
+            <span>Log Mutasi Stok ({summary?.total_transactions || 0})</span>
           </button>
 
           <button

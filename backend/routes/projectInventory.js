@@ -217,11 +217,12 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
       const projWh = warehouses.filter(w => w.project_id === proj.id);
 
       if (proj.id === 'proj-famous' || proj.code === 'FAMOUS') {
-        const totalItems = FAMOUS_SUMMARY.total_items || FAMOUS_ITEMS.length || 0;
-        const installedCount = FAMOUS_SUMMARY.by_status?.['Terinstall'] || 0;
-        const warehouseStock = FAMOUS_SUMMARY.by_status?.['Onsite'] || 0;
-        const damagedCount = (FAMOUS_SUMMARY.by_status?.['Rusak'] || 0) + (FAMOUS_SUMMARY.by_status?.['Return'] || 0);
-        const fleetUnitsCount = FAMOUS_SUMMARY.fleet_summary?.total_units || FAMOUS_FLEET_MATRIX.length || 0;
+        const dynFamous = buildDynamicFamousSummary(FAMOUS_ITEMS, FAMOUS_FLEET_MATRIX, FAMOUS_SUMMARY);
+        const totalItems = dynFamous.total_items || 0;
+        const installedCount = (dynFamous.by_status?.['Terinstall'] || 0) + (dynFamous.by_status?.['Terinstall Belum Tercatat Dalam BASTM'] || 0);
+        const warehouseStock = (dynFamous.by_status?.['Onsite'] || 0) + (dynFamous.by_status?.['Stock Belum Tercatat Dalam BASTM'] || 0);
+        const damagedCount = (dynFamous.by_status?.['Rusak'] || 0) + (dynFamous.by_status?.['Return'] || 0);
+        const fleetUnitsCount = dynFamous.fleet_summary?.total_units || FAMOUS_FLEET_MATRIX.length || 0;
 
         return {
           ...proj,
@@ -241,11 +242,12 @@ router.get('/projects', optionalAuth, async (req, res, next) => {
       }
 
       if (proj.id === 'proj-wim' || proj.code === 'WIM') {
-        const totalComponents = WIM_SUMMARY.total_components || WIM_COMPONENTS.length || 0;
-        const installedCount = WIM_SUMMARY.by_status?.['Terpasang'] || 0;
-        const warehouseStock = WIM_SUMMARY.by_lane?.['Gudang / Site Office'] || WIM_SUMMARY.by_lane?.['Gudang Buffer'] || WIM_SUMMARY.by_lane?.['Gudang'] || WIM_SUMMARY.by_status?.['Spare'] || 0;
-        const damagedCount = (WIM_SUMMARY.by_condition?.['Rusak'] || 0) + (WIM_SUMMARY.by_condition?.['Discontinue / Rusak'] || 0);
-        const warrantyCount = WIM_SUMMARY.total_warranty_items || WIM_WARRANTY.length || 0;
+        const dynWim = buildDynamicWimSummary(WIM_COMPONENTS, WIM_TRANSACTIONS, WIM_WARRANTY, WIM_SUMMARY);
+        const totalComponents = dynWim.total_components || 0;
+        const installedCount = dynWim.by_status?.['Terpasang'] || 0;
+        const warehouseStock = dynWim.by_lane?.['Gudang / Site Office'] || dynWim.by_lane?.['Gudang Buffer'] || dynWim.by_lane?.['Gudang'] || dynWim.by_status?.['Spare'] || 0;
+        const damagedCount = (dynWim.by_condition?.['Rusak'] || 0) + (dynWim.by_condition?.['Patah'] || 0);
+        const warrantyCount = dynWim.total_warranty_items || 0;
 
         return {
           ...proj,
@@ -480,9 +482,292 @@ router.delete('/warehouses/:id', requireAuth, adminOnly, async (req, res, next) 
 // 2.5 REAL FAMOUS PROJECT DEDICATED APIS
 // ==========================================
 
+function buildDynamicFamousSummary(items, fleetMatrix, baseSummary = {}) {
+  const byCategory = {};
+  const byStatus = {};
+  const byMitra = {};
+  const stockPivots = {};
+  const datePivots = {};
+  let totalPindahan = 0;
+
+  for (const item of items || []) {
+    const catKey = (item.category || 'gps').toLowerCase();
+    const catUpper = catKey.toUpperCase();
+    const st = item.status || 'Onsite';
+    const mt = (item.mitra || 'STOCK').toUpperCase() === 'RUSAK' ? 'RUSAK' : (item.mitra || 'STOCK');
+
+    if (item.is_pindahan) totalPindahan++;
+
+    if (!byCategory[catKey]) {
+      byCategory[catKey] = {
+        total: 0,
+        Terinstall: 0,
+        Onsite: 0,
+        Rusak: 0,
+        Return: 0,
+        Pindahan: 0,
+        'Stock Belum Tercatat Dalam BASTM': 0,
+        'Terinstall Belum Tercatat Dalam BASTM': 0
+      };
+    }
+    byCategory[catKey].total++;
+    byCategory[catKey][st] = (byCategory[catKey][st] || 0) + 1;
+    if (item.is_pindahan) byCategory[catKey].Pindahan++;
+
+    byStatus[st] = (byStatus[st] || 0) + 1;
+    if (mt && mt !== 'STOCK' && mt !== 'RUSAK' && mt !== 'RETURN') {
+      byMitra[mt] = (byMitra[mt] || 0) + 1;
+    }
+
+    if (!stockPivots[catUpper]) {
+      stockPivots[catUpper] = {
+        category: catUpper,
+        category_name: item.category_name || catUpper,
+        title: `DATA ${catUpper}`,
+        stock_title: `STOCK ${catUpper}`,
+        total: 0,
+        terinstall: 0,
+        terinstall_non_bastm: 0,
+        onsite: 0,
+        stock_non_bastm: 0,
+        belum_bastm: 0,
+        rusak: 0,
+        return_rma: 0,
+        pindahan: 0,
+        statuses: {},
+        rows_map: {}
+      };
+    }
+    const sp = stockPivots[catUpper];
+    sp.total++;
+    sp.statuses[st] = (sp.statuses[st] || 0) + 1;
+    if (st === 'Terinstall') sp.terinstall++;
+    else if (st === 'Terinstall Belum Tercatat Dalam BASTM') {
+      sp.terinstall_non_bastm++;
+      sp.belum_bastm++;
+    } else if (st === 'Onsite') sp.onsite++;
+    else if (st === 'Stock Belum Tercatat Dalam BASTM') {
+      sp.stock_non_bastm++;
+      sp.belum_bastm++;
+    } else if (st === 'Rusak') sp.rusak++;
+    else if (st === 'Return') sp.return_rma++;
+    if (item.is_pindahan) sp.pindahan++;
+
+    if (!sp.rows_map[mt]) {
+      sp.rows_map[mt] = {
+        mitra: mt,
+        Onsite: 0,
+        Return: 0,
+        Rusak: 0,
+        'Stock Belum Tercatat Dalam BASTM': 0,
+        Terinstall: 0,
+        'Terinstall Belum Tercatat Dalam BASTM': 0,
+        onsite: 0,
+        return_rma: 0,
+        rusak: 0,
+        stock_non_bastm: 0,
+        terinstall: 0,
+        terinstall_non_bastm: 0,
+        belum_bastm: 0,
+        total: 0
+      };
+    }
+    const rRow = sp.rows_map[mt];
+    rRow[st] = (rRow[st] || 0) + 1;
+    if (st === 'Onsite') rRow.onsite++;
+    else if (st === 'Return') rRow.return_rma++;
+    else if (st === 'Rusak') rRow.rusak++;
+    else if (st === 'Stock Belum Tercatat Dalam BASTM') {
+      rRow.stock_non_bastm++;
+      rRow.belum_bastm++;
+    } else if (st === 'Terinstall') rRow.terinstall++;
+    else if (st === 'Terinstall Belum Tercatat Dalam BASTM') {
+      rRow.terinstall_non_bastm++;
+      rRow.belum_bastm++;
+    }
+    rRow.total++;
+
+    const dtKey = item.tanggal_onsite && item.tanggal_onsite !== '-' ? item.tanggal_onsite : 'Tanpa Tanggal';
+    if (!datePivots[catUpper]) datePivots[catUpper] = {};
+    if (!datePivots[catUpper][dtKey]) {
+      datePivots[catUpper][dtKey] = {
+        tanggal_onsite: dtKey,
+        Onsite: 0,
+        'Stock Belum Tercatat Dalam BASTM': 0,
+        Terinstall: 0,
+        'Terinstall Belum Tercatat Dalam BASTM': 0,
+        Rusak: 0,
+        Return: 0,
+        onsite: 0,
+        terinstall: 0,
+        rusak: 0,
+        return_rma: 0,
+        belum_bastm: 0,
+        total: 0
+      };
+    }
+    const dRow = datePivots[catUpper][dtKey];
+    dRow[st] = (dRow[st] || 0) + 1;
+    if (st === 'Onsite') dRow.onsite++;
+    else if (st === 'Terinstall') dRow.terinstall++;
+    else if (st === 'Rusak') dRow.rusak++;
+    else if (st === 'Return') dRow.return_rma++;
+    else if (st === 'Stock Belum Tercatat Dalam BASTM' || st === 'Terinstall Belum Tercatat Dalam BASTM') dRow.belum_bastm++;
+    dRow.total++;
+  }
+
+  const formattedDatePivots = {};
+  for (const catUpper of Object.keys(datePivots)) {
+    formattedDatePivots[catUpper] = Object.values(datePivots[catUpper]).sort((a, b) => a.tanggal_onsite.localeCompare(b.tanggal_onsite));
+  }
+
+  for (const catUpper of Object.keys(stockPivots)) {
+    const p = stockPivots[catUpper];
+    const sortedRows = Object.values(p.rows_map).sort((a, b) => a.mitra.localeCompare(b.mitra));
+    p.rows = sortedRows;
+    p.by_mitra = sortedRows;
+    p.by_date = formattedDatePivots[catUpper] || [];
+    delete p.rows_map;
+  }
+
+  return {
+    ...baseSummary,
+    total_items: (items || []).length,
+    total_pindahan: totalPindahan,
+    by_category: byCategory,
+    by_status: byStatus,
+    by_mitra: byMitra,
+    stock_pivots: stockPivots,
+    date_pivots: formattedDatePivots,
+    fleet_summary: baseSummary.fleet_summary || {
+      total_units: (fleetMatrix || []).length,
+      optimal_units: 0,
+      partial_units: 0,
+      critical_units: 0
+    }
+  };
+}
+
+function buildDynamicWimSummary(components, transactions, warranty, baseSummary = {}) {
+  const byCategory = {};
+  const byStatus = {};
+  const byCondition = {};
+  const byLane = {};
+
+  for (const comp of components || []) {
+    const cat = comp.category || 'Lainnya';
+    const st = comp.status || 'Spare';
+    const cond = comp.condition || 'Baru';
+    const lane = comp.lane && comp.lane !== '-' ? comp.lane : (comp.location || 'Other');
+
+    if (!byCategory[cat]) {
+      byCategory[cat] = { total: 0, Terpasang: 0, Dilepas: 0, Spare: 0, Baru: 0, Bekas: 0, Dummy: 0, Rusak: 0 };
+    }
+    byCategory[cat].total++;
+    byCategory[cat][st] = (byCategory[cat][st] || 0) + 1;
+    byCategory[cat][cond] = (byCategory[cat][cond] || 0) + 1;
+
+    byStatus[st] = (byStatus[st] || 0) + 1;
+    byCondition[cond] = (byCondition[cond] || 0) + 1;
+
+    let laneGroup = 'Office HO / Lainnya';
+    if (String(lane).includes('Lane 1')) laneGroup = 'Lane 1';
+    else if (String(lane).includes('Lane 3')) laneGroup = 'Lane 3';
+    else if (String(lane).toLowerCase().includes('vgt') || String(lane).toLowerCase().includes('gudang')) laneGroup = 'Gudang / Site Office';
+    byLane[laneGroup] = (byLane[laneGroup] || 0) + 1;
+  }
+
+  // Aggregate transactions by category and stock_type if sheets_control_stock not present
+  const txByCat = {};
+  for (const tx of transactions || []) {
+    const cat = tx.category || 'Lainnya';
+    if (!txByCat[cat]) {
+      txByCat[cat] = { category: cat, baru_in: 0, baru_out: 0, sisa_baru: 0, bekas_in: 0, bekas_out: 0, sisa_bekas: 0 };
+    }
+    if (tx.stock_type === 'BARU') {
+      txByCat[cat].baru_in += Number(tx.qty_in) || 0;
+      txByCat[cat].baru_out += Number(tx.qty_out) || 0;
+      if (tx.final_stock !== undefined && tx.final_stock !== null && tx.final_stock !== '') {
+        txByCat[cat].sisa_baru = Number(tx.final_stock) || 0;
+      }
+    } else {
+      txByCat[cat].bekas_in += Number(tx.qty_in) || 0;
+      txByCat[cat].bekas_out += Number(tx.qty_out) || 0;
+      if (tx.final_stock !== undefined && tx.final_stock !== null && tx.final_stock !== '') {
+        txByCat[cat].sisa_bekas = Number(tx.final_stock) || 0;
+      }
+    }
+  }
+
+  // Merge baseSummary.sheets_control_stock with live component counts
+  const rawSheets = Array.isArray(baseSummary.sheets_control_stock) && baseSummary.sheets_control_stock.length > 0
+    ? baseSummary.sheets_control_stock
+    : Object.values(txByCat);
+
+  const sheetsControlStock = rawSheets.map((sh) => {
+    const catName = sh.sheet || sh.category;
+    const compStats = byCategory[catName] || {};
+    const sisaBaru = Number(sh.sisa_baru) || 0;
+    const sisaBekas = Number(sh.sisa_bekas) || 0;
+    return {
+      category: catName,
+      baru_in: Number(sh.baru_in) || 0,
+      baru_out: Number(sh.baru_out) || 0,
+      sisa_baru: sisaBaru,
+      status_baru: sh.status_baru || (sisaBaru > 0 ? 'Ready' : 'Out of Stock'),
+      bekas_in: Number(sh.bekas_in) || 0,
+      bekas_out: Number(sh.bekas_out) || 0,
+      sisa_bekas: sisaBekas,
+      status_bekas: sh.status_bekas || (sisaBekas > 0 ? 'Ready' : 'Out of Stock'),
+      terpasang: compStats.Terpasang ?? sh.terpasang ?? 0,
+      dilepas: compStats.Dilepas ?? sh.dilepas ?? 0,
+      spare: compStats.Spare ?? sh.spare ?? 0,
+      total_fisik: compStats.total ?? sh.total_fisik ?? 0
+    };
+  });
+
+  // Aggregate warranty by sector dynamically from WIM_WARRANTY in DB
+  const sectorMap = {};
+  for (const w of warranty || []) {
+    if (!w || w.item_name === 'Nama Item' || w.part_number === 'Part Number') continue;
+    const sec = w.section || 'Lainnya';
+    if (!sectorMap[sec]) {
+      sectorMap[sec] = {
+        sector: sec,
+        short: sec
+          .replace('Sensor Low Speed (LS)', 'Sensor LS')
+          .replace('Sensor High Speed (HS)', 'Sensor HS')
+          .replace('Sensor Light Curtain (LC)', 'Light Curtain'),
+        jenis_item: 0,
+        estimasi_2thn: 0,
+        lead_1bln: 0,
+        lead_3bln: 0
+      };
+    }
+    sectorMap[sec].jenis_item++;
+    sectorMap[sec].estimasi_2thn += Number(w.qty_estimated_2yr) || 0;
+    if (String(w.lead_time || '').includes('3')) sectorMap[sec].lead_3bln++;
+    else sectorMap[sec].lead_1bln++;
+  }
+
+  return {
+    ...baseSummary,
+    total_components: (components || []).length,
+    total_transactions: (transactions || []).length,
+    total_warranty_items: (warranty || []).length,
+    by_category: byCategory,
+    by_status: byStatus,
+    by_condition: byCondition,
+    by_lane: byLane,
+    sheets_control_stock: sheetsControlStock,
+    warranty_by_sector: Object.values(sectorMap)
+  };
+}
+
 // GET /api/project-inventory/famous/summary
 router.get('/famous/summary', requireAuth, requireProjectAccess('proj-famous'), (req, res) => {
-  return sendSuccess(res, FAMOUS_SUMMARY, 'Ringkasan data real project FAMOUS.');
+  const dynamicSummary = buildDynamicFamousSummary(FAMOUS_ITEMS, FAMOUS_FLEET_MATRIX, FAMOUS_SUMMARY);
+  return sendSuccess(res, dynamicSummary, 'Ringkasan data real project FAMOUS.');
 });
 
 // GET /api/project-inventory/famous/fleet-matrix
@@ -600,7 +885,8 @@ router.get('/famous/items', requireAuth, requireProjectAccess('proj-famous'), (r
 
 // GET /api/project-inventory/wim/summary
 router.get('/wim/summary', requireAuth, requireProjectAccess('proj-wim'), (req, res) => {
-  return sendSuccess(res, WIM_SUMMARY, 'Ringkasan data real project WIM (Weigh-In-Motion).');
+  const dynamicSummary = buildDynamicWimSummary(WIM_COMPONENTS, WIM_TRANSACTIONS, WIM_WARRANTY, WIM_SUMMARY);
+  return sendSuccess(res, dynamicSummary, 'Ringkasan data real project WIM (Weigh-In-Motion).');
 });
 
 // GET /api/project-inventory/wim/components

@@ -62,163 +62,6 @@ import {
 } from '../../api/projectInventoryApi';
 import FullDocumentPreviewModal from '../common/FullDocumentPreviewModal';
 
-// Exact Pivot & Chart Data from the 9 Stock Sheets (Excluding HRGA)
-const FAMOUS_STOCK_PIVOTS = {
-  GPS: {
-    key: 'GPS', title: 'DATA GPS', total: 1155, terinstall: 818, onsite: 220, rusak: 107, return_rma: 0, belum_bastm: 10, pindahan: 624,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 220, rusak: 0, return_rma: 0, belum_bastm: 10, total: 230 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 107, return_rma: 0, belum_bastm: 0, total: 107 }
-    ]
-  },
-  DSM: {
-    key: 'DSM', title: 'DATA DSM', total: 1275, terinstall: 816, onsite: 203, rusak: 74, return_rma: 182, belum_bastm: 0, pindahan: 746,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 87, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 87 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 59, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 59 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 202, rusak: 0, return_rma: 0, belum_bastm: 0, total: 202 },
-      { mitra: 'RETURN', terinstall: 0, onsite: 1, rusak: 0, return_rma: 182, belum_bastm: 0, total: 183 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 74, return_rma: 0, belum_bastm: 0, total: 74 }
-    ]
-  },
-  ADAS: {
-    key: 'ADAS', title: 'DATA ADAS', total: 1175, terinstall: 818, onsite: 293, rusak: 64, return_rma: 0, belum_bastm: 0, pindahan: 559,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 293, rusak: 0, return_rma: 0, belum_bastm: 0, total: 293 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 64, return_rma: 0, belum_bastm: 0, total: 64 }
-    ]
-  },
-  MDVR: {
-    key: 'MDVR', title: 'DATA MDVR', total: 1175, terinstall: 818, onsite: 233, rusak: 113, return_rma: 11, belum_bastm: 0, pindahan: 18,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 233, rusak: 0, return_rma: 0, belum_bastm: 0, total: 233 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 113, return_rma: 0, belum_bastm: 0, total: 113 },
-      { mitra: 'RETURN', terinstall: 0, onsite: 0, rusak: 0, return_rma: 11, belum_bastm: 0, total: 11 }
-    ]
-  },
-  SSD: {
-    key: 'SSD', title: 'DATA SSD', total: 1179, terinstall: 818, onsite: 327, rusak: 30, return_rma: 0, belum_bastm: 4, pindahan: 533,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 3, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 3 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 327, rusak: 0, return_rma: 0, belum_bastm: 4, total: 331 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 30, return_rma: 0, belum_bastm: 0, total: 30 }
-    ]
-  },
-  OBU: {
-    key: 'OBU', title: 'DATA OBU', total: 1145, terinstall: 816, onsite: 245, rusak: 84, return_rma: 0, belum_bastm: 0, pindahan: 339,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 152, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 152 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 27, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 27 },
-      { mitra: 'MVM', terinstall: 2, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 2 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 245, rusak: 0, return_rma: 0, belum_bastm: 0, total: 245 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 84, return_rma: 0, belum_bastm: 0, total: 84 }
-    ]
-  },
-  PTT: {
-    key: 'PTT', title: 'DATA PTT', total: 1191, terinstall: 804, onsite: 257, rusak: 115, return_rma: 0, belum_bastm: 15, pindahan: 697,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 151, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 90 },
-      { mitra: 'GECL', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 90 },
-      { mitra: 'KMB', terinstall: 87, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 88 },
-      { mitra: 'BBS', terinstall: 66, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 67 },
-      { mitra: 'MAV', terinstall: 59, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 60 },
-      { mitra: 'BKAE', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 2, total: 48 },
-      { mitra: 'MMS', terinstall: 45, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 46 },
-      { mitra: 'RAM', terinstall: 26, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 1, total: 27 },
-      { mitra: 'MVM', terinstall: 1, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 1 },
-      { mitra: 'BUS', terinstall: 1, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 1 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 257, rusak: 0, return_rma: 0, belum_bastm: 2, total: 259 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 115, return_rma: 0, belum_bastm: 0, total: 115 }
-    ]
-  },
-  DOME: {
-    key: 'DOME', title: 'DATA DOME', total: 1020, terinstall: 818, onsite: 143, rusak: 59, return_rma: 0, belum_bastm: 0, pindahan: 460,
-    by_mitra: [
-      { mitra: 'AEK', terinstall: 153, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 153 },
-      { mitra: 'RBT', terinstall: 146, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 146 },
-      { mitra: 'BMT', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'GECL', terinstall: 90, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 90 },
-      { mitra: 'KMB', terinstall: 88, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 88 },
-      { mitra: 'BBS', terinstall: 67, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 67 },
-      { mitra: 'MAV', terinstall: 60, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 60 },
-      { mitra: 'BKAE', terinstall: 48, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 48 },
-      { mitra: 'MMS', terinstall: 46, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 46 },
-      { mitra: 'RAM', terinstall: 28, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 28 },
-      { mitra: 'MVM', terinstall: 2, onsite: 0, rusak: 0, return_rma: 0, belum_bastm: 0, total: 2 },
-      { mitra: 'STOCK', terinstall: 0, onsite: 143, rusak: 0, return_rma: 0, belum_bastm: 0, total: 143 },
-      { mitra: 'RUSAK', terinstall: 0, onsite: 0, rusak: 59, return_rma: 0, belum_bastm: 0, total: 59 }
-    ]
-  },
-  CANBUS: {
-    key: 'CANBUS', title: 'DATA CANBUS', total: 105, terinstall: 5, onsite: 100, rusak: 0, return_rma: 0, belum_bastm: 0, pindahan: 0,
-    by_mitra: [
-      { mitra: 'STOCK', terinstall: 5, onsite: 100, rusak: 0, return_rma: 0, belum_bastm: 0, total: 105 }
-    ]
-  }
-};
-
 const SENSOR_ICONS = {
   gps: Compass,
   dsm: Eye,
@@ -422,50 +265,90 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
     return () => clearTimeout(timer);
   }, [hardwareSearch]);
 
-  // Sensor Category metadata list (Strictly Stock Sheets Only — Excluding HRGA)
+  // Sub-view mode for single category datasheet charts: 'mitra' (DATA <KATEGORI>) | 'tanggal' (STOCK <KATEGORI>)
+  const [singleCatChartMode, setSingleCatChartMode] = useState('mitra');
+
+  // Sensor Category metadata list (100% Database-driven from 9 Stock Sheets — Excluding HRGA)
   const stockPivots = useMemo(() => {
-    return summary?.stock_pivots || FAMOUS_STOCK_PIVOTS;
+    return summary?.stock_pivots || {};
+  }, [summary]);
+
+  const datePivots = useMemo(() => {
+    return summary?.date_pivots || {};
   }, [summary]);
 
   const categoryStatsList = useMemo(() => {
-    const specs = [
-      { key: 'GPS', name: 'GPS Tracker', icon: Compass, total: stockPivots.GPS?.total || 1155, installed: stockPivots.GPS?.terinstall || 818, stock: stockPivots.GPS?.onsite || 220, repair: (stockPivots.GPS?.rusak || 107) + (stockPivots.GPS?.return_rma || 0), rusak: stockPivots.GPS?.rusak || 107, return_rma: stockPivots.GPS?.return_rma || 0, belum_bastm: stockPivots.GPS?.belum_bastm || 10, pindahan: stockPivots.GPS?.pindahan || 624 },
-      { key: 'DSM', name: 'DSM AI Fatigue Camera', icon: Eye, total: stockPivots.DSM?.total || 1275, installed: stockPivots.DSM?.terinstall || 816, stock: stockPivots.DSM?.onsite || 203, repair: (stockPivots.DSM?.rusak || 74) + (stockPivots.DSM?.return_rma || 182), rusak: stockPivots.DSM?.rusak || 74, return_rma: stockPivots.DSM?.return_rma || 182, belum_bastm: stockPivots.DSM?.belum_bastm || 0, pindahan: stockPivots.DSM?.pindahan || 746 },
-      { key: 'ADAS', name: 'ADAS Safety Camera', icon: ShieldCheck, total: stockPivots.ADAS?.total || 1175, installed: stockPivots.ADAS?.terinstall || 818, stock: stockPivots.ADAS?.onsite || 293, repair: (stockPivots.ADAS?.rusak || 64) + (stockPivots.ADAS?.return_rma || 0), rusak: stockPivots.ADAS?.rusak || 64, return_rma: stockPivots.ADAS?.return_rma || 0, belum_bastm: stockPivots.ADAS?.belum_bastm || 0, pindahan: stockPivots.ADAS?.pindahan || 559 },
-      { key: 'MDVR', name: 'MDVR Video Box', icon: Video, total: stockPivots.MDVR?.total || 1175, installed: stockPivots.MDVR?.terinstall || 818, stock: stockPivots.MDVR?.onsite || 233, repair: (stockPivots.MDVR?.rusak || 113) + (stockPivots.MDVR?.return_rma || 11), rusak: stockPivots.MDVR?.rusak || 113, return_rma: stockPivots.MDVR?.return_rma || 11, belum_bastm: stockPivots.MDVR?.belum_bastm || 0, pindahan: stockPivots.MDVR?.pindahan || 18 },
-      { key: 'SSD', name: 'SSD Storage Drive', icon: HardDrive, total: stockPivots.SSD?.total || 1179, installed: stockPivots.SSD?.terinstall || 818, stock: stockPivots.SSD?.onsite || 327, repair: (stockPivots.SSD?.rusak || 30) + (stockPivots.SSD?.return_rma || 0), rusak: stockPivots.SSD?.rusak || 30, return_rma: stockPivots.SSD?.return_rma || 0, belum_bastm: stockPivots.SSD?.belum_bastm || 4, pindahan: stockPivots.SSD?.pindahan || 533 },
-      { key: 'OBU', name: 'OBU Cabin Display', icon: Tv, total: stockPivots.OBU?.total || 1145, installed: stockPivots.OBU?.terinstall || 816, stock: stockPivots.OBU?.onsite || 245, repair: (stockPivots.OBU?.rusak || 84) + (stockPivots.OBU?.return_rma || 0), rusak: stockPivots.OBU?.rusak || 84, return_rma: stockPivots.OBU?.return_rma || 0, belum_bastm: stockPivots.OBU?.belum_bastm || 0, pindahan: stockPivots.OBU?.pindahan || 339 },
-      { key: 'PTT', name: 'PTT Radio Comm', icon: Radio, total: stockPivots.PTT?.total || 1191, installed: stockPivots.PTT?.terinstall || 804, stock: stockPivots.PTT?.onsite || 257, repair: (stockPivots.PTT?.rusak || 115) + (stockPivots.PTT?.return_rma || 0), rusak: stockPivots.PTT?.rusak || 115, return_rma: stockPivots.PTT?.return_rma || 0, belum_bastm: stockPivots.PTT?.belum_bastm || 15, pindahan: stockPivots.PTT?.pindahan || 697 },
-      { key: 'DOME', name: 'Dome CCTV Security', icon: Video, total: stockPivots.DOME?.total || 1020, installed: stockPivots.DOME?.terinstall || 818, stock: stockPivots.DOME?.onsite || 143, repair: (stockPivots.DOME?.rusak || 59) + (stockPivots.DOME?.return_rma || 0), rusak: stockPivots.DOME?.rusak || 59, return_rma: stockPivots.DOME?.return_rma || 0, belum_bastm: stockPivots.DOME?.belum_bastm || 0, pindahan: stockPivots.DOME?.pindahan || 460 },
-      { key: 'CANBUS', name: 'CAN-Bus Telemetry', icon: Cpu, total: stockPivots.CANBUS?.total || 105, installed: stockPivots.CANBUS?.terinstall || 5, stock: stockPivots.CANBUS?.onsite || 100, repair: 0, rusak: 0, return_rma: 0, belum_bastm: 0, pindahan: 0 }
+    const catDefs = [
+      { key: 'GPS', name: 'GPS Tracker', icon: Compass },
+      { key: 'DSM', name: 'DSM AI Fatigue Camera', icon: Eye },
+      { key: 'ADAS', name: 'ADAS Safety Camera', icon: ShieldCheck },
+      { key: 'MDVR', name: 'MDVR Video Box', icon: Video },
+      { key: 'SSD', name: 'SSD Storage Drive', icon: HardDrive },
+      { key: 'OBU', name: 'OBU Cabin Display', icon: Tv },
+      { key: 'PTT', name: 'PTT Radio Comm', icon: Radio },
+      { key: 'DOME', name: 'Dome CCTV Security', icon: Video },
+      { key: 'CANBUS', name: 'CAN-Bus Telemetry', icon: Cpu }
     ];
-    return specs;
-  }, [stockPivots]);
+    return catDefs.map((def) => {
+      const sp = stockPivots[def.key] || {};
+      const byCat = summary?.by_category?.[def.key.toLowerCase()] || {};
+      const terinstall = sp.terinstall ?? byCat.Terinstall ?? 0;
+      const terinstallNonBastm = sp.terinstall_non_bastm ?? byCat['Terinstall Belum Tercatat Dalam BASTM'] ?? 0;
+      const onsite = sp.onsite ?? byCat.Onsite ?? 0;
+      const stockNonBastm = sp.stock_non_bastm ?? byCat['Stock Belum Tercatat Dalam BASTM'] ?? 0;
+      const rusak = sp.rusak ?? byCat.Rusak ?? 0;
+      const returnRma = sp.return_rma ?? byCat.Return ?? 0;
+      const belumBastm = sp.belum_bastm ?? (terinstallNonBastm + stockNonBastm);
+      const total = sp.total ?? byCat.total ?? 0;
+      const pindahan = sp.pindahan ?? byCat.Pindahan ?? 0;
 
-  // Combined Mitra Breakdown across all 9 Stock Categories
+      return {
+        ...def,
+        total,
+        installed: terinstall + terinstallNonBastm,
+        terinstall,
+        terinstall_non_bastm: terinstallNonBastm,
+        stock: onsite + stockNonBastm,
+        onsite,
+        stock_non_bastm: stockNonBastm,
+        repair: rusak + returnRma,
+        rusak,
+        return_rma: returnRma,
+        belum_bastm: belumBastm,
+        pindahan
+      };
+    });
+  }, [stockPivots, summary]);
+
+  // Combined Mitra Breakdown across all 9 Stock Categories (100% from DB)
   const combinedMitraChartData = useMemo(() => {
     const mitraMap = {};
-    const order = ['AEK', 'RBT', 'BMT', 'GECL', 'KMB', 'BBS', 'MAV', 'BKAE', 'MMS', 'RAM', 'MVM', 'STOCK', 'RUSAK', 'RETURN'];
+    const order = ['AEK', 'BBS', 'BKAE', 'BMT', 'BUS', 'GECL', 'KMB', 'MAV', 'MMS', 'MVM', 'RAM', 'RBT', 'RETURN', 'RUSAK', 'STOCK'];
     order.forEach(m => {
       mitraMap[m] = { mitra: m, Terinstall: 0, Onsite: 0, Rusak: 0, Return: 0, Total: 0 };
     });
     Object.values(stockPivots).forEach((catPivot) => {
-      (catPivot.by_mitra || []).forEach((row) => {
+      const rows = catPivot.by_mitra || catPivot.rows || [];
+      rows.forEach((row) => {
         const m = row.mitra;
         if (!mitraMap[m]) {
           mitraMap[m] = { mitra: m, Terinstall: 0, Onsite: 0, Rusak: 0, Return: 0, Total: 0 };
         }
-        mitraMap[m].Terinstall += (row.terinstall || 0) + (row.belum_bastm && m !== 'STOCK' ? row.belum_bastm : 0);
-        mitraMap[m].Onsite += (row.onsite || 0) + (m === 'STOCK' ? (row.belum_bastm || 0) : 0);
-        mitraMap[m].Rusak += (row.rusak || 0);
-        mitraMap[m].Return += (row.return_rma || 0);
+        const ter = (row.terinstall ?? row.Terinstall ?? 0) + (row.terinstall_non_bastm ?? row['Terinstall Belum Tercatat Dalam BASTM'] ?? 0);
+        const ons = (row.onsite ?? row.Onsite ?? 0) + (row.stock_non_bastm ?? row['Stock Belum Tercatat Dalam BASTM'] ?? 0);
+        const rsk = row.rusak ?? row.Rusak ?? 0;
+        const ret = row.return_rma ?? row.Return ?? 0;
+        mitraMap[m].Terinstall += ter;
+        mitraMap[m].Onsite += ons;
+        mitraMap[m].Rusak += rsk;
+        mitraMap[m].Return += ret;
         mitraMap[m].Total += (row.total || 0);
       });
     });
     return Object.values(mitraMap).filter(r => r.Total > 0);
   }, [stockPivots]);
 
-  // Overall Status Pie Data (9 Stock Sheets)
+  // Overall Status Pie Data (9 Stock Sheets from DB)
   const overallPieData = useMemo(() => {
     const totTerinstall = categoryStatsList.reduce((acc, c) => acc + c.installed, 0);
     const totOnsite = categoryStatsList.reduce((acc, c) => acc + c.stock, 0);
@@ -480,10 +363,11 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
   }, [categoryStatsList]);
 
   const activeCategoryPivot = selectedCategory !== 'ALL' ? stockPivots[selectedCategory] : null;
+  const activeCategoryDates = selectedCategory !== 'ALL' ? (datePivots[selectedCategory] || activeCategoryPivot?.by_date || []) : [];
 
   return (
     <div className="space-y-6">
-      {/* ── Top Executive KPI Highlights (Real FAMOUS Data) ── */}
+      {/* ── Top Executive KPI Highlights (Real FAMOUS Data from DB) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Hardware Items */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs relative overflow-hidden group hover:border-red-400 transition-all">
@@ -494,11 +378,11 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold text-red-600 mt-2">
-            {summary?.total_items ? Number(summary.total_items).toLocaleString('id-ID') : '9.416'}
+            {Number(summary?.total_items || 0).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            Kategori Sensor &amp; Gateway
+            9 Kategori Sensor &amp; Gateway
           </div>
         </div>
 
@@ -511,11 +395,11 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-blue-700 mt-2">
-            {summary?.fleet_summary?.total_units ? Number(summary.fleet_summary.total_units).toLocaleString('id-ID') : '825'}
+            {Number(summary?.fleet_summary?.total_units || 0).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-blue-600 mt-1 flex items-center gap-1 font-medium">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            {summary?.fleet_summary?.optimal_units || 795} Unit Lengkap (8/8)
+            {Number(summary?.fleet_summary?.optimal_units || 0).toLocaleString('id-ID')} Unit Lengkap (8/8)
           </div>
         </div>
 
@@ -528,7 +412,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-purple-700 mt-2">
-            {summary?.total_pindahan ? Number(summary.total_pindahan).toLocaleString('id-ID') : '3.976'}
+            {Number(summary?.total_pindahan || 0).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-purple-600 mt-1 font-medium flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
@@ -545,7 +429,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-600 mt-2">
-            {summary?.by_status?.['Onsite'] ? Number(summary.by_status['Onsite']).toLocaleString('id-ID') : '2.028'}
+            {((summary?.by_status?.['Onsite'] || 0) + (summary?.by_status?.['Stock Belum Tercatat Dalam BASTM'] || 0)).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1 font-medium">
             Siap pasang / penggantian cepat di site
@@ -561,7 +445,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-rose-600 mt-2">
-            {((summary?.by_status?.['Rusak'] || 646) + (summary?.by_status?.['Return'] || 193)).toLocaleString('id-ID')}
+            {((summary?.by_status?.['Rusak'] || 0) + (summary?.by_status?.['Return'] || 0)).toLocaleString('id-ID')}
           </div>
           <div className="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1">
             <RotateCcw className="w-3.5 h-3.5" />
@@ -594,7 +478,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
           {categoryStatsList.map((cat) => {
             const Icon = cat.icon;
             const isSelected = selectedCategory === cat.key;
-            const pctInstalled = Math.round((cat.installed / cat.total) * 100);
+            const pctInstalled = cat.total > 0 ? Math.round((cat.installed / cat.total) * 100) : 0;
 
             return (
               <div
@@ -644,12 +528,12 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
               <BarChart3 className="w-4 h-4 text-red-600" />
               {selectedCategory === 'ALL'
                 ? 'Visualisasi Stock Komponen FAMOUS (9 Kategori Stock)'
-                : `${activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Distribusi Status & Mitra Hauling`}
+                : `${activeCategoryPivot?.title || `DATA ${selectedCategory}`} & STOCK ${selectedCategory} — Visualisasi Datasheet`}
             </h3>
             <p className="text-xs text-slate-500">
               {selectedCategory === 'ALL'
-                ? 'Rekapitulasi grafik dan pivot table khusus lembar Stock (GPS, DSM, ADAS, MDVR, SSD, OBU, PTT, DOME, CANBUS)'
-                : `Grafik perbandingan status komponen ${selectedCategory} per mitra hauling beserta tabel pivot resmi`}
+                ? 'Rekapitulasi grafik dan pivot table dari database untuk 9 lembar Stock (GPS, DSM, ADAS, MDVR, SSD, OBU, PTT, DOME, CANBUS)'
+                : `Grafik & Pivot Table resmi dari lembar 'Stock ${selectedCategory}' (COUNTA of Status ${selectedCategory})`}
             </p>
           </div>
 
@@ -697,7 +581,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                     <p className="text-[11px] text-slate-500">Klik batang grafik untuk melihat detail pivot kategori terkait</p>
                   </div>
                   <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700">
-                    Total: 9.415 Unit
+                    Total: {Number(summary?.total_items || 0).toLocaleString('id-ID')} Unit
                   </span>
                 </div>
                 <div className="h-[280px] w-full">
@@ -784,7 +668,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
                       Distribusi Perangkat per Mitra Hauling &amp; Gudang Stock
                     </h4>
-                    <p className="text-[11px] text-slate-500">Akumulasi COUNTA of Status dari 9 sheet Stock (AEK, RBT, BMT, GECL, KMB, BBS, MAV, BKAE, MMS, RAM, STOCK, RUSAK, RETURN)</p>
+                    <p className="text-[11px] text-slate-500">Akumulasi COUNTA of Status dari 9 sheet Stock (AEK, BBS, BKAE, BMT, GECL, KMB, MAV, MMS, MVM, RAM, RBT, RETURN, RUSAK, STOCK)</p>
                   </div>
                 </div>
                 <div className="h-[260px] w-full">
@@ -833,10 +717,10 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
                         className="hover:bg-white cursor-pointer transition-colors"
                       >
                         <td className="py-1.5 px-2 font-bold text-slate-800">Stock {row.key}</td>
-                        <td className="py-1.5 px-2 text-right text-blue-700 font-semibold">{(row.stock + (row.key === 'GPS' ? 10 : row.key === 'SSD' ? 4 : row.key === 'PTT' ? 2 : 0)).toLocaleString('id-ID')}</td>
-                        <td className="py-1.5 px-2 text-right text-emerald-700 font-semibold">{(row.installed + (row.key === 'PTT' ? 13 : 0)).toLocaleString('id-ID')}</td>
-                        <td className="py-1.5 px-2 text-right text-rose-600">{row.rusak}</td>
-                        <td className="py-1.5 px-2 text-right text-amber-600">{row.return_rma}</td>
+                        <td className="py-1.5 px-2 text-right text-blue-700 font-semibold">{row.stock.toLocaleString('id-ID')}</td>
+                        <td className="py-1.5 px-2 text-right text-emerald-700 font-semibold">{row.installed.toLocaleString('id-ID')}</td>
+                        <td className="py-1.5 px-2 text-right text-rose-600">{row.rusak.toLocaleString('id-ID')}</td>
+                        <td className="py-1.5 px-2 text-right text-amber-600">{row.return_rma.toLocaleString('id-ID')}</td>
                         <td className="py-1.5 px-2 text-right font-black text-slate-900">{row.total.toLocaleString('id-ID')}</td>
                       </tr>
                     ))}
@@ -846,136 +730,247 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             </div>
           </div>
         ) : (
-          /* Single Category Stock View (Exact replica of DATA <KATEGORI> chart & Pivot Table in Google Sheets) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
-                    {activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Grafik per Mitra Hauling
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Visualisasi dari lembar &apos;Stock {selectedCategory}&apos; (COUNTA of Status {selectedCategory})
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] font-mono">
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-                    Terinstall: {activeCategoryPivot?.terinstall || 0}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">
-                    Onsite: {activeCategoryPivot?.onsite || 0}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">
-                    Rusak/Return: {(activeCategoryPivot?.rusak || 0) + (activeCategoryPivot?.return_rma || 0)}
-                  </span>
-                </div>
+          /* Single Category Stock View (Both Pivot 1: DATA <KATEGORI> & Pivot 2: STOCK <KATEGORI> from Google Sheets) */
+          <div className="space-y-4">
+            {/* Sub-toggle between Grafik 1 (DATA <KATEGORI> per Mitra) & Grafik 2 (STOCK <KATEGORI> per Tanggal Onsite) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-3.5 py-2.5 rounded-2xl border border-slate-200/80">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-mono font-bold text-slate-700 uppercase">Mode Grafik Datasheet:</span>
+                <button
+                  type="button"
+                  onClick={() => setSingleCatChartMode('mitra')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    singleCatChartMode === 'mitra'
+                      ? 'bg-red-600 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
+                  }`}
+                >
+                  Grafik 1: DATA {selectedCategory} (Per Mitra Hauling)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSingleCatChartMode('tanggal')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    singleCatChartMode === 'tanggal'
+                      ? 'bg-red-600 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
+                  }`}
+                >
+                  Grafik 2: STOCK {selectedCategory} (Per Tanggal Onsite/Instal)
+                </button>
               </div>
 
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={activeCategoryPivot?.by_mitra || []}
-                    margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
-                    onClick={(state) => {
-                      if (state?.activeLabel) {
-                        setSelectedMitra(state.activeLabel);
-                        setActiveView('hardware');
-                      }
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="mitra" tick={{ fontSize: 10, fontWeight: 700, fill: '#334155' }} interval={0} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
-                    <Bar dataKey="onsite" name="Onsite" fill="#3b82f6" radius={[3, 3, 0, 0]} cursor="pointer" />
-                    <Bar dataKey="terinstall" name="Terinstall" fill="#10b981" radius={[3, 3, 0, 0]} cursor="pointer" />
-                    <Bar dataKey="rusak" name="Rusak" fill="#ef4444" radius={[3, 3, 0, 0]} cursor="pointer" />
-                    {activeCategoryPivot?.return_rma > 0 && (
-                      <Bar dataKey="return_rma" name="Return" fill="#f59e0b" radius={[3, 3, 0, 0]} cursor="pointer" />
-                    )}
-                    {activeCategoryPivot?.belum_bastm > 0 && (
-                      <Bar dataKey="belum_bastm" name="Belum Tercatat BASTM" fill="#64748b" radius={[3, 3, 0, 0]} cursor="pointer" />
-                    )}
-                    <Bar dataKey="total" name="Grand Total" fill="#dc2626" radius={[3, 3, 0, 0]} cursor="pointer" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Pivot Table for the Selected Stock Sheet */}
-            <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
-              <div className="flex items-center justify-between mb-2.5">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
-                    COUNTA of Status {selectedCategory}
-                  </h4>
-                  <p className="text-[10px] text-slate-500">Klik baris mitra untuk memfilter tabel perangkat di bawah</p>
-                </div>
-                <span className="text-[11px] font-mono font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
-                  Total: {activeCategoryPivot?.total?.toLocaleString('id-ID')}
+              <div className="flex items-center gap-2 text-[11px] font-mono">
+                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                  Terinstall: {(activeCategoryPivot?.terinstall || 0) + (activeCategoryPivot?.terinstall_non_bastm || 0)}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">
+                  Onsite: {(activeCategoryPivot?.onsite || 0) + (activeCategoryPivot?.stock_non_bastm || 0)}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">
+                  Rusak/Return: {(activeCategoryPivot?.rusak || 0) + (activeCategoryPivot?.return_rma || 0)}
                 </span>
               </div>
-
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
-                    <th className="py-1.5 px-2">Mitra Hauling</th>
-                    <th className="py-1.5 px-2 text-right text-blue-700">Onsite</th>
-                    <th className="py-1.5 px-2 text-right text-rose-700">Rusak</th>
-                    {activeCategoryPivot?.return_rma > 0 && (
-                      <th className="py-1.5 px-2 text-right text-amber-700">Return</th>
-                    )}
-                    {activeCategoryPivot?.belum_bastm > 0 && (
-                      <th className="py-1.5 px-2 text-right text-slate-600">Non-BASTM</th>
-                    )}
-                    <th className="py-1.5 px-2 text-right text-emerald-700">Terinstall</th>
-                    <th className="py-1.5 px-2 text-right font-bold text-slate-900">Grand Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/60 font-mono text-[11px]">
-                  {(activeCategoryPivot?.by_mitra || []).map((r) => (
-                    <tr
-                      key={r.mitra}
-                      onClick={() => {
-                        setSelectedMitra(r.mitra);
-                        setActiveView('hardware');
-                      }}
-                      className={`hover:bg-white cursor-pointer transition-colors ${
-                        selectedMitra === r.mitra ? 'bg-red-50/70 font-bold' : ''
-                      }`}
-                    >
-                      <td className="py-1.5 px-2 font-bold text-slate-800">{r.mitra}</td>
-                      <td className="py-1.5 px-2 text-right text-blue-700">{r.onsite || ''}</td>
-                      <td className="py-1.5 px-2 text-right text-rose-600">{r.rusak || ''}</td>
-                      {activeCategoryPivot?.return_rma > 0 && (
-                        <td className="py-1.5 px-2 text-right text-amber-600">{r.return_rma || ''}</td>
-                      )}
-                      {activeCategoryPivot?.belum_bastm > 0 && (
-                        <td className="py-1.5 px-2 text-right text-slate-600">{r.belum_bastm || ''}</td>
-                      )}
-                      <td className="py-1.5 px-2 text-right text-emerald-700">{r.terinstall || ''}</td>
-                      <td className="py-1.5 px-2 text-right font-bold text-slate-900">{r.total}</td>
-                    </tr>
-                  ))}
-                  <tr className="bg-slate-200/70 font-black text-slate-900 border-t-2 border-slate-300">
-                    <td className="py-2 px-2">Grand Total</td>
-                    <td className="py-2 px-2 text-right text-blue-800">{activeCategoryPivot?.onsite || 0}</td>
-                    <td className="py-2 px-2 text-right text-rose-700">{activeCategoryPivot?.rusak || 0}</td>
-                    {activeCategoryPivot?.return_rma > 0 && (
-                      <td className="py-2 px-2 text-right text-amber-800">{activeCategoryPivot?.return_rma || 0}</td>
-                    )}
-                    {activeCategoryPivot?.belum_bastm > 0 && (
-                      <td className="py-2 px-2 text-right text-slate-800">{activeCategoryPivot?.belum_bastm || 0}</td>
-                    )}
-                    <td className="py-2 px-2 text-right text-emerald-800">{activeCategoryPivot?.terinstall || 0}</td>
-                    <td className="py-2 px-2 text-right text-red-700">{activeCategoryPivot?.total || 0}</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
+
+            {singleCatChartMode === 'mitra' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="mb-3">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                      {activeCategoryPivot?.title || `DATA ${selectedCategory}`} — Grafik per Mitra Hauling (Kolom O:V)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Visualisasi Pivot Table 1 dari lembar &apos;Stock {selectedCategory}&apos; (COUNTA of Status {selectedCategory})
+                    </p>
+                  </div>
+
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={activeCategoryPivot?.by_mitra || activeCategoryPivot?.rows || []}
+                        margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
+                        onClick={(state) => {
+                          if (state?.activeLabel) {
+                            setSelectedMitra(state.activeLabel);
+                            setActiveView('hardware');
+                          }
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis dataKey="mitra" tick={{ fontSize: 10, fontWeight: 700, fill: '#334155' }} interval={0} />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                        <Bar dataKey="onsite" name="Onsite" fill="#3b82f6" radius={[3, 3, 0, 0]} cursor="pointer" />
+                        <Bar dataKey="terinstall" name="Terinstall" fill="#10b981" radius={[3, 3, 0, 0]} cursor="pointer" />
+                        <Bar dataKey="rusak" name="Rusak" fill="#ef4444" radius={[3, 3, 0, 0]} cursor="pointer" />
+                        {activeCategoryPivot?.return_rma > 0 && (
+                          <Bar dataKey="return_rma" name="Return" fill="#f59e0b" radius={[3, 3, 0, 0]} cursor="pointer" />
+                        )}
+                        {activeCategoryPivot?.belum_bastm > 0 && (
+                          <Bar dataKey="belum_bastm" name="Belum Tercatat BASTM" fill="#64748b" radius={[3, 3, 0, 0]} cursor="pointer" />
+                        )}
+                        <Bar dataKey="total" name="Grand Total" fill="#dc2626" radius={[3, 3, 0, 0]} cursor="pointer" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Pivot Table 1 for the Selected Stock Sheet */}
+                <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                        COUNTA of Status {selectedCategory} (Mitra Hauling)
+                      </h4>
+                      <p className="text-[10px] text-slate-500">Klik baris mitra untuk memfilter tabel perangkat di bawah</p>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
+                      Total: {Number(activeCategoryPivot?.total || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
+                        <th className="py-1.5 px-2">Mitra Hauling</th>
+                        <th className="py-1.5 px-2 text-right text-blue-700">Onsite</th>
+                        <th className="py-1.5 px-2 text-right text-rose-700">Rusak</th>
+                        {activeCategoryPivot?.return_rma > 0 && (
+                          <th className="py-1.5 px-2 text-right text-amber-700">Return</th>
+                        )}
+                        {activeCategoryPivot?.belum_bastm > 0 && (
+                          <th className="py-1.5 px-2 text-right text-slate-600">Non-BASTM</th>
+                        )}
+                        <th className="py-1.5 px-2 text-right text-emerald-700">Terinstall</th>
+                        <th className="py-1.5 px-2 text-right font-bold text-slate-900">Grand Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/60 font-mono text-[11px]">
+                      {(activeCategoryPivot?.by_mitra || activeCategoryPivot?.rows || []).map((r) => (
+                        <tr
+                          key={r.mitra}
+                          onClick={() => {
+                            setSelectedMitra(r.mitra);
+                            setActiveView('hardware');
+                          }}
+                          className={`hover:bg-white cursor-pointer transition-colors ${
+                            selectedMitra === r.mitra ? 'bg-red-50/70 font-bold' : ''
+                          }`}
+                        >
+                          <td className="py-1.5 px-2 font-bold text-slate-800">{r.mitra}</td>
+                          <td className="py-1.5 px-2 text-right text-blue-700">{r.onsite || ''}</td>
+                          <td className="py-1.5 px-2 text-right text-rose-600">{r.rusak || ''}</td>
+                          {activeCategoryPivot?.return_rma > 0 && (
+                            <td className="py-1.5 px-2 text-right text-amber-600">{r.return_rma || ''}</td>
+                          )}
+                          {activeCategoryPivot?.belum_bastm > 0 && (
+                            <td className="py-1.5 px-2 text-right text-slate-600">{r.belum_bastm || ''}</td>
+                          )}
+                          <td className="py-1.5 px-2 text-right text-emerald-700">{r.terinstall || ''}</td>
+                          <td className="py-1.5 px-2 text-right font-bold text-slate-900">{r.total}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-slate-200/70 font-black text-slate-900 border-t-2 border-slate-300">
+                        <td className="py-2 px-2">Grand Total</td>
+                        <td className="py-2 px-2 text-right text-blue-800">{activeCategoryPivot?.onsite || 0}</td>
+                        <td className="py-2 px-2 text-right text-rose-700">{activeCategoryPivot?.rusak || 0}</td>
+                        {activeCategoryPivot?.return_rma > 0 && (
+                          <td className="py-2 px-2 text-right text-amber-800">{activeCategoryPivot?.return_rma || 0}</td>
+                        )}
+                        {activeCategoryPivot?.belum_bastm > 0 && (
+                          <td className="py-2 px-2 text-right text-slate-800">{activeCategoryPivot?.belum_bastm || 0}</td>
+                        )}
+                        <td className="py-2 px-2 text-right text-emerald-800">{activeCategoryPivot?.terinstall || 0}</td>
+                        <td className="py-2 px-2 text-right text-red-700">{activeCategoryPivot?.total || 0}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              /* Pivot Table 2 & Chart 2: STOCK <KATEGORI> by Tanggal Onsite (Kolom Z:AI in Datasheet) */
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className="lg:col-span-7 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="mb-3">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                      STOCK {selectedCategory} — Grafik per Tanggal Onsite / Instal (Kolom Z:AI)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Visualisasi Pivot Table 2 dari lembar &apos;Stock {selectedCategory}&apos; berdasarkan Tanggal Kedatangan Onsite
+                    </p>
+                  </div>
+
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={activeCategoryDates}
+                        margin={{ top: 10, right: 12, left: -10, bottom: 25 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis
+                          dataKey="tanggal_onsite"
+                          angle={-25}
+                          textAnchor="end"
+                          height={50}
+                          tick={{ fontSize: 9.5, fontWeight: 700, fill: '#334155' }}
+                        />
+                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600 }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 700, paddingTop: '6px' }} />
+                        <Bar dataKey="onsite" name="Onsite" stackId="dt" fill="#3b82f6" />
+                        <Bar dataKey="terinstall" name="Terinstall" stackId="dt" fill="#10b981" />
+                        <Bar dataKey="rusak" name="Rusak" stackId="dt" fill="#ef4444" />
+                        <Bar dataKey="return_rma" name="Return" stackId="dt" fill="#f59e0b" />
+                        <Bar dataKey="belum_bastm" name="Non-BASTM" stackId="dt" fill="#64748b" radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 overflow-x-auto max-h-[360px] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+                        Pivot Tanggal Onsite ({selectedCategory})
+                      </h4>
+                      <p className="text-[10px] text-slate-500">Rekapitulasi batch kedatangan &amp; status perangkat</p>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
+                      Total: {Number(activeCategoryPivot?.total || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="sticky top-0 bg-slate-100">
+                      <tr className="border-b border-slate-200 text-[10px] font-mono uppercase text-slate-500">
+                        <th className="py-1.5 px-2">Tanggal Onsite</th>
+                        <th className="py-1.5 px-2 text-right text-blue-700">Onsite</th>
+                        <th className="py-1.5 px-2 text-right text-emerald-700">Terinstall</th>
+                        <th className="py-1.5 px-2 text-right text-rose-700">Rusak</th>
+                        <th className="py-1.5 px-2 text-right font-bold text-slate-900">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/60 font-mono text-[11px]">
+                      {activeCategoryDates.map((d) => (
+                        <tr key={d.tanggal_onsite} className="hover:bg-white">
+                          <td className="py-1.5 px-2 font-bold text-slate-800">{d.tanggal_onsite}</td>
+                          <td className="py-1.5 px-2 text-right text-blue-700">{(d.onsite || 0) + (d.belum_bastm || 0) || ''}</td>
+                          <td className="py-1.5 px-2 text-right text-emerald-700">{d.terinstall || ''}</td>
+                          <td className="py-1.5 px-2 text-right text-rose-600">{(d.rusak || 0) + (d.return_rma || 0) || ''}</td>
+                          <td className="py-1.5 px-2 text-right font-bold text-slate-900">{d.total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -993,7 +988,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <Truck className="w-4 h-4 text-blue-600" />
-            <span>Peta Status Armada Truk (825 Unit)</span>
+            <span>Peta Status Armada Truk ({Number(summary?.fleet_summary?.total_units || 0).toLocaleString('id-ID')} Unit)</span>
           </button>
 
           <button
@@ -1005,7 +1000,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <Boxes className="w-4 h-4 text-red-600" />
-            <span>Master Hardware Real (9.416 Item)</span>
+            <span>Master Hardware Real ({Number(summary?.total_items || 0).toLocaleString('id-ID')} Item)</span>
           </button>
 
           <button
@@ -1017,7 +1012,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <ArrowRightLeft className="w-4 h-4 text-purple-600" />
-            <span>Unit Pindahan ({summary?.total_pindahan ? Number(summary.total_pindahan).toLocaleString('id-ID') : '3.976'})</span>
+            <span>Unit Pindahan ({Number(summary?.total_pindahan || 0).toLocaleString('id-ID')})</span>
           </button>
 
           <button
@@ -1029,7 +1024,7 @@ export default function FamousInteractiveDashboard({ onOpenDocuments, onOpenMos 
             }`}
           >
             <AlertTriangle className="w-4 h-4 text-rose-600" />
-            <span>Unit Rusak &amp; Retur Garansi ({((summary?.by_status?.['Rusak'] || 646) + (summary?.by_status?.['Return'] || 193)).toLocaleString('id-ID')})</span>
+            <span>Unit Rusak &amp; Retur Garansi ({((summary?.by_status?.['Rusak'] || 0) + (summary?.by_status?.['Return'] || 0)).toLocaleString('id-ID')})</span>
           </button>
         </div>
 
