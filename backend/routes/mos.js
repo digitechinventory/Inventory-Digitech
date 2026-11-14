@@ -89,6 +89,24 @@ export const DOCUMENT_TEMPLATES = {
       { id: 'r3', name: 'LOADCELL INTERCOMP', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '92285794', qty_received: 0, qty_do: 1, condition: 'Baru', warranty: '550k weighing cycle', notes: 'Barang kondisi baik' },
       { id: 'r4', name: 'LOADCELL INTERCOMP', spec: 'INTERCOMP Loadcell double ended shear beam', sn: '91913138', qty_received: 0, qty_do: 1, condition: 'Baru', warranty: '550k weighing cycle', notes: 'Barang kondisi baik' }
     ]
+  },
+  MR: {
+    id: 'tpl-mr-007',
+    type: 'MR',
+    code: '007_SITE_MR',
+    title: 'MATERIAL REQUEST & PENGELUARAN GUDANG',
+    subtitle: 'SURAT PERMINTAAN MATERIAL & PENGAMBILAN SUKU CADANG SITE',
+    defaultOrientation: 'landscape',
+    defaultSite: 'Pit South Site BIB-02',
+    defaultReceiver: 'Team Mekanik Pit',
+    defaultDocNumber: '007/SITE/MR/MNTOA/BIBOA/XI/2026',
+    defaultDate: new Date().toISOString().split('T')[0],
+    defaultCondition: 'Baru / Siap Pakai',
+    columns: [
+      'No', 'Nama Barang / Material', 'Spesifikasi / Part No.', 'Serial Number',
+      'Qty Diminta', 'Qty Tersedia', 'Kondisi Barang', 'Rak / Bin', 'Keterangan'
+    ],
+    defaultItems: []
   }
 };
 
@@ -131,7 +149,7 @@ const normalizeMosDoc = (d) => {
     id: d.id,
     doc_number: d.doc_number || d.mos_number || d.id,
     mos_number: d.mos_number || d.doc_number,
-    template_type: d.template_type || sigs.template_type || (d.doc_number?.includes('MDT') ? 'MDT' : d.doc_number?.includes('MRP') ? 'MRP' : 'MOS'),
+    template_type: d.template_type || sigs.template_type || (d.doc_number?.includes('MDT') ? 'MDT' : d.doc_number?.includes('MRP') ? 'MRP' : d.doc_number?.includes('/MR/') ? 'MR' : 'MOS'),
     title: d.title || `Dokumen Approval ${d.doc_number || d.id}`,
     subtitle: d.subtitle || sigs.subtitle || '',
     vendor_name: d.vendor_name || 'PT Trakindo Utama',
@@ -805,18 +823,19 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
 
     // Auto-commit inventory ledger if completed
     if (nextStatus === 'completed' && doc.items?.length > 0) {
+      const isMaterialRequest = doc.template_type === 'MR' || doc.doc_number?.includes('/MR/');
       for (const item of doc.items) {
-        const qtyReceived = Number(item.qty_received || item.qty || 1);
+        const qtyVal = Number(item.qty_received || item.qty || 1);
         try {
           await supabase.from('inventory_ledger').insert({
             item_name: item.name || item.item_name,
             part_number: item.spec || item.part_number,
-            bin_location: 'R-A01',
-            qty_change: qtyReceived,
-            transaction_type: 'MOS_IN',
+            bin_location: item.bin_location || 'R-A01',
+            qty_change: isMaterialRequest ? -Math.abs(qtyVal) : qtyVal,
+            transaction_type: isMaterialRequest ? 'MR_OUT' : 'MOS_IN',
             reference_doc_id: doc.doc_number,
             notes: `Auto-commit approval ttd (${doc.doc_number})`,
-            performed_by: req.user.full_name,
+            performed_by: doc.approval_maker_name || req.user.full_name,
             created_at: new Date().toISOString()
           });
         } catch {}

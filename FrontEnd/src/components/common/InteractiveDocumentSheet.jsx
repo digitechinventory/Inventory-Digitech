@@ -22,7 +22,8 @@ import {
   Check,
   FileText,
   Image as ImageIcon,
-  Edit3
+  Edit3,
+  PenTool
 } from 'lucide-react';
 import api from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -50,7 +51,7 @@ export default function InteractiveDocumentSheet({
 }) {
   const { addToast } = useToast();
   const doc = documentData || {};
-  const isCustom = doc.template_type === 'CUSTOM' || (!['MOS', 'MDT', 'MRP'].includes(doc.template_type) && doc.pages?.length > 0);
+  const isCustom = doc.template_type === 'CUSTOM' || (!['MOS', 'MDT', 'MRP', 'MR'].includes(doc.template_type) && doc.pages?.length > 0);
   const tplType = doc.template_type || 'MOS';
 
   // Orientation: 'landscape' or 'portrait'
@@ -606,6 +607,8 @@ export default function InteractiveDocumentSheet({
                         ? 'MATERIAL DISMANTLING'
                         : tplType === 'MRP'
                         ? 'MATERIAL REPLACEMENT'
+                        : tplType === 'MR'
+                        ? 'MATERIAL REQUEST'
                         : 'MATERIAL ON SITE'}
                     </div>
                     <div className="text-[11px] font-mono text-slate-600 mt-1">
@@ -927,29 +930,56 @@ export default function InteractiveDocumentSheet({
                   : 'border-2 border-dashed border-blue-500 bg-blue-50/30 ring-4 ring-blue-500/20 animate-pulse'
               }`}
             >
-              {/* Header Box (Purely Functional Status - NO PERSON NAME) */}
-              <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-200/60 text-[10px]">
-                <span className="font-bold flex items-center gap-1">
+              {/* Header Box (Usign Drag & Resize Helper) */}
+              <div className="flex items-center justify-between gap-1 mb-1 pb-1 border-b border-slate-200/60 text-[10px]">
+                <span className="font-bold flex items-center gap-1 min-w-0 truncate">
                   {!isPositionValidForRole ? (
                     <>
-                      <AlertTriangle className="w-3 h-3 text-red-600" />
-                      <span className="text-red-700">Area Tanda Tangan</span>
+                      <AlertTriangle className="w-3 h-3 text-red-600 shrink-0" />
+                      <span className="text-red-700 truncate">Geser ke {getSlotLabel(userAllowedSlot)}</span>
                     </>
                   ) : isPositionLocked ? (
                     <>
-                      <Lock className="w-3 h-3 text-emerald-600" />
-                      <span className="text-emerald-700">Posisi Terkunci</span>
+                      <Lock className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span className="text-emerald-700 truncate">Posisi Terkunci</span>
                     </>
                   ) : (
                     <>
-                      <Move className="w-3 h-3 text-blue-600" />
-                      <span className="text-blue-700">Geser ke Kolom TTD</span>
+                      <Move className="w-3 h-3 text-blue-600 shrink-0" />
+                      <span className="text-blue-700 truncate">Atur di Nama Anda</span>
                     </>
                   )}
                 </span>
-                <span className="font-mono text-slate-400">
-                  {Math.round(sigPosition.xPercent)}%, {Math.round(sigPosition.yPercent)}%
-                </span>
+                {!isPositionLocked && (
+                  <div
+                    className="flex items-center gap-0.5 shrink-0"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSigWidth((w) => Math.max(96, w - 16));
+                      }}
+                      className="w-4 h-4 rounded bg-white border border-slate-300 text-slate-700 font-bold leading-none flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                      title="Perkecil ukuran tanda tangan"
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSigWidth((w) => Math.min(260, w + 16));
+                      }}
+                      className="w-4 h-4 rounded bg-white border border-slate-300 text-slate-700 font-bold leading-none flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                      title="Perbesar ukuran tanda tangan"
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Transparent Signature Ink Preview Only (NO NAME TEXT WHATSOEVER) */}

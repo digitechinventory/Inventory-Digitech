@@ -38,6 +38,7 @@ export default function MOSPage() {
   const [searchParams] = useSearchParams();
   const projectParam = searchParams.get('project');
   const actionParam = searchParams.get('action');
+  const docIdParam = searchParams.get('doc');
 
   // Active view: 'waiting_list' | 'sheet'
   const [activeView, setActiveView] = useState('waiting_list');
@@ -100,12 +101,21 @@ export default function MOSPage() {
     setUserSignature(newSigDataUrl);
   };
 
-  // Auto-select first document if available so sheet view is always ready
+  // Auto-select document from ?doc=<id> query param or default first document
   useEffect(() => {
-    if (!selectedDocument && documents.length > 0) {
+    if (documents.length === 0) return;
+    if (docIdParam) {
+      const target = documents.find((d) => String(d.id) === String(docIdParam));
+      if (target) {
+        setSelectedDocument(target);
+        setActiveView('sheet');
+        return;
+      }
+    }
+    if (!selectedDocument) {
       setSelectedDocument(documents[0]);
     }
-  }, [documents, selectedDocument]);
+  }, [documents, selectedDocument, docIdParam]);
 
   // Open Document Sheet
   const handleOpenDocument = (doc) => {
