@@ -362,11 +362,11 @@ export default function IronNestSidebar({
               position: 'absolute',
               top: 0,
               left: 0,
-              width: isCollapsed ? '110px' : '155px',
-              height: isCollapsed ? '110px' : '155px',
+              width: isCollapsed ? '100px' : '116px',
+              height: isCollapsed ? '100px' : '116px',
               pointerEvents: 'none',
               zIndex: 1,
-              opacity: 0.95,
+              opacity: 0.9,
             }}
           >
             <svg viewBox="-5 -5 160 160" style={{ width: '100%', height: '100%', display: 'block' }}>
@@ -405,21 +405,21 @@ export default function IronNestSidebar({
                 borderBottom: '1px solid rgba(226,232,240,0.6)',
               }}
               className={`flex items-center justify-between transition-all ${
-                isCollapsed ? 'px-2 pt-11 pb-3 flex-col gap-2' : 'px-4 pt-12 pb-4'
+                isCollapsed ? 'px-2 pt-11 pb-3 flex-col gap-2' : 'px-3.5 pt-11 pb-3.5 gap-2'
               }`}
             >
               {isCollapsed ? (
-                /* Collapsed: emblem only with white container */
+                /* Collapsed: emblem only with crisp white badge */
                 <div className="flex flex-col items-center gap-2 w-full">
                   <NavLink
-                    to="/dashboard"
-                    className="p-1.5 rounded-xl bg-white shadow-sm border border-slate-200/80 hover:bg-red-50 transition-all flex items-center justify-center relative z-20"
+                    to={role === 'Superadmin' ? '/overview' : '/dashboard'}
+                    className="p-1.5 rounded-xl bg-white shadow-sm border border-red-100 hover:bg-red-50 transition-all flex items-center justify-center relative z-20"
                     title="Digitech IMS"
                   >
                     <img
                       src="/digitech-emblem.png"
                       alt="Digitech"
-                      className="h-8 w-8 object-contain drop-shadow-2xs"
+                      className="h-8 w-8 object-contain"
                     />
                   </NavLink>
                   <button
@@ -432,50 +432,45 @@ export default function IronNestSidebar({
                   </button>
                 </div>
               ) : (
-                /* Expanded: logo + text + collapse button */
+                /* Expanded: single clean emblem badge over Mega Mendung + crisp typography on clean white */
                 <>
                   <NavLink
-                    to="/dashboard"
-                    className="flex items-center gap-2.5 group min-w-0 bg-white/95 backdrop-blur-md pl-2.5 pr-4 py-1.5 rounded-2xl shadow-sm border border-white/90 ring-1 ring-slate-900/5 relative z-20"
+                    to={role === 'Superadmin' ? '/overview' : '/dashboard'}
+                    className="flex items-center gap-2.5 group flex-1 min-w-0 relative z-20"
                   >
-                    {/* Logo with crisp borderless container */}
-                    <div
-                      style={{
-                        background: '#FFFFFF',
-                        borderRadius: '10px',
-                        padding: '3px',
-                        boxShadow: '0 2px 6px rgba(15,23,42,0.08)',
-                        flexShrink: 0,
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-xl bg-white p-1.5 shadow-[0_4px_12px_rgba(185,28,28,0.16)] border border-red-100/90 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
                       <img
                         src="/digitech-emblem.png"
                         alt="Digitech"
-                        style={{ height: '32px', width: '32px', objectFit: 'contain', display: 'block' }}
-                        className="transition-transform group-hover:scale-105"
+                        className="w-full h-full object-contain block"
                       />
                     </div>
-                    {/* Brand text */}
                     <div className="flex flex-col justify-center min-w-0">
                       <span
-                        style={{ lineHeight: 1.1 }}
-                        className="text-[14px] font-black tracking-wider text-slate-950 group-hover:text-red-700 transition-colors uppercase"
+                        style={{
+                          lineHeight: 1.05,
+                          textShadow: '0 1px 8px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.95)'
+                        }}
+                        className="text-[15px] font-black tracking-wider text-slate-950 group-hover:text-red-700 transition-colors uppercase"
                       >
                         DIGITECH
                       </span>
                       <span
-                        style={{ lineHeight: 1.2, marginTop: '2px' }}
-                        className="text-[9px] font-extrabold text-red-600 tracking-tight whitespace-nowrap leading-tight"
+                        style={{
+                          lineHeight: 1.2,
+                          textShadow: '0 1px 6px rgba(255,255,255,0.95)'
+                        }}
+                        className="text-[9.5px] font-bold text-red-600 tracking-tight truncate mt-0.5"
                       >
-                        Inventory Management System
+                        Inventory Management
                       </span>
                     </div>
                   </NavLink>
 
-                  <div className="flex items-center gap-1 shrink-0 ml-1 relative z-20">
+                  <div className="flex items-center shrink-0 relative z-20">
                     <button
                       onClick={onToggleCollapse}
-                      className="hidden lg:flex p-1.5 rounded-xl bg-white/95 text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition-all cursor-pointer"
+                      className="hidden lg:flex p-1.5 rounded-xl bg-white text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition-all cursor-pointer"
                       title="Ciutkan Menu"
                       aria-label="Collapse sidebar"
                     >
