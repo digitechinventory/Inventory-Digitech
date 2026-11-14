@@ -52,7 +52,7 @@ export async function exportStyledExcel({
   sections = []
 }) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'PT Digitech - Inventory Management System';
+  workbook.creator = 'Digital and Technology Solutions (DigiTech) Division - Golden Energy Mines (GEMS)';
   workbook.created = new Date();
 
   const totalCols = Math.max(columns.length, 6);
@@ -203,3 +203,4 @@ export async function exportStyledExcel({
   const buffer = await workbook.xlsx.writeBuffer();
   triggerDownload(buffer, filename);
 }
+

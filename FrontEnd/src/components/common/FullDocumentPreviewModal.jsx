@@ -678,7 +678,7 @@ export default function FullDocumentPreviewModal({
               {/* ── DOCUMENT FOOTER ─────── */}
               <div className="border-t border-slate-200 pt-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-slate-500 mt-6">
                 <div>
-                  PT Digitech &bull; Inventory Management System
+                  DigiTech Division &mdash; Golden Energy Mines (GEMS) &bull; Inventory Management System
                 </div>
                 <div className="text-right">
                   No. Dokumen: {doc.doc_number || '007/MVM-BIB/VII/2024'} &bull; Halaman 1 dari 1

@@ -42,8 +42,8 @@ const getTransporter = () => {
 };
 
 /**
- * Header Email Resmi PT Digitech
- * Kop surat elektronik dengan emblem resmi Digitech + Inventory Management System.
+ * Header Email Resmi Digital and Technology Solutions (DigiTech) Division - Golden Energy Mines (GEMS)
+ * Kop surat elektronik dengan emblem resmi DigiTech + Inventory Management System.
  */
 const getEmailHeader = (subtitle = 'Pemberitahuan Sistem') => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 2px solid #b91c1c; padding-bottom: 16px; margin-bottom: 24px;">
@@ -73,13 +73,13 @@ const getEmailHeader = (subtitle = 'Pemberitahuan Sistem') => `
 `;
 
 /**
- * Footer Email Resmi PT Digitech
+ * Footer Email Resmi Digital and Technology Solutions (DigiTech) Division - Golden Energy Mines (GEMS)
  */
 const getEmailFooter = (extra = 'Dokumen & pemberitahuan elektronik resmi operasional gudang dan site.') => `
   <div style="border-top: 1px solid #e2e8f0; margin-top: 28px; padding-top: 16px; font-size: 11px; color: #64748b; text-align: center; font-family: Arial, sans-serif; line-height: 1.6;">
-    <strong style="color: #0f172a;">PT Digitech &bull; Inventory Management System</strong><br/>
+    <strong style="color: #0f172a;">Digital and Technology Solutions (DigiTech) Division &bull; Golden Energy Mines (GEMS)</strong><br/>
     <span>${extra}</span><br/>
-    <span style="color: #94a3b8; font-size: 10px;">&copy; ${new Date().getFullYear()} PT Digitech. Hak cipta dilindungi.</span>
+    <span style="color: #94a3b8; font-size: 10px;">&copy; ${new Date().getFullYear()} DigiTech Division &mdash; Golden Energy Mines (GEMS). Hak cipta dilindungi.</span>
   </div>
 `;
 
@@ -160,7 +160,7 @@ export const sendActivationEmail = async (email, fullName, role, company) => {
       Pengajuan akun Anda pada sistem <strong>Digitech Inventory Management System</strong> telah disetujui oleh administrator dan saat ini berstatus aktif.
     </p>
     ${buildKvTable([
-      ['Perusahaan / Mitra', company || 'PT Digitech'],
+      ['Divisi / Perusahaan', company || 'DigiTech Division — Golden Energy Mines (GEMS)'],
       ['Peran Akses', `<strong style="color: #b91c1c;">${role || 'User'}</strong>`],
       ['Status Akun', '<strong style="color: #15803d;">Aktif</strong>']
     ])}

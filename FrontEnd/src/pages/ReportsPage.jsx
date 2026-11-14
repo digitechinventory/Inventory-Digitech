@@ -451,7 +451,7 @@ export default function ReportsPage() {
   </table>
 
   <div class="footer">
-    <div>PT Digitech &bull; Inventory Management System</div>
+    <div>DigiTech Division &mdash; Golden Energy Mines (GEMS) &bull; Inventory Management System</div>
     <div>No. Dokumen: ${esc(docNumber)} &bull; Dicetak pada ${esc(printDate)}</div>
   </div>
   <script>
@@ -1621,7 +1621,7 @@ export default function ReportsPage() {
               {/* 9. Official A4 Paper Footer */}
               <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] font-mono text-slate-500 gap-2">
                 <div>
-                  PT Digitech &bull; Inventory Management System
+                  DigiTech Division &mdash; Golden Energy Mines (GEMS) &bull; Inventory Management System
                 </div>
                 <div className="text-center sm:text-right">
                   No. Dokumen: {previewDoc.id} &bull; Halaman 1 dari 1

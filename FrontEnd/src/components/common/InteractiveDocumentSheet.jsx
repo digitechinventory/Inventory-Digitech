@@ -845,7 +845,7 @@ export default function InteractiveDocumentSheet({
                   Catatan: Laporkan ke Pengawas Site dan Digitech apabila terdapat ketidaksesuaian jumlah atau kondisi material.
                 </span>
                 <span className="font-mono text-slate-500 shrink-0">
-                  PT Digitech &bull; Dokumen Resmi Site
+                  DigiTech Division &mdash; Golden Energy Mines (GEMS) &bull; Dokumen Resmi Site
                 </span>
               </div>
 

@@ -374,7 +374,7 @@ export default function DirectDocumentSheet({
         {/* ── 6. Official Document Footer ── */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500 font-mono">
           <div>
-            PT Digitech &mdash; Inventory Management System
+            DigiTech Division &mdash; Golden Energy Mines (GEMS) &mdash; Inventory Management System
           </div>
           <div>
             Formulir Resmi Permintaan &amp; Pengeluaran Material
