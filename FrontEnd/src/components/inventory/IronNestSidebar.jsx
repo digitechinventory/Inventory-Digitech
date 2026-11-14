@@ -256,13 +256,19 @@ export default function IronNestSidebar({
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   };
 
-  const sidebarWidth = isCollapsed ? 'lg:w-[76px] w-[272px]' : 'w-[272px]';
+  const sidebarWidth = isCollapsed ? 'w-[76px]' : 'w-[272px]';
 
   return (
     <>
+      {/* Shared Mega Mendung SVG defs rendered once to avoid duplicate gradient IDs */}
+      <svg width="0" height="0" aria-hidden="true" className="absolute pointer-events-none">
+        <MegaMendungDefs />
+      </svg>
+
       {/* ── Floating Sidebar Wrapper (Desktop Only — Mobile uses Liquid Glass Bottom Navbar) ── */}
       <aside
-        className={`hidden lg:block fixed top-4 bottom-4 left-3 z-50 transition-all duration-300 ease-in-out select-none ${sidebarWidth}`}
+        style={{ willChange: 'width', contain: 'layout style' }}
+        className={`hidden lg:block fixed top-4 bottom-4 left-3 z-50 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] select-none ${sidebarWidth}`}
       >
         {/* ── Layer 2: Shadow / Accent Parallelogram (behind main body) ── */}
         <div
@@ -270,10 +276,11 @@ export default function IronNestSidebar({
           style={{
             position: 'absolute',
             inset: 0,
-            transform: 'translate(6px, 6px)',
+            transform: 'translate3d(6px, 6px, 0)',
             clipPath: CLIP_SHADOW,
             zIndex: 0,
             pointerEvents: 'none',
+            contain: 'strict',
           }}
         >
           <div
@@ -282,8 +289,6 @@ export default function IronNestSidebar({
               height: '100%',
               background: 'linear-gradient(160deg, #7F1D1D 0%, #B91C1C 40%, #DC2626 70%, #EF4444 100%)',
               opacity: 0.55,
-              border: '1.5px solid rgba(220,38,38,0.5)',
-              boxShadow: '0 12px 40px rgba(185,28,28,0.35), 0 4px 16px rgba(127,29,29,0.3)',
             }}
           />
         </div>
@@ -293,18 +298,18 @@ export default function IronNestSidebar({
           style={{
             position: 'absolute',
             inset: 0,
-            transform: 'translate(11px, 11px)',
+            transform: 'translate3d(11px, 11px, 0)',
             clipPath: CLIP_SHADOW,
             zIndex: -1,
             pointerEvents: 'none',
+            contain: 'strict',
           }}
         >
           <div
             style={{
               width: '100%',
               height: '100%',
-              background: 'rgba(127,29,29,0.18)',
-              boxShadow: '0 16px 48px rgba(127,29,29,0.2)',
+              background: 'rgba(127,29,29,0.16)',
             }}
           />
         </div>
@@ -321,7 +326,6 @@ export default function IronNestSidebar({
             background: '#FFFFFF',
             borderLeft: '5px solid #C0111B',
             borderRight: '1px solid #CBD5E1',
-            boxShadow: '0 2px 20px rgba(0,0,0,0.10), 1px 0 8px rgba(0,0,0,0.05)',
           }}
         >
           {/* ── Top Slanted Edge Border (Diagonal from 0,40 to 100%,0) ──── */}
@@ -355,42 +359,42 @@ export default function IronNestSidebar({
               strokeWidth="2.5"
             />
           </svg>
-          {/* ── Corner Ornament: TOP-LEFT Mega Mendung (Batik Merah Khas Card Login) ─── */}
+          {/* ── Corner Ornament: TOP-LEFT Mega Mendung (Fixed size, zero re-rasterize) ─── */}
           <div
             aria-hidden="true"
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: isCollapsed ? '100px' : '116px',
-              height: isCollapsed ? '100px' : '116px',
+              width: '116px',
+              height: '116px',
               pointerEvents: 'none',
               zIndex: 1,
               opacity: 0.9,
+              contain: 'strict',
             }}
           >
             <svg viewBox="-5 -5 160 160" style={{ width: '100%', height: '100%', display: 'block' }}>
-              <MegaMendungDefs />
               <use href="#sbMegaMendungShape" x="0" y="0" />
             </svg>
           </div>
 
-          {/* ── Corner Ornament: BOTTOM-RIGHT Mega Mendung (Batik Merah Khas Card Login) ─── */}
+          {/* ── Corner Ornament: BOTTOM-RIGHT Mega Mendung (Fixed size, zero re-rasterize) ─── */}
           <div
             aria-hidden="true"
             style={{
               position: 'absolute',
               bottom: 0,
               right: 0,
-              width: isCollapsed ? '110px' : '155px',
-              height: isCollapsed ? '110px' : '155px',
+              width: '140px',
+              height: '140px',
               pointerEvents: 'none',
               zIndex: 1,
               opacity: 0.95,
+              contain: 'strict',
             }}
           >
             <svg viewBox="-5 -5 160 160" style={{ width: '100%', height: '100%', display: 'block' }}>
-              <MegaMendungDefs />
               <use href="#sbMegaMendungShape" transform="rotate(180, 75, 75)" />
             </svg>
           </div>
@@ -398,117 +402,94 @@ export default function IronNestSidebar({
           {/* ── All content sits ABOVE ornaments (z-index: 10+) ─────── */}
           <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
 
-            {/* ── Brand Header ────────────────────────────────── */}
+            {/* ── Brand Header (Single unified DOM tree — zero snap/remount) ── */}
             <div
               style={{
                 background: 'transparent',
                 borderBottom: '1px solid rgba(226,232,240,0.6)',
               }}
-              className={`flex items-center justify-between transition-all ${
-                isCollapsed ? 'px-2 pt-11 pb-3 flex-col gap-2' : 'px-3.5 pt-11 pb-3.5 gap-2'
+              className={`relative flex items-center px-3.5 pt-11 transition-[padding-bottom] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                isCollapsed ? 'pb-11' : 'pb-3.5'
               }`}
             >
-              {isCollapsed ? (
-                /* Collapsed: emblem only with crisp white badge */
-                <div className="flex flex-col items-center gap-2 w-full">
-                  <NavLink
-                    to={role === 'Superadmin' ? '/overview' : '/dashboard'}
-                    className="p-1.5 rounded-xl bg-white shadow-sm border border-red-100 hover:bg-red-50 transition-all flex items-center justify-center relative z-20"
-                    title="Digitech IMS"
-                  >
-                    <img
-                      src="/digitech-emblem.png"
-                      alt="Digitech"
-                      className="h-8 w-8 object-contain"
-                    />
-                  </NavLink>
-                  <button
-                    onClick={onToggleCollapse}
-                    className="hidden lg:flex p-1.5 rounded-xl text-slate-500 hover:text-red-600 bg-white/90 hover:bg-white transition-all cursor-pointer relative z-20 shadow-2xs border border-slate-200/60"
-                    title="Perluas Menu Navigasi"
-                    aria-label="Expand sidebar"
-                  >
-                    <PanelLeftOpen className="w-4 h-4" />
-                  </button>
+              <NavLink
+                to={role === 'Superadmin' ? '/overview' : '/dashboard'}
+                className="flex items-center group min-w-0 relative z-20"
+                title="Digitech IMS"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white p-1.5 shadow-[0_4px_12px_rgba(185,28,28,0.16)] border border-red-100/90 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+                  <img
+                    src="/digitech-emblem.png"
+                    alt="Digitech"
+                    className="w-full h-full object-contain block"
+                  />
                 </div>
-              ) : (
-                /* Expanded: single clean emblem badge over Mega Mendung + crisp typography on clean white */
-                <>
-                  <NavLink
-                    to={role === 'Superadmin' ? '/overview' : '/dashboard'}
-                    className="flex items-center gap-2.5 group flex-1 min-w-0 relative z-20"
+                <div
+                  className={`flex flex-col justify-center min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    isCollapsed ? 'max-w-0 opacity-0 ml-0 pointer-events-none' : 'max-w-[165px] opacity-100 ml-2.5'
+                  }`}
+                >
+                  <span
+                    style={{
+                      lineHeight: 1.05,
+                      textShadow: '0 1px 8px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.95)'
+                    }}
+                    className="text-[15px] font-black tracking-wider text-slate-950 group-hover:text-red-700 transition-colors uppercase"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white p-1.5 shadow-[0_4px_12px_rgba(185,28,28,0.16)] border border-red-100/90 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                      <img
-                        src="/digitech-emblem.png"
-                        alt="Digitech"
-                        className="w-full h-full object-contain block"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center min-w-0">
-                      <span
-                        style={{
-                          lineHeight: 1.05,
-                          textShadow: '0 1px 8px rgba(255,255,255,0.95), 0 0 12px rgba(255,255,255,0.95)'
-                        }}
-                        className="text-[15px] font-black tracking-wider text-slate-950 group-hover:text-red-700 transition-colors uppercase"
-                      >
-                        DIGITECH
-                      </span>
-                      <span
-                        style={{
-                          lineHeight: 1.2,
-                          textShadow: '0 1px 6px rgba(255,255,255,0.95)'
-                        }}
-                        className="text-[9.5px] font-bold text-red-600 tracking-tight truncate mt-0.5"
-                      >
-                        Inventory Management
-                      </span>
-                    </div>
-                  </NavLink>
+                    DIGITECH
+                  </span>
+                  <span
+                    style={{
+                      lineHeight: 1.2,
+                      textShadow: '0 1px 6px rgba(255,255,255,0.95)'
+                    }}
+                    className="text-[9.5px] font-bold text-red-600 tracking-tight truncate mt-0.5"
+                  >
+                    Inventory Management
+                  </span>
+                </div>
+              </NavLink>
 
-                  <div className="flex items-center shrink-0 relative z-20">
-                    <button
-                      onClick={onToggleCollapse}
-                      className="hidden lg:flex p-1.5 rounded-xl bg-white text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition-all cursor-pointer"
-                      title="Ciutkan Menu"
-                      aria-label="Collapse sidebar"
-                    >
-                      <PanelLeftClose className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={onClose}
-                      className="lg:hidden p-1.5 rounded-xl bg-white/95 text-slate-700 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition cursor-pointer"
-                      aria-label="Close sidebar"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </>
-              )}
+              {/* Smoothly Gliding Collapse / Expand Button */}
+              <button
+                onClick={onToggleCollapse}
+                style={{
+                  top: isCollapsed ? '90px' : '49px',
+                  right: isCollapsed ? '21px' : '14px',
+                }}
+                className="hidden lg:flex absolute items-center justify-center w-[30px] h-[30px] rounded-xl bg-white text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 shadow-2xs transition-[top,right,background-color,color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer z-20"
+                title={isCollapsed ? 'Perluas Menu Navigasi' : 'Ciutkan Menu'}
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </button>
             </div>
 
-            {/* ── Role Badge Strip ─────────────────────────────── */}
-            {!isCollapsed && (
-              <div className="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">
-                  Hak Akses Portal
-                </span>
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase ${getRoleBadgeStyle(role)}`}>
-                  {role || 'User'}
-                </span>
-              </div>
-            )}
-
-            {/* ── Grouped Navigation Items with Moving Hover Animation ── */}
-            <nav
-              className={`flex-1 overflow-y-auto py-2.5 custom-scrollbar ${isCollapsed ? 'px-2 space-y-2' : 'px-3 space-y-3'}`}
+            {/* ── Role Badge Strip (Smooth max-height collapse) ─────────── */}
+            <div
+              className={`px-4 bg-slate-50/80 flex items-center justify-between overflow-hidden whitespace-nowrap transition-[max-height,opacity,padding] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                isCollapsed ? 'max-h-0 opacity-0 py-0 border-b-0' : 'max-h-10 opacity-100 py-2 border-b border-slate-100'
+              }`}
             >
+              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">
+                Hak Akses Portal
+              </span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase ${getRoleBadgeStyle(role)}`}>
+                {role || 'User'}
+              </span>
+            </div>
+
+            {/* ── Grouped Navigation Items (Constant left icon anchor — zero layout jump) ── */}
+            <nav className="flex-1 overflow-y-auto px-3 py-2.5 space-y-2 custom-scrollbar overflow-x-hidden">
               {navGroups.map((group, groupIdx) => (
                 <div key={group.id} className="space-y-1">
-                  {/* Group Header Label */}
-                  {!isCollapsed ? (
-                    <div className="px-3 pt-2 pb-1 flex items-center justify-between select-none">
+                  {/* Group Header Label — Fixed height cross-fade so vertical spacing never shifts */}
+                  <div className="relative h-6 flex items-center px-3 select-none overflow-hidden">
+                    <div
+                      className={`w-full flex items-center justify-between whitespace-nowrap transition-opacity duration-200 ${
+                        isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                      }`}
+                    >
                       <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-600/70" />
                         {group.title}
@@ -517,9 +498,14 @@ export default function IronNestSidebar({
                         {group.items.length}
                       </span>
                     </div>
-                  ) : (
-                    groupIdx > 0 && <div className="my-1.5 border-t border-slate-200/60 w-8 mx-auto" />
-                  )}
+                    {groupIdx > 0 && (
+                      <div
+                        className={`absolute left-1/2 -translate-x-1/2 w-6 border-t border-slate-200/80 transition-opacity duration-200 ${
+                          isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                      />
+                    )}
+                  </div>
 
                   {/* Group Items */}
                   <div className="space-y-1">
@@ -544,31 +530,26 @@ export default function IronNestSidebar({
                                 if (item.id === 'printer') setShowPrinterSetup(true);
                                 if (isOpen) onClose();
                               }}
-                              className={`w-full relative flex items-center rounded-xl transition-all duration-300 ease-out cursor-pointer overflow-hidden ${
-                                isCollapsed
-                                  ? 'w-11 h-11 mx-auto justify-center'
-                                  : 'gap-3 px-3.5 py-2 text-xs font-semibold'
-                              } text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1.5 border border-transparent hover:border-red-200/60`}
+                              className="w-full h-9 px-3.5 relative flex items-center rounded-xl transition-[background-color,color,box-shadow,transform] duration-200 ease-out cursor-pointer overflow-hidden text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1 border border-transparent hover:border-red-200/60"
                             >
-                              {/* Sliding Indicator on Hover */}
-                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center opacity-0 group-hover:opacity-100" />
-
-                              <Icon className="w-4 h-4 shrink-0 text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6 transition-all duration-300" />
-                              
-                              {!isCollapsed && (
+                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center opacity-0 group-hover:opacity-100" />
+                              <Icon className="w-4 h-4 shrink-0 text-slate-500 group-hover:text-red-600 transition-colors duration-200" />
+                              <div
+                                className={`flex items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                                  isCollapsed ? 'max-w-0 opacity-0 ml-0 pointer-events-none' : 'max-w-[185px] opacity-100 ml-3'
+                                }`}
+                              >
                                 <span className="truncate flex-1 text-left tracking-tight">{item.label}</span>
-                              )}
-
-                              {!isCollapsed && item.badge && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200 transition-all duration-200">
-                                  {item.badge}
-                                </span>
-                              )}
+                                {item.badge && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 ml-1.5 shrink-0">
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
                             </button>
 
-                            {/* Tooltip for collapsed */}
                             {isCollapsed && (
-                              <div className="fixed left-[88px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 slide-in-from-left-2">
+                              <div className="fixed left-[92px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5">
                                 <span className="text-[9px] font-mono font-bold text-red-600 uppercase">[{group.title.split(' ')[0]}]</span>
                                 <span>{item.label}</span>
                               </div>
@@ -582,28 +563,22 @@ export default function IronNestSidebar({
                           <NavLink
                             to={item.path}
                             onClick={onClose}
-                            className={`relative flex items-center rounded-xl transition-all duration-300 ease-out cursor-pointer overflow-hidden ${
-                              isCollapsed
-                                ? 'w-11 h-11 mx-auto justify-center'
-                                : 'gap-3 px-3.5 py-2 text-xs font-semibold'
-                            } ${
+                            className={`w-full h-9 px-3.5 relative flex items-center rounded-xl transition-[background-color,color,box-shadow,transform] duration-200 ease-out cursor-pointer overflow-hidden text-xs ${
                               isActive
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white font-bold shadow-[0_4px_16px_rgba(220,38,38,0.28)] translate-x-1'
-                                : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1.5 border border-transparent hover:border-red-200/60'
+                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white font-bold shadow-[0_4px_14px_rgba(220,38,38,0.25)]'
+                                : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-gradient-to-r hover:from-red-50/90 hover:via-white hover:to-slate-50 hover:shadow-[0_4px_14px_rgba(220,38,38,0.10)] hover:translate-x-1 border border-transparent hover:border-red-200/60'
                             }`}
                           >
-                            {/* Animated Left Sliding Red Bar on Hover */}
                             {!isActive && (
-                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center opacity-0 group-hover:opacity-100" />
+                              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-red-500 to-red-700 rounded-r-full scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center opacity-0 group-hover:opacity-100" />
                             )}
 
-                            {/* Micro-animated Icon on hover */}
                             <div className="relative shrink-0">
                               <Icon
-                                className={`w-4 h-4 transition-all duration-300 ${
+                                className={`w-4 h-4 transition-colors duration-200 ${
                                   isActive
-                                    ? 'text-white scale-105'
-                                    : 'text-slate-500 group-hover:text-red-600 group-hover:scale-120 group-hover:rotate-6'
+                                    ? 'text-white'
+                                    : 'text-slate-500 group-hover:text-red-600'
                                 }`}
                               />
                               {isCollapsed && item.badge && (
@@ -611,30 +586,33 @@ export default function IronNestSidebar({
                               )}
                             </div>
 
-                            {!isCollapsed && (
-                              <span className="truncate flex-1 tracking-tight transition-colors duration-200">
+                            <div
+                              className={`flex items-center flex-1 min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                                isCollapsed ? 'max-w-0 opacity-0 ml-0 pointer-events-none' : 'max-w-[185px] opacity-100 ml-3'
+                              }`}
+                            >
+                              <span className="truncate flex-1 tracking-tight">
                                 {item.label}
                               </span>
-                            )}
 
-                            {!isCollapsed && item.badge && (
-                              <span
-                                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full transition-all duration-200 shrink-0 ${
-                                  isActive
-                                    ? 'bg-white/20 text-white border border-white/30'
-                                    : item.isAlertBadge
-                                    ? 'bg-red-50 text-red-700 border border-red-200 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600'
-                                    : 'bg-slate-100 text-slate-500 border border-slate-200 group-hover:bg-red-50 group-hover:text-red-700 group-hover:border-red-200 group-hover:scale-105'
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
-                            )}
+                              {item.badge && (
+                                <span
+                                  className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full ml-1.5 shrink-0 ${
+                                    isActive
+                                      ? 'bg-white/20 text-white border border-white/30'
+                                      : item.isAlertBadge
+                                      ? 'bg-red-50 text-red-700 border border-red-200 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600'
+                                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                  }`}
+                                >
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
                           </NavLink>
 
-                          {/* Tooltip for collapsed mode with Group tag */}
                           {isCollapsed && (
-                            <div className="fixed left-[88px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5 slide-in-from-left-2">
+                            <div className="fixed left-[92px] px-3 py-1.5 bg-white/98 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 whitespace-nowrap backdrop-blur-md flex items-center gap-1.5">
                               <span className="text-[9px] font-mono font-bold text-red-600 uppercase">[{group.title.split(' ')[0]}]</span>
                               <span>{item.label}</span>
                             </div>
@@ -647,12 +625,11 @@ export default function IronNestSidebar({
               ))}
             </nav>
 
-            {/* ── Footer: Pengaturan (Expandable) & Logout ────── */}
+            {/* ── Footer: Pengaturan & Logout (Constant left icon anchor) ── */}
             <div
-              className={`border-t border-slate-100/80 space-y-0.5 relative z-10 ${isCollapsed ? 'p-2 pb-12' : 'p-3 pb-12'}`}
+              className="border-t border-slate-100/80 space-y-0.5 relative z-10 px-3 pt-2.5 pb-12"
               style={{ background: 'transparent' }}
             >
-              {/* Pengaturan (Direct Navigation without redundant submenu) */}
               <div className="relative group">
                 <button
                   onClick={() => {
@@ -660,46 +637,49 @@ export default function IronNestSidebar({
                     if (isOpen) onClose();
                   }}
                   title={isCollapsed ? 'Pengaturan' : undefined}
-                  className={`w-full flex items-center rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  className={`w-full h-9 px-3.5 flex items-center rounded-xl text-xs font-semibold transition-[background-color,color] duration-200 cursor-pointer overflow-hidden ${
                     location.pathname === '/settings'
                       ? 'bg-red-50 text-red-700 font-bold border border-red-200 shadow-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
-                  } ${
-                    isCollapsed
-                      ? 'w-11 h-11 mx-auto justify-center'
-                      : 'gap-2.5 px-3 py-2'
                   }`}
                 >
                   <Settings
-                    className={`w-4 h-4 shrink-0 transition-transform duration-300 ${
+                    className={`w-4 h-4 shrink-0 ${
                       location.pathname === '/settings' ? 'text-red-600' : 'text-slate-500'
                     }`}
                   />
-                  {!isCollapsed && (
-                    <span className="truncate flex-1 text-left">Pengaturan</span>
-                  )}
+                  <span
+                    className={`overflow-hidden whitespace-nowrap text-left transition-[max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      isCollapsed ? 'max-w-0 opacity-0 ml-0 pointer-events-none' : 'max-w-[160px] opacity-100 ml-3'
+                    }`}
+                  >
+                    Pengaturan
+                  </span>
                 </button>
 
                 {isCollapsed && (
-                  <div className="fixed left-[88px] px-3 py-1.5 bg-white/95 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-all z-50 whitespace-nowrap backdrop-blur-md">
+                  <div className="fixed left-[92px] px-3 py-1.5 bg-white/95 text-slate-800 text-xs font-bold rounded-xl shadow-xl border border-slate-200/90 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 whitespace-nowrap backdrop-blur-md">
                     Pengaturan
                   </div>
                 )}
               </div>
 
-              {/* Logout */}
               <div className="relative group">
                 <button
                   onClick={handleLogout}
-                  className={`w-full flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all duration-200 cursor-pointer ${
-                    isCollapsed ? 'w-11 h-11 mx-auto justify-center' : 'gap-2.5 px-3 py-2'
-                  }`}
+                  className="w-full h-9 px-3.5 flex items-center rounded-xl text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-[background-color,color] duration-200 cursor-pointer overflow-hidden"
                 >
                   <LogOut className="w-4 h-4 text-red-500 shrink-0" />
-                  {!isCollapsed && <span className="truncate">Keluar (Logout)</span>}
+                  <span
+                    className={`overflow-hidden whitespace-nowrap text-left transition-[max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      isCollapsed ? 'max-w-0 opacity-0 ml-0 pointer-events-none' : 'max-w-[160px] opacity-100 ml-3'
+                    }`}
+                  >
+                    Keluar (Logout)
+                  </span>
                 </button>
                 {isCollapsed && (
-                  <div className="fixed left-[88px] px-3 py-1.5 bg-white/95 text-red-600 text-xs font-bold rounded-xl shadow-xl border border-red-200/80 pointer-events-none opacity-0 group-hover:opacity-100 transition-all z-50 whitespace-nowrap backdrop-blur-md">
+                  <div className="fixed left-[92px] px-3 py-1.5 bg-white/95 text-red-600 text-xs font-bold rounded-xl shadow-xl border border-red-200/80 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 whitespace-nowrap backdrop-blur-md">
                     Keluar (Logout)
                   </div>
                 )}

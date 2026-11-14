@@ -93,8 +93,8 @@ export default function IronNestLayout() {
         onToggleCollapse={toggleCollapse}
       />
 
-      {/* 2. Main Content Area with Smooth Margin Transition */}
-      <div className={`flex-1 flex flex-col ${isCollapsed ? 'lg:ml-[92px]' : 'lg:ml-[272px]'} min-h-screen w-full transition-[margin] duration-300 ease-in-out`}>
+      {/* 2. Main Content Area with Synchronized Smooth Margin Transition */}
+      <div className={`flex-1 flex flex-col ${isCollapsed ? 'lg:ml-[92px]' : 'lg:ml-[272px]'} min-h-screen w-full transition-[margin-left] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]`}>
         {/* Top Search & Utilities Bar */}
         <IronNestHeader
           onToggleSidebar={() => setIsSidebarOpen(true)}
