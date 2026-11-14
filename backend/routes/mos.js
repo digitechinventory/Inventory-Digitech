@@ -134,10 +134,26 @@ export const generateUniqueDocNumber = (type = 'MOS') => {
   return `${String(nextSeq).padStart(3, '0')}/SITE/${typeCode}/MNTOA/BIBOA/${monthRoman}/${year}`;
 };
 
+// Filter out 1x1 / dummy test pixel PNGs (e.g. bright green automation placeholder)
+const sanitizeSignatureImage = (src) => {
+  if (!src || typeof src !== 'string') return null;
+  const trimmed = src.trim();
+  if (!trimmed.startsWith('data:image/')) return null;
+  // Reject tiny < 250 char data URIs or known 1x1 green dummy PNG
+  if (trimmed.length < 250 || trimmed.includes('AAAAEAAAABCAYAAAAfFcSJ')) return null;
+  return trimmed;
+};
+
 // Helper to normalize MOS/Approval document
 const normalizeMosDoc = (d) => {
   const sigs = (typeof d.signatures === 'object' && d.signatures !== null) ? d.signatures : {};
-  const placed = sigs.signatures_placed || sigs.placed || d.signatures_placed || [];
+  const rawPlaced = sigs.signatures_placed || sigs.placed || d.signatures_placed || [];
+  const placed = Array.isArray(rawPlaced)
+    ? rawPlaced.map((s) => ({
+        ...s,
+        signature_image: sanitizeSignatureImage(s?.signature_image)
+      }))
+    : [];
 
   const originLoc = d.origin_location || sigs.origin_location || 'Gudang Site / Buffer';
   const destLoc = d.destination_location || sigs.destination_location || d.site_location || d.site_name || 'BIB Pit Sebamban KM-14';
@@ -794,7 +810,7 @@ router.post('/:id/stamp', requireAuth, async (req, res, next) => {
       y_percent: Number(y_percent),
       width_percent: Number(width_percent),
       height_percent: Number(height_percent),
-      signature_image: signature_image || null,
+      signature_image: sanitizeSignatureImage(signature_image),
       signer_name: signer_name || req.user.full_name || 'Approver',
       signer_role: signer_role || req.user.role || 'Staff Lapangan',
       timestamp,
