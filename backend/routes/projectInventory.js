@@ -177,7 +177,7 @@ router.get('/my-authorities', requireAuth, (req, res) => {
 // ==========================================
 
 // GET /api/project-inventory/projects
-router.get('/projects', optionalAuth, async (req, res, next) => {
+router.get('/projects', requireAuth, async (req, res, next) => {
   try {
     let projects = FALLBACK_PROJECTS;
     try {
@@ -1125,81 +1125,97 @@ router.post('/documents', requireAuth, (req, res) => {
 });
 
 // POST /api/project-inventory/documents/:id/attachment (Upload / Attach PDF or Image to Document)
-router.post('/documents/:id/attachment', requireAuth, async (req, res) => {
-  const { id } = req.params;
-  const { file_name, file_data, file_type, summary } = req.body;
+router.post('/documents/:id/attachment', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { file_name, file_data, file_type, summary } = req.body;
 
-  const doc = PROJECT_DOCUMENTS.find(d => d.id === id);
-  if (!doc) {
-    throw new AppError('Dokumen tidak ditemukan.', 404, 'NOT_FOUND');
-  }
-
-  let fileUrl = null;
-  if (file_data && file_name) {
-    try {
-      const safeName = `${Date.now()}_${file_name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const uploadsDir = path.join(__dirname, '..', 'uploads', 'documents');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      const filePath = path.join(uploadsDir, safeName);
-      if (file_data.includes(';base64,')) {
-        const base64Data = file_data.split(';base64,').pop();
-        fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
-      } else {
-        fs.writeFileSync(filePath, file_data, 'utf8');
-      }
-      fileUrl = `/uploads/documents/${safeName}`;
-    } catch (e) {
-      console.warn('Failed to save file to disk:', e.message);
+    const doc = PROJECT_DOCUMENTS.find(d => d.id === id);
+    if (!doc) {
+      throw new AppError('Dokumen tidak ditemukan.', 404, 'NOT_FOUND');
     }
+
+    if (doc.project_id && !checkUserProjectAccess(req.user, doc.project_id)) {
+      throw new AppError('Akses ditolak: Anda tidak memiliki otoritas pada proyek dokumen ini.', 403, 'FORBIDDEN_PROJECT_ACCESS');
+    }
+
+    let fileUrl = null;
+    if (file_data && file_name) {
+      try {
+        const safeName = `${Date.now()}_${file_name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const uploadsDir = path.join(__dirname, '..', 'uploads', 'documents');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        const filePath = path.join(uploadsDir, safeName);
+        if (file_data.includes(';base64,')) {
+          const base64Data = file_data.split(';base64,').pop();
+          fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
+        } else {
+          fs.writeFileSync(filePath, file_data, 'utf8');
+        }
+        fileUrl = `/uploads/documents/${safeName}`;
+      } catch (e) {
+        console.warn('Failed to save file to disk:', e.message);
+      }
+    }
+
+    doc.file_attachment = file_name || doc.file_attachment;
+    doc.file_url = fileUrl || doc.file_url;
+    doc.file_data = file_data || doc.file_data;
+    doc.file_type = file_type || (file_name?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+    if (summary) doc.summary = summary;
+    doc.updated_at = new Date().toISOString();
+    persistDataset('project_documents', PROJECT_DOCUMENTS);
+
+    return sendSuccess(res, doc, 'Berkas fisik berhasil disimpan dan diakses pada database.');
+  } catch (err) {
+    next(err);
   }
-
-  doc.file_attachment = file_name || doc.file_attachment;
-  doc.file_url = fileUrl || doc.file_url;
-  doc.file_data = file_data || doc.file_data;
-  doc.file_type = file_type || (file_name?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
-  if (summary) doc.summary = summary;
-  doc.updated_at = new Date().toISOString();
-  persistDataset('project_documents', PROJECT_DOCUMENTS);
-
-  return sendSuccess(res, doc, 'Berkas fisik berhasil disimpan dan diakses pada database.');
 });
 
 // POST /api/project-inventory/documents/:id/sign (Otorisasi Digital & Tanda Tangan Dokumen Proyek)
-router.post('/documents/:id/sign', requireAuth, async (req, res) => {
-  const { id } = req.params;
-  const { signature_image, signer_name, signer_role, slot, x_percent, y_percent } = req.body;
+router.post('/documents/:id/sign', requireAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { signature_image, signer_name, signer_role, slot, x_percent, y_percent } = req.body;
 
-  const doc = PROJECT_DOCUMENTS.find(d => d.id === id);
-  if (!doc) {
-    throw new AppError('Dokumen tidak ditemukan.', 404, 'NOT_FOUND');
+    const doc = PROJECT_DOCUMENTS.find(d => d.id === id);
+    if (!doc) {
+      throw new AppError('Dokumen tidak ditemukan.', 404, 'NOT_FOUND');
+    }
+
+    if (doc.project_id && !checkUserProjectAccess(req.user, doc.project_id)) {
+      throw new AppError('Akses ditolak: Anda tidak memiliki otoritas pada proyek dokumen ini.', 403, 'FORBIDDEN_PROJECT_ACCESS');
+    }
+
+    if (!doc.signatures) {
+      doc.signatures = [];
+    }
+
+    const sigRecord = {
+      id: `sig-${Date.now()}`,
+      signer_name: signer_name || req.user?.full_name || 'Staff Terverifikasi',
+      signer_role: signer_role || req.user?.role || 'Staff Lapangan',
+      timestamp: new Date().toISOString(),
+      signature_image: signature_image || null,
+      x_percent: x_percent || 50,
+      y_percent: y_percent || 80,
+      slot: slot || 'slot1'
+    };
+
+    doc.signatures.push(sigRecord);
+    doc.signatures_count = (doc.signatures_count || 0) + 1;
+    if (doc.signatures_count >= (doc.required_signatures || 2)) {
+      doc.status = 'Approved';
+    }
+    doc.updated_at = new Date().toISOString();
+    persistDataset('project_documents', PROJECT_DOCUMENTS);
+
+    return sendSuccess(res, doc, 'Tanda tangan digital berhasil disahkan pada dokumen.');
+  } catch (err) {
+    next(err);
   }
-
-  if (!doc.signatures) {
-    doc.signatures = [];
-  }
-
-  const sigRecord = {
-    id: `sig-${Date.now()}`,
-    signer_name: signer_name || req.user?.full_name || 'Staff Terverifikasi',
-    signer_role: signer_role || req.user?.role || 'Staff Lapangan',
-    timestamp: new Date().toISOString(),
-    signature_image: signature_image || null,
-    x_percent: x_percent || 50,
-    y_percent: y_percent || 80,
-    slot: slot || 'slot1'
-  };
-
-  doc.signatures.push(sigRecord);
-  doc.signatures_count = (doc.signatures_count || 0) + 1;
-  if (doc.signatures_count >= (doc.required_signatures || 2)) {
-    doc.status = 'Approved';
-  }
-  doc.updated_at = new Date().toISOString();
-  persistDataset('project_documents', PROJECT_DOCUMENTS);
-
-  return sendSuccess(res, doc, 'Tanda tangan digital berhasil disahkan pada dokumen.');
 });
 
 // ==========================================

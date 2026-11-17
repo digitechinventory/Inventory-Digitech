@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Toast from './components/Toast';
 
-// Layout & Startup Splash
+// Core Eager Layout, Auth & Main Entry
 import IronNestLayout from './layouts/IronNestLayout';
 import StartupSplashScreen from './components/common/StartupSplashScreen';
-
-// Pages
 import Dashboard from './pages/Dashboard';
-import MOSPage from './pages/MOSPage';
-import InventoryPage from './pages/InventoryPage';
-import MaterialRequestPage from './pages/MaterialRequestPage';
-import ToolLoansPage from './pages/ToolLoansPage';
-import StockOpnamePage from './pages/StockOpnamePage';
-import AssetLifecyclePage from './pages/AssetLifecyclePage';
-import InventoryLedgerPage from './pages/InventoryLedgerPage';
-import ReportsPage from './pages/ReportsPage';
-import UsersPage from './pages/UsersPage';
-import AccountSettingsPage from './pages/AccountSettingsPage';
-import AssetTrackingPage from './pages/AssetTrackingPage';
 import AuthPage from './pages/AuthPage';
-import AgendaCalendarPage from './pages/AgendaCalendarPage';
-import ProjectInventoryPage from './pages/ProjectInventoryPage';
 
-// Role-Specific Pages Organized in Separate Folders
-import SuperadminDashboard from './pages/superadmin/SuperadminDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import UserDashboard from './pages/user/UserDashboard';
+// Lazy-loaded Route Modules (Code-Splitting)
+const MOSPage = lazy(() => import('./pages/MOSPage'));
+const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const MaterialRequestPage = lazy(() => import('./pages/MaterialRequestPage'));
+const ToolLoansPage = lazy(() => import('./pages/ToolLoansPage'));
+const StockOpnamePage = lazy(() => import('./pages/StockOpnamePage'));
+const AssetLifecyclePage = lazy(() => import('./pages/AssetLifecyclePage'));
+const InventoryLedgerPage = lazy(() => import('./pages/InventoryLedgerPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
+const AssetTrackingPage = lazy(() => import('./pages/AssetTrackingPage'));
+const AgendaCalendarPage = lazy(() => import('./pages/AgendaCalendarPage'));
+const ProjectInventoryPage = lazy(() => import('./pages/ProjectInventoryPage'));
+const SuperadminDashboard = lazy(() => import('./pages/superadmin/SuperadminDashboard'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,7 +63,14 @@ function RoleRoute({ allowedRoles, children }) {
 
 function AppRoutes() {
   return (
-    <Routes>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh] text-xs font-mono text-slate-400">
+          Memuat modul...
+        </div>
+      }
+    >
+      <Routes>
       {/* Public Login & Register Route */}
       <Route path="/login" element={<AuthPage />} />
 
@@ -248,6 +253,7 @@ function AppRoutes() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </Suspense>
   );
 }
 

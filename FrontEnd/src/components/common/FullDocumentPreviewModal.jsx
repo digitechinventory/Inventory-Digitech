@@ -31,7 +31,13 @@ import {
   QrCode
 } from 'lucide-react';
 import { uploadProjectDocumentAttachment, signProjectDocument } from '../../api/projectInventoryApi';
-import SignatureCanvas from './SignatureCanvas';
+import SignatureUploadExtractorModal from './SignatureUploadExtractorModal.jsx';
+
+const isValidSigImg = (src) =>
+  typeof src === 'string' &&
+  src.startsWith('data:image/') &&
+  src.length >= 250 &&
+  !src.includes('AAAAEAAAABCAYAAAAfFcSJ');
 
 /**
  * FullDocumentPreviewModal
@@ -59,7 +65,22 @@ export default function FullDocumentPreviewModal({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadToast, setUploadToast] = useState(null);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isExtractorOpen, setIsExtractorOpen] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
+  const [localSignature, setLocalSignature] = useState(() => {
+    if (userSignature) return userSignature;
+    try {
+      return localStorage.getItem(`digitech_signature_${currentUser?.id || 'current_user'}`) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (userSignature) {
+      setLocalSignature(userSignature);
+    }
+  }, [userSignature]);
 
   const fileInputRef = useRef(null);
   const modalContainerRef = useRef(null);
@@ -205,9 +226,10 @@ export default function FullDocumentPreviewModal({
 
     try {
       const sigPayload = {
-        signer_name: currentUser?.full_name || 'Harris / Manajemen Digitech',
-        signer_role: currentUser?.role || 'Head of Mining Division',
+        signer_name: currentUser?.full_name || 'Harris / Manajemen DigiTech',
+        signer_role: currentUser?.role || 'Head of Operation',
         signature_image: signatureDataUrl,
+        slot: 'slot3',
         notes: 'Disahkan secara digital melalui sistem IMS'
       };
 
@@ -475,7 +497,7 @@ export default function FullDocumentPreviewModal({
                           Inventory Management System
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
-                          Mining Automation, Weigh-In-Motion &amp; Telematics Division
+                          Digital and Technology Solutions (DigiTech) Division &mdash; Golden Energy Mines (GEMS)
                         </div>
                       </div>
                     </div>
@@ -609,70 +631,106 @@ export default function FullDocumentPreviewModal({
                 </div>
 
                 {/* ── 3-PARTY AUTHORIZATION & SIGNATURES (Sharp Table) ── */}
-                <div className="pt-2 mb-6">
-                  <div className="border border-slate-800 rounded-none">
-                    <div className="bg-[#162B4D] text-white text-center font-mono font-bold text-xs uppercase py-1.5 tracking-wider border-b border-slate-800">
-                      LEMBAR PENGESAHAN &amp; TANDA TANGAN OTORISASI (3 PIHAK)
+                {(() => {
+                  const sigList = Array.isArray(doc.signatures) ? doc.signatures : [];
+                  const getPartySig = (slotKey, fallbackIdx) =>
+                    sigList.find((s, idx) => (s.slot === slotKey || idx === fallbackIdx) && isValidSigImg(s.signature_image));
+                  const p1Sig = getPartySig('slot1', 0);
+                  const p2Sig = getPartySig('slot2', 1);
+                  const p3Sig =
+                    sigList.find((s) => s.slot === 'slot3' && isValidSigImg(s.signature_image)) ||
+                    (sigList.length >= 3 && isValidSigImg(sigList[2]?.signature_image) ? sigList[2] : null);
+                  const isApproved = doc.signatures_count >= (doc.required_signatures || 2) || doc.status === 'Approved' || doc.status === 'Completed';
+
+                  return (
+                    <div className="pt-2 mb-6">
+                      <div className="border border-slate-800 rounded-none">
+                        <div className="bg-[#162B4D] text-white text-center font-mono font-bold text-xs uppercase py-1.5 tracking-wider border-b border-slate-800">
+                          LEMBAR PENGESAHAN &amp; TANDA TANGAN OTORISASI (3 PIHAK)
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-800 text-center">
+                          {/* Kolom 1: Pemohon / Teknisi */}
+                          <div className="p-3 bg-white flex flex-col justify-between min-h-[145px]">
+                            <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
+                              Pihak I (Pelaksana Lapangan)
+                            </div>
+                            <div className="flex-1 flex items-center justify-center my-1.5">
+                              {p1Sig ? (
+                                <img
+                                  src={p1Sig.signature_image}
+                                  alt={p1Sig.signer_name || 'TTD Pihak I'}
+                                  className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                                />
+                              ) : (
+                                <span className="text-[10px] text-slate-300 self-end pb-1">______________________</span>
+                              )}
+                            </div>
+                            <div className="border-t border-slate-300 pt-1.5">
+                              <div className="font-bold text-xs text-slate-900">{doc.creator_name || 'Pelaksana Lapangan'}</div>
+                              <div className="text-[10px] text-slate-600">{doc.creator_role || 'Teknisi WIM & Telematika'}</div>
+                            </div>
+                          </div>
+
+                          {/* Kolom 2: Supervisor Site */}
+                          <div className="p-3 bg-white flex flex-col justify-between min-h-[145px]">
+                            <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
+                              Pihak II (Supervisor Site)
+                            </div>
+                            <div className="flex-1 flex items-center justify-center my-1.5">
+                              {p2Sig ? (
+                                <img
+                                  src={p2Sig.signature_image}
+                                  alt={p2Sig.signer_name || 'TTD Pihak II'}
+                                  className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                                />
+                              ) : (
+                                <span className="text-[10px] text-slate-300 self-end pb-1">______________________</span>
+                              )}
+                            </div>
+                            <div className="border-t border-slate-300 pt-1.5">
+                              <div className="font-bold text-xs text-slate-900">{doc.approval_checker_name || 'Supervisor Site'}</div>
+                              <div className="text-[10px] text-slate-600">Supervisor Workshop &amp; Telematika</div>
+                            </div>
+                          </div>
+
+                          {/* Kolom 3: Otorisasi Manajemen */}
+                          <div className="p-3 bg-white flex flex-col justify-between min-h-[145px] relative">
+                            <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
+                              Pihak III (Penanggung Jawab Site)
+                            </div>
+                            <div className="flex-1 flex items-center justify-center my-1.5">
+                              {p3Sig ? (
+                                <img
+                                  src={p3Sig.signature_image}
+                                  alt={p3Sig.signer_name || 'TTD Pihak III'}
+                                  className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                                />
+                              ) : isApproved ? (
+                                <span className="px-3 py-0.5 rounded-none border border-slate-800 bg-slate-100 text-[10px] font-mono font-bold text-slate-900">
+                                  DISETUJUI
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsSignModalOpen(true)}
+                                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-none text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                                >
+                                  <PenTool className="w-3.5 h-3.5" />
+                                  <span>Tanda Tangani</span>
+                                </button>
+                              )}
+                            </div>
+                            <div className="border-t border-slate-300 pt-1.5">
+                              <div className="font-bold text-xs text-slate-900">{doc.approval_approver_name || 'Manajemen Operasional'}</div>
+                              <div className="text-[10px] text-slate-600">Manajemen Operasional DigiTech</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-800 text-center">
-                      {/* Kolom 1: Pemohon / Teknisi */}
-                      <div className="p-3 bg-white flex flex-col justify-between min-h-[145px]">
-                        <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
-                          Pihak I (Pelaksana Lapangan)
-                        </div>
-                        <div className="flex-1 flex items-end justify-center my-1.5">
-                          <span className="text-[10px] text-slate-300 pb-1">______________________</span>
-                        </div>
-                        <div className="border-t border-slate-300 pt-1.5">
-                          <div className="font-bold text-xs text-slate-900">{doc.creator_name || 'Pelaksana Lapangan'}</div>
-                          <div className="text-[10px] text-slate-600">{doc.creator_role || 'Teknisi WIM & Telematika'}</div>
-                        </div>
-                      </div>
-
-                      {/* Kolom 2: Supervisor Site */}
-                      <div className="p-3 bg-white flex flex-col justify-between min-h-[145px]">
-                        <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
-                          Pihak II (Supervisor Site)
-                        </div>
-                        <div className="flex-1 flex items-end justify-center my-1.5">
-                          <span className="text-[10px] text-slate-300 pb-1">______________________</span>
-                        </div>
-                        <div className="border-t border-slate-300 pt-1.5">
-                          <div className="font-bold text-xs text-slate-900">{doc.approval_checker_name || 'Supervisor Site'}</div>
-                          <div className="text-[10px] text-slate-600">Supervisor Workshop &amp; Telematika</div>
-                        </div>
-                      </div>
-
-                      {/* Kolom 3: Otorisasi Manajemen */}
-                      <div className="p-3 bg-white flex flex-col justify-between min-h-[145px] relative">
-                        <div className="text-[10px] font-mono font-bold uppercase text-slate-800 border-b border-slate-300 pb-1">
-                          Pihak III (Penanggung Jawab Site)
-                        </div>
-                        <div className="flex-1 flex items-center justify-center my-1.5">
-                          {doc.signatures_count >= (doc.required_signatures || 2) || doc.status === 'Approved' || doc.status === 'Completed' ? (
-                            <span className="px-3 py-0.5 rounded-none border border-slate-800 bg-slate-100 text-[10px] font-mono font-bold text-slate-900">
-                              DISETUJUI
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setIsSignModalOpen(true)}
-                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-none text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                            >
-                              <PenTool className="w-3.5 h-3.5" />
-                              <span>Tanda Tangani</span>
-                            </button>
-                          )}
-                        </div>
-                        <div className="border-t border-slate-300 pt-1.5">
-                          <div className="font-bold text-xs text-slate-900">{doc.approval_approver_name || 'Manajemen Operasional'}</div>
-                          <div className="text-[10px] text-slate-600">Manajemen Operasional Digitech</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
 
               {/* ── DOCUMENT FOOTER ─────── */}
@@ -757,16 +815,16 @@ export default function FullDocumentPreviewModal({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* 3. POPUP MODAL: TANDA TANGAN DIGITAL                          */}
+      {/* 3. POPUP MODAL: TANDA TANGAN DIGITAL USIGN                   */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {isSignModalOpen && (
         <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <PenTool className="w-5 h-5 text-red-600" />
                 <h4 className="font-black text-slate-900 text-base">
-                  Pengesahan Tanda Tangan
+                  Pengesahan Tanda Tangan (Usign)
                 </h4>
               </div>
               <button
@@ -779,26 +837,51 @@ export default function FullDocumentPreviewModal({
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed font-sans">
-              Bubuhkan tanda tangan untuk mengesahkan dokumen <strong>{doc.doc_number}</strong>. Tanda tangan akan disimpan secara permanen pada log otorisasi dokumen.
+              Bubuhkan gambar tanda tangan transparan untuk mengesahkan dokumen <strong>{doc.doc_number}</strong> ke kolom otorisasi dokumen.
             </p>
 
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center min-h-[140px]">
-              {userSignature ? (
-                <div className="space-y-2 text-center">
-                  <div className="h-16 flex items-center justify-center bg-white p-2 rounded-xl border border-slate-200">
-                    <img src={userSignature} alt="Tanda Tangan Tersimpan" className="max-h-full max-w-full object-contain" />
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col items-center justify-center min-h-[140px]">
+              {isValidSigImg(localSignature) ? (
+                <div className="space-y-2.5 text-center w-full">
+                  <div
+                    className="h-20 flex items-center justify-center bg-white p-2 rounded-lg border border-slate-200"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(45deg, #f8fafc 25%, transparent 25%), linear-gradient(-45deg, #f8fafc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8fafc 75%), linear-gradient(-45deg, transparent 75%, #f8fafc 75%)',
+                      backgroundSize: '12px 12px',
+                      backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px'
+                    }}
+                  >
+                    <img
+                      src={localSignature}
+                      alt="Tanda Tangan Tersimpan"
+                      className="max-h-full max-w-full object-contain mix-blend-multiply"
+                    />
                   </div>
                   <div className="text-[10px] text-emerald-700 font-bold">
-                    Menggunakan Tanda Tangan Tersimpan Akun Anda
+                    Tanda Tangan Transparan Tersimpan Akun Anda
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsExtractorOpen(true)}
+                    className="px-3 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+                  >
+                    Ganti / Ekstrak Ulang Gambar TTD
+                  </button>
                 </div>
               ) : (
-                <div className="w-full">
-                  <SignatureCanvas
-                    onSave={(dataUrl) => handleSignConfirm(dataUrl)}
-                    width={340}
-                    height={120}
-                  />
+                <div className="text-center space-y-3 py-2">
+                  <div className="text-xs text-slate-500">
+                    Anda belum memiliki file tanda tangan transparan tersimpan.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsExtractorOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs transition cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Upload &amp; Ekstrak Gambar Tanda Tangan (Auto Hapus Background)</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -811,19 +894,33 @@ export default function FullDocumentPreviewModal({
               >
                 Batal
               </button>
-              {userSignature && (
+              {isValidSigImg(localSignature) && (
                 <button
                   type="button"
                   disabled={isSigning}
-                  onClick={() => handleSignConfirm(userSignature)}
+                  onClick={() => handleSignConfirm(localSignature)}
                   className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>{isSigning ? 'Mengesahkan...' : 'Sahkan Sekarang'}</span>
+                  <span>{isSigning ? 'Membubuhkan...' : 'Bubuhkan & Sahkan TTD'}</span>
                 </button>
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {isExtractorOpen && (
+        <div className="fixed inset-0 z-[100002]" style={{ isolation: 'isolate' }}>
+          <SignatureUploadExtractorModal
+            isOpen={isExtractorOpen}
+            onClose={() => setIsExtractorOpen(false)}
+            currentUser={currentUser}
+            onSave={(newSig) => {
+              setLocalSignature(newSig);
+              setIsExtractorOpen(false);
+            }}
+          />
         </div>
       )}
 

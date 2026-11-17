@@ -383,7 +383,7 @@ export default function SuperadminDashboard() {
                   <tr key={doc.id} className="hover:bg-slate-50 transition">
                     <td className="px-4 py-3 font-mono font-bold text-blue-700">{doc.doc_number || doc.id}</td>
                     <td className="px-4 py-3 text-slate-800 font-medium">{doc.site_location || 'Site Office'}</td>
-                    <td className="px-4 py-3 text-slate-600">{doc.pic_receiver_name || 'Rayhans Najib A.'}</td>
+                    <td className="px-4 py-3 text-slate-600">{doc.pic_receiver_name || 'Petugas Logistik Site'}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />

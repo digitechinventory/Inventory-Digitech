@@ -14,7 +14,7 @@ const DEFAULT_ROLE_NOTIFICATIONS = {
     {
       id: 'default-sa-1',
       title: 'Menunggu Otorisasi Final (Slot 3)',
-      message: 'MOS-2026-09-001 dari PT Trakindo Utama siap untuk penandatanganan dan pengesahan akhir.',
+      message: 'MOS-2026-09-001 untuk pengiriman material site siap untuk penandatanganan dan pengesahan akhir.',
       type: 'info',
       link: '/mos',
       is_read: false,

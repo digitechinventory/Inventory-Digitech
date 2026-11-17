@@ -384,7 +384,7 @@ export default function ReportsPage() {
       <div>
         <div class="brand-title">DIGITECH</div>
         <div class="brand-sub">Inventory Management System</div>
-        <div class="brand-addr">Divisi Logistik, Telematika &amp; Operasional Site &bull; ${esc(docSite)}</div>
+        <div class="brand-addr">Digital and Technology Solutions (DigiTech) Division &mdash; Golden Energy Mines (GEMS) &bull; ${esc(docSite)}</div>
       </div>
     </div>
     <div class="kop-right">
@@ -1405,16 +1405,16 @@ export default function ReportsPage() {
 
           {/* Reader Document Canvas Workspace (Clean Slate-100, No Black Colors) */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center items-start bg-slate-100">
-            {/* The Authentic A4 Paper Sheet */}
+            {/* The Authentic A4 Paper Sheet (Sharp 90° Corners) */}
             <div
               style={{
                 transform: `scale(${zoomLevel / 100})`,
                 transformOrigin: 'top center'
               }}
-              className="w-full max-w-4xl bg-white rounded-xs shadow-2xl shadow-slate-300/80 border border-slate-300/80 p-8 sm:p-14 space-y-6 text-slate-800 transition-transform duration-100 my-4 select-text print:m-0 print:p-0 print:border-none print:shadow-none"
+              className="w-full max-w-4xl bg-white rounded-none shadow-2xl shadow-slate-300/80 border border-slate-400 p-8 sm:p-14 space-y-6 text-slate-800 transition-transform duration-100 my-4 select-text print:m-0 print:p-0 print:border-none print:shadow-none"
             >
-              {/* 1. Kop Surat Resmi Digitech */}
-              <div className="border-b-2 border-red-700 pb-4">
+              {/* 1. Kop Surat Resmi DigiTech Division (GEMS) */}
+              <div className="border-b-2 border-slate-900 pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
                     <img
@@ -1433,8 +1433,8 @@ export default function ReportsPage() {
                       <div className="text-xs font-bold text-red-600 mt-0.5">
                         Inventory Management System
                       </div>
-                      <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                        Divisi Logistik, Telematika &amp; Operasional Site
+                      <div className="text-[10px] text-slate-600 leading-tight mt-0.5">
+                        Digital and Technology Solutions (DigiTech) Division &mdash; Golden Energy Mines (GEMS)
                       </div>
                     </div>
                   </div>
@@ -1466,7 +1466,7 @@ export default function ReportsPage() {
               </div>
 
               {/* 4. Parameter & Identitas Audit (Grid Resmi) */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/90 p-4 rounded-xl border border-slate-200 text-xs font-mono">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/90 p-4 rounded-none border border-slate-800 text-xs font-mono">
                 <div>
                   <span className="text-[10px] text-slate-400 block uppercase font-sans font-medium">Fasilitas / Lokasi</span>
                   <span className="font-bold text-slate-900">{previewDoc.site}</span>
@@ -1499,36 +1499,36 @@ export default function ReportsPage() {
                   </span>
                 </div>
 
-                <div className="border border-slate-300 rounded-xl overflow-hidden text-xs">
-                  <table className="w-full text-left">
-                    <thead className="bg-slate-100/90 font-mono text-[10px] uppercase text-slate-700 border-b border-slate-300">
-                      <tr>
-                        <th className="p-3 w-10 text-center">No</th>
-                        <th className="p-3">Nama Material / Komponen</th>
-                        <th className="p-3">Spesifikasi / Part No / SN</th>
-                        <th className="p-3 text-center">Lokasi Rak</th>
-                        <th className="p-3 text-center">Qty</th>
-                        <th className="p-3 text-center">Satuan</th>
-                        <th className="p-3 text-center">Kondisi</th>
-                        <th className="p-3">Keterangan</th>
+                <div className="border border-slate-800 rounded-none overflow-hidden text-xs">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[#162B4D] font-mono text-[10px] uppercase text-white border-b border-slate-800">
+                      <tr className="divide-x divide-slate-600">
+                        <th className="p-2.5 w-10 text-center">No</th>
+                        <th className="p-2.5">Nama Material / Komponen</th>
+                        <th className="p-2.5">Spesifikasi / Part No / SN</th>
+                        <th className="p-2.5 text-center">Lokasi Rak</th>
+                        <th className="p-2.5 text-center">Qty</th>
+                        <th className="p-2.5 text-center">Satuan</th>
+                        <th className="p-2.5 text-center">Kondisi</th>
+                        <th className="p-2.5">Keterangan</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 font-mono text-[11px]">
+                    <tbody className="divide-y divide-slate-300 font-mono text-[11px]">
                       {previewDoc.raw?.items && previewDoc.raw.items.length > 0 ? (
                         previewDoc.raw.items.map((item, idx) => (
-                          <tr key={item.id || idx}>
-                            <td className="p-3 text-center font-bold text-slate-500">{String(idx + 1).padStart(2, '0')}</td>
-                            <td className="p-3 font-sans font-bold text-slate-900">{item.name || '-'}</td>
-                            <td className="p-3 text-slate-600">{item.spec || item.sn || item.part_number || '-'}</td>
-                            <td className="p-3 text-center text-slate-600">{item.bin_location || '-'}</td>
-                            <td className="p-3 text-center font-black text-slate-900">{item.qty_received || item.qty || 1}</td>
-                            <td className="p-3 text-center text-slate-700">{item.unit || 'PCS'}</td>
-                            <td className="p-3 text-center">
-                              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
+                          <tr key={item.id || idx} className="divide-x divide-slate-300">
+                            <td className="p-2.5 text-center font-bold text-slate-500">{String(idx + 1).padStart(2, '0')}</td>
+                            <td className="p-2.5 font-sans font-bold text-slate-900">{item.name || '-'}</td>
+                            <td className="p-2.5 text-slate-600">{item.spec || item.sn || item.part_number || '-'}</td>
+                            <td className="p-2.5 text-center text-slate-600">{item.bin_location || '-'}</td>
+                            <td className="p-2.5 text-center font-black text-slate-900">{item.qty_received || item.qty || 1}</td>
+                            <td className="p-2.5 text-center text-slate-700">{item.unit || 'PCS'}</td>
+                            <td className="p-2.5 text-center">
+                              <span className="px-2 py-0.5 rounded-none bg-slate-100 text-slate-800 border border-slate-400 font-bold text-[10px]">
                                 {item.condition || 'Baik'}
                               </span>
                             </td>
-                            <td className="p-3 text-slate-600">{item.notes || '-'}</td>
+                            <td className="p-2.5 text-slate-600">{item.notes || '-'}</td>
                           </tr>
                         ))
                       ) : (
@@ -1542,8 +1542,8 @@ export default function ReportsPage() {
                     {previewDoc.raw?.items && previewDoc.raw.items.length > 0 && (
                       <tfoot className="bg-slate-50 border-t border-slate-300 font-mono text-[10px] text-slate-700">
                         <tr>
-                          <td colSpan={4} className="p-3 font-bold">TOTAL ITEM DOKUMEN BERITA ACARA</td>
-                          <td colSpan={4} className="p-3 text-right font-bold text-emerald-700">
+                          <td colSpan={4} className="p-2.5 font-bold">TOTAL ITEM DOKUMEN BERITA ACARA</td>
+                          <td colSpan={4} className="p-2.5 text-right font-bold text-emerald-700">
                             {previewDoc.raw.items.length} ITEM TERVERIFIKASI
                           </td>
                         </tr>
@@ -1558,7 +1558,7 @@ export default function ReportsPage() {
                 <span className="font-black text-xs text-slate-900 uppercase font-mono tracking-wider">
                   Ringkasan Hasil Evaluasi &amp; Catatan Auditor:
                 </span>
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-1.5">
+                <div className="p-3.5 bg-slate-50 rounded-none border border-slate-400 text-xs text-slate-700 leading-relaxed space-y-1.5">
                   <p>
                     {previewDoc.summary}
                   </p>
@@ -1574,49 +1574,99 @@ export default function ReportsPage() {
               </div>
 
               {/* 8. Kolom Pengesahan & Tanda Tangan Resmi */}
-              <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs">
-                {/* Otorisator 1 */}
-                <div className="space-y-2">
-                  <p className="text-slate-600 text-[11px] font-medium">Disiapkan Oleh:</p>
-                  <div className="h-16 flex items-end justify-center">
-                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
-                      {previewDoc.raw?.approval_maker_name || previewDoc.author || user?.full_name || 'Pelaksana Logistik'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Staff Logistik &amp; Material Controller</p>
-                  </div>
-                </div>
+              {(() => {
+                const placedSigs = Array.isArray(previewDoc.raw?.signatures_placed) ? previewDoc.raw.signatures_placed : [];
+                const getSlotSig = (slot) =>
+                  placedSigs.find((s, i) => {
+                    const matchSlot =
+                      slot === 'maker'
+                        ? (s.x_percent != null ? Number(s.x_percent) <= 36 : i === 0)
+                        : slot === 'checker'
+                        ? (s.x_percent != null ? Number(s.x_percent) > 36 && Number(s.x_percent) <= 66 : i === 1)
+                        : (s.x_percent != null ? Number(s.x_percent) > 66 : i === 2);
+                    return (
+                      matchSlot &&
+                      typeof s.signature_image === 'string' &&
+                      s.signature_image.startsWith('data:image/') &&
+                      s.signature_image.length >= 250 &&
+                      !s.signature_image.includes('AAAAEAAAABCAYAAAAfFcSJ')
+                    );
+                  });
 
-                {/* Otorisator 2 */}
-                <div className="space-y-2">
-                  <p className="text-slate-600 text-[11px] font-medium">Diperiksa Oleh:</p>
-                  <div className="h-16 flex items-end justify-center">
-                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
-                      {previewDoc.raw?.approval_checker_name || 'Supervisor Logistik Site'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_checker_role || 'Supervisor Logistik & Workshop'}</p>
-                  </div>
-                </div>
+                const sigMaker = getSlotSig('maker');
+                const sigChecker = getSlotSig('checker');
+                const sigApprover = getSlotSig('approver');
 
-                {/* Otorisator 3 */}
-                <div className="space-y-2">
-                  <p className="text-slate-600 text-[11px] font-medium">Disetujui Oleh:</p>
-                  <div className="h-16 flex items-end justify-center">
-                    <span className="text-[10px] text-slate-400 italic pb-1">Tanda tangan</span>
+                return (
+                  <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs">
+                    {/* Otorisator 1 */}
+                    <div className="space-y-2">
+                      <p className="text-slate-600 text-[11px] font-medium">Disiapkan Oleh:</p>
+                      <div className="h-16 flex items-center justify-center">
+                        {sigMaker ? (
+                          <img
+                            src={sigMaker.signature_image}
+                            alt={sigMaker.signer_name || 'TTD'}
+                            className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-slate-300 self-end pb-1">______________________</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                          {previewDoc.raw?.approval_maker_name || previewDoc.author || user?.full_name || 'Pelaksana Logistik'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Staff Logistik &amp; Material Controller</p>
+                      </div>
+                    </div>
+
+                    {/* Otorisator 2 */}
+                    <div className="space-y-2">
+                      <p className="text-slate-600 text-[11px] font-medium">Diperiksa Oleh:</p>
+                      <div className="h-16 flex items-center justify-center">
+                        {sigChecker ? (
+                          <img
+                            src={sigChecker.signature_image}
+                            alt={sigChecker.signer_name || 'TTD'}
+                            className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-slate-300 self-end pb-1">______________________</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                          {previewDoc.raw?.approval_checker_name || 'Supervisor Logistik Site'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_checker_role || 'Supervisor Logistik & Workshop'}</p>
+                      </div>
+                    </div>
+
+                    {/* Otorisator 3 */}
+                    <div className="space-y-2">
+                      <p className="text-slate-600 text-[11px] font-medium">Disetujui Oleh:</p>
+                      <div className="h-16 flex items-center justify-center">
+                        {sigApprover ? (
+                          <img
+                            src={sigApprover.signature_image}
+                            alt={sigApprover.signer_name || 'TTD'}
+                            className="max-h-14 max-w-full object-contain mix-blend-multiply mx-auto pointer-events-none"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-slate-300 self-end pb-1">______________________</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
+                          {previewDoc.raw?.approval_approver_name || 'Manajemen Operasional'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_approver_role || 'Kepala Operasional Site'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-slate-900 border-b border-slate-400 pb-1">
-                      {previewDoc.raw?.approval_approver_name || 'Manajemen Operasional'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{previewDoc.raw?.approval_approver_role || 'Kepala Operasional Site'}</p>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* 9. Official A4 Paper Footer */}
               <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-[10px] font-mono text-slate-500 gap-2">

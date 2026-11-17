@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import localDb from '../services/localDb.js';
 import { requireAuth } from '../middleware/auth.js';
-import { adminOnly } from '../middleware/rbac.js';
+import { superadminOnly } from '../middleware/rbac.js';
 import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { sendAgendaNotificationEmail } from '../services/mailer.js';
@@ -10,8 +10,8 @@ import { sendAgendaNotificationEmail } from '../services/mailer.js';
 const router = Router();
 const FALLBACK_AGENDAS = [];
 
-// GET /api/agendas â€” List agendas with optional filter by month or category
-router.get('/', requireAuth, async (req, res, next) => {
+// GET /api/agendas — List agendas (Superadmin only)
+router.get('/', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { month, category, status } = req.query;
     let query = supabase.from('agendas').select('*').order('date', { ascending: true }).order('start_time', { ascending: true });
@@ -59,8 +59,8 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/agendas/:id â€” Detail single agenda
-router.get('/:id', requireAuth, async (req, res, next) => {
+// GET /api/agendas/:id — Detail single agenda (Superadmin only)
+router.get('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { data, error } = await supabase.from('agendas').select('*').eq('id', id).maybeSingle();
@@ -77,8 +77,8 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/agendas â€” Create agenda (Admin & Superadmin only)
-router.post('/', requireAuth, adminOnly, async (req, res, next) => {
+// POST /api/agendas — Create agenda (Superadmin only)
+router.post('/', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const {
       title,
@@ -159,8 +159,8 @@ router.post('/', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/agendas/:id â€” Update agenda (Admin & Superadmin only)
-router.put('/:id', requireAuth, adminOnly, async (req, res, next) => {
+// PUT /api/agendas/:id — Update agenda (Superadmin only)
+router.put('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -223,8 +223,8 @@ router.put('/:id', requireAuth, adminOnly, async (req, res, next) => {
   }
 });
 
-// DELETE /api/agendas/:id â€” Delete agenda (Admin & Superadmin only)
-router.delete('/:id', requireAuth, adminOnly, async (req, res, next) => {
+// DELETE /api/agendas/:id — Delete agenda (Superadmin only)
+router.delete('/:id', requireAuth, superadminOnly, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { error } = await supabase.from('agendas').delete().eq('id', id);

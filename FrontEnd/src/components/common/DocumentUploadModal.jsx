@@ -101,7 +101,7 @@ export default function DocumentUploadModal({
   // Sisi Pengirim (Asal)
   const [originLocation, setOriginLocation] = useState('Site Office');
   const [originSpecificArea, setOriginSpecificArea] = useState('Main Warehouse Bay 1');
-  const [senderName, setSenderName] = useState(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
+  const [senderName, setSenderName] = useState(currentUser?.full_name || 'Petugas Operasional Site');
   const [senderRole, setSenderRole] = useState(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi Lapangan');
   const [senderPhone, setSenderPhone] = useState('0812-3456-7890');
 
@@ -122,7 +122,7 @@ export default function DocumentUploadModal({
   const [notesJustification, setNotesJustification] = useState('Barang diterima sesuai spesifikasi Purchase Order. Dilakukan pengecekan fisik menyeluruh dan serial number tercatat lengkap.');
 
   // ── Section 4: Alur Otorisasi 3 Slot (Approval untuk Siapa) ──
-  const [approvalMakerName, setApprovalMakerName] = useState(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
+  const [approvalMakerName, setApprovalMakerName] = useState(currentUser?.full_name || 'Petugas Operasional Site');
   const [approvalMakerRole, setApprovalMakerRole] = useState('Teknisi Lapangan');
   const [approvalMakerDept, setApprovalMakerDept] = useState('Teknisi Operasional');
 
@@ -188,7 +188,7 @@ export default function DocumentUploadModal({
 
       setOriginLocation(editDocument.origin_location || 'Site Office');
       setOriginSpecificArea(editDocument.origin_specific_area || 'Main Warehouse Bay 1');
-      setSenderName(editDocument.sender_name || currentUser?.full_name || 'Rayhans Najib Al-Faruq');
+      setSenderName(editDocument.sender_name || currentUser?.full_name || 'Petugas Operasional Site');
       setSenderRole(editDocument.sender_role || 'Teknisi Lapangan');
       setSenderPhone(editDocument.sender_phone || '0812-3456-7890');
 
@@ -204,7 +204,7 @@ export default function DocumentUploadModal({
       setPurpose(editDocument.purpose || 'Verifikasi dan serah terima material operasional di site');
       setNotesJustification(editDocument.notes_justification || '');
 
-      setApprovalMakerName(editDocument.approval_maker_name || editDocument.sender_name || 'Rayhans Najib Al-Faruq');
+      setApprovalMakerName(editDocument.approval_maker_name || editDocument.sender_name || 'Petugas Operasional Site');
       setApprovalMakerRole(editDocument.approval_maker_role || 'Teknisi Lapangan');
       setApprovalMakerDept(editDocument.approval_maker_dept || 'Teknisi Operasional');
 
@@ -237,7 +237,7 @@ export default function DocumentUploadModal({
 
       setOriginLocation('Site Office');
       setOriginSpecificArea('Main Warehouse Bay 1');
-      setSenderName(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
+      setSenderName(currentUser?.full_name || 'Petugas Operasional Site');
       setSenderRole(currentUser?.role === 'Admin' ? 'Supervisor Logistik' : 'Teknisi Lapangan');
       setSenderPhone('0812-3456-7890');
 
@@ -265,7 +265,7 @@ export default function DocumentUploadModal({
       setDriverName('Bpk. Mulyadi (KT 8821 BB)');
       setNotesJustification('Barang diterima sesuai spesifikasi Purchase Order. Dilakukan pengecekan fisik menyeluruh dan serial number tercatat lengkap.');
 
-      setApprovalMakerName(currentUser?.full_name || 'Rayhans Najib Al-Faruq');
+      setApprovalMakerName(currentUser?.full_name || 'Petugas Operasional Site');
       setApprovalMakerRole('Teknisi Lapangan');
       setApprovalMakerDept('Teknisi Operasional');
 

@@ -338,7 +338,7 @@ export default function UserDashboard() {
                         </span>
                       </div>
                       <div className="text-xs text-slate-600 font-medium">
-                        {doc.vendor_name || 'PT Trakindo Utama'} • PO: {doc.po_do_number || 'PO-2026-09-001'}
+                        {doc.vendor_name || 'Pemasok Material Site'} • PO: {doc.po_do_number || 'PO-2026-09-001'}
                       </div>
                       <div className="text-[10px] text-slate-400 flex items-center gap-2">
                         <span>Lokasi: {doc.site_location || 'Area Rak 1'}</span>

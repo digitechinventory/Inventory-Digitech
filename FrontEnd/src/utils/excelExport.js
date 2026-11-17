@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs';
-
 const THIN_BORDER = {
   top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
   left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
@@ -51,6 +49,8 @@ export async function exportStyledExcel({
   columns = [],
   sections = []
 }) {
+  const ExcelJSModule = await import('exceljs');
+  const ExcelJS = ExcelJSModule.default || ExcelJSModule;
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Digital and Technology Solutions (DigiTech) Division - Golden Energy Mines (GEMS)';
   workbook.created = new Date();
@@ -88,7 +88,7 @@ export async function exportStyledExcel({
   ws.mergeCells(3, 2, 3, totalCols);
 
   const brandCell = ws.getCell(1, 2);
-  brandCell.value = 'DIGITECH — INVENTORY MANAGEMENT SYSTEM';
+  brandCell.value = 'DIGITECH DIVISION (GEMS) — INVENTORY MANAGEMENT SYSTEM';
   brandCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF0F172A' } };
   brandCell.alignment = { vertical: 'middle', horizontal: 'left' };
 

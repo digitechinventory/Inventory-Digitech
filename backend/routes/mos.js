@@ -21,7 +21,7 @@ export const DOCUMENT_TEMPLATES = {
     subtitle: 'BERITA ACARA VERIFIKASI & PENERIMAAN MATERIAL SITE',
     defaultOrientation: 'landscape',
     defaultSite: 'Site Office',
-    defaultReceiver: 'Rayhans Najib Al-Faruq',
+    defaultReceiver: 'Petugas Logistik Site',
     defaultDocNumber: '001/SITE/MOS/MNTOA/BIBOA/IV/2026',
     defaultDate: '2026-04-07',
     defaultCondition: 'Baik',
@@ -157,7 +157,7 @@ const normalizeMosDoc = (d) => {
 
   const originLoc = d.origin_location || sigs.origin_location || 'Gudang Site / Buffer';
   const destLoc = d.destination_location || sigs.destination_location || d.site_location || d.site_name || 'BIB Pit Sebamban KM-14';
-  const senderNm = d.sender_name || sigs.sender_name || d.requester_name || 'Rayhans Najib Al-Faruq';
+  const senderNm = d.sender_name || sigs.sender_name || d.requester_name || 'Petugas Operasional Site';
   const senderRl = d.sender_role || sigs.sender_role || d.department || 'Teknisi Lapangan';
   const destRecv = d.destination_receiver || sigs.destination_receiver || d.pic_receiver_name || 'Team Mekanik Pit';
 
@@ -168,7 +168,7 @@ const normalizeMosDoc = (d) => {
     template_type: d.template_type || sigs.template_type || (d.doc_number?.includes('MDT') ? 'MDT' : d.doc_number?.includes('MRP') ? 'MRP' : d.doc_number?.includes('/MR/') ? 'MR' : 'MOS'),
     title: d.title || `Dokumen Approval ${d.doc_number || d.id}`,
     subtitle: d.subtitle || sigs.subtitle || '',
-    vendor_name: d.vendor_name || 'PT Trakindo Utama',
+    vendor_name: d.vendor_name || 'Mitra Pemasok Resmi',
     
     // Rute Pengiriman (Dari Siapa -> Akan Kemana)
     site_location: destLoc,
@@ -392,7 +392,7 @@ router.post('/', requireAuth, async (req, res, next) => {
     const docNum = doc_number || autoNumber;
     const docId = `doc-${Date.now()}`;
 
-    const effectiveSender = sender_name || req.user.full_name || 'Rayhans Najib Al-Faruq';
+    const effectiveSender = sender_name || req.user.full_name || 'Petugas Operasional Site';
     const effectiveReceiver = destination_receiver || pic_receiver_name || 'Team Mekanik Pit';
     const effectiveMakerName = approval_maker_name || effectiveSender;
 
@@ -595,6 +595,13 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     }
 
     const editorRole = (req.user?.role || '').toLowerCase();
+    const isAdminOrSuperadmin = editorRole === 'admin' || editorRole === 'superadmin';
+    const isCreator =
+      (doc.created_by_id && String(doc.created_by_id) === String(req.user?.id)) ||
+      (doc.sender_name && req.user?.full_name && doc.sender_name.toLowerCase() === req.user.full_name.toLowerCase());
+    if (!isAdminOrSuperadmin && !isCreator) {
+      throw new AppError('Anda tidak memiliki izin untuk mengubah metadata dokumen ini.', 403, 'FORBIDDEN');
+    }
     if (doc.status === 'completed') {
       throw new AppError('Dokumen yang sudah disetujui final (completed) tidak dapat diubah lagi.', 403, 'DOCUMENT_LOCKED');
     }

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../services/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
-import { adminOnly } from '../middleware/rbac.js';
+import { adminOnly, requireRole } from '../middleware/rbac.js';
 import { sendSuccess, sendCreated } from '../middleware/responseHandler.js';
 import { AppError } from '../middleware/errorHandler.js';
 import {
@@ -126,8 +126,8 @@ function inferToolProject(item, idx = 0) {
   return pool[idx % pool.length];
 }
 
-// GET /api/tools/loans — List tool loans
-router.get('/loans', requireAuth, async (req, res, next) => {
+// GET /api/tools/loans — List tool loans (User & Admin)
+router.get('/loans', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
   try {
     const { status, project_id } = req.query;
     if (project_id && !checkUserProjectAccess(req.user, project_id)) {
@@ -174,7 +174,7 @@ router.get('/loans', requireAuth, async (req, res, next) => {
 });
 
 // GET /api/tools/stats
-router.get('/stats', requireAuth, async (req, res, next) => {
+router.get('/stats', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
   try {
     const { data } = await supabase.from('tool_loans').select('*');
     const list = (data && data.length > 0) ? data : FALLBACK_TOOLS;
@@ -193,8 +193,8 @@ router.get('/stats', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/tools/loans — Borrow a tool
-router.post('/loans', requireAuth, async (req, res, next) => {
+// POST /api/tools/loans — Borrow a tool (User & Admin)
+router.post('/loans', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
   try {
     const { tool_name, serial_number, expected_return_date, notes, project_id } = req.body;
 
@@ -244,7 +244,7 @@ router.post('/loans', requireAuth, async (req, res, next) => {
 });
 
 // PUT /api/tools/loans/:id/return — Return tool (Admin / User)
-router.put('/loans/:id/return', requireAuth, async (req, res, next) => {
+router.put('/loans/:id/return', requireAuth, requireRole('User', 'Admin'), async (req, res, next) => {
   try {
     const { condition, notes } = req.body;
     const today = new Date().toISOString().split('T')[0];

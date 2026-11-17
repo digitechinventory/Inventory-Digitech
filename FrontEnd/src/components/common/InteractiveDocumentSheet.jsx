@@ -641,7 +641,7 @@ export default function InteractiveDocumentSheet({
                         Inventory Management System
                       </div>
                       <div className="text-[10px] text-slate-600">
-                        Divisi Logistik &amp; Operasional Site
+                        Digital and Technology Solutions (DigiTech) Division &mdash; Golden Energy Mines (GEMS)
                       </div>
                     </div>
                   </div>

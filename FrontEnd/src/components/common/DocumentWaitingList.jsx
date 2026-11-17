@@ -390,7 +390,7 @@ export default function DocumentWaitingList({
                         <span>{doc.received_date || doc.created_at?.split('T')[0]}</span>
                       </span>
 
-                      <span>PIC Pengirim: <strong className="text-slate-700">{doc.sender_name || doc.pic_receiver_name || 'Rayhans Najib'}</strong></span>
+                      <span>PIC Pengirim: <strong className="text-slate-700">{doc.sender_name || doc.pic_receiver_name || 'Petugas Operasional Site'}</strong></span>
 
                       {doc.intended_for && (
                         <span className="text-slate-400">| Peruntukan: <strong className="text-slate-700">{doc.intended_for}</strong></span>
